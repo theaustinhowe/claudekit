@@ -488,7 +488,7 @@ function ToolRow({
       <div className="flex items-center flex-wrap gap-4 px-4 sm:px-6 py-3">
         {/* Expand chevron */}
         <CollapsibleTrigger asChild>
-          <button type="button" className="flex-shrink-0 -mr-2 p-0.5 rounded hover:bg-muted transition-colors">
+          <button type="button" className="shrink-0 -mr-2 p-0.5 rounded hover:bg-muted transition-colors">
             <ChevronDown
               className={cn("w-4 h-4 text-muted-foreground transition-transform", expanded && "rotate-180")}
             />
@@ -496,7 +496,7 @@ function ToolRow({
         </CollapsibleTrigger>
 
         {/* Status icon */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {!result ? (
             <div className="w-5 h-5 rounded-full bg-muted" />
           ) : isInstalled ? (
@@ -522,7 +522,7 @@ function ToolRow({
         </CollapsibleTrigger>
 
         {/* Badge */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {!result ? (
             <Badge variant="outline" className="text-muted-foreground">
               Pending
@@ -578,7 +578,7 @@ function ToolRow({
         </div>
 
         {/* Version */}
-        <div className="flex-shrink-0 w-32 text-right hidden sm:block">
+        <div className="shrink-0 w-32 text-right hidden sm:block">
           {result?.currentVersion ? (
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-sm font-mono text-muted-foreground">{result.currentVersion}</span>
@@ -590,7 +590,7 @@ function ToolRow({
         </div>
 
         {/* Action */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {result && isInstalled && result.updateAvailable && updateCommand && (
             <Button
               variant="ghost"

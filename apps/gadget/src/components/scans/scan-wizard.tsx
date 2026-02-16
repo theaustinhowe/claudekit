@@ -352,7 +352,7 @@ export function ScanWizard({ policies, repos: _repos, savedScanRoots }: ScanWiza
                           <tr key={repo.localPath} className="border-b last:border-b-0">
                             <td className="p-3">
                               <p className="font-medium">{repo.name}</p>
-                              <p className="text-xs text-muted-foreground font-mono truncate max-w-[200px]">
+                              <p className="text-xs text-muted-foreground font-mono truncate max-w-50">
                                 {repo.localPath}
                               </p>
                             </td>
@@ -387,7 +387,7 @@ export function ScanWizard({ policies, repos: _repos, savedScanRoots }: ScanWiza
                                   });
                                 }}
                               >
-                                <SelectTrigger className="h-8 text-xs w-[180px]">
+                                <SelectTrigger className="h-8 text-xs w-45">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
