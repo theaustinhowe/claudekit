@@ -1,7 +1,10 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createWriteStream, mkdirSync, readdirSync, rmSync, type WriteStream, writeFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { join } from "node:path";
 import { type AppDef, apps, LOG_DIR, PID_DIR, pidFilePath } from "./dev-apps.js";
+
+const CONTROL_PORT = 2999;
 
 const MAX_RESTARTS = 3;
 const UPTIME_RESET_MS = 30_000;
@@ -124,6 +127,7 @@ interface ManagedApp {
   proc: ChildProcess | null;
   restartCount: number;
   startTime: number;
+  pendingRestart: boolean;
 }
 
 const managed: ManagedApp[] = [];
@@ -186,6 +190,14 @@ function launchApp(entry: ManagedApp): void {
     // Don't restart if we're shutting down
     if (shuttingDown) return;
 
+    // Manual restart requested via control server
+    if (entry.pendingRestart) {
+      entry.pendingRestart = false;
+      entry.restartCount = 0;
+      launchApp(entry);
+      return;
+    }
+
     if (code !== 0 && code !== null) {
       const uptime = Date.now() - entry.startTime;
       if (uptime > UPTIME_RESET_MS) {
@@ -244,6 +256,9 @@ function shutdown(): void {
     }
   }
 
+  // Close control server
+  controlServer.close();
+
   // Clean up PID file
   try {
     rmSync(pidFilePath(), { force: true });
@@ -262,6 +277,64 @@ function shutdown(): void {
 
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
+
+// --- Control server ---
+
+function restartApp(entry: ManagedApp): void {
+  entry.restartCount = 0;
+  if (entry.proc?.pid) {
+    // Process running — flag for restart after exit
+    entry.pendingRestart = true;
+    writeLog(entry.app.id, {
+      level: 30,
+      time: Date.now(),
+      msg: "Restart requested via control server",
+      app: entry.app.id,
+      service: "lifecycle",
+    });
+    try {
+      process.kill(-entry.proc.pid, "SIGTERM");
+    } catch {
+      try {
+        entry.proc.kill("SIGTERM");
+      } catch {
+        // Already dead
+      }
+    }
+  } else {
+    // Process not running — start directly
+    writeLog(entry.app.id, {
+      level: 30,
+      time: Date.now(),
+      msg: "Start requested via control server",
+      app: entry.app.id,
+      service: "lifecycle",
+    });
+    launchApp(entry);
+  }
+}
+
+const controlServer = createServer((req, res) => {
+  res.setHeader("Content-Type", "application/json");
+
+  const match = req.url?.match(/^\/restart\/(.+)$/);
+  if (req.method === "POST" && match) {
+    const appId = decodeURIComponent(match[1]);
+    const entry = managed.find((e) => e.app.id === appId);
+    if (!entry) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: "Unknown app" }));
+      return;
+    }
+    restartApp(entry);
+    res.writeHead(200);
+    res.end(JSON.stringify({ ok: true, appId }));
+    return;
+  }
+
+  res.writeHead(404);
+  res.end(JSON.stringify({ error: "Not found" }));
+});
 
 // --- Main ---
 
@@ -282,7 +355,11 @@ for (const app of apps) {
     proc: null,
     restartCount: 0,
     startTime: 0,
+    pendingRestart: false,
   };
   managed.push(entry);
   launchApp(entry);
 }
+
+// Start control server
+controlServer.listen(CONTROL_PORT);

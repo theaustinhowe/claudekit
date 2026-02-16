@@ -67,23 +67,24 @@ export default async function AppLogPage({
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 65px)" }}>
-      <div className="border-b px-8 py-3 flex items-center gap-2 text-sm flex-shrink-0">
-        <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
-          Dashboard
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="font-medium">{app}</span>
-        <span className="text-muted-foreground">/</span>
-        <span className="font-medium">{formatDateLabel(date)}</span>
-        <span className="text-xs text-muted-foreground ml-2">{initialLogs.length} entries loaded</span>
+      <div className="max-w-6xl mx-auto w-full flex flex-col flex-1 overflow-hidden px-8 pb-6">
+        <div className="py-4 flex items-center gap-2 text-sm flex-shrink-0">
+          <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+            Dashboard
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-medium">{app}</span>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-medium">{formatDateLabel(date)}</span>
+        </div>
+        <LogViewerClient
+          app={app}
+          date={date}
+          isToday={isToday}
+          initialLogs={initialLogs}
+          availableDates={availableDates}
+        />
       </div>
-      <LogViewerClient
-        app={app}
-        date={date}
-        isToday={isToday}
-        initialLogs={initialLogs}
-        availableDates={availableDates}
-      />
     </div>
   );
 }

@@ -38,3 +38,8 @@ console.log(`${DIM}Logs:${RESET}  ~/.devkit/logs/`);
 console.log(`${DIM}View:${RESET}  ${CYAN}http://localhost:2000${RESET}`);
 console.log(`${DIM}Stop:${RESET}  ${CYAN}pnpm dev:stop${RESET}`);
 console.log();
+
+// Open the web dashboard after a short delay to let Next.js start
+setTimeout(() => {
+  spawn("open", ["http://localhost:2000"], { stdio: "ignore" }).unref();
+}, 3000);

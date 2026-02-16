@@ -1,11 +1,24 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { ThemeProvider } from "next-themes";
 import type { FileContent } from "../types";
 import { FileViewer } from "./file-viewer";
+import { Toaster } from "./sonner";
+
+// FileViewer uses SyntaxHighlighter (needs next-themes) and toast (needs Toaster).
+function FileViewerDecorator(Story: React.ComponentType) {
+  return (
+    <ThemeProvider attribute="class" defaultTheme="light">
+      <Story />
+      <Toaster />
+    </ThemeProvider>
+  );
+}
 
 const meta: Meta<typeof FileViewer> = {
   title: "Components/FileViewer",
   component: FileViewer,
   tags: ["autodocs"],
+  decorators: [FileViewerDecorator],
 };
 export default meta;
 

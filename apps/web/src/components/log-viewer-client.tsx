@@ -1,12 +1,12 @@
 "use client";
 
-import { useAutoScroll } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { Calendar } from "@devkit/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, CalendarIcon, Pause, Play, Search } from "lucide-react";
+import { ArrowDown, CalendarIcon, Check, Copy, Pause, Play, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -74,8 +74,34 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
   const [filter, setFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState<Set<number>>(new Set());
   const [tailing, setTailing] = useState(isToday);
-  const { containerRef, isAtBottom, scrollToBottom } = useAutoScroll(tailing);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const userScrolledRef = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  const scrollToBottom = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    setIsAtBottom(true);
+    userScrolledRef.current = false;
+  }, []);
+
+  // Track scroll position to detect when user scrolls away from bottom
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      const atBottom = distanceFromBottom < 50;
+      setIsAtBottom(atBottom);
+      userScrolledRef.current = !atBottom;
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Set of available date strings for calendar highlighting
   const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
@@ -128,10 +154,22 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
     return result;
   }, [logs, filter, levelFilter]);
 
+  // Auto-scroll to bottom when new logs arrive (only if user hasn't scrolled up)
+  const prevLogCountRef = useRef(filteredLogs.length);
+  useEffect(() => {
+    if (filteredLogs.length > prevLogCountRef.current && !userScrolledRef.current && tailing) {
+      requestAnimationFrame(() => {
+        const el = containerRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    }
+    prevLogCountRef.current = filteredLogs.length;
+  }, [filteredLogs.length, tailing]);
+
   const virtualizer = useVirtualizer({
     count: filteredLogs.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => 24,
+    estimateSize: () => 32,
     overscan: 20,
   });
 
@@ -160,10 +198,20 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
 
   const selectedDate = useMemo(() => new Date(`${date}T00:00:00`), [date]);
 
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleRowClick = useCallback((entry: LogEntry, index: number) => {
+    navigator.clipboard.writeText(JSON.stringify(entry, null, 2));
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    setCopiedIndex(index);
+    copyTimeoutRef.current = setTimeout(() => setCopiedIndex(null), 1500);
+  }, []);
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden rounded-lg border">
       {/* Toolbar */}
-      <div className="border-b px-4 py-2 flex items-center gap-3 flex-shrink-0">
+      <div className="border-b px-5 py-3 flex items-center gap-3 flex-shrink-0 bg-muted/30">
         {/* Calendar day picker */}
         <Popover>
           <PopoverTrigger asChild>
@@ -247,11 +295,10 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
           </button>
         )}
 
-        <span className="text-xs text-muted-foreground">{filteredLogs.length} entries</span>
       </div>
 
       {/* Log entries */}
-      <div ref={containerRef} className="flex-1 overflow-auto font-mono text-xs" style={{ contain: "strict" }}>
+      <div ref={containerRef} className="flex-1 overflow-auto font-mono text-[13px] leading-relaxed" style={{ contain: "strict" }}>
         <div
           style={{
             height: `${virtualizer.getTotalSize()}px`,
@@ -262,30 +309,48 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
           {virtualizer.getVirtualItems().map((virtualItem) => {
             const entry = filteredLogs[virtualItem.index];
             return (
-              <div
-                key={virtualItem.key}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: `${virtualItem.size}px`,
-                  transform: `translateY(${virtualItem.start}px)`,
-                }}
-                className={cn(
-                  "flex items-center px-4 hover:bg-accent/50 border-b border-border/30",
-                  ROW_BG_COLORS[entry.level],
-                )}
-              >
-                <span className="w-20 flex-shrink-0 text-muted-foreground">{formatTimestamp(entry.time)}</span>
-                <span className={cn("w-12 flex-shrink-0 font-semibold", LEVEL_COLORS[entry.level] || "")}>
-                  {getLevelName(entry.level)}
-                </span>
-                {entry.service && (
-                  <span className="w-24 flex-shrink-0 text-muted-foreground truncate">[{entry.service}]</span>
-                )}
-                <span className={cn("truncate", MSG_COLORS[entry.level])}>{entry.msg}</span>
-              </div>
+              <Tooltip key={virtualItem.key}>
+                <TooltipTrigger asChild>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                    className={cn(
+                      "group flex items-center px-5 hover:bg-accent/50 border-b border-border/30 cursor-pointer select-none",
+                      ROW_BG_COLORS[entry.level],
+                    )}
+                    onClick={() => handleRowClick(entry, virtualItem.index)}
+                  >
+                    <span className="w-20 flex-shrink-0 text-muted-foreground">{formatTimestamp(entry.time)}</span>
+                    <span className={cn("w-12 flex-shrink-0 font-semibold", LEVEL_COLORS[entry.level] || "")}>
+                      {getLevelName(entry.level)}
+                    </span>
+                    {entry.service && (
+                      <span className="w-24 flex-shrink-0 text-muted-foreground truncate">[{entry.service}]</span>
+                    )}
+                    <span className={cn("truncate flex-1", MSG_COLORS[entry.level])}>{entry.msg}</span>
+                    <span className="flex-shrink-0 ml-2 w-5">
+                      {copiedIndex === virtualItem.index ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  sideOffset={2}
+                  className="max-w-xl max-h-64 overflow-auto font-mono text-xs whitespace-pre p-3"
+                >
+                  {JSON.stringify(entry, null, 2)}
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </div>

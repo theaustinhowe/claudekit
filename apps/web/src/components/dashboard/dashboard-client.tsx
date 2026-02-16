@@ -4,7 +4,8 @@ import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { BookOpen, ChevronDown, Cpu, ExternalLink, Rocket, ScrollText, Video, Wrench } from "lucide-react";
+import { Skeleton } from "@devkit/ui/components/skeleton";
+import { BookOpen, ChevronDown, Cpu, ExternalLink, Rocket, RotateCw, ScrollText, Video, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -53,23 +54,29 @@ function formatDate(date: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function AppCardSkeleton() {
+const SKELETON_ACCENT_COLORS = Object.values(ACCENT_COLORS);
+
+function AppCardSkeleton({ index }: { index: number }) {
+  const accent = SKELETON_ACCENT_COLORS[index % SKELETON_ACCENT_COLORS.length];
   return (
-    <Card className="animate-pulse border-l-4 border-l-muted">
+    <Card className={cn("border-l-4", accent)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-5 w-5 rounded bg-muted" />
-            <div className="h-5 w-24 rounded bg-muted" />
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-5 w-24" />
           </div>
-          <div className="h-5 w-12 rounded bg-muted" />
+          <Skeleton className="h-5 w-12 rounded-full" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-4 w-full rounded bg-muted mb-3" />
+        <Skeleton className="h-4 w-full mb-3" />
         <div className="flex items-center justify-between">
-          <div className="h-4 w-16 rounded bg-muted" />
-          <div className="h-4 w-4 rounded bg-muted" />
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="h-2.5 w-2.5 rounded-full" />
+            <Skeleton className="h-4 w-14" />
+          </div>
+          <Skeleton className="h-4 w-10" />
         </div>
       </CardContent>
     </Card>
@@ -94,6 +101,26 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
     const interval = setInterval(fetchApps, 10_000);
     return () => clearInterval(interval);
   }, [fetchApps]);
+
+  const [restarting, setRestarting] = useState<Set<string>>(new Set());
+
+  const restartApp = useCallback(
+    async (appId: string) => {
+      setRestarting((prev) => new Set(prev).add(appId));
+      try {
+        await fetch(`/api/apps/${encodeURIComponent(appId)}/restart`, { method: "POST" });
+        // Poll for status change after a short delay
+        setTimeout(fetchApps, 2000);
+      } finally {
+        setRestarting((prev) => {
+          const next = new Set(prev);
+          next.delete(appId);
+          return next;
+        });
+      }
+    },
+    [fetchApps],
+  );
 
   const logsByApp = useMemo(() => {
     const map = new Map<string, LogFileInfo[]>();
@@ -130,10 +157,10 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
           <div className="grid gap-4 sm:grid-cols-2">
             {apps === null ? (
               <>
-                <AppCardSkeleton />
-                <AppCardSkeleton />
-                <AppCardSkeleton />
-                <AppCardSkeleton />
+                <AppCardSkeleton index={0} />
+                <AppCardSkeleton index={1} />
+                <AppCardSkeleton index={2} />
+                <AppCardSkeleton index={3} />
               </>
             ) : (
               apps.map((app) => {
@@ -146,56 +173,83 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                         ACCENT_COLORS[app.id] ?? "border-l-primary",
                       )}
                     >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-primary">{ICON_MAP[app.icon]}</span>
-                            <CardTitle className="text-base">{app.name}</CardTitle>
+                      {/* Upper zone — click to open app */}
+                      <button
+                        type="button"
+                        tabIndex={app.status === "running" ? 0 : -1}
+                        className={cn("w-full text-left", app.status === "running" && "cursor-pointer")}
+                        onClick={() => {
+                          if (app.status === "running") {
+                            window.open(app.url, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-primary">{ICON_MAP[app.icon]}</span>
+                              <CardTitle className="text-base">{app.name}</CardTitle>
+                            </div>
+                            <Badge variant="outline" className="font-mono text-xs">
+                              :{app.port}
+                            </Badge>
                           </div>
-                          <Badge variant="outline" className="font-mono text-xs">
-                            :{app.port}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground mb-3">{app.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={cn(
-                                "h-2.5 w-2.5 rounded-full",
-                                app.status === "running"
-                                  ? "bg-success shadow-[0_0_6px_hsl(var(--success)/0.5)]"
-                                  : "bg-muted-foreground/40",
-                              )}
-                            />
-                            <span className="text-xs text-muted-foreground capitalize">{app.status}</span>
+                        </CardHeader>
+                        <div className="px-6 pb-4">
+                          <p className="text-sm text-muted-foreground mb-3">{app.description}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "h-2.5 w-2.5 rounded-full",
+                                  app.status === "running"
+                                    ? "bg-success shadow-[0_0_6px_hsl(var(--success)/0.5)]"
+                                    : "bg-muted-foreground/40",
+                                )}
+                              />
+                              <span className="text-xs text-muted-foreground capitalize">{app.status}</span>
+                            </div>
+                            {app.status === "running" ? (
+                              <a
+                                href={app.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Open <ExternalLink className="h-3 w-3" />
+                              </a>
+                            ) : (
+                              <button
+                                type="button"
+                                className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
+                                disabled={restarting.has(app.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  restartApp(app.id);
+                                }}
+                              >
+                                {restarting.has(app.id) ? "Starting\u2026" : "Start"}
+                                <RotateCw className={cn("h-3 w-3", restarting.has(app.id) && "animate-spin")} />
+                              </button>
+                            )}
                           </div>
-                          {app.status === "running" && (
-                            <a
-                              href={app.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
-                            >
-                              Open <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
                         </div>
+                      </button>
 
-                        {/* Collapsible log trigger */}
-                        {appLogs.length > 0 && (
-                          <CollapsibleTrigger className="flex items-center gap-1.5 mt-3 pt-3 border-t w-full text-xs text-muted-foreground hover:text-foreground transition-colors group">
+                      {/* Lower zone — collapsible logs */}
+                      {appLogs.length > 0 && (
+                        <div className="px-6 pb-4">
+                          <CollapsibleTrigger className="flex items-center gap-1.5 pt-3 border-t w-full text-xs text-muted-foreground hover:text-foreground transition-colors group">
                             <ScrollText className="h-3.5 w-3.5" />
                             <span>
                               {appLogs.length} log {appLogs.length === 1 ? "file" : "files"}
                             </span>
                             <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
                           </CollapsibleTrigger>
-                        )}
-                      </CardContent>
+                        </div>
+                      )}
 
-                      {/* Collapsible log content — date-grouped entries */}
                       {appLogs.length > 0 && (
                         <CollapsibleContent>
                           <div className="px-6 pb-4 space-y-1.5">

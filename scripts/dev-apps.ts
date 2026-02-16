@@ -14,6 +14,7 @@ export const apps: AppDef[] = [
   { id: "gogo-web", filter: "gogo-web", port: 2200 },
   { id: "gogo-orchestrator", filter: "gogo-orchestrator", port: 2201 },
   { id: "b4u", filter: "b4u", port: 2300 },
+  { id: "storybook", filter: "@devkit/ui", port: 6006 },
 ];
 
 export const PID_DIR = join(homedir(), ".devkit", "pids");
