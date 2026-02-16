@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@devkit/ui/components/button";
+import { DiffViewer } from "@devkit/ui/components/diff-viewer";
 import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
@@ -13,7 +14,6 @@ import {
   fetchFileDiff,
   fetchFileDiffByPath,
 } from "@/lib/api";
-import { DiffViewer } from "./diff-viewer";
 import { FileBrowser } from "./file-browser";
 
 interface ChangesDrawerProps {

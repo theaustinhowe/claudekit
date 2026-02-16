@@ -2,9 +2,9 @@
 
 import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
+import { DiffViewer } from "@devkit/ui/components/diff-viewer";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
-import { DiffViewer } from "@/components/code/diff-viewer";
 import { getCommitDetailAction, getCommitFilePatch } from "@/lib/actions/code-browser";
 import type { CommitDetail, CommitFile, CommitFileStatus } from "@/lib/types";
 

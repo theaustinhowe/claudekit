@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -153,11 +153,11 @@ function detectClaudeMetadata(): Record<string, string | null> {
 
   // Detect binary path
   try {
-    const { stdout } = require("node:child_process").execFileSync("which", ["claude"], {
+    const stdout = execFileSync("which", ["claude"], {
       encoding: "utf-8",
       timeout: 3000,
     });
-    meta.binaryPath = (stdout as string).trim();
+    meta.binaryPath = stdout.trim();
   } catch {
     meta.binaryPath = null;
   }

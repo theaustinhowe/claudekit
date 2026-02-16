@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell } from "@devkit/ui";
+import { AppShell } from "@devkit/ui/components/app-shell";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { SessionProvider } from "@/components/sessions/session-context";

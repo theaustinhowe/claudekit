@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { execute, getDb, queryOne } from "@/lib/db";
@@ -465,7 +466,6 @@ export async function generateProject(options: GenerateOptions) {
     if (gitInit) {
       onProgress?.("[INFO] Initializing git repository...");
       try {
-        const { execSync } = require("node:child_process");
         execSync("git init", { cwd: expandedPath, stdio: "ignore" });
         execSync("git add .", { cwd: expandedPath, stdio: "ignore" });
         execSync('git commit -m "Initial commit from Gadget Generator"', {

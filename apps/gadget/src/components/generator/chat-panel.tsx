@@ -13,11 +13,11 @@ import {
   AlertDialogTitle,
 } from "@devkit/ui/components/alert-dialog";
 import { Button } from "@devkit/ui/components/button";
+import { MarkdownRenderer } from "@devkit/ui/components/markdown-renderer";
 import { Textarea } from "@devkit/ui/components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Bot, Clock, Loader2, Send, Square, User } from "lucide-react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { MarkdownRenderer } from "@/components/code/markdown-renderer";
 import type { StreamEntry } from "@/components/generator/streaming-display";
 import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
 import type { DesignMessage } from "@/lib/types";

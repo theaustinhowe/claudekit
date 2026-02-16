@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell } from "@devkit/ui";
+import { AppShell } from "@devkit/ui/components/app-shell";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
 

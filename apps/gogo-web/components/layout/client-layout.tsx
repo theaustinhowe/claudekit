@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell } from "@devkit/ui";
+import { AppShell } from "@devkit/ui/components/app-shell";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";

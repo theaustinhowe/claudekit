@@ -1,4 +1,82 @@
-export * from "./client";
-export * from "./constants";
-export * from "./schemas";
-export * from "./types";
+// Types
+
+// Client
+export type {
+  AgentInfo,
+  AgentStatusResponse,
+  BranchInfo,
+  ChangedFile,
+  CreatePrResponse,
+  DiscoveredRepo,
+  GitHubComment,
+  GitHubCommentUser,
+  GitHubIssue,
+  GitHubLabel,
+  GitHubUser,
+  GoGoClient,
+  GoGoClientConfig,
+  HealthEvent,
+  HealthResponse,
+  KnownAgentInfo,
+  RepositoryInfo,
+  RepositorySettings,
+  ResearchSessionDetail,
+  ResearchSessionInfo,
+  ResearchSuggestionInfo,
+  SetupStatusResponse,
+  VerifyGitHubResponse,
+  VerifyRepositoryResponse,
+  VerifyWorkspaceResponse,
+  WorktreeInfo,
+} from "./client";
+export { createGoGoClient } from "./client";
+// Constants
+export type { JobActionType } from "./constants";
+export { ARCHIVABLE_STATUSES, JOB_STATUS_LABELS, VALID_TRANSITIONS } from "./constants";
+// Schemas
+export {
+  ApiResponseSchema,
+  CreateManualJobSchema,
+  InjectModeSchema,
+  JobActionSchema,
+  JobEventSchema,
+  JobEventTypeSchema,
+  JobLogSchema,
+  JobSchema,
+  JobSourceSchema,
+  JobStatusSchema,
+  LogStreamSchema,
+  PaginatedResponseSchema,
+  RepositorySchema,
+  WsClientMessageSchema,
+  WsClientMessageTypeSchema,
+  WsMessageSchema,
+  WsMessageTypeSchema,
+} from "./schemas";
+export type {
+  AgentProviderType,
+  ApiResponse,
+  InjectMode,
+  Issue,
+  IssueComment,
+  Job,
+  JobEvent,
+  JobEventType,
+  JobLog,
+  JobSource,
+  JobStatus,
+  LogStream,
+  NetworkInfo,
+  PaginatedResponse,
+  Repository,
+  ResearchCategory,
+  ResearchSession,
+  ResearchSessionStatus,
+  ResearchSeverity,
+  ResearchSuggestion,
+  SettingsEntry,
+  WsClientMessage,
+  WsClientMessageType,
+  WsMessage,
+  WsMessageType,
+} from "./types";

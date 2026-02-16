@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@devkit/ui/components/button";
+import { FileViewer as CodeFileViewer } from "@devkit/ui/components/file-viewer";
+import { MarkdownRenderer } from "@devkit/ui/components/markdown-renderer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { AlertCircle, FolderGit2, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -9,9 +11,7 @@ import { CodeChangesView } from "@/components/code/code-changes-view";
 import { CodeCommitLog } from "@/components/code/code-commit-log";
 import { CodeDirectoryListing } from "@/components/code/code-directory-listing";
 import { CodeFileTree } from "@/components/code/code-file-tree";
-import { CodeFileViewer } from "@/components/code/code-file-viewer";
 import { CodeToolbar } from "@/components/code/code-toolbar";
-import { MarkdownRenderer } from "@/components/code/markdown-renderer";
 import {
   getCodeFileContent,
   getCommitLog,
