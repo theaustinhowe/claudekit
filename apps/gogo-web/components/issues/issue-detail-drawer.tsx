@@ -4,7 +4,7 @@ import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import { Separator } from "@devkit/ui/components/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { TooltipProvider } from "@devkit/ui/components/tooltip";
 import { ExternalLink, Loader2, Play, Zap } from "lucide-react";
 import Link from "next/link";
@@ -65,43 +65,45 @@ export function IssueDetailDrawer({
             </div>
           </SheetHeader>
 
-          <ScrollArea className="flex-1 -mx-6 px-6">
-            <div className="space-y-4 py-4">
-              {/* Author info */}
-              {issue.user && <IssueAuthorInfo user={issue.user} createdAt={issue.created_at} />}
+          <SheetBody>
+            <ScrollArea className="flex-1 -mx-6 px-6">
+              <div className="space-y-4 py-4">
+                {/* Author info */}
+                {issue.user && <IssueAuthorInfo user={issue.user} createdAt={issue.created_at} />}
 
-              {/* Labels */}
-              {issue.labels.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {issue.labels.map((label) => (
-                    <Badge
-                      key={label.id}
-                      variant="outline"
-                      style={{
-                        backgroundColor: `#${label.color}20`,
-                        borderColor: `#${label.color}`,
-                        color: `#${label.color}`,
-                      }}
-                      className="text-xs"
-                    >
-                      {label.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+                {/* Labels */}
+                {issue.labels.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {issue.labels.map((label) => (
+                      <Badge
+                        key={label.id}
+                        variant="outline"
+                        style={{
+                          backgroundColor: `#${label.color}20`,
+                          borderColor: `#${label.color}`,
+                          color: `#${label.color}`,
+                        }}
+                        className="text-xs"
+                      >
+                        {label.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
-              {/* Description */}
-              <IssueDescription body={issue.body} />
+                {/* Description */}
+                <IssueDescription body={issue.body} />
 
-              {/* Comments section */}
-              {repositoryId && (
-                <>
-                  <Separator className="my-4" />
-                  <IssueComments repositoryId={repositoryId} issueNumber={issue.number} />
-                </>
-              )}
-            </div>
-          </ScrollArea>
+                {/* Comments section */}
+                {repositoryId && (
+                  <>
+                    <Separator className="my-4" />
+                    <IssueComments repositoryId={repositoryId} issueNumber={issue.number} />
+                  </>
+                )}
+              </div>
+            </ScrollArea>
+          </SheetBody>
 
           {/* Actions footer */}
           <div className="border-t pt-4">

@@ -5,6 +5,7 @@ import { cn } from "@devkit/ui";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -18,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devk
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -28,7 +30,7 @@ import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Progress } from "@devkit/ui/components/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Switch } from "@devkit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
@@ -1384,20 +1386,22 @@ export function RepoDetailClient({
             <SheetTitle>{viewingAIFile?.name}</SheetTitle>
             <SheetDescription className="font-mono text-xs">{viewingAIFile?.path}</SheetDescription>
           </SheetHeader>
-          <div className="mt-4">
-            {viewingFileLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading...
-              </div>
-            ) : viewingFileContent ? (
-              <pre className="text-sm bg-muted p-4 rounded-lg font-mono overflow-auto max-h-[70vh] whitespace-pre-wrap">
-                {viewingFileContent}
-              </pre>
-            ) : (
-              <p className="text-sm text-muted-foreground py-8 text-center">File is empty or could not be read.</p>
-            )}
-          </div>
+          <SheetBody>
+            <div className="mt-4">
+              {viewingFileLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
+                </div>
+              ) : viewingFileContent ? (
+                <pre className="text-sm bg-muted p-4 rounded-lg font-mono overflow-auto max-h-[70vh] whitespace-pre-wrap">
+                  {viewingFileContent}
+                </pre>
+              ) : (
+                <p className="text-sm text-muted-foreground py-8 text-center">File is empty or could not be read.</p>
+              )}
+            </div>
+          </SheetBody>
         </SheetContent>
       </Sheet>
 
@@ -1418,33 +1422,35 @@ export function RepoDetailClient({
             <SheetTitle>Why was this flagged?</SheetTitle>
             <SheetDescription>{selectedFinding?.title}</SheetDescription>
           </SheetHeader>
-          {selectedFinding && (
-            <div className="mt-6 space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-2">Details</h4>
-                <p className="text-sm text-muted-foreground">{selectedFinding.details}</p>
-              </div>
-              {selectedFinding.evidence && (
+          <SheetBody>
+            {selectedFinding && (
+              <div className="mt-6 space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Evidence</h4>
-                  <pre className="text-sm bg-muted p-3 rounded-lg font-mono overflow-x-auto">
-                    {selectedFinding.evidence}
-                  </pre>
+                  <h4 className="text-sm font-medium mb-2">Details</h4>
+                  <p className="text-sm text-muted-foreground">{selectedFinding.details}</p>
                 </div>
-              )}
-              <div>
-                <h4 className="text-sm font-medium mb-2">Suggested Actions</h4>
-                <ul className="space-y-2">
-                  {selectedFinding.suggested_actions.map((action) => (
-                    <li key={action} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-success" />
-                      {action}
-                    </li>
-                  ))}
-                </ul>
+                {selectedFinding.evidence && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Evidence</h4>
+                    <pre className="text-sm bg-muted p-3 rounded-lg font-mono overflow-x-auto">
+                      {selectedFinding.evidence}
+                    </pre>
+                  </div>
+                )}
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Suggested Actions</h4>
+                  <ul className="space-y-2">
+                    {selectedFinding.suggested_actions.map((action) => (
+                      <li key={action} className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-success" />
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </SheetBody>
         </SheetContent>
       </Sheet>
 
@@ -1455,65 +1461,67 @@ export function RepoDetailClient({
             <DialogTitle>Create GitHub Repository</DialogTitle>
             <DialogDescription>Create a new GitHub repository and push your code.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="remote-owner">Account</Label>
-              {remoteAccountsLoading ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading accounts...
-                </div>
-              ) : remoteAccounts.length > 0 ? (
-                <Select value={remoteOwner} onValueChange={setRemoteOwner}>
-                  <SelectTrigger id="remote-owner">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {remoteAccounts.map((account) => (
-                      <SelectItem key={account.login} value={account.login}>
-                        {account.login} {account.type === "org" ? "(org)" : "(personal)"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <p className="text-sm text-muted-foreground">No GitHub accounts found.</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="remote-name">Repository Name</Label>
-              <Input
-                id="remote-name"
-                value={remoteRepoName}
-                onChange={(e) => setRemoteRepoName(e.target.value)}
-                placeholder="my-repo"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="remote-desc">Description (optional)</Label>
-              <Input
-                id="remote-desc"
-                value={remoteDescription}
-                onChange={(e) => setRemoteDescription(e.target.value)}
-                placeholder="A short description"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {remoteIsPrivate ? (
-                  <Lock className="w-4 h-4 text-muted-foreground" />
+          <DialogBody>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="remote-owner">Account</Label>
+                {remoteAccountsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading accounts...
+                  </div>
+                ) : remoteAccounts.length > 0 ? (
+                  <Select value={remoteOwner} onValueChange={setRemoteOwner}>
+                    <SelectTrigger id="remote-owner">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {remoteAccounts.map((account) => (
+                        <SelectItem key={account.login} value={account.login}>
+                          {account.login} {account.type === "org" ? "(org)" : "(personal)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
-                  <Globe className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No GitHub accounts found.</p>
                 )}
-                <Label htmlFor="remote-visibility">{remoteIsPrivate ? "Private" : "Public"}</Label>
               </div>
-              <Switch
-                id="remote-visibility"
-                checked={!remoteIsPrivate}
-                onCheckedChange={(checked) => setRemoteIsPrivate(!checked)}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="remote-name">Repository Name</Label>
+                <Input
+                  id="remote-name"
+                  value={remoteRepoName}
+                  onChange={(e) => setRemoteRepoName(e.target.value)}
+                  placeholder="my-repo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="remote-desc">Description (optional)</Label>
+                <Input
+                  id="remote-desc"
+                  value={remoteDescription}
+                  onChange={(e) => setRemoteDescription(e.target.value)}
+                  placeholder="A short description"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {remoteIsPrivate ? (
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <Globe className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <Label htmlFor="remote-visibility">{remoteIsPrivate ? "Private" : "Public"}</Label>
+                </div>
+                <Switch
+                  id="remote-visibility"
+                  checked={!remoteIsPrivate}
+                  onCheckedChange={(checked) => setRemoteIsPrivate(!checked)}
+                />
+              </div>
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRemoteDialog(false)} disabled={remoteCreating}>
               Cancel
@@ -1552,17 +1560,19 @@ export function RepoDetailClient({
                 : "This will untrack the repository from Gadget. Your files on disk will not be affected."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {repo.local_path && (
-            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={alsoTrash}
-                onChange={(e) => setAlsoTrash(e.target.checked)}
-                className="rounded border-border"
-              />
-              Also move directory to Trash
-            </label>
-          )}
+          <AlertDialogBody>
+            {repo.local_path && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={alsoTrash}
+                  onChange={(e) => setAlsoTrash(e.target.checked)}
+                  className="rounded border-border"
+                />
+                Also move directory to Trash
+              </label>
+            )}
+          </AlertDialogBody>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction

@@ -4,6 +4,7 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -63,64 +64,66 @@ export function GitHubStep({ token, onTokenChange, onContinue, isVerifying, veri
                     Follow these steps to generate a token with the required permissions.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-3 text-sm">
-                    <div className="flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                        1
-                      </span>
-                      <p>
-                        Go to GitHub <span className="font-medium">Settings</span> →{" "}
-                        <span className="font-medium">Developer settings</span> →{" "}
-                        <span className="font-medium">Personal access tokens</span> →{" "}
-                        <span className="font-medium">Tokens (classic)</span>
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                        2
-                      </span>
-                      <p>
-                        Click <span className="font-medium">"Generate new token (classic)"</span>
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                        3
-                      </span>
-                      <p>Set a descriptive name (e.g., "GoGo")</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                        4
-                      </span>
-                      <div>
-                        <p className="mb-2">Select the required scopes:</p>
-                        <ul className="ml-1 space-y-1 text-muted-foreground">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                            <code className="bg-muted px-1.5 py-0.5 rounded text-xs">repo</code>
-                            <span className="text-xs">Full control of private repositories</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                            <code className="bg-muted px-1.5 py-0.5 rounded text-xs">workflow</code>
-                            <span className="text-xs">Update GitHub Action workflows</span>
-                          </li>
-                        </ul>
+                <DialogBody>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                          1
+                        </span>
+                        <p>
+                          Go to GitHub <span className="font-medium">Settings</span> →{" "}
+                          <span className="font-medium">Developer settings</span> →{" "}
+                          <span className="font-medium">Personal access tokens</span> →{" "}
+                          <span className="font-medium">Tokens (classic)</span>
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                          2
+                        </span>
+                        <p>
+                          Click <span className="font-medium">"Generate new token (classic)"</span>
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                          3
+                        </span>
+                        <p>Set a descriptive name (e.g., "GoGo")</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                          4
+                        </span>
+                        <div>
+                          <p className="mb-2">Select the required scopes:</p>
+                          <ul className="ml-1 space-y-1 text-muted-foreground">
+                            <li className="flex items-center gap-2">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                              <code className="bg-muted px-1.5 py-0.5 rounded text-xs">repo</code>
+                              <span className="text-xs">Full control of private repositories</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                              <code className="bg-muted px-1.5 py-0.5 rounded text-xs">workflow</code>
+                              <span className="text-xs">Update GitHub Action workflows</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                          5
+                        </span>
+                        <p>
+                          Click <span className="font-medium">"Generate token"</span> and copy it immediately — you
+                          won't see it again!
+                        </p>
                       </div>
                     </div>
-                    <div className="flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                        5
-                      </span>
-                      <p>
-                        Click <span className="font-medium">"Generate token"</span> and copy it immediately — you won't
-                        see it again!
-                      </p>
-                    </div>
                   </div>
-                </div>
+                </DialogBody>
                 <DialogFooter>
                   <Button asChild>
                     <a

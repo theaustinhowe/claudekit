@@ -5,6 +5,7 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -164,21 +165,23 @@ export function ApiKeysTab({ envKeys: initialEnvKeys, serverKeys }: ApiKeysTabPr
                               <DialogTitle>{help.title}</DialogTitle>
                               <DialogDescription>Follow these steps to create your token</DialogDescription>
                             </DialogHeader>
-                            <ol className="space-y-2 text-sm list-decimal list-inside">
-                              {help.steps.map((step) => (
-                                <li key={step} className="text-muted-foreground leading-relaxed">
-                                  {step}
-                                </li>
-                              ))}
-                            </ol>
-                            <div className="pt-2">
-                              <Button asChild variant="default" className="w-full">
-                                <a href={help.url} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="w-4 h-4 mr-2" />
-                                  {help.urlLabel}
-                                </a>
-                              </Button>
-                            </div>
+                            <DialogBody>
+                              <ol className="space-y-2 text-sm list-decimal list-inside">
+                                {help.steps.map((step) => (
+                                  <li key={step} className="text-muted-foreground leading-relaxed">
+                                    {step}
+                                  </li>
+                                ))}
+                              </ol>
+                              <div className="pt-2">
+                                <Button asChild variant="default" className="w-full">
+                                  <a href={help.url} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    {help.urlLabel}
+                                  </a>
+                                </Button>
+                              </div>
+                            </DialogBody>
                           </DialogContent>
                         </Dialog>
                       )}

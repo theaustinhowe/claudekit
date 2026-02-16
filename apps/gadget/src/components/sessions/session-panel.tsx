@@ -3,7 +3,7 @@
 import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { Progress } from "@devkit/ui/components/progress";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { ExternalLink, Square } from "lucide-react";
 import Link from "next/link";
@@ -142,39 +142,41 @@ export function SessionPanel() {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="overflow-y-auto flex-1">
-          {/* Active sessions */}
-          {activeSessions.length > 0 && (
-            <div>
-              <div className="px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium bg-muted/50">
-                Active
+        <SheetBody>
+          <div className="overflow-y-auto flex-1">
+            {/* Active sessions */}
+            {activeSessions.length > 0 && (
+              <div>
+                <div className="px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium bg-muted/50">
+                  Active
+                </div>
+                {activeSessions.map((s) => (
+                  <SessionRowItem key={s.id} session={s} />
+                ))}
               </div>
-              {activeSessions.map((s) => (
-                <SessionRowItem key={s.id} session={s} />
-              ))}
-            </div>
-          )}
+            )}
 
-          {/* Completed sessions */}
-          {completedSessions.length > 0 && (
-            <div>
-              <div className="px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium bg-muted/50">
-                Recent
+            {/* Completed sessions */}
+            {completedSessions.length > 0 && (
+              <div>
+                <div className="px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium bg-muted/50">
+                  Recent
+                </div>
+                {completedSessions.map((s) => (
+                  <SessionRowItem key={s.id} session={s} />
+                ))}
               </div>
-              {completedSessions.map((s) => (
-                <SessionRowItem key={s.id} session={s} />
-              ))}
-            </div>
-          )}
+            )}
 
-          {/* Empty state */}
-          {sessions.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <span className="text-sm">No active sessions</span>
-              <span className="text-xs mt-1">Sessions will appear here when running</span>
-            </div>
-          )}
-        </div>
+            {/* Empty state */}
+            {sessions.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <span className="text-sm">No active sessions</span>
+                <span className="text-xs mt-1">Sessions will appear here when running</span>
+              </div>
+            )}
+          </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

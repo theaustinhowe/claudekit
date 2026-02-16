@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devk
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -353,59 +354,61 @@ export function RepositoryStep({
             <DialogDescription>Navigate to a directory to scan for repositories</DialogDescription>
           </DialogHeader>
 
-          {/* Current path */}
-          <div className="rounded-md border bg-muted/50 px-3 py-2">
-            <p className="text-sm font-mono truncate" title={browseResolvedPath}>
-              {browseResolvedPath || browsePath}
-            </p>
-          </div>
-
-          {browseError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
-              <div className="flex items-center gap-2 text-destructive">
-                <XCircle className="h-4 w-4 shrink-0" />
-                <span className="text-sm">{browseError}</span>
-              </div>
+          <DialogBody>
+            {/* Current path */}
+            <div className="rounded-md border bg-muted/50 px-3 py-2">
+              <p className="text-sm font-mono truncate" title={browseResolvedPath}>
+                {browseResolvedPath || browsePath}
+              </p>
             </div>
-          )}
 
-          {/* Directory listing */}
-          <div className="max-h-64 overflow-y-auto rounded-lg border">
-            {browseDirectory.isPending ? (
-              <div className="flex items-center justify-center p-6">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <div className="divide-y">
-                {/* Parent directory */}
-                {browseResolvedPath && browseParent !== browseResolvedPath && (
-                  <button
-                    type="button"
-                    onClick={() => navigateTo(browseParent)}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
-                  >
-                    <Folder className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">..</span>
-                  </button>
-                )}
-                {browseDirectories.length === 0 && !browseDirectory.isPending && (
-                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">No subdirectories</div>
-                )}
-                {browseDirectories.map((dir) => (
-                  <button
-                    type="button"
-                    key={dir}
-                    onClick={() => navigateTo(browseResolvedPath ? `${browseResolvedPath}/${dir}` : dir)}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
-                  >
-                    <Folder className="h-4 w-4 text-blue-500" />
-                    <span className="flex-1 truncate">{dir}</span>
-                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  </button>
-                ))}
+            {browseError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                <div className="flex items-center gap-2 text-destructive">
+                  <XCircle className="h-4 w-4 shrink-0" />
+                  <span className="text-sm">{browseError}</span>
+                </div>
               </div>
             )}
-          </div>
+
+            {/* Directory listing */}
+            <div className="max-h-64 overflow-y-auto rounded-lg border">
+              {browseDirectory.isPending ? (
+                <div className="flex items-center justify-center p-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {/* Parent directory */}
+                  {browseResolvedPath && browseParent !== browseResolvedPath && (
+                    <button
+                      type="button"
+                      onClick={() => navigateTo(browseParent)}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                    >
+                      <Folder className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">..</span>
+                    </button>
+                  )}
+                  {browseDirectories.length === 0 && !browseDirectory.isPending && (
+                    <div className="px-3 py-4 text-center text-sm text-muted-foreground">No subdirectories</div>
+                  )}
+                  {browseDirectories.map((dir) => (
+                    <button
+                      type="button"
+                      key={dir}
+                      onClick={() => navigateTo(browseResolvedPath ? `${browseResolvedPath}/${dir}` : dir)}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                    >
+                      <Folder className="h-4 w-4 text-blue-500" />
+                      <span className="flex-1 truncate">{dir}</span>
+                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setBrowseOpen(false)}>

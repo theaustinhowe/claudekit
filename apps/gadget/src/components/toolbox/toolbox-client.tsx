@@ -8,6 +8,7 @@ import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -15,7 +16,7 @@ import {
   DialogTitle,
 } from "@devkit/ui/components/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Skeleton } from "@devkit/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
@@ -326,41 +327,43 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
                   <DialogTitle>Manage Tools</DialogTitle>
                   <DialogDescription>Choose which developer tools to track in your Toolbox.</DialogDescription>
                 </DialogHeader>
-                <div className="max-h-80 overflow-y-auto space-y-4 py-2">
-                  {CATEGORY_ORDER.map((cat) => {
-                    const catTools = DEFAULT_TOOLS.filter((t) => t.category === cat);
-                    if (catTools.length === 0) return null;
-                    return (
-                      <div key={cat}>
-                        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                          {TOOL_CATEGORY_LABELS[cat]}
-                        </p>
-                        <div className="space-y-2">
-                          {catTools.map((tool) => {
-                            const toolChecked = dialogSelection.includes(tool.id);
-                            return (
-                              <div key={tool.id} className="flex items-center gap-3">
-                                <Checkbox
-                                  id={`tool-${tool.id}`}
-                                  checked={toolChecked}
-                                  onCheckedChange={(checked) => {
-                                    setDialogSelection((prev) =>
-                                      checked ? [...prev, tool.id] : prev.filter((id) => id !== tool.id),
-                                    );
-                                  }}
-                                />
-                                <label htmlFor={`tool-${tool.id}`} className="cursor-pointer">
-                                  <span className="text-sm font-medium">{tool.name}</span>
-                                  <span className="text-xs text-muted-foreground ml-2">{tool.description}</span>
-                                </label>
-                              </div>
-                            );
-                          })}
+                <DialogBody>
+                  <div className="max-h-80 overflow-y-auto space-y-4 py-2">
+                    {CATEGORY_ORDER.map((cat) => {
+                      const catTools = DEFAULT_TOOLS.filter((t) => t.category === cat);
+                      if (catTools.length === 0) return null;
+                      return (
+                        <div key={cat}>
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                            {TOOL_CATEGORY_LABELS[cat]}
+                          </p>
+                          <div className="space-y-2">
+                            {catTools.map((tool) => {
+                              const toolChecked = dialogSelection.includes(tool.id);
+                              return (
+                                <div key={tool.id} className="flex items-center gap-3">
+                                  <Checkbox
+                                    id={`tool-${tool.id}`}
+                                    checked={toolChecked}
+                                    onCheckedChange={(checked) => {
+                                      setDialogSelection((prev) =>
+                                        checked ? [...prev, tool.id] : prev.filter((id) => id !== tool.id),
+                                      );
+                                    }}
+                                  />
+                                  <label htmlFor={`tool-${tool.id}`} className="cursor-pointer">
+                                    <span className="text-sm font-medium">{tool.name}</span>
+                                    <span className="text-xs text-muted-foreground ml-2">{tool.description}</span>
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </DialogBody>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setDialogOpen(false)}>
                     Cancel
@@ -397,10 +400,12 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
                     ) : null}
                   </SheetDescription>
                 </SheetHeader>
-                <div className="flex-1 mt-4 bg-zinc-950 rounded-lg p-4 overflow-y-auto font-mono text-xs text-zinc-200 whitespace-pre-wrap">
-                  {cmdOutput.join("")}
-                  <div ref={cmdEndRef} />
-                </div>
+                <SheetBody>
+                  <div className="flex-1 mt-4 bg-zinc-950 rounded-lg p-4 overflow-y-auto font-mono text-xs text-zinc-200 whitespace-pre-wrap">
+                    {cmdOutput.join("")}
+                    <div ref={cmdEndRef} />
+                  </div>
+                </SheetBody>
               </SheetContent>
             </Sheet>
           </div>

@@ -5,7 +5,7 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { Input } from "@devkit/ui/components/input";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   Bot,
@@ -492,115 +492,122 @@ export function PatternsLibraryClient({
               )}
             </SheetDescription>
           </SheetHeader>
-          {viewConcept &&
-            (() => {
-              const repoNames = viewConcept.all_repo_names?.split(", ").filter(Boolean) || [];
-              const repoIds = viewConcept.all_repo_ids?.split(",").filter(Boolean) || [];
-              return repoNames.length > 0 ? (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">Found in</h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {repoNames.map((name, i) => {
-                      const rid = repoIds[i];
-                      const isLib = rid === LIBRARY_REPO_ID || name === "Library";
-                      return isLib ? (
-                        <Badge key={rid || name} variant="secondary" className="text-xs">
-                          {viewConcept.source_name || "Library"}
-                        </Badge>
-                      ) : (
-                        <Link key={rid || name} href={`/repositories/${rid}`}>
-                          <Badge variant="outline" className="text-xs hover:bg-muted cursor-pointer">
-                            {name}
+          <SheetBody>
+            {viewConcept &&
+              (() => {
+                const repoNames = viewConcept.all_repo_names?.split(", ").filter(Boolean) || [];
+                const repoIds = viewConcept.all_repo_ids?.split(",").filter(Boolean) || [];
+                return repoNames.length > 0 ? (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2">Found in</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {repoNames.map((name, i) => {
+                        const rid = repoIds[i];
+                        const isLib = rid === LIBRARY_REPO_ID || name === "Library";
+                        return isLib ? (
+                          <Badge key={rid || name} variant="secondary" className="text-xs">
+                            {viewConcept.source_name || "Library"}
                           </Badge>
-                        </Link>
-                      );
-                    })}
+                        ) : (
+                          <Link key={rid || name} href={`/repositories/${rid}`}>
+                            <Badge variant="outline" className="text-xs hover:bg-muted cursor-pointer">
+                              {name}
+                            </Badge>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ) : null;
-            })()}
-          {viewConcept && (
-            <div className="mt-4 space-y-1.5">
-              <h4 className="text-sm font-medium mb-2">Details</h4>
-              <p className="text-xs text-muted-foreground">
-                Type: {CONCEPT_TYPE_SINGULAR[viewConcept.concept_type] || viewConcept.concept_type}
-              </p>
-              <p className="text-xs text-muted-foreground font-mono break-all">
-                Path: {(() => {
-                  const ghUrl = getGitHubFileUrl(viewConcept.metadata, viewConcept.relative_path);
-                  return ghUrl ? (
-                    <a href={ghUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                      {viewConcept.relative_path}
-                    </a>
-                  ) : (
-                    viewConcept.relative_path
-                  );
-                })()}
-              </p>
-              {Boolean(viewConcept.metadata.last_modified) && (
+                ) : null;
+              })()}
+            {viewConcept && (
+              <div className="mt-4 space-y-1.5">
+                <h4 className="text-sm font-medium mb-2">Details</h4>
                 <p className="text-xs text-muted-foreground">
-                  Last modified:{" "}
-                  {new Date(viewConcept.metadata.last_modified as string).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}{" "}
-                  ({timeAgo(viewConcept.metadata.last_modified as string)})
+                  Type: {CONCEPT_TYPE_SINGULAR[viewConcept.concept_type] || viewConcept.concept_type}
                 </p>
-              )}
-              {getAuthorName(viewConcept.metadata.author) && (
-                <p className="text-xs text-muted-foreground">Author: {getAuthorName(viewConcept.metadata.author)}</p>
-              )}
-              {Boolean(viewConcept.metadata.plugin) && (
-                <p className="text-xs text-muted-foreground">
-                  Plugin: {formatNamePart(viewConcept.metadata.plugin as string)}
-                </p>
-              )}
-              {typeof viewConcept.metadata.repo_stars === "number" && (
-                <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                  <Star className="w-3 h-3" /> {(() => {
-                    const repoUrl = getGitHubRepoUrl(viewConcept.metadata);
-                    return repoUrl ? (
+                <p className="text-xs text-muted-foreground font-mono break-all">
+                  Path: {(() => {
+                    const ghUrl = getGitHubFileUrl(viewConcept.metadata, viewConcept.relative_path);
+                    return ghUrl ? (
                       <a
-                        href={repoUrl}
+                        href={ghUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:underline"
                       >
-                        {viewConcept.metadata.repo_stars.toLocaleString()} stars
+                        {viewConcept.relative_path}
                       </a>
                     ) : (
-                      <>{viewConcept.metadata.repo_stars.toLocaleString()} stars</>
+                      viewConcept.relative_path
                     );
                   })()}
                 </p>
-              )}
-              {Array.isArray(viewConcept.metadata.repo_topics) &&
-                (viewConcept.metadata.repo_topics as string[]).length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {(viewConcept.metadata.repo_topics as string[]).map((topic) => (
-                      <Badge key={topic} variant="secondary" className="text-[10px] h-4 px-1.5">
-                        {topic}
-                      </Badge>
-                    ))}
-                  </div>
+                {Boolean(viewConcept.metadata.last_modified) && (
+                  <p className="text-xs text-muted-foreground">
+                    Last modified:{" "}
+                    {new Date(viewConcept.metadata.last_modified as string).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}{" "}
+                    ({timeAgo(viewConcept.metadata.last_modified as string)})
+                  </p>
                 )}
-            </div>
-          )}
-          {viewConcept?.content && (
-            <Collapsible className="mt-4">
-              <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors group w-full">
-                <ChevronRight className="w-4 h-4 transition-transform group-data-[open]:rotate-90" />
-                <Code2 className="w-4 h-4 text-muted-foreground" />
-                File Contents
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <pre className="text-sm bg-muted p-4 rounded-lg font-mono overflow-auto max-h-[60vh] whitespace-pre-wrap mt-2">
-                  {viewConcept.content}
-                </pre>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
+                {getAuthorName(viewConcept.metadata.author) && (
+                  <p className="text-xs text-muted-foreground">Author: {getAuthorName(viewConcept.metadata.author)}</p>
+                )}
+                {Boolean(viewConcept.metadata.plugin) && (
+                  <p className="text-xs text-muted-foreground">
+                    Plugin: {formatNamePart(viewConcept.metadata.plugin as string)}
+                  </p>
+                )}
+                {typeof viewConcept.metadata.repo_stars === "number" && (
+                  <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                    <Star className="w-3 h-3" /> {(() => {
+                      const repoUrl = getGitHubRepoUrl(viewConcept.metadata);
+                      return repoUrl ? (
+                        <a
+                          href={repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {viewConcept.metadata.repo_stars.toLocaleString()} stars
+                        </a>
+                      ) : (
+                        <>{viewConcept.metadata.repo_stars.toLocaleString()} stars</>
+                      );
+                    })()}
+                  </p>
+                )}
+                {Array.isArray(viewConcept.metadata.repo_topics) &&
+                  (viewConcept.metadata.repo_topics as string[]).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {(viewConcept.metadata.repo_topics as string[]).map((topic) => (
+                        <Badge key={topic} variant="secondary" className="text-[10px] h-4 px-1.5">
+                          {topic}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+              </div>
+            )}
+            {viewConcept?.content && (
+              <Collapsible className="mt-4">
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors group w-full">
+                  <ChevronRight className="w-4 h-4 transition-transform group-data-[open]:rotate-90" />
+                  <Code2 className="w-4 h-4 text-muted-foreground" />
+                  File Contents
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <pre className="text-sm bg-muted p-4 rounded-lg font-mono overflow-auto max-h-[60vh] whitespace-pre-wrap mt-2">
+                    {viewConcept.content}
+                  </pre>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </SheetBody>
         </SheetContent>
       </Sheet>
 

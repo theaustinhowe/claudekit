@@ -3,7 +3,7 @@
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   ArrowRight,
@@ -379,13 +379,15 @@ export function RepoIntegrationsContent({ repoId, concepts, linkedConcepts, repo
                 {viewConcept?.relative_path}
               </SheetDescription>
             </SheetHeader>
-            {viewConcept?.content && (
-              <div className="mt-4">
-                <pre className="text-sm bg-muted p-4 rounded-lg font-mono overflow-auto max-h-[60vh] whitespace-pre-wrap">
-                  {viewConcept.content}
-                </pre>
-              </div>
-            )}
+            <SheetBody>
+              {viewConcept?.content && (
+                <div className="mt-4">
+                  <pre className="text-sm bg-muted p-4 rounded-lg font-mono overflow-auto max-h-[60vh] whitespace-pre-wrap">
+                    {viewConcept.content}
+                  </pre>
+                </div>
+              )}
+            </SheetBody>
           </SheetContent>
         </Sheet>
 

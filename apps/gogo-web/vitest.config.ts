@@ -12,17 +12,17 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    setupFiles: ["./__tests__/setup.ts"],
-    include: ["__tests__/**/*.test.{ts,tsx}"],
+    setupFiles: ["./test-setup.ts"],
+    include: ["**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",
       include: ["lib/**/*.ts", "hooks/**/*.ts", "components/**/*.tsx", "contexts/**/*.tsx"],
       exclude: ["**/*.test.ts", "**/*.test.tsx", "**/*.d.ts"],
       thresholds: {
-        statements: 15,
-        branches: 5,
-        functions: 15,
-        lines: 15,
+        statements: 38,
+        branches: 30,
+        functions: 33,
+        lines: 38,
       },
     },
   },

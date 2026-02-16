@@ -12,7 +12,7 @@ import {
 } from "@devkit/ui/components/alert-dialog";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Textarea } from "@devkit/ui/components/textarea";
@@ -151,34 +151,36 @@ export function TemplatesTab({ templates, onUseTemplate, createTrigger = 0 }: Te
           <DialogHeader>
             <DialogTitle>Create Template</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Name *</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. React SPA"
-                className="mt-1"
-              />
+          <DialogBody>
+            <div className="space-y-4">
+              <div>
+                <Label>Name *</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. React SPA"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe what this template is for"
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreate} disabled={isSubmitting || !name.trim()}>
+                  {isSubmitting ? "Creating..." : "Create"}
+                </Button>
+              </div>
             </div>
-            <div>
-              <Label>Description</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what this template is for"
-                className="mt-1"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreate} disabled={isSubmitting || !name.trim()}>
-                {isSubmitting ? "Creating..." : "Create"}
-              </Button>
-            </div>
-          </div>
+          </DialogBody>
         </DialogContent>
       </Dialog>
 

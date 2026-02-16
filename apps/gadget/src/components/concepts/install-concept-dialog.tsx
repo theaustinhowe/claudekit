@@ -5,6 +5,7 @@ import { Button } from "@devkit/ui/components/button";
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -91,57 +92,59 @@ export function InstallConceptDialog({ concept, repos, open, onOpenChange, onIns
           <DialogDescription>Link &quot;{concept.name}&quot; to another repository</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Concept preview */}
-          <div className="p-3 rounded-lg border bg-muted/30">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-medium text-sm">{concept.name}</span>
-              <Badge variant="outline" className="text-[10px]">
-                {CONCEPT_TYPE_SINGULAR[concept.concept_type] || concept.concept_type}
-              </Badge>
+        <DialogBody>
+          <div className="space-y-4">
+            {/* Concept preview */}
+            <div className="p-3 rounded-lg border bg-muted/30">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-medium text-sm">{concept.name}</span>
+                <Badge variant="outline" className="text-[10px]">
+                  {CONCEPT_TYPE_SINGULAR[concept.concept_type] || concept.concept_type}
+                </Badge>
+              </div>
+              {concept.description && <p className="text-xs text-muted-foreground">{concept.description}</p>}
             </div>
-            {concept.description && <p className="text-xs text-muted-foreground">{concept.description}</p>}
-          </div>
 
-          {/* Target repo selector */}
-          <div className="space-y-2">
-            <span className="text-sm font-medium">Target Repository</span>
-            <Select value={targetRepoId} onValueChange={setTargetRepoId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a repository..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableRepos.map((repo) => (
-                  <SelectItem key={repo.id} value={repo.id}>
-                    {repo.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Sync to disk checkbox */}
-          <div className="flex items-center gap-2">
-            <Checkbox id="sync-to-disk" checked={syncToDisk} onCheckedChange={(v) => setSyncToDisk(v === true)} />
-            <label htmlFor="sync-to-disk" className="text-sm cursor-pointer">
-              Also sync files to disk
-            </label>
-          </div>
-
-          {/* Target path preview */}
-          {targetRepoId && syncToDisk && (
-            <div className="text-xs text-muted-foreground">
-              <span className="font-medium">Will {isMerge ? "merge into" : "create"}:</span>{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">{getTargetPath(concept)}</code>
+            {/* Target repo selector */}
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Target Repository</span>
+              <Select value={targetRepoId} onValueChange={setTargetRepoId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a repository..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRepos.map((repo) => (
+                    <SelectItem key={repo.id} value={repo.id}>
+                      {repo.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
 
-          {isMerge && syncToDisk && (
-            <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-              This will merge into the existing settings file. Existing entries will not be overwritten.
-            </p>
-          )}
-        </div>
+            {/* Sync to disk checkbox */}
+            <div className="flex items-center gap-2">
+              <Checkbox id="sync-to-disk" checked={syncToDisk} onCheckedChange={(v) => setSyncToDisk(v === true)} />
+              <label htmlFor="sync-to-disk" className="text-sm cursor-pointer">
+                Also sync files to disk
+              </label>
+            </div>
+
+            {/* Target path preview */}
+            {targetRepoId && syncToDisk && (
+              <div className="text-xs text-muted-foreground">
+                <span className="font-medium">Will {isMerge ? "merge into" : "create"}:</span>{" "}
+                <code className="bg-muted px-1 py-0.5 rounded">{getTargetPath(concept)}</code>
+              </div>
+            )}
+
+            {isMerge && syncToDisk && (
+              <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                This will merge into the existing settings file. Existing entries will not be overwritten.
+              </p>
+            )}
+          </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

@@ -13,7 +13,14 @@ import {
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@devkit/ui/components/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   AlertTriangle,
@@ -425,14 +432,16 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
             <DialogTitle>Edit Policy</DialogTitle>
             <DialogDescription>Configure audit rules and generator defaults</DialogDescription>
           </DialogHeader>
-          {selectedPolicy && (
-            <PolicyForm
-              initialData={selectedPolicy}
-              onSubmit={handleEditSubmit}
-              onCancel={() => setEditDialogOpen(false)}
-              isSubmitting={isSubmitting}
-            />
-          )}
+          <DialogBody>
+            {selectedPolicy && (
+              <PolicyForm
+                initialData={selectedPolicy}
+                onSubmit={handleEditSubmit}
+                onCancel={() => setEditDialogOpen(false)}
+                isSubmitting={isSubmitting}
+              />
+            )}
+          </DialogBody>
         </DialogContent>
       </Dialog>
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -441,13 +450,15 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
             <DialogTitle>Create Policy</DialogTitle>
             <DialogDescription>Define a new set of audit rules</DialogDescription>
           </DialogHeader>
-          <PolicyForm
-            key={createDefaults?.name ?? "empty"}
-            initialData={createDefaults as Policy | undefined}
-            onSubmit={handleCreateSubmit}
-            onCancel={() => setCreateDialogOpen(false)}
-            isSubmitting={isSubmitting}
-          />
+          <DialogBody>
+            <PolicyForm
+              key={createDefaults?.name ?? "empty"}
+              initialData={createDefaults as Policy | undefined}
+              onSubmit={handleCreateSubmit}
+              onCancel={() => setCreateDialogOpen(false)}
+              isSubmitting={isSubmitting}
+            />
+          </DialogBody>
         </DialogContent>
       </Dialog>
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

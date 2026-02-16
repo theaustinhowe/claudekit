@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import { useMemo } from "react";
 import { parseStreamLog, type StreamEntry, StreamingDisplay } from "@/components/generator/streaming-display";
 
@@ -25,11 +25,13 @@ export function ScaffoldLogDialog({ open, onOpenChange, logs }: ScaffoldLogDialo
         <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
           <DialogTitle>Scaffold Log</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <div className="bg-zinc-950 rounded-lg border border-zinc-800 p-3 font-mono text-sm">
-            <StreamingDisplay entries={entries} variant="terminal" />
+        <DialogBody>
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="bg-zinc-950 rounded-lg border border-zinc-800 p-3 font-mono text-sm">
+              <StreamingDisplay entries={entries} variant="terminal" />
+            </div>
           </div>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

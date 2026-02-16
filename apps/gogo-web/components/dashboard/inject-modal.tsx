@@ -3,6 +3,7 @@
 import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -86,85 +87,89 @@ export function InjectModal({ jobId, disabled, variant = "default" }: InjectModa
               Send a message to the agent. This will be added to its context and can influence its behavior.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Delivery Mode</Label>
+          <DialogBody>
+            <div className="space-y-4 py-4">
               <div className="space-y-2">
-                {/* Immediate option */}
-                <button
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                    mode === "immediate"
-                      ? "border-primary bg-primary/5"
-                      : "border-muted hover:border-muted-foreground/50"
-                  }`}
-                  onClick={() => setMode("immediate")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      setMode("immediate");
-                    }
-                  }}
-                  type="button"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-2">
-                    <Zap className={`h-4 w-4 ${mode === "immediate" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="font-medium">Immediate</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 ml-6">
-                    Pauses the agent, injects your message, and resumes immediately. The agent will see your message in
-                    its next turn.
-                  </p>
-                </button>
+                <Label>Delivery Mode</Label>
+                <div className="space-y-2">
+                  {/* Immediate option */}
+                  <button
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                      mode === "immediate"
+                        ? "border-primary bg-primary/5"
+                        : "border-muted hover:border-muted-foreground/50"
+                    }`}
+                    onClick={() => setMode("immediate")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setMode("immediate");
+                      }
+                    }}
+                    type="button"
+                    tabIndex={0}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Zap className={`h-4 w-4 ${mode === "immediate" ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className="font-medium">Immediate</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 ml-6">
+                      Pauses the agent, injects your message, and resumes immediately. The agent will see your message
+                      in its next turn.
+                    </p>
+                  </button>
 
-                {/* Queued option */}
-                <button
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                    mode === "queued" ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/50"
-                  }`}
-                  onClick={() => setMode("queued")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      setMode("queued");
-                    }
-                  }}
-                  type="button"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-2">
-                    <Clock className={`h-4 w-4 ${mode === "queued" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="font-medium">Queued</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 ml-6">
-                    Stores the message for delivery at the agent's next natural stopping point. The agent continues
-                    working until it finishes its current task.
-                  </p>
-                </button>
+                  {/* Queued option */}
+                  <button
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                      mode === "queued"
+                        ? "border-primary bg-primary/5"
+                        : "border-muted hover:border-muted-foreground/50"
+                    }`}
+                    onClick={() => setMode("queued")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setMode("queued");
+                      }
+                    }}
+                    type="button"
+                    tabIndex={0}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock className={`h-4 w-4 ${mode === "queued" ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className="font-medium">Queued</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 ml-6">
+                      Stores the message for delivery at the agent's next natural stopping point. The agent continues
+                      working until it finishes its current task.
+                    </p>
+                  </button>
+                </div>
+
+                {/* Usage tips */}
+                <div className="text-xs text-muted-foreground mt-3 p-2 bg-muted rounded-md">
+                  <p className="font-medium mb-1">When to use:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li>
+                      <strong>Immediate:</strong> Urgent corrections, stop wrong actions
+                    </li>
+                    <li>
+                      <strong>Queued:</strong> Additional context, non-urgent guidance
+                    </li>
+                  </ul>
+                </div>
               </div>
-
-              {/* Usage tips */}
-              <div className="text-xs text-muted-foreground mt-3 p-2 bg-muted rounded-md">
-                <p className="font-medium mb-1">When to use:</p>
-                <ul className="list-disc list-inside space-y-0.5">
-                  <li>
-                    <strong>Immediate:</strong> Urgent corrections, stop wrong actions
-                  </li>
-                  <li>
-                    <strong>Queued:</strong> Additional context, non-urgent guidance
-                  </li>
-                </ul>
+              <div className="space-y-2">
+                <Label>Message</Label>
+                <Textarea
+                  placeholder="Enter your message to the agent..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Message</Label>
-              <Textarea
-                placeholder="Enter your message to the agent..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
-            </div>
-          </div>
+          </DialogBody>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel

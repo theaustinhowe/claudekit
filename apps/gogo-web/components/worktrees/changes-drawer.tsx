@@ -3,7 +3,7 @@
 import { Button } from "@devkit/ui/components/button";
 import { DiffViewer } from "@devkit/ui/components/diff-viewer";
 import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { FileCode, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -122,55 +122,57 @@ export function ChangesDrawer({ jobId, worktreePath, title, open, onOpenChange }
           <p className="text-xs text-muted-foreground">Comparing to {baseBranch}</p>
         </SheetHeader>
 
-        <div className="flex h-[calc(100vh-100px)]">
-          {/* File browser on the left */}
-          <div className="w-72 shrink-0 border-r">
-            <div className="border-b px-4 py-2">
-              <h3 className="text-sm font-medium">Changed Files ({files.length})</h3>
-            </div>
-            {filesLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <SheetBody>
+          <div className="flex h-[calc(100vh-100px)]">
+            {/* File browser on the left */}
+            <div className="w-72 shrink-0 border-r">
+              <div className="border-b px-4 py-2">
+                <h3 className="text-sm font-medium">Changed Files ({files.length})</h3>
               </div>
-            ) : filesError ? (
-              <div className="p-4 text-sm text-red-500">{filesError}</div>
-            ) : (
-              <ScrollArea className="h-[calc(100%-40px)]">
-                <FileBrowser files={files} selectedPath={selectedFile} onSelectFile={setSelectedFile} />
-              </ScrollArea>
-            )}
-          </div>
-
-          {/* Diff viewer */}
-          <div className="flex-1 overflow-hidden">
-            {selectedFile && (
-              <div className="border-b bg-muted/30 px-4 py-2">
-                <code className="text-sm">{selectedFile}</code>
-              </div>
-            )}
-            <ScrollArea className="h-[calc(100%-40px)]">
-              {diffLoading ? (
+              {filesLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : diffError ? (
-                <div className="p-4 text-sm text-red-500">{diffError}</div>
-              ) : selectedFile ? (
-                <DiffViewer patch={diff} />
-              ) : !filesLoading && files.length === 0 && !filesError ? (
-                <div className="flex flex-col items-center justify-center p-8 text-muted-foreground text-center">
-                  <FileCode className="h-8 w-8 mb-2 opacity-50" />
-                  <p className="font-medium">No changes detected</p>
-                  <p className="text-sm mt-1">This workspace has no file changes compared to {baseBranch}.</p>
-                </div>
+              ) : filesError ? (
+                <div className="p-4 text-sm text-red-500">{filesError}</div>
               ) : (
-                <div className="flex items-center justify-center p-8 text-muted-foreground">
-                  Select a file to view changes
+                <ScrollArea className="h-[calc(100%-40px)]">
+                  <FileBrowser files={files} selectedPath={selectedFile} onSelectFile={setSelectedFile} />
+                </ScrollArea>
+              )}
+            </div>
+
+            {/* Diff viewer */}
+            <div className="flex-1 overflow-hidden">
+              {selectedFile && (
+                <div className="border-b bg-muted/30 px-4 py-2">
+                  <code className="text-sm">{selectedFile}</code>
                 </div>
               )}
-            </ScrollArea>
+              <ScrollArea className="h-[calc(100%-40px)]">
+                {diffLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : diffError ? (
+                  <div className="p-4 text-sm text-red-500">{diffError}</div>
+                ) : selectedFile ? (
+                  <DiffViewer patch={diff} />
+                ) : !filesLoading && files.length === 0 && !filesError ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-muted-foreground text-center">
+                    <FileCode className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="font-medium">No changes detected</p>
+                    <p className="text-sm mt-1">This workspace has no file changes compared to {baseBranch}.</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    Select a file to view changes
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
           </div>
-        </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

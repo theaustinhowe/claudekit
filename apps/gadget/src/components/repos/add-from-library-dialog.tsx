@@ -3,7 +3,14 @@
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@devkit/ui/components/dialog";
 import { Input } from "@devkit/ui/components/input";
 import { Tabs, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
@@ -185,146 +192,149 @@ export function AddFromLibraryDialog({
           <DialogDescription>Link integrations from other repos into this project.</DialogDescription>
         </DialogHeader>
 
-        <Tabs value={typeFilter} onValueChange={setTypeFilter} className="flex-1 min-h-0 flex flex-col">
-          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <TabsList className="justify-start overflow-x-auto flex-nowrap">
-              {TYPE_TABS.map((tab) => {
-                const count = tab === "all" ? concepts.length : typeCounts[tab] || 0;
-                return (
-                  <TabsTrigger key={tab} value={tab} className="text-xs" disabled={count === 0 && tab !== "all"}>
-                    {tab === "all" ? "All" : CONCEPT_TYPE_LABELS[tab] || tab}
-                    {count > 0 && (
-                      <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">
-                        {count}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-            <div className="relative sm:ml-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search integrations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-full sm:w-56"
-              />
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto mt-4">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No available integrations found.</p>
-              </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 gap-3">
-                {filtered.map((concept) => {
-                  const Icon = CONCEPT_ICONS[concept.concept_type] || Puzzle;
-                  const isLibrary = concept.repo_id === LIBRARY_REPO_ID;
+        <DialogBody>
+          <Tabs value={typeFilter} onValueChange={setTypeFilter} className="flex-1 min-h-0 flex flex-col">
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+              <TabsList className="justify-start overflow-x-auto flex-nowrap">
+                {TYPE_TABS.map((tab) => {
+                  const count = tab === "all" ? concepts.length : typeCounts[tab] || 0;
                   return (
-                    <Card key={concept.id} className="hover:border-primary/30 transition-colors">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <TooltipProvider delayDuration={300}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                                  <Icon className="w-4 h-4 text-muted-foreground" />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="left">
-                                {CONCEPT_TYPE_SINGULAR[concept.concept_type] || concept.concept_type}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <div className="flex-1 min-w-0">
-                            <span className="font-semibold text-sm truncate block mb-0.5">
-                              {formatConceptName(concept.name)}
-                            </span>
-                            <div className="flex items-center gap-1 mb-1 flex-wrap">
-                              {(() => {
-                                const repoNames = concept.all_repo_names?.split(", ").filter(Boolean) || [];
-                                const repoIds = concept.all_repo_ids?.split(",").filter(Boolean) || [];
-                                if (repoNames.length > 0) {
-                                  return repoNames.map((name, i) => {
-                                    const rid = repoIds[i];
-                                    const isLib = rid === LIBRARY_REPO_ID || name === "Library";
-                                    return (
-                                      <Badge key={rid || name} variant="secondary" className="text-[10px] h-4 px-1.5">
-                                        {isLib ? concept.source_name || "Library" : name}
-                                      </Badge>
-                                    );
-                                  });
-                                }
-                                return (
-                                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                                    {isLibrary ? concept.source_name || "Library" : concept.repo_name}
-                                  </Badge>
-                                );
-                              })()}
-                            </div>
-                            {concept.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">{concept.description}</p>
-                            )}
-                            {Boolean(concept.metadata?.last_modified || concept.metadata?.repo_stars) && (
-                              <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-                                {Boolean(concept.metadata.last_modified) && (
-                                  <span>Updated {timeAgo(concept.metadata.last_modified as string)}</span>
-                                )}
-                                {Boolean(concept.metadata.last_modified && getAuthorName(concept.metadata.author)) && (
-                                  <span>·</span>
-                                )}
-                                {getAuthorName(concept.metadata.author) && (
-                                  <span>by {getAuthorName(concept.metadata.author)}</span>
-                                )}
-                                {typeof concept.metadata.repo_stars === "number" && concept.metadata.repo_stars > 0 && (
-                                  <>
-                                    {Boolean(
-                                      concept.metadata.last_modified || getAuthorName(concept.metadata.author),
-                                    ) && <span>·</span>}
-                                    <span className="inline-flex items-center gap-0.5">
-                                      <Star className="w-3 h-3" />
-                                      {formatStars(concept.metadata.repo_stars)}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2 mt-3 justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0"
-                            disabled={installing === concept.id}
-                            onClick={() => handleInstall(concept.id)}
-                          >
-                            {installing === concept.id ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <>
-                                <Link2 className="w-3.5 h-3.5 mr-1" />
-                                Link
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <TabsTrigger key={tab} value={tab} className="text-xs" disabled={count === 0 && tab !== "all"}>
+                      {tab === "all" ? "All" : CONCEPT_TYPE_LABELS[tab] || tab}
+                      {count > 0 && (
+                        <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">
+                          {count}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
                   );
                 })}
+              </TabsList>
+              <div className="relative sm:ml-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search integrations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-full sm:w-56"
+                />
               </div>
-            )}
-          </div>
-        </Tabs>
+            </div>
+
+            <div className="flex-1 overflow-y-auto mt-4">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No available integrations found.</p>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {filtered.map((concept) => {
+                    const Icon = CONCEPT_ICONS[concept.concept_type] || Puzzle;
+                    const isLibrary = concept.repo_id === LIBRARY_REPO_ID;
+                    return (
+                      <Card key={concept.id} className="hover:border-primary/30 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <TooltipProvider delayDuration={300}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                    <Icon className="w-4 h-4 text-muted-foreground" />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                  {CONCEPT_TYPE_SINGULAR[concept.concept_type] || concept.concept_type}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <div className="flex-1 min-w-0">
+                              <span className="font-semibold text-sm truncate block mb-0.5">
+                                {formatConceptName(concept.name)}
+                              </span>
+                              <div className="flex items-center gap-1 mb-1 flex-wrap">
+                                {(() => {
+                                  const repoNames = concept.all_repo_names?.split(", ").filter(Boolean) || [];
+                                  const repoIds = concept.all_repo_ids?.split(",").filter(Boolean) || [];
+                                  if (repoNames.length > 0) {
+                                    return repoNames.map((name, i) => {
+                                      const rid = repoIds[i];
+                                      const isLib = rid === LIBRARY_REPO_ID || name === "Library";
+                                      return (
+                                        <Badge key={rid || name} variant="secondary" className="text-[10px] h-4 px-1.5">
+                                          {isLib ? concept.source_name || "Library" : name}
+                                        </Badge>
+                                      );
+                                    });
+                                  }
+                                  return (
+                                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                                      {isLibrary ? concept.source_name || "Library" : concept.repo_name}
+                                    </Badge>
+                                  );
+                                })()}
+                              </div>
+                              {concept.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">{concept.description}</p>
+                              )}
+                              {Boolean(concept.metadata?.last_modified || concept.metadata?.repo_stars) && (
+                                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
+                                  {Boolean(concept.metadata.last_modified) && (
+                                    <span>Updated {timeAgo(concept.metadata.last_modified as string)}</span>
+                                  )}
+                                  {Boolean(
+                                    concept.metadata.last_modified && getAuthorName(concept.metadata.author),
+                                  ) && <span>·</span>}
+                                  {getAuthorName(concept.metadata.author) && (
+                                    <span>by {getAuthorName(concept.metadata.author)}</span>
+                                  )}
+                                  {typeof concept.metadata.repo_stars === "number" &&
+                                    concept.metadata.repo_stars > 0 && (
+                                      <>
+                                        {Boolean(
+                                          concept.metadata.last_modified || getAuthorName(concept.metadata.author),
+                                        ) && <span>·</span>}
+                                        <span className="inline-flex items-center gap-0.5">
+                                          <Star className="w-3 h-3" />
+                                          {formatStars(concept.metadata.repo_stars)}
+                                        </span>
+                                      </>
+                                    )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="shrink-0"
+                              disabled={installing === concept.id}
+                              onClick={() => handleInstall(concept.id)}
+                            >
+                              {installing === concept.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <Link2 className="w-3.5 h-3.5 mr-1" />
+                                  Link
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </Tabs>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

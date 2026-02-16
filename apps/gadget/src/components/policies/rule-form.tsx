@@ -2,7 +2,7 @@
 
 import { Button } from "@devkit/ui/components/button";
 import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
@@ -125,265 +125,267 @@ export function RuleForm({ open, onOpenChange, initialData, policies, onSubmit, 
         <DialogHeader>
           <DialogTitle>{initialData ? "Edit Rule" : "New Rule"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-5">
-          {/* Basic info */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <Label>Name *</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Require LICENSE file"
-                className="mt-1"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Description</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What does this rule check?"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label>Severity</Label>
-              <Select value={severity} onValueChange={(v) => setSeverity(v as Severity)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEVERITIES.map((s) => (
-                    <SelectItem key={s} value={s} className="capitalize">
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Category</Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as FindingCategory)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c} className="capitalize">
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Rule Type */}
-          <div>
-            <Label>Rule Type *</Label>
-            <Select value={ruleType} onValueChange={(v) => setRuleType(v as CustomRuleType)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RULE_TYPES.map((rt) => (
-                  <SelectItem key={rt.value} value={rt.value}>
-                    {rt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              {RULE_TYPES.find((rt) => rt.value === ruleType)?.description}
-            </p>
-          </div>
-
-          {/* Config — changes per rule_type */}
-          <div className="p-4 rounded-lg border bg-muted/30">
-            <Label className="mb-3 block text-sm font-medium">Configuration</Label>
-
-            {ruleType === "file_exists" && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground mb-2">
-                  Add paths to check. Finding is created if NONE of them exist.
-                </p>
-                {filePaths.map((p, i) => (
-                  <div key={`filepath-${p || i}`} className="flex gap-2">
-                    <Input
-                      value={p}
-                      onChange={(e) => {
-                        const next = [...filePaths];
-                        next[i] = e.target.value;
-                        setFilePaths(next);
-                      }}
-                      placeholder="e.g. LICENSE or LICENSE.md"
-                      className="flex-1"
-                    />
-                    {filePaths.length > 1 && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setFilePaths(filePaths.filter((_, j) => j !== i))}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Remove</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={() => setFilePaths([...filePaths, ""])}>
-                  <Plus className="w-4 h-4 mr-1" /> Add Path
-                </Button>
+        <DialogBody>
+          <div className="space-y-5">
+            {/* Basic info */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label>Name *</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Require LICENSE file"
+                  className="mt-1"
+                />
               </div>
-            )}
-
-            {ruleType === "file_missing" && (
+              <div className="sm:col-span-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What does this rule check?"
+                  className="mt-1"
+                />
+              </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Finding is created if the file IS present.</p>
-                <Input
-                  value={singlePath}
-                  onChange={(e) => setSinglePath(e.target.value)}
-                  placeholder="e.g. .env.local"
-                />
+                <Label>Severity</Label>
+                <Select value={severity} onValueChange={(v) => setSeverity(v as Severity)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SEVERITIES.map((s) => (
+                      <SelectItem key={s} value={s} className="capitalize">
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
-
-            {ruleType === "file_contains" && (
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs">File Path</Label>
-                  <Input
-                    value={containsFile}
-                    onChange={(e) => setContainsFile(e.target.value)}
-                    placeholder="e.g. package.json"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Regex Pattern</Label>
-                  <Input
-                    value={containsPattern}
-                    onChange={(e) => setContainsPattern(e.target.value)}
-                    placeholder='e.g. "type":\\s*"module"'
-                    className="mt-1 font-mono"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={containsNegate} onCheckedChange={(v) => setContainsNegate(v === true)} />
-                  <Label className="text-sm">Negate — flag if pattern IS found (instead of missing)</Label>
-                </div>
+              <div>
+                <Label>Category</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v as FindingCategory)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c} className="capitalize">
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
+            </div>
 
-            {ruleType === "json_field" && (
-              <div className="space-y-3">
+            {/* Rule Type */}
+            <div>
+              <Label>Rule Type *</Label>
+              <Select value={ruleType} onValueChange={(v) => setRuleType(v as CustomRuleType)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RULE_TYPES.map((rt) => (
+                    <SelectItem key={rt.value} value={rt.value}>
+                      {rt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {RULE_TYPES.find((rt) => rt.value === ruleType)?.description}
+              </p>
+            </div>
+
+            {/* Config — changes per rule_type */}
+            <div className="p-4 rounded-lg border bg-muted/30">
+              <Label className="mb-3 block text-sm font-medium">Configuration</Label>
+
+              {ruleType === "file_exists" && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Add paths to check. Finding is created if NONE of them exist.
+                  </p>
+                  {filePaths.map((p, i) => (
+                    <div key={`filepath-${p || i}`} className="flex gap-2">
+                      <Input
+                        value={p}
+                        onChange={(e) => {
+                          const next = [...filePaths];
+                          next[i] = e.target.value;
+                          setFilePaths(next);
+                        }}
+                        placeholder="e.g. LICENSE or LICENSE.md"
+                        className="flex-1"
+                      />
+                      {filePaths.length > 1 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setFilePaths(filePaths.filter((_, j) => j !== i))}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setFilePaths([...filePaths, ""])}>
+                    <Plus className="w-4 h-4 mr-1" /> Add Path
+                  </Button>
+                </div>
+              )}
+
+              {ruleType === "file_missing" && (
                 <div>
-                  <Label className="text-xs">JSON File</Label>
+                  <p className="text-xs text-muted-foreground mb-2">Finding is created if the file IS present.</p>
                   <Input
-                    value={jsonFile}
-                    onChange={(e) => setJsonFile(e.target.value)}
-                    placeholder="e.g. tsconfig.json"
-                    className="mt-1"
+                    value={singlePath}
+                    onChange={(e) => setSinglePath(e.target.value)}
+                    placeholder="e.g. .env.local"
                   />
                 </div>
-                <div>
-                  <Label className="text-xs">Field Path (dot notation)</Label>
-                  <Input
-                    value={jsonField}
-                    onChange={(e) => setJsonField(e.target.value)}
-                    placeholder="e.g. compilerOptions.strict"
-                    className="mt-1 font-mono"
-                  />
+              )}
+
+              {ruleType === "file_contains" && (
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">File Path</Label>
+                    <Input
+                      value={containsFile}
+                      onChange={(e) => setContainsFile(e.target.value)}
+                      placeholder="e.g. package.json"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Regex Pattern</Label>
+                    <Input
+                      value={containsPattern}
+                      onChange={(e) => setContainsPattern(e.target.value)}
+                      placeholder='e.g. "type":\\s*"module"'
+                      className="mt-1 font-mono"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={containsNegate} onCheckedChange={(v) => setContainsNegate(v === true)} />
+                    <Label className="text-sm">Negate — flag if pattern IS found (instead of missing)</Label>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs">Expected Value</Label>
-                  <Input
-                    value={jsonExpected}
-                    onChange={(e) => setJsonExpected(e.target.value)}
-                    placeholder="e.g. true"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Supports: true, false, numbers, or strings</p>
+              )}
+
+              {ruleType === "json_field" && (
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">JSON File</Label>
+                    <Input
+                      value={jsonFile}
+                      onChange={(e) => setJsonFile(e.target.value)}
+                      placeholder="e.g. tsconfig.json"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Field Path (dot notation)</Label>
+                    <Input
+                      value={jsonField}
+                      onChange={(e) => setJsonField(e.target.value)}
+                      placeholder="e.g. compilerOptions.strict"
+                      className="mt-1 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Expected Value</Label>
+                    <Input
+                      value={jsonExpected}
+                      onChange={(e) => setJsonExpected(e.target.value)}
+                      placeholder="e.g. true"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Supports: true, false, numbers, or strings</p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Policy Binding */}
-          <div>
-            <Label>Policy Binding (optional)</Label>
-            <Select value={policyId || "__none__"} onValueChange={(v) => setPolicyId(v === "__none__" ? "" : v)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Global (all policies)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Global (all policies)</SelectItem>
-                {policies.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Leave as "Global" to apply this rule to all scans, or bind it to a specific policy.
-            </p>
-          </div>
+            {/* Policy Binding */}
+            <div>
+              <Label>Policy Binding (optional)</Label>
+              <Select value={policyId || "__none__"} onValueChange={(v) => setPolicyId(v === "__none__" ? "" : v)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Global (all policies)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Global (all policies)</SelectItem>
+                  {policies.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Leave as "Global" to apply this rule to all scans, or bind it to a specific policy.
+              </p>
+            </div>
 
-          {/* Suggested Actions */}
-          <div>
-            <Label className="mb-2 block">Suggested Actions</Label>
-            {suggestedActions.map((action, i) => (
-              <div key={`action-${action || i}`} className="flex gap-2 mb-2">
-                <Input
-                  value={action}
-                  onChange={(e) => {
-                    const next = [...suggestedActions];
-                    next[i] = e.target.value;
-                    setSuggestedActions(next);
-                  }}
-                  placeholder="e.g. Add a LICENSE file"
-                  className="flex-1"
-                />
-                {suggestedActions.length > 1 && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setSuggestedActions(suggestedActions.filter((_, j) => j !== i))}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Remove</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={() => setSuggestedActions([...suggestedActions, ""])}>
-              <Plus className="w-4 h-4 mr-1" /> Add Action
-            </Button>
-          </div>
+            {/* Suggested Actions */}
+            <div>
+              <Label className="mb-2 block">Suggested Actions</Label>
+              {suggestedActions.map((action, i) => (
+                <div key={`action-${action || i}`} className="flex gap-2 mb-2">
+                  <Input
+                    value={action}
+                    onChange={(e) => {
+                      const next = [...suggestedActions];
+                      next[i] = e.target.value;
+                      setSuggestedActions(next);
+                    }}
+                    placeholder="e.g. Add a LICENSE file"
+                    className="flex-1"
+                  />
+                  {suggestedActions.length > 1 && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSuggestedActions(suggestedActions.filter((_, j) => j !== i))}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => setSuggestedActions([...suggestedActions, ""])}>
+                <Plus className="w-4 h-4 mr-1" /> Add Action
+              </Button>
+            </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? "Saving..." : "Save"}
-            </Button>
+            {/* Footer */}
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
+                {isSubmitting ? "Saving..." : "Save"}
+              </Button>
+            </div>
           </div>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

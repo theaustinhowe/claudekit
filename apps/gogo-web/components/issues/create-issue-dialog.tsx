@@ -3,6 +3,7 @@
 import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -89,43 +90,45 @@ export function CreateIssueDialog({ onSubmit, isLoading = false, compact = false
             <DialogTitle>Create New Issue</DialogTitle>
             <DialogDescription>Create a new GitHub issue in this repository.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">
-                Title <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Issue title"
-                required
-                disabled={isLoading}
-              />
+          <DialogBody>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">
+                  Title <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Issue title"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="body">Description</Label>
+                <Textarea
+                  id="body"
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Describe the issue in detail..."
+                  rows={5}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="labels">Labels</Label>
+                <Input
+                  id="labels"
+                  value={labelsInput}
+                  onChange={(e) => setLabelsInput(e.target.value)}
+                  placeholder="bug, enhancement, documentation"
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-muted-foreground">Comma-separated list of labels to add to the issue</p>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="body">Description</Label>
-              <Textarea
-                id="body"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Describe the issue in detail..."
-                rows={5}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="labels">Labels</Label>
-              <Input
-                id="labels"
-                value={labelsInput}
-                onChange={(e) => setLabelsInput(e.target.value)}
-                placeholder="bug, enhancement, documentation"
-                disabled={isLoading}
-              />
-              <p className="text-xs text-muted-foreground">Comma-separated list of labels to add to the issue</p>
-            </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
               Cancel
