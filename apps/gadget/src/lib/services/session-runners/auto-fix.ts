@@ -1,5 +1,5 @@
 import { saveAutoFixRun, updateAutoFixRun } from "@/lib/actions/auto-fix";
-import { runClaude } from "@/lib/services/claude-runner";
+import { runClaude } from "@devkit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 

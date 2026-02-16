@@ -32,24 +32,24 @@ const LEVEL_NAMES: Record<number, string> = {
 const LEVEL_COLORS: Record<number, string> = {
   10: "text-muted-foreground",
   20: "text-muted-foreground",
-  30: "text-blue-400",
-  40: "text-yellow-400",
-  50: "text-red-400",
-  60: "text-red-500 font-bold",
+  30: "text-info",
+  40: "text-warning",
+  50: "text-destructive",
+  60: "text-destructive font-bold",
 };
 
 const MSG_COLORS: Record<number, string> = {
   10: "text-muted-foreground/70",
   20: "text-muted-foreground",
-  40: "text-yellow-300/90",
-  50: "text-red-300",
-  60: "text-red-400 font-bold",
+  40: "text-warning/90",
+  50: "text-destructive/80",
+  60: "text-destructive font-bold",
 };
 
 const ROW_BG_COLORS: Record<number, string> = {
-  40: "bg-yellow-500/5",
-  50: "bg-red-500/8",
-  60: "bg-red-500/15",
+  40: "bg-warning/8",
+  50: "bg-destructive/10",
+  60: "bg-destructive/20",
 };
 
 function getLevelName(level: number): string {

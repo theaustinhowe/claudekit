@@ -4,9 +4,9 @@ import type { JobSource } from "@devkit/gogo-shared";
 import { CheckCircle, ClipboardCheck, ExternalLink, MessageSquare, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Textarea } from "@devkit/ui/components/textarea";
 import { useApprovePlan } from "@/hooks/use-jobs";
 import { formatLastChecked } from "@/lib/utils";
 

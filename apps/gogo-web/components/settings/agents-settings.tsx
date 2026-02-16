@@ -1,10 +1,10 @@
 "use client";
 
 import { AlertCircle, Bot, Check, ExternalLink, Info, Sparkles, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@devkit/ui/components/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useAllAgents } from "@/hooks/use-agents";
 import type { KnownAgentInfo } from "@/lib/api";
 

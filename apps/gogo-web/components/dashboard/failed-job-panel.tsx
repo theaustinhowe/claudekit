@@ -4,9 +4,9 @@ import type { Job } from "@devkit/gogo-shared";
 import { AlertTriangle, ChevronDown, ChevronRight, RefreshCw, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Collapsible, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { useJobAction } from "@/hooks/use-jobs";
 
 interface FailedJobPanelProps {

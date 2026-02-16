@@ -7,9 +7,9 @@ import { Suspense, useMemo } from "react";
 import { toast } from "sonner";
 import { ArchivedJobCard } from "@/components/archive/archived-job-card";
 import { PageTabs, type Tab } from "@/components/layout/page-tabs";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@devkit/ui/components/button";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useJobAction, useJobs } from "@/hooks/use-jobs";
 import type { Job } from "@/types/job";
 

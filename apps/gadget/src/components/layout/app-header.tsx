@@ -1,10 +1,10 @@
 "use client";
 
+import { ClaudeUsageDialog, HeaderUsageWidget } from "@devkit/claude-usage/components/usage-shared";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { ClaudeUsageDialog, HeaderUsageWidget } from "@/components/claude-usage-shared";
 import { SessionIndicator } from "@/components/sessions/session-indicator";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getClaudeRateLimitsAction, getClaudeUsageStats } from "@/lib/actions/claude-usage";
+import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 import type { ClaudeRateLimits, ClaudeUsageStats } from "@/lib/types";
 import { MobileMenuButton, MobileSidebar } from "./app-sidebar";
 
@@ -17,7 +17,7 @@ export function AppHeader() {
 
   const refreshUsage = useCallback(() => {
     startTransition(async () => {
-      const [stats, limits] = await Promise.all([getClaudeUsageStats(), getClaudeRateLimitsAction()]);
+      const [stats, limits] = await Promise.all([getClaudeUsageStatsAction(), getClaudeRateLimitsAction()]);
       setClaudeUsage(stats);
       setRateLimits(limits);
     });

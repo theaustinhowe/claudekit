@@ -1,7 +1,7 @@
 import path from "node:path";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { getUpgradeTasks, updateUpgradeTask } from "@/lib/actions/upgrade-tasks";
-import { runClaude } from "@/lib/services/claude-runner";
+import { runClaude } from "@devkit/claude-runner";
 import { safeGitCommit } from "@/lib/services/git-utils";
 import { buildEnvSetupPrompt, buildImplementationPrompt, buildUpgradeTaskPrompt } from "@/lib/services/scaffold-prompt";
 import type { SessionRunner } from "@/lib/services/session-manager";

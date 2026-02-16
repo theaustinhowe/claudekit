@@ -1,9 +1,9 @@
 "use client";
 
 import { AlertCircle, Bot, Check, ExternalLink, Sparkles, TestTube2, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@devkit/ui/components/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useAgentStatus } from "@/hooks/use-agents";
 import type { AgentInfo } from "@/lib/api";
 

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { DuckDBConnection } from "@duckdb/node-api";
 import { DuckDBInstance } from "@duckdb/node-api";
-import { checkpoint, execute } from "./helpers.js";
+import { checkpoint, execute } from "./helpers";
 
 export interface DatabaseConfig {
   /** Absolute path to the DuckDB file */

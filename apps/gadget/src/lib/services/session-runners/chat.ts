@@ -1,7 +1,7 @@
 import path from "node:path";
 import { createDesignMessage, getGeneratorProject } from "@/lib/actions/generator-projects";
 import { getUpgradeTasks } from "@/lib/actions/upgrade-tasks";
-import { runClaude } from "@/lib/services/claude-runner";
+import { runClaude } from "@devkit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 import { applyTaskMutations, parseTaskMutations } from "@/lib/services/task-mutation-parser";

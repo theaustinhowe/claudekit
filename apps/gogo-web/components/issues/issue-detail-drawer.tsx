@@ -3,12 +3,12 @@
 import { ExternalLink, Loader2, Play, Zap } from "lucide-react";
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Separator } from "@devkit/ui/components/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { TooltipProvider } from "@devkit/ui/components/tooltip";
 import type { GitHubIssue } from "@/lib/api";
 import { IssueAuthorInfo, IssueComments, IssueDescription } from "./issue-content";
 

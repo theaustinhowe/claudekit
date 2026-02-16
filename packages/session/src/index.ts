@@ -1,4 +1,4 @@
-export { createSessionManager } from "./session-manager.js";
+export { createSessionManager } from "./session-manager";
 export type {
   LiveSession,
   SessionEvent,
@@ -8,4 +8,4 @@ export type {
   SessionPersistence,
   SessionRunner,
   SessionSubscriber,
-} from "./types.js";
+} from "./types";

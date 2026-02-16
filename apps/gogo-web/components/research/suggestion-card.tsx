@@ -2,9 +2,9 @@
 
 import { AlertTriangle, ArrowRight, FileCode, Info, ShieldAlert, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { useConvertSuggestion } from "@/hooks/use-research";
 import type { ResearchSuggestionInfo } from "@/lib/api";
 

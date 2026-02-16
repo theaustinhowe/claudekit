@@ -1,18 +1,21 @@
 "use client";
 
+import type { ClaudeRateLimits, ClaudeUsageStats } from "@devkit/claude-usage";
+import { ClaudeUsageDialog, HeaderUsageWidget } from "@devkit/claude-usage/components/usage-shared";
+import { cn } from "@devkit/ui";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { Sheet, SheetContent, SheetTrigger } from "@devkit/ui/components/sheet";
 import { Heart, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useWebSocketContext } from "@/contexts/websocket-context";
 import { useHealth } from "@/hooks/use-jobs";
-import { cn } from "@devkit/ui";
+import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 import { Sidebar } from "./sidebar";
 
 interface AppShellProps {
@@ -117,6 +120,10 @@ function ConnectionBadge() {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [claudeUsage, setClaudeUsage] = useState<ClaudeUsageStats | null>(null);
+  const [rateLimits, setRateLimits] = useState<ClaudeRateLimits | null>(null);
+  const [usageDialogOpen, setUsageDialogOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -124,6 +131,39 @@ export function AppShell({ children }: AppShellProps) {
       setMobileMenuOpen(false);
     }
   }, [pathname]);
+
+  const refreshUsage = useCallback(() => {
+    startTransition(async () => {
+      const [stats, limits] = await Promise.all([getClaudeUsageStatsAction(), getClaudeRateLimitsAction()]);
+      setClaudeUsage(stats);
+      setRateLimits(limits);
+    });
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    refreshUsage();
+  }, [refreshUsage]);
+
+  // Auto-refresh when the soonest rate-limit window resets
+  useEffect(() => {
+    if (!rateLimits) return;
+
+    const resetTimes: number[] = [];
+    if (rateLimits.fiveHour.resetsAt) resetTimes.push(new Date(rateLimits.fiveHour.resetsAt).getTime());
+    if (rateLimits.sevenDay.resetsAt) resetTimes.push(new Date(rateLimits.sevenDay.resetsAt).getTime());
+    for (const w of Object.values(rateLimits.modelLimits)) {
+      if (w.resetsAt) resetTimes.push(new Date(w.resetsAt).getTime());
+    }
+
+    const now = Date.now();
+    const futureResets = resetTimes.filter((t) => t > now);
+    if (futureResets.length === 0) return;
+
+    const delayMs = Math.min(...futureResets) - now + 2000; // 2s after reset
+    const id = setTimeout(refreshUsage, delayMs);
+    return () => clearTimeout(id);
+  }, [rateLimits, refreshUsage]);
 
   // Check if this page should use the app shell
   const shouldUseShell = !excludedPaths.some((path) => pathname.startsWith(path));
@@ -170,7 +210,15 @@ export function AppShell({ children }: AppShellProps) {
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Desktop header banner */}
           <header className="hidden md:flex h-14 items-center justify-between border-b bg-background/80 backdrop-blur-xs sticky top-0 z-30 px-4 sm:px-6">
-            <div className="flex-1" />
+            <div className="flex-1">
+              {claudeUsage && (
+                <HeaderUsageWidget
+                  usage={claudeUsage}
+                  rateLimits={rateLimits}
+                  onClick={() => setUsageDialogOpen(true)}
+                />
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <ConnectionBadge />
               <ThemeToggle />
@@ -181,6 +229,15 @@ export function AppShell({ children }: AppShellProps) {
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
+
+      {claudeUsage && (
+        <ClaudeUsageDialog
+          open={usageDialogOpen}
+          onOpenChange={setUsageDialogOpen}
+          usage={claudeUsage}
+          rateLimits={rateLimits}
+        />
+      )}
     </div>
   );
 }

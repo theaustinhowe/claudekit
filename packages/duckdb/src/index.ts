@@ -1,7 +1,7 @@
-export type { DatabaseConfig, DatabaseInstance } from "./connection.js";
-export { createDatabase } from "./connection.js";
-export type { QueryParams } from "./helpers.js";
-export { checkpoint, convertRow, execute, queryAll, queryOne, withTransaction } from "./helpers.js";
-export { buildInClause, buildUpdate, parseJsonField } from "./utils.js";
-export type { MigrateOptions } from "./migrate.js";
-export { runMigrations } from "./migrate.js";
+export type { DatabaseConfig, DatabaseInstance } from "./connection";
+export { createDatabase } from "./connection";
+export type { QueryParams } from "./helpers";
+export { checkpoint, convertRow, execute, queryAll, queryOne, withTransaction } from "./helpers";
+export { buildInClause, buildUpdate, parseJsonField } from "./utils";
+export type { MigrateOptions } from "./migrate";
+export { runMigrations } from "./migrate";

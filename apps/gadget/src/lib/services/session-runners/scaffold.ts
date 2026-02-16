@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
-import { runClaude } from "@/lib/services/claude-runner";
+import { runClaude } from "@devkit/claude-runner";
 import { buildInterfaceDesignSystem, writeInterfaceDesignFile, writeSkillFiles } from "@/lib/services/interface-design";
 import { buildPrototypePrompt } from "@/lib/services/scaffold-prompt";
 import type { SessionRunner } from "@/lib/services/session-manager";

@@ -15,7 +15,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RepoSelector } from "@/components/repo/repo-selector";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useJobs } from "@/hooks/use-jobs";
 import { cn } from "@devkit/ui";
 

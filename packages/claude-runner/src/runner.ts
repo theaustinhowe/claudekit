@@ -1,6 +1,6 @@
 import { execSync, spawn } from "node:child_process";
-import { parseStreamJsonEvent } from "./parser.js";
-import type { ClaudeResult, ClaudeStreamEvent, RunClaudeOptions } from "./types.js";
+import { parseStreamJsonEvent } from "./parser";
+import type { ClaudeResult, ClaudeStreamEvent, RunClaudeOptions } from "./types";
 
 /**
  * Check if the Claude CLI binary is available in PATH.

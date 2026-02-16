@@ -3,8 +3,8 @@
 import { Check, ChevronsUpDown, GitBranch, Plus } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@devkit/ui/components/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useRepositoryContext } from "@/contexts/repository-context";
 import { cn } from "@devkit/ui";
 

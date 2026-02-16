@@ -2,7 +2,7 @@
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@devkit/ui/components/button";
 
 export default function HealthError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {

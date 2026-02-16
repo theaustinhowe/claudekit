@@ -1,4 +1,4 @@
-import { runClaude } from "@/lib/claude/claude-runner";
+import { runClaude } from "@devkit/claude-runner";
 import { buildGenerateScriptsPrompt } from "@/lib/claude/prompts/generate-scripts";
 import { buildGenerateVoiceoverPrompt } from "@/lib/claude/prompts/generate-voiceover";
 import type { SessionRunner } from "@/lib/claude/types";

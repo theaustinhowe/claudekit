@@ -2,8 +2,8 @@
 
 import { AlertCircle, CheckCircle2, Filter } from "lucide-react";
 import { useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
 import { useRepositoryContext } from "@/contexts/repository-context";
 import { cn } from "@devkit/ui";
 import type { Job, JobStatus } from "@/types/job";

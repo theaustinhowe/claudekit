@@ -3,7 +3,7 @@
 import { Clock, Loader2, MessageSquarePlus, Send, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from "@devkit/ui/components/dialog";
+import { Label } from "@devkit/ui/components/label";
+import { Textarea } from "@devkit/ui/components/textarea";
 import { useJobAction } from "@/hooks/use-jobs";
 
 type InjectMode = "immediate" | "queued";

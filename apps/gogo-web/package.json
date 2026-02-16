@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@devkit/claude-usage": "workspace:*",
     "@devkit/gogo-shared": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "@devkit/logger": "workspace:*",

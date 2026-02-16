@@ -39,14 +39,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@devkit/ui/components/alert-dialog";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useCheckNeedsInfoResponse, useCreatePr, useJob, useJobAction, useJobEvents } from "@/hooks/use-jobs";
 import type { JobActionType } from "@/lib/api";
 import { JOB_STATUS_CONFIG } from "@/types/job";

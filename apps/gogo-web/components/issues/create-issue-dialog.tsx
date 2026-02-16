@@ -3,7 +3,7 @@
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from "@devkit/ui/components/dialog";
+import { Input } from "@devkit/ui/components/input";
+import { Label } from "@devkit/ui/components/label";
+import { Textarea } from "@devkit/ui/components/textarea";
 
 interface CreateIssueDialogProps {
   onSubmit: (data: { title: string; body?: string; labels?: string[] }) => void;

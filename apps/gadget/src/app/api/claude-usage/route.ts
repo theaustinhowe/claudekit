@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getClaudeRateLimits } from "@/lib/services/claude-usage-api";
+import { getClaudeRateLimits } from "@devkit/claude-usage/server";
 
 export async function GET() {
   const rateLimits = await getClaudeRateLimits();

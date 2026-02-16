@@ -1,4 +1,4 @@
-import { runClaude } from "@/lib/claude/claude-runner";
+import { runClaude } from "@devkit/claude-runner";
 import { buildGenerateOutlinePrompt } from "@/lib/claude/prompts/generate-outline";
 import type { SessionRunner } from "@/lib/claude/types";
 import { execute, query } from "@/lib/db";

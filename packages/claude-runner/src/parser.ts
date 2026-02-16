@@ -1,4 +1,4 @@
-import type { ClaudeStreamEvent, LogType, ParsedEvent } from "./types.js";
+import type { ClaudeStreamEvent, LogType, ParsedEvent } from "./types";
 
 /**
  * Parse a single stream-json event from Claude CLI.

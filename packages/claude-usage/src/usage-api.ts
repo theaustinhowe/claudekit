@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { ClaudeRateLimits, RateLimitWindow } from "@/lib/types";
+import type { ClaudeRateLimits, RateLimitWindow } from "./types";
 
 const execFileAsync = promisify(execFile);
 
@@ -96,7 +96,7 @@ async function fetchRateLimits(token: string): Promise<ClaudeRateLimits> {
     throw new Error(`OAuth usage API returned ${res.status}`);
   }
 
-  const data: OAuthUsageResponse = await res.json();
+  const data = (await res.json()) as OAuthUsageResponse;
 
   // Extract model-specific weekly limits (seven_day_opus, seven_day_sonnet, etc.)
   const modelLimits: Record<string, RateLimitWindow> = {};

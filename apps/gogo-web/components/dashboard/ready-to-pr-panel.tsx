@@ -3,10 +3,10 @@
 import type { Job } from "@devkit/gogo-shared";
 import { AlertTriangle, CheckCircle2, ChevronDown, Loader2, RefreshCw, TestTube, Wrench } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Progress } from "@devkit/ui/components/progress";
 
 interface ReadyToPrPanelProps {
   job: Job;

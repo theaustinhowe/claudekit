@@ -29,6 +29,9 @@ importers:
       '@devkit/claude-runner':
         specifier: workspace:*
         version: link:../../packages/claude-runner
+      '@devkit/claude-usage':
+        specifier: workspace:*
+        version: link:../../packages/claude-usage
       '@devkit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
@@ -114,6 +117,9 @@ importers:
       '@devkit/claude-runner':
         specifier: workspace:*
         version: link:../../packages/claude-runner
+      '@devkit/claude-usage':
+        specifier: workspace:*
+        version: link:../../packages/claude-usage
       '@devkit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
@@ -263,6 +269,9 @@ importers:
 
   apps/gogo-web:
     dependencies:
+      '@devkit/claude-usage':
+        specifier: workspace:*
+        version: link:../../packages/claude-usage
       '@devkit/gogo-shared':
         specifier: workspace:*
         version: link:../../packages/gogo-shared
@@ -481,6 +490,28 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@22.19.11)(jiti@2.6.1)(jsdom@25.0.0)(lightningcss@1.30.2)(tsx@4.21.0)
+
+  packages/claude-usage:
+    dependencies:
+      '@devkit/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lucide-react:
+        specifier: ^0.468.0
+        version: 0.468.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.11
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/config: {}
 

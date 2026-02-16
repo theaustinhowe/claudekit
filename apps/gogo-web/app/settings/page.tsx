@@ -8,8 +8,8 @@ import { ConnectDevice } from "@/components/settings/connect-device";
 import { GeneralSettings } from "@/components/settings/general-settings";
 import { GitHubSettings } from "@/components/settings/github-settings";
 import { RepositoriesSettings } from "@/components/settings/repositories-settings";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useSettings } from "@/hooks/use-settings";
 
 const tabIds = ["general", "github", "agents", "repositories", "connect"] as const;

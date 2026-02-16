@@ -15,9 +15,9 @@ import {
   XCircle,
 } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -25,9 +25,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@devkit/ui/components/dialog";
+import { Input } from "@devkit/ui/components/input";
+import { Label } from "@devkit/ui/components/label";
 import { useBrowseDirectory } from "@/hooks/use-setup";
 import type { DiscoveredRepo, VerifyRepositoryResponse } from "@/lib/api";
 import type { SelectedRepo } from "./setup-wizard";

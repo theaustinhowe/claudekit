@@ -2,8 +2,8 @@
 
 import type { Job } from "@devkit/gogo-shared";
 import { CheckCircle2, ExternalLink, Eye, GitMerge, MessageSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 
 interface PrReviewingPanelProps {
   job: Job;

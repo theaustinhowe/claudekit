@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { Textarea } from "@devkit/ui/components/textarea";
 import { useResumeAgent } from "@/hooks/use-jobs";
 import { formatLastChecked } from "@/lib/utils";
 

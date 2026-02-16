@@ -3,7 +3,8 @@ import { readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
-import { calculateModelCost, type TokenCounts } from "@/lib/claude-pricing";
+import { calculateModelCost } from "./pricing";
+import type { TokenCounts } from "./types";
 
 interface ModelTokenBreakdown {
   inputTokens: number;

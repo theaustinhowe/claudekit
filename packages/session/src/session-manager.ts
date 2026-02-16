@@ -6,7 +6,7 @@ import type {
   SessionPersistence,
   SessionRunner,
   SessionSubscriber,
-} from "./types.js";
+} from "./types";
 
 /** globalThis cache shape for Next.js HMR survival */
 interface GlobalSessionCache {

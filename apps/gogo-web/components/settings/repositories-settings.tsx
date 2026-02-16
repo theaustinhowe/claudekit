@@ -3,9 +3,9 @@
 import { GitBranch, Plus } from "lucide-react";
 import Link from "next/link";
 import { RepoSettings } from "@/components/repo/repo-settings";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent } from "@devkit/ui/components/card";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useRepositories } from "@/hooks/use-repositories";
 
 export function RepositoriesSettings() {

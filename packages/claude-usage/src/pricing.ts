@@ -1,6 +1,8 @@
 // Anthropic API pricing per 1M tokens (USD)
 // https://docs.anthropic.com/en/docs/about-claude/models
 
+import type { TokenCounts } from "./types";
+
 interface ModelPricing {
   input: number;
   output: number;
@@ -50,13 +52,6 @@ function getPricingKey(modelId: string): string | null {
   }
 
   return null;
-}
-
-export interface TokenCounts {
-  inputTokens: number;
-  outputTokens: number;
-  cacheReadInputTokens: number;
-  cacheCreationInputTokens: number;
 }
 
 /** Calculate USD cost for a given model and token counts */

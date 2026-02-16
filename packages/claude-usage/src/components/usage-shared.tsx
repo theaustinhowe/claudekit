@@ -5,8 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import { BarChart3, Bot, ChevronDown, DollarSign, Gauge, Layers, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { ClaudeRateLimits, ClaudeUsageStats, RateLimitWindow } from "@/lib/types";
-import { formatNumber } from "@/lib/utils";
+import type { ClaudeRateLimits, ClaudeUsageStats, RateLimitWindow } from "../types";
 
 function formatTokenCount(n: number): string {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
@@ -345,13 +344,13 @@ export function ClaudeUsageDialog({
                                 })}
                               </p>
                               <p className="text-muted-foreground tabular-nums">
-                                {formatNumber(day.messageCount)} messages
+                                {day.messageCount.toLocaleString()} messages
                               </p>
                               <p className="text-muted-foreground tabular-nums">
-                                {formatNumber(day.sessionCount)} sessions
+                                {day.sessionCount.toLocaleString()} sessions
                               </p>
                               <p className="text-muted-foreground tabular-nums">
-                                {formatNumber(day.toolCallCount)} tool calls
+                                {day.toolCallCount.toLocaleString()} tool calls
                               </p>
                             </div>
                           </div>
@@ -382,14 +381,14 @@ export function ClaudeUsageDialog({
                       month: "short",
                       day: "numeric",
                     });
-                    const dateLabel = isToday ? `Today — ${dayName}` : dayName;
+                    const dateLabel = isToday ? `Today \u2014 ${dayName}` : dayName;
                     return (
                       <div key={day.date} className="flex items-center justify-between text-xs">
                         <span className={isToday ? "font-medium" : "text-muted-foreground"}>{dateLabel}</span>
                         <span
                           className={`tabular-nums ${day.totalCostUSD > 0 ? "font-medium" : "text-muted-foreground"}`}
                         >
-                          {day.totalCostUSD > 0 ? formatCost(day.totalCostUSD) : "—"}
+                          {day.totalCostUSD > 0 ? formatCost(day.totalCostUSD) : "\u2014"}
                         </span>
                       </div>
                     );
@@ -505,7 +504,7 @@ export function HeaderUsageWidget({
       onClick={onClick}
     >
       <Bot className="w-3.5 h-3.5 text-violet-500 shrink-0" />
-      <span className="tabular-nums whitespace-nowrap">{formatNumber(usage.totalSessions)} sessions</span>
+      <span className="tabular-nums whitespace-nowrap">{usage.totalSessions.toLocaleString()} sessions</span>
       <span className="text-border">|</span>
       <span className="tabular-nums whitespace-nowrap">{usage.totalMessages.toLocaleString()} msgs</span>
       <span className="text-border">|</span>

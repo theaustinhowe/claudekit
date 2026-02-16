@@ -1,4 +1,4 @@
-import { runClaude } from "@/lib/claude/claude-runner";
+import { runClaude } from "@devkit/claude-runner";
 import { buildAnalyzeProjectPrompt } from "@/lib/claude/prompts/analyze-project";
 import type { SessionRunner } from "@/lib/claude/types";
 import { execute } from "@/lib/db";

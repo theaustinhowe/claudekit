@@ -2,8 +2,8 @@
 
 import { AlertTriangle, Clock, Coffee, Github, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@devkit/ui/components/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useHealth } from "@/hooks/use-jobs";
 import { cn } from "@devkit/ui";
 

@@ -3,8 +3,8 @@
 import type { Job } from "@devkit/gogo-shared";
 import { PauseCircle, Play, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { useResumeAgent } from "@/hooks/use-jobs";
 import { InjectModal } from "./inject-modal";
 

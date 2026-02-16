@@ -2,10 +2,10 @@
 
 import { FileCode, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@devkit/ui/components/button";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   type ChangedFile,
   fetchChangedFiles,

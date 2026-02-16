@@ -25,11 +25,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@devkit/ui/components/alert-dialog";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent } from "@devkit/ui/components/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import type { WorktreeInfo } from "@/lib/api";
 import type { JobStatus } from "@/types/job";
 import { JOB_STATUS_CONFIG } from "@/types/job";

@@ -4,7 +4,7 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Devkit",
+  title: "ClaudeKit",
   description: "Local development control center",
 };
 

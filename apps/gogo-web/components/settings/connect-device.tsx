@@ -4,10 +4,10 @@ import type { NetworkInfo } from "@devkit/gogo-shared";
 import { Check, Copy, QrCode, RefreshCw, Smartphone, Wifi } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { fetchNetworkInfo } from "@/lib/api";
 
 export function ConnectDevice() {

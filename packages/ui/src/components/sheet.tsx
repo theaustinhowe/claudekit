@@ -9,9 +9,9 @@ import { cn } from "../utils";
 
 const Sheet = SheetPrimitive.Root;
 
-const _SheetTrigger = SheetPrimitive.Trigger;
+const SheetTrigger = SheetPrimitive.Trigger;
 
-const _SheetClose = SheetPrimitive.Close;
+const SheetClose = SheetPrimitive.Close;
 
 const SheetPortal = SheetPrimitive.Portal;
 
@@ -95,4 +95,15 @@ const SheetDescription = React.forwardRef<
 ));
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
-export { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle };
+export {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPortal,
+  SheetTitle,
+  SheetTrigger,
+};

@@ -1,8 +1,8 @@
 "use client";
 
 import { GitBranch } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@devkit/ui/components/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useRepositoryContext } from "@/contexts/repository-context";
 
 interface RepoBadgeProps {

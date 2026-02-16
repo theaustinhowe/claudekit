@@ -2,7 +2,7 @@
 
 import { Inbox } from "lucide-react";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import type { GitHubIssue } from "@/lib/api";
 import { IssueCard } from "./issue-card";
 
