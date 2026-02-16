@@ -1,5 +1,5 @@
 import { Readable } from "node:stream";
-import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 // We mock the Node built-ins that session-parser and usage-api depend on.
@@ -45,7 +45,7 @@ afterEach(() => {
 
 // ─── Helper: create a readable stream from JSONL lines ────────────────────────
 function jsonlStream(lines: unknown[]): Readable {
-  const content = lines.map((l) => JSON.stringify(l)).join("\n") + "\n";
+  const content = `${lines.map((l) => JSON.stringify(l)).join("\n")}\n`;
   return Readable.from(content);
 }
 
@@ -87,7 +87,12 @@ describe("getTodayUsageWithCost", () => {
         message: {
           id: "msg-1",
           model: "claude-sonnet-4-5",
-          usage: { input_tokens: 1000, output_tokens: 500, cache_read_input_tokens: 200, cache_creation_input_tokens: 100 },
+          usage: {
+            input_tokens: 1000,
+            output_tokens: 500,
+            cache_read_input_tokens: 200,
+            cache_creation_input_tokens: 100,
+          },
         },
       },
       {
@@ -96,7 +101,12 @@ describe("getTodayUsageWithCost", () => {
         message: {
           id: "msg-2",
           model: "claude-sonnet-4-5",
-          usage: { input_tokens: 2000, output_tokens: 1000, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 },
+          usage: {
+            input_tokens: 2000,
+            output_tokens: 1000,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
+          },
         },
       },
     ];
@@ -105,15 +115,15 @@ describe("getTodayUsageWithCost", () => {
 
     const result = await getTodayUsageWithCost();
     expect(result).not.toBeNull();
-    expect(result!.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
+    expect(result?.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
 
-    const breakdown = result!.modelBreakdown["claude-sonnet-4-5"];
+    const breakdown = result?.modelBreakdown["claude-sonnet-4-5"];
     expect(breakdown.inputTokens).toBe(3000);
     expect(breakdown.outputTokens).toBe(1500);
     expect(breakdown.cacheReadInputTokens).toBe(200);
     expect(breakdown.cacheCreationInputTokens).toBe(100);
     expect(breakdown.costUSD).toBeGreaterThan(0);
-    expect(result!.totalCostUSD).toBe(breakdown.costUSD);
+    expect(result?.totalCostUSD).toBe(breakdown.costUSD);
   });
 
   it("deduplicates messages by id (last entry wins)", async () => {
@@ -161,8 +171,8 @@ describe("getTodayUsageWithCost", () => {
     const result = await getTodayUsageWithCost();
     expect(result).not.toBeNull();
     // Last entry wins for dedup
-    expect(result!.modelBreakdown["claude-sonnet-4-5"].inputTokens).toBe(999);
-    expect(result!.modelBreakdown["claude-sonnet-4-5"].outputTokens).toBe(888);
+    expect(result?.modelBreakdown["claude-sonnet-4-5"].inputTokens).toBe(999);
+    expect(result?.modelBreakdown["claude-sonnet-4-5"].outputTokens).toBe(888);
   });
 
   it("skips non-assistant messages and entries without usage", async () => {
@@ -194,8 +204,8 @@ describe("getTodayUsageWithCost", () => {
 
     const result = await getTodayUsageWithCost();
     expect(result).not.toBeNull();
-    expect(result!.totalCostUSD).toBe(0);
-    expect(Object.keys(result!.modelBreakdown)).toHaveLength(0);
+    expect(result?.totalCostUSD).toBe(0);
+    expect(Object.keys(result?.modelBreakdown)).toHaveLength(0);
   });
 
   it("returns null when projects directory is missing", async () => {
@@ -206,7 +216,7 @@ describe("getTodayUsageWithCost", () => {
     const result = await getTodayUsageWithCost();
     // parseTodayJSONL returns an object with empty breakdown and 0 cost when no files found
     expect(result).not.toBeNull();
-    expect(result!.totalCostUSD).toBe(0);
+    expect(result?.totalCostUSD).toBe(0);
   });
 
   it("aggregates tokens across multiple models", async () => {
@@ -253,14 +263,14 @@ describe("getTodayUsageWithCost", () => {
 
     const result = await getTodayUsageWithCost();
     expect(result).not.toBeNull();
-    expect(Object.keys(result!.modelBreakdown)).toHaveLength(2);
-    expect(result!.modelBreakdown["claude-opus-4-5"]).toBeDefined();
-    expect(result!.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
+    expect(Object.keys(result?.modelBreakdown)).toHaveLength(2);
+    expect(result?.modelBreakdown["claude-opus-4-5"]).toBeDefined();
+    expect(result?.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
     // Opus should be more expensive than sonnet for similar token counts
-    expect(result!.modelBreakdown["claude-opus-4-5"].costUSD).toBeGreaterThan(0);
-    expect(result!.modelBreakdown["claude-sonnet-4-5"].costUSD).toBeGreaterThan(0);
-    expect(result!.totalCostUSD).toBeCloseTo(
-      result!.modelBreakdown["claude-opus-4-5"].costUSD + result!.modelBreakdown["claude-sonnet-4-5"].costUSD,
+    expect(result?.modelBreakdown["claude-opus-4-5"].costUSD).toBeGreaterThan(0);
+    expect(result?.modelBreakdown["claude-sonnet-4-5"].costUSD).toBeGreaterThan(0);
+    expect(result?.totalCostUSD).toBeCloseTo(
+      result?.modelBreakdown["claude-opus-4-5"].costUSD + result?.modelBreakdown["claude-sonnet-4-5"].costUSD,
       10,
     );
   });
@@ -313,7 +323,7 @@ describe("getRecentDailyCosts", () => {
     // Today should have non-zero cost
     const todayEntry = result.find((e) => e.date === todayStr);
     expect(todayEntry).toBeDefined();
-    expect(todayEntry!.totalCostUSD).toBeGreaterThan(0);
+    expect(todayEntry?.totalCostUSD).toBeGreaterThan(0);
   });
 
   it("returns empty array when projects directory is missing", async () => {
@@ -342,9 +352,7 @@ describe("getClaudeRateLimits", () => {
     const { getClaudeRateLimits } = await importFresh();
 
     // Mock credentials file (fallback path since we can't easily mock execFile with promisify)
-    mockReadFile.mockResolvedValue(
-      JSON.stringify({ claudeAiOauth: { accessToken: "test-token-123" } }),
-    );
+    mockReadFile.mockResolvedValue(JSON.stringify({ claudeAiOauth: { accessToken: "test-token-123" } }));
 
     // On macOS the execFile will be called first for keychain — make it fail so it falls back to file
     mockExecFile.mockImplementation((...args: unknown[]) => {
@@ -372,17 +380,17 @@ describe("getClaudeRateLimits", () => {
 
     const result = await getClaudeRateLimits();
     expect(result).not.toBeNull();
-    expect(result!.fiveHour.utilization).toBe(42);
-    expect(result!.fiveHour.resetsAt).toBe("2026-02-15T12:00:00Z");
-    expect(result!.sevenDay.utilization).toBe(15);
-    expect(result!.modelLimits.opus).toBeDefined();
-    expect(result!.modelLimits.opus.utilization).toBe(80);
-    expect(result!.modelLimits.sonnet).toBeDefined();
-    expect(result!.modelLimits.sonnet.utilization).toBe(30);
-    expect(result!.extraUsage).not.toBeNull();
-    expect(result!.extraUsage!.isEnabled).toBe(true);
-    expect(result!.extraUsage!.usedCredits).toBe(50);
-    expect(result!.extraUsage!.monthlyLimit).toBe(200);
+    expect(result?.fiveHour.utilization).toBe(42);
+    expect(result?.fiveHour.resetsAt).toBe("2026-02-15T12:00:00Z");
+    expect(result?.sevenDay.utilization).toBe(15);
+    expect(result?.modelLimits.opus).toBeDefined();
+    expect(result?.modelLimits.opus.utilization).toBe(80);
+    expect(result?.modelLimits.sonnet).toBeDefined();
+    expect(result?.modelLimits.sonnet.utilization).toBe(30);
+    expect(result?.extraUsage).not.toBeNull();
+    expect(result?.extraUsage?.isEnabled).toBe(true);
+    expect(result?.extraUsage?.usedCredits).toBe(50);
+    expect(result?.extraUsage?.monthlyLimit).toBe(200);
   });
 
   it("returns null when no OAuth token is available", async () => {
@@ -408,9 +416,7 @@ describe("getClaudeRateLimits", () => {
       cb(new Error("no keychain"));
     });
 
-    mockReadFile.mockResolvedValue(
-      JSON.stringify({ claudeAiOauth: { accessToken: "test-token" } }),
-    );
+    mockReadFile.mockResolvedValue(JSON.stringify({ claudeAiOauth: { accessToken: "test-token" } }));
 
     mockFetch.mockResolvedValue({
       ok: false,
@@ -429,9 +435,7 @@ describe("getClaudeRateLimits", () => {
       cb(new Error("no keychain"));
     });
 
-    mockReadFile.mockResolvedValue(
-      JSON.stringify({ claudeAiOauth: { accessToken: "test-token" } }),
-    );
+    mockReadFile.mockResolvedValue(JSON.stringify({ claudeAiOauth: { accessToken: "test-token" } }));
 
     mockFetch.mockResolvedValue({
       ok: true,
@@ -443,9 +447,9 @@ describe("getClaudeRateLimits", () => {
 
     const result = await getClaudeRateLimits();
     expect(result).not.toBeNull();
-    expect(result!.extraUsage).toBeNull();
-    expect(result!.fiveHour.utilization).toBe(10);
-    expect(Object.keys(result!.modelLimits)).toHaveLength(0);
+    expect(result?.extraUsage).toBeNull();
+    expect(result?.fiveHour.utilization).toBe(10);
+    expect(Object.keys(result?.modelLimits)).toHaveLength(0);
   });
 
   it("skips seven_day_oauth_apps and seven_day_cowork from model limits", async () => {
@@ -456,9 +460,7 @@ describe("getClaudeRateLimits", () => {
       cb(new Error("no keychain"));
     });
 
-    mockReadFile.mockResolvedValue(
-      JSON.stringify({ claudeAiOauth: { accessToken: "test-token" } }),
-    );
+    mockReadFile.mockResolvedValue(JSON.stringify({ claudeAiOauth: { accessToken: "test-token" } }));
 
     mockFetch.mockResolvedValue({
       ok: true,
@@ -474,10 +476,10 @@ describe("getClaudeRateLimits", () => {
     const result = await getClaudeRateLimits();
     expect(result).not.toBeNull();
     // oauth_apps and cowork should be excluded
-    expect(result!.modelLimits.oauth_apps).toBeUndefined();
-    expect(result!.modelLimits.cowork).toBeUndefined();
+    expect(result?.modelLimits.oauth_apps).toBeUndefined();
+    expect(result?.modelLimits.cowork).toBeUndefined();
     // opus should be included
-    expect(result!.modelLimits.opus).toBeDefined();
-    expect(result!.modelLimits.opus.utilization).toBe(70);
+    expect(result?.modelLimits.opus).toBeDefined();
+    expect(result?.modelLimits.opus.utilization).toBe(70);
   });
 });

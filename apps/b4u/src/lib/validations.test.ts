@@ -57,7 +57,7 @@ describe("routesArraySchema", () => {
   });
 
   it("rejects path over 200 characters", () => {
-    const data = [{ path: "/" + "a".repeat(200), title: "Long", authRequired: false }];
+    const data = [{ path: `/${"a".repeat(200)}`, title: "Long", authRequired: false }];
     const result = routesArraySchema.safeParse(data);
     expect(result.success).toBe(false);
   });

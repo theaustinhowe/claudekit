@@ -43,7 +43,6 @@ vi.mock("../services/issue-sync.js", () => ({
 
 import { execute, queryAll, queryOne } from "../db/helpers.js";
 import { mapIssue, mapRepositoryFull } from "../db/schema.js";
-import { createIssueForRepo, getIssueByNumber } from "../services/github/index.js";
 import { syncIssuesForRepo } from "../services/issue-sync.js";
 import { broadcast } from "../ws/handler.js";
 import { issuesRouter } from "./issues.js";

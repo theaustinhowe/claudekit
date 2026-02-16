@@ -73,6 +73,7 @@ describe("discoverRepos", () => {
         return [makeDirent(".git", true), makeDirent("package.json", false, true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
     mockReadFileSync.mockImplementation((p: unknown) => {
@@ -121,6 +122,7 @@ describe("discoverRepos", () => {
         return [makeDirent("node_modules", true), makeDirent("dist", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
     const repos = discoverRepos({ roots: ["/projects"] });
@@ -140,6 +142,7 @@ describe("discoverRepos", () => {
         return [makeDirent(".hidden", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
     const repos = discoverRepos({ roots: ["/projects"] });
@@ -163,6 +166,7 @@ describe("discoverRepos", () => {
         return [makeDirent(".git", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
     mockStatSync.mockImplementation(() => {

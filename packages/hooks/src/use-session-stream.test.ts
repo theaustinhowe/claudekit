@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useSessionStream } from "./use-session-stream";
 import type { SessionStreamEvent } from "./use-session-stream";
+import { useSessionStream } from "./use-session-stream";
 
 // --- Helpers for creating a mock SSE stream ----------------------------------
 
@@ -52,9 +52,7 @@ afterEach(() => {
 
 describe("useSessionStream", () => {
   it("starts with idle status when no sessionId", () => {
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: null }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: null }));
     expect(result.current.status).toBe("idle");
     expect(result.current.logs).toEqual([]);
     expect(result.current.progress).toBeNull();
@@ -68,9 +66,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1", autoConnect: false }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1", autoConnect: false }));
     expect(result.current.status).toBe("idle");
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -79,9 +75,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1", autoConnect: true }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1", autoConnect: true }));
 
     // Let the connection establish
     await act(async () => {
@@ -99,27 +93,20 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    renderHook(() =>
-      useSessionStream({ sessionId: "s1", baseUrl: "http://localhost:3000" }),
-    );
+    renderHook(() => useSessionStream({ sessionId: "s1", baseUrl: "http://localhost:3000" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "http://localhost:3000/api/sessions/s1/stream",
-      expect.any(Object),
-    );
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost:3000/api/sessions/s1/stream", expect.any(Object));
   });
 
   it("accumulates log events", async () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -145,9 +132,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -166,9 +151,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -193,9 +176,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -213,9 +194,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -234,9 +213,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -255,9 +232,7 @@ describe("useSessionStream", () => {
     global.fetch = mockFetchWithStream(mock);
     const onEvent = vi.fn();
 
-    renderHook(() =>
-      useSessionStream({ sessionId: "s1", onEvent }),
-    );
+    renderHook(() => useSessionStream({ sessionId: "s1", onEvent }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -268,9 +243,7 @@ describe("useSessionStream", () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
-    expect(onEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "log", log: "Line 1" }),
-    );
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "log", log: "Line 1" }));
   });
 
   it("calls onComplete callback for done/error/cancelled events", async () => {
@@ -278,9 +251,7 @@ describe("useSessionStream", () => {
     global.fetch = mockFetchWithStream(mock);
     const onComplete = vi.fn();
 
-    renderHook(() =>
-      useSessionStream({ sessionId: "s1", onComplete }),
-    );
+    renderHook(() => useSessionStream({ sessionId: "s1", onComplete }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -291,18 +262,14 @@ describe("useSessionStream", () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
-    expect(onComplete).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "done" }),
-    );
+    expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ type: "done" }));
   });
 
   it("respects maxLogs cap", async () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1", maxLogs: 3 }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1", maxLogs: 3 }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -324,9 +291,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -344,9 +309,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -367,9 +330,7 @@ describe("useSessionStream", () => {
     const mock = createMockStream();
     global.fetch = mockFetchWithStream(mock);
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
@@ -390,9 +351,7 @@ describe("useSessionStream", () => {
       status: 500,
     });
 
-    const { result } = renderHook(() =>
-      useSessionStream({ sessionId: "s1" }),
-    );
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);

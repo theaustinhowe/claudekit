@@ -194,7 +194,7 @@ describe("subscribe", () => {
     expect(events.length).toBeGreaterThan(0);
     expect(events[0]).toEqual(expect.objectContaining({ type: "init" }));
 
-    unsub!();
+    unsub?.();
   });
 });
 
@@ -232,7 +232,7 @@ describe("getLiveSession", () => {
     await startSession(sessionId, runner);
     const session = getLiveSession(sessionId);
     expect(session).toBeDefined();
-    expect(session!.id).toBe(sessionId);
+    expect(session?.id).toBe(sessionId);
   });
 });
 

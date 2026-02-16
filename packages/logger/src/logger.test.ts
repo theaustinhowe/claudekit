@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
@@ -84,7 +84,9 @@ describe("parseLogFileName", () => {
 describe("listLogFiles", () => {
   it("discovers .ndjson files and returns metadata", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["gadget.2026-02-15.ndjson", "web.ndjson", "ignore.txt"] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue(["gadget.2026-02-15.ndjson", "web.ndjson", "ignore.txt"] as unknown as ReturnType<
+      typeof readdirSync
+    >);
 
     const { listLogFiles } = await import("./index.js");
     const result = listLogFiles("/tmp/logs");
@@ -97,7 +99,9 @@ describe("listLogFiles", () => {
 
   it("filters out non-ndjson files", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["notes.txt", "data.json", "app.ndjson"] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue(["notes.txt", "data.json", "app.ndjson"] as unknown as ReturnType<
+      typeof readdirSync
+    >);
 
     const { listLogFiles } = await import("./index.js");
     const result = listLogFiles("/tmp/logs");

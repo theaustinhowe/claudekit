@@ -1,7 +1,5 @@
-import { type MockInstance, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { Readable, Writable } from "node:stream";
+import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 
 vi.mock("node:child_process", () => ({
   execSync: vi.fn(),
@@ -81,7 +79,16 @@ describe("runClaude", () => {
 
     expect(mockedSpawn).toHaveBeenCalledWith(
       "claude",
-      ["-p", "--verbose", "--output-format", "stream-json", "--allowedTools", "Write", "--disallowedTools", "Edit,Bash"],
+      [
+        "-p",
+        "--verbose",
+        "--output-format",
+        "stream-json",
+        "--allowedTools",
+        "Write",
+        "--disallowedTools",
+        "Edit,Bash",
+      ],
       expect.objectContaining({
         cwd: "/my/project",
         stdio: ["pipe", "pipe", "pipe"],
@@ -160,14 +167,14 @@ describe("runClaude", () => {
     });
 
     // Emit a system event
-    child.stdout.emit("data", Buffer.from(JSON.stringify({ type: "system" }) + "\n"));
+    child.stdout.emit("data", Buffer.from(`${JSON.stringify({ type: "system" })}\n`));
 
     // Emit an assistant text event
     const assistantEvt = {
       type: "assistant",
       message: { content: [{ type: "text", text: "Hello world" }] },
     };
-    child.stdout.emit("data", Buffer.from(JSON.stringify(assistantEvt) + "\n"));
+    child.stdout.emit("data", Buffer.from(`${JSON.stringify(assistantEvt)}\n`));
 
     // Emit a result event with final content
     const resultEvt = {
@@ -175,7 +182,7 @@ describe("runClaude", () => {
       result: "Hello world - final result",
       duration_ms: 2000,
     };
-    child.stdout.emit("data", Buffer.from(JSON.stringify(resultEvt) + "\n"));
+    child.stdout.emit("data", Buffer.from(`${JSON.stringify(resultEvt)}\n`));
 
     // Close the process
     child.emit("close", 0);
@@ -290,8 +297,8 @@ describe("runClaude", () => {
 
     const healthWarning = progress.find((p) => p.log?.includes("[warn]"));
     expect(healthWarning).toBeDefined();
-    expect(healthWarning!.log).toContain("No output from Claude CLI after 1s");
-    expect(healthWarning!.bytesReceived).toBe(0);
+    expect(healthWarning?.log).toContain("No output from Claude CLI after 1s");
+    expect(healthWarning?.bytesReceived).toBe(0);
   });
 
   it("does not emit spawn health warning if data arrives before timeout", async () => {
@@ -308,7 +315,7 @@ describe("runClaude", () => {
     });
 
     // Send data before health timeout fires
-    child.stdout.emit("data", Buffer.from(JSON.stringify({ type: "system" }) + "\n"));
+    child.stdout.emit("data", Buffer.from(`${JSON.stringify({ type: "system" })}\n`));
 
     vi.advanceTimersByTime(5000);
 

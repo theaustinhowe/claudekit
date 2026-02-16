@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { VALID_TRANSITIONS, ARCHIVABLE_STATUSES, JOB_STATUS_LABELS } from "./constants";
+import { describe, expect, it } from "vitest";
+import { ARCHIVABLE_STATUSES, JOB_STATUS_LABELS, VALID_TRANSITIONS } from "./constants";
 import type { JobStatus } from "./types";
 
 // ---------------------------------------------------------------------------

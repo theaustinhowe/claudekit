@@ -301,7 +301,7 @@ describe("parseStreamJsonEvent", () => {
         },
       };
       const result = parseStreamJsonEvent(evt, cwd);
-      const thinkingLine = result.log!.split("\n")[0];
+      const thinkingLine = result.log?.split("\n")[0];
       // Tab + 80 chars + "..."
       expect(thinkingLine).toBe(`\t${"A".repeat(80)}...`);
     });

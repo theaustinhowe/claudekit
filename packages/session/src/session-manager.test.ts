@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SessionEvent, SessionPersistence, SessionRunner } from "./types.js";
 import { createSessionManager } from "./session-manager.js";
+import type { SessionEvent, SessionPersistence, SessionRunner } from "./types.js";
 
 function createMockPersistence(): SessionPersistence {
   return {
@@ -10,7 +10,9 @@ function createMockPersistence(): SessionPersistence {
   };
 }
 
-function defaultSessionRow(overrides: Partial<{ session_type: string; label: string; status: string; pid: number | null }> = {}) {
+function defaultSessionRow(
+  overrides: Partial<{ session_type: string; label: string; status: string; pid: number | null }> = {},
+) {
   return {
     session_type: "audit",
     label: "Test Session",
@@ -50,10 +52,13 @@ describe("createSessionManager", () => {
       const live = await manager.startSession("s1", runner);
 
       expect(persistence.loadSession).toHaveBeenCalledWith("s1");
-      expect(persistence.updateSession).toHaveBeenCalledWith("s1", expect.objectContaining({
-        status: "running",
-        started_at: expect.any(String),
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({
+          status: "running",
+          started_at: expect.any(String),
+        }),
+      );
       expect(live.id).toBe("s1");
       expect(live.sessionType).toBe("audit");
       expect(live.label).toBe("Test Session");
@@ -88,7 +93,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = () => new Promise((resolve) => { resolveRunner = resolve; });
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
 
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
@@ -113,12 +121,15 @@ describe("createSessionManager", () => {
       await live.completionPromise;
 
       expect(live.status).toBe("done");
-      expect(persistence.updateSession).toHaveBeenCalledWith("s1", expect.objectContaining({
-        status: "done",
-        progress: 100,
-        completed_at: expect.any(String),
-        result_json: JSON.stringify({ score: 42 }),
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({
+          status: "done",
+          progress: 100,
+          completed_at: expect.any(String),
+          result_json: JSON.stringify({ score: 42 }),
+        }),
+      );
 
       const doneEvent = live.events.find((e) => e.type === "done");
       expect(doneEvent).toBeDefined();
@@ -138,11 +149,14 @@ describe("createSessionManager", () => {
       await live.completionPromise;
 
       expect(live.status).toBe("error");
-      expect(persistence.updateSession).toHaveBeenCalledWith("s1", expect.objectContaining({
-        status: "error",
-        completed_at: expect.any(String),
-        error_message: "Something broke",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({
+          status: "error",
+          completed_at: expect.any(String),
+          error_message: "Something broke",
+        }),
+      );
 
       const errorEvent = live.events.find((e) => e.type === "error");
       expect(errorEvent).toBeDefined();
@@ -170,11 +184,14 @@ describe("createSessionManager", () => {
       await live.completionPromise;
 
       expect(live.status).toBe("cancelled");
-      expect(persistence.updateSession).toHaveBeenCalledWith("s1", expect.objectContaining({
-        status: "cancelled",
-        completed_at: expect.any(String),
-        error_message: "Cancelled by user",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({
+          status: "cancelled",
+          completed_at: expect.any(String),
+          error_message: "Cancelled by user",
+        }),
+      );
 
       const cancelledEvent = live.events.find((e) => e.type === "cancelled");
       expect(cancelledEvent).toBeDefined();
@@ -249,17 +266,23 @@ describe("createSessionManager", () => {
       const live = await manager.startSession("s1", runner);
       await live.completionPromise;
 
-      expect(persistence.updateSession).toHaveBeenCalledWith("s1", expect.objectContaining({
-        progress: 50,
-        phase: "scanning",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({
+          progress: 50,
+          phase: "scanning",
+        }),
+      );
     });
 
     it("should clear subscribers after completion", async () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = () => new Promise((resolve) => { resolveRunner = resolve; });
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       const live = await manager.startSession("s1", runner);
@@ -284,9 +307,12 @@ describe("createSessionManager", () => {
       const live = await manager.startSession("s1", runner);
       await live.completionPromise;
 
-      expect(persistence.updateSession).toHaveBeenCalledWith("s1", expect.objectContaining({
-        result_json: "{}",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({
+          result_json: "{}",
+        }),
+      );
     });
 
     it("should stringify non-Error throws", async () => {
@@ -301,9 +327,12 @@ describe("createSessionManager", () => {
       await live.completionPromise;
 
       expect(live.status).toBe("error");
-      expect(persistence.updateSession).toHaveBeenCalledWith("s1", expect.objectContaining({
-        error_message: "string error",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "s1",
+        expect.objectContaining({
+          error_message: "string error",
+        }),
+      );
     });
   });
 
@@ -315,13 +344,14 @@ describe("createSessionManager", () => {
     it("should abort a running session", async () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
-      let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = ({ signal }) => new Promise((resolve, reject) => {
-        resolveRunner = resolve;
-        signal.addEventListener("abort", () => {
-          reject(new DOMException("The operation was aborted.", "AbortError"));
+      let _resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
+      const runner: SessionRunner = ({ signal }) =>
+        new Promise((resolve, reject) => {
+          _resolveRunner = resolve;
+          signal.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
         });
-      });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       const live = await manager.startSession("s1", runner);
@@ -362,11 +392,14 @@ describe("createSessionManager", () => {
 
       expect(result).toBe(true);
       expect(killSpy).toHaveBeenCalledWith(12345, "SIGTERM");
-      expect(persistence.updateSession).toHaveBeenCalledWith("orphaned-session", expect.objectContaining({
-        status: "cancelled",
-        completed_at: expect.any(String),
-        error_message: "Cancelled (orphaned session)",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "orphaned-session",
+        expect.objectContaining({
+          status: "cancelled",
+          completed_at: expect.any(String),
+          error_message: "Cancelled (orphaned session)",
+        }),
+      );
 
       killSpy.mockRestore();
     });
@@ -382,9 +415,12 @@ describe("createSessionManager", () => {
       const result = await manager.cancelSession("orphaned-dead");
 
       expect(result).toBe(true);
-      expect(persistence.updateSession).toHaveBeenCalledWith("orphaned-dead", expect.objectContaining({
-        status: "cancelled",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "orphaned-dead",
+        expect.objectContaining({
+          status: "cancelled",
+        }),
+      );
 
       killSpy.mockRestore();
     });
@@ -396,10 +432,13 @@ describe("createSessionManager", () => {
       const result = await manager.cancelSession("pending-orphan");
 
       expect(result).toBe(true);
-      expect(persistence.updateSession).toHaveBeenCalledWith("pending-orphan", expect.objectContaining({
-        status: "cancelled",
-        error_message: "Cancelled (orphaned session)",
-      }));
+      expect(persistence.updateSession).toHaveBeenCalledWith(
+        "pending-orphan",
+        expect.objectContaining({
+          status: "cancelled",
+          error_message: "Cancelled (orphaned session)",
+        }),
+      );
     });
   });
 
@@ -419,7 +458,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = () => new Promise((resolve) => { resolveRunner = resolve; });
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       const live = await manager.startSession("s1", runner);
@@ -440,10 +482,11 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let onProgress!: (event: SessionEvent) => void;
-      const runner: SessionRunner = (ctx) => new Promise((resolve) => {
-        onProgress = ctx.onProgress;
-        // Don't resolve yet so session stays running
-      });
+      const runner: SessionRunner = (ctx) =>
+        new Promise((_resolve) => {
+          onProgress = ctx.onProgress;
+          // Don't resolve yet so session stays running
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       await manager.startSession("s1", runner);
@@ -466,9 +509,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let onProgress!: (event: SessionEvent) => void;
-      const runner: SessionRunner = (ctx) => new Promise((resolve) => {
-        onProgress = ctx.onProgress;
-      });
+      const runner: SessionRunner = (ctx) =>
+        new Promise((_resolve) => {
+          onProgress = ctx.onProgress;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       const live = await manager.startSession("s1", runner);
@@ -481,7 +525,7 @@ describe("createSessionManager", () => {
       received.length = 0;
 
       // Unsubscribe
-      unsub!();
+      unsub?.();
 
       // Events after unsubscribe should not be received
       onProgress({ type: "progress", progress: 75 });
@@ -514,7 +558,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = () => new Promise((resolve) => { resolveRunner = resolve; });
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       await manager.startSession("s1", runner);
@@ -564,7 +611,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = () => new Promise((resolve) => { resolveRunner = resolve; });
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       const live = await manager.startSession("s1", runner);
@@ -596,7 +646,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = () => new Promise((resolve) => { resolveRunner = resolve; });
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       await manager.startSession("s1", runner);
@@ -621,7 +674,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = () => new Promise((resolve) => { resolveRunner = resolve; });
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       await manager.startSession("s1", runner);
@@ -711,9 +767,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let onProgress!: (event: SessionEvent) => void;
-      const runner: SessionRunner = (ctx) => new Promise((resolve) => {
-        onProgress = ctx.onProgress;
-      });
+      const runner: SessionRunner = (ctx) =>
+        new Promise((_resolve) => {
+          onProgress = ctx.onProgress;
+        });
       const manager = createSessionManager({
         persistence,
         logFlushIntervalMs: 2000,
@@ -751,9 +808,10 @@ describe("createSessionManager", () => {
       await live.completionPromise;
 
       // Logs should have been flushed on completion even without interval
-      expect(persistence.persistLogs).toHaveBeenCalledWith("s1", expect.arrayContaining([
-        { log: "final log", logType: "info" },
-      ]));
+      expect(persistence.persistLogs).toHaveBeenCalledWith(
+        "s1",
+        expect.arrayContaining([{ log: "final log", logType: "info" }]),
+      );
     });
 
     it("should flush remaining logs on error", async () => {
@@ -768,9 +826,10 @@ describe("createSessionManager", () => {
       const live = await manager.startSession("s1", runner);
       await live.completionPromise;
 
-      expect(persistence.persistLogs).toHaveBeenCalledWith("s1", expect.arrayContaining([
-        { log: "pre-error log", logType: "status" },
-      ]));
+      expect(persistence.persistLogs).toHaveBeenCalledWith(
+        "s1",
+        expect.arrayContaining([{ log: "pre-error log", logType: "status" }]),
+      );
     });
 
     it("should default logType to 'status' when not provided", async () => {
@@ -785,18 +844,17 @@ describe("createSessionManager", () => {
       const live = await manager.startSession("s1", runner);
       await live.completionPromise;
 
-      expect(persistence.persistLogs).toHaveBeenCalledWith("s1", [
-        { log: "untyped log", logType: "status" },
-      ]);
+      expect(persistence.persistLogs).toHaveBeenCalledWith("s1", [{ log: "untyped log", logType: "status" }]);
     });
 
     it("should not call persistLogs when there are no pending logs", async () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
-      let onProgress!: (event: SessionEvent) => void;
-      const runner: SessionRunner = (ctx) => new Promise((resolve) => {
-        onProgress = ctx.onProgress;
-      });
+      let _onProgress!: (event: SessionEvent) => void;
+      const runner: SessionRunner = (ctx) =>
+        new Promise((_resolve) => {
+          _onProgress = ctx.onProgress;
+        });
       const manager = createSessionManager({
         persistence,
         logFlushIntervalMs: 1000,
@@ -847,9 +905,10 @@ describe("createSessionManager", () => {
       vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
 
       let onProgress!: (event: SessionEvent) => void;
-      const runner: SessionRunner = (ctx) => new Promise((resolve) => {
-        onProgress = ctx.onProgress;
-      });
+      const runner: SessionRunner = (ctx) =>
+        new Promise((_resolve) => {
+          onProgress = ctx.onProgress;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       await manager.startSession("s1", runner);
@@ -878,10 +937,11 @@ describe("createSessionManager", () => {
 
       let onProgress!: (event: SessionEvent) => void;
       let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
-      const runner: SessionRunner = (ctx) => new Promise((resolve) => {
-        onProgress = ctx.onProgress;
-        resolveRunner = resolve;
-      });
+      const runner: SessionRunner = (ctx) =>
+        new Promise((resolve) => {
+          onProgress = ctx.onProgress;
+          resolveRunner = resolve;
+        });
       const manager = createSessionManager({ persistence, useGlobalCache: false });
 
       const live = await manager.startSession("s1", runner);

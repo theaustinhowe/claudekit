@@ -115,7 +115,7 @@ function validateClaudeSession(sessionId: string, worktreePath: string): Session
  * Returns validation result with error details if invalid
  */
 function validateSession(
-  agentType: string,
+  _agentType: string,
   sessionId: string | null,
   worktreePath: string | null,
   _agentSessionData: unknown,

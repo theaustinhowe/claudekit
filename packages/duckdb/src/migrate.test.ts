@@ -146,9 +146,9 @@ describe("runMigrations", () => {
   it("ignores 'already exists' errors in DDL", async () => {
     const conn = createMockConnection();
 
-    let callCount = 0;
+    let _callCount = 0;
     (conn.run as ReturnType<typeof vi.fn>).mockImplementation((sql: string) => {
-      callCount++;
+      _callCount++;
       // Simulate "already exists" error on the actual DDL statement execution
       if (sql.includes("CREATE TABLE jobs")) {
         throw new Error("Table 'jobs' already exists");

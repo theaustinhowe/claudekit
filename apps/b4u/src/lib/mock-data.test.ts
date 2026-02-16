@@ -33,11 +33,11 @@ describe("FILE_TREE", () => {
 
   it("has children", () => {
     expect(FILE_TREE.children).toBeDefined();
-    expect(FILE_TREE.children!.length).toBeGreaterThan(0);
+    expect(FILE_TREE.children?.length).toBeGreaterThan(0);
   });
 
   it("contains file and directory nodes", () => {
-    const types = new Set(FILE_TREE.children!.map((c) => c.type));
+    const types = new Set(FILE_TREE.children?.map((c) => c.type));
     expect(types.has("directory")).toBe(true);
     expect(types.has("file")).toBe(true);
   });

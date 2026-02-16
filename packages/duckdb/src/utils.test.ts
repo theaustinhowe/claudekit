@@ -50,16 +50,16 @@ describe("buildUpdate", () => {
     const result = buildUpdate("jobs", "job-1", { status: "running", branch: "main" }, undefined, timestampFn);
 
     expect(result).not.toBeNull();
-    expect(result!.sql).toBe("UPDATE jobs SET status = ?, branch = ?, updated_at = ? WHERE id = ?");
-    expect(result!.params).toEqual(["running", "main", fixedTimestamp, "job-1"]);
+    expect(result?.sql).toBe("UPDATE jobs SET status = ?, branch = ?, updated_at = ? WHERE id = ?");
+    expect(result?.params).toEqual(["running", "main", fixedTimestamp, "job-1"]);
   });
 
   it("skips undefined values", () => {
     const result = buildUpdate("jobs", "job-1", { status: "done", branch: undefined }, undefined, timestampFn);
 
     expect(result).not.toBeNull();
-    expect(result!.sql).toBe("UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?");
-    expect(result!.params).toEqual(["done", fixedTimestamp, "job-1"]);
+    expect(result?.sql).toBe("UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?");
+    expect(result?.params).toEqual(["done", fixedTimestamp, "job-1"]);
   });
 
   it("stringifies JSON fields", () => {
@@ -67,7 +67,7 @@ describe("buildUpdate", () => {
     const result = buildUpdate("repos", "repo-1", { config: { key: "val" } }, jsonFields, timestampFn);
 
     expect(result).not.toBeNull();
-    expect(result!.params[0]).toBe('{"key":"val"}');
+    expect(result?.params[0]).toBe('{"key":"val"}');
   });
 
   it("does not stringify non-JSON fields", () => {
@@ -75,16 +75,16 @@ describe("buildUpdate", () => {
     const result = buildUpdate("repos", "repo-1", { name: "test", config: { a: 1 } }, jsonFields, timestampFn);
 
     expect(result).not.toBeNull();
-    expect(result!.params[0]).toBe("test");
-    expect(result!.params[1]).toBe('{"a":1}');
+    expect(result?.params[0]).toBe("test");
+    expect(result?.params[1]).toBe('{"a":1}');
   });
 
   it("appends updated_at timestamp", () => {
     const result = buildUpdate("jobs", "job-1", { status: "done" }, undefined, timestampFn);
 
     expect(result).not.toBeNull();
-    expect(result!.sql).toContain("updated_at = ?");
-    expect(result!.params).toContain(fixedTimestamp);
+    expect(result?.sql).toContain("updated_at = ?");
+    expect(result?.params).toContain(fixedTimestamp);
   });
 
   it("returns null when all values are undefined", () => {
@@ -114,7 +114,7 @@ describe("buildUpdate", () => {
     const result = buildUpdate("jobs", "job-1", { status: null }, undefined, timestampFn);
 
     expect(result).not.toBeNull();
-    expect(result!.params[0]).toBeNull();
+    expect(result?.params[0]).toBeNull();
   });
 
   it("uses default timestampFn when not provided", () => {
@@ -124,7 +124,7 @@ describe("buildUpdate", () => {
 
     expect(result).not.toBeNull();
     // The timestamp should be between before and after
-    const ts = result!.params[1] as string;
+    const ts = result?.params[1] as string;
     expect(ts >= before).toBe(true);
     expect(ts <= after).toBe(true);
   });

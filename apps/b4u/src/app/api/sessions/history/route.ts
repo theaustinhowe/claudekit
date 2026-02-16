@@ -73,8 +73,9 @@ export async function GET() {
     // Group sessions by run_id
     const byRunId: Record<string, SessionRow[]> = {};
     for (const row of rows) {
-      if (!byRunId[row.run_id!]) byRunId[row.run_id!] = [];
-      byRunId[row.run_id!].push(row);
+      const runId = row.run_id ?? "";
+      if (!byRunId[runId]) byRunId[runId] = [];
+      byRunId[runId].push(row);
     }
 
     // Build flat run entries list

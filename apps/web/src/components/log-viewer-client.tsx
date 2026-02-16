@@ -294,11 +294,14 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
             {tailing ? "Pause" : "Tail"}
           </button>
         )}
-
       </div>
 
       {/* Log entries */}
-      <div ref={containerRef} className="flex-1 overflow-auto font-mono text-[13px] leading-relaxed" style={{ contain: "strict" }}>
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-auto font-mono text-[13px] leading-relaxed"
+        style={{ contain: "strict" }}
+      >
         <div
           style={{
             height: `${virtualizer.getTotalSize()}px`,
@@ -312,6 +315,8 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
               <Tooltip key={virtualItem.key}>
                 <TooltipTrigger asChild>
                   <div
+                    role="row"
+                    tabIndex={0}
                     style={{
                       position: "absolute",
                       top: 0,
@@ -325,6 +330,9 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
                       ROW_BG_COLORS[entry.level],
                     )}
                     onClick={() => handleRowClick(entry, virtualItem.index)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") handleRowClick(entry, virtualItem.index);
+                    }}
                   >
                     <span className="w-20 flex-shrink-0 text-muted-foreground">{formatTimestamp(entry.time)}</span>
                     <span className={cn("w-12 flex-shrink-0 font-semibold", LEVEL_COLORS[entry.level] || "")}>
