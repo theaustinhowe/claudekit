@@ -228,19 +228,19 @@ describe("getClaudeRateLimits", () => {
       expect(result?.modelLimits).not.toHaveProperty("cowork");
     });
 
-    it("parses extra_usage when enabled", async () => {
+    it("parses extra_usage when enabled (cents to dollars)", async () => {
       setupFetchResponse({
         five_hour: { utilization: 0, resets_at: "" },
         seven_day: { utilization: 0, resets_at: "" },
-        extra_usage: { is_enabled: true, utilization: 25, used_credits: 5, monthly_limit: 20 },
+        extra_usage: { is_enabled: true, utilization: 25, used_credits: 2057, monthly_limit: 5000 },
       });
 
       const result = await getClaudeRateLimits();
       expect(result?.extraUsage).toEqual({
         isEnabled: true,
         utilization: 25,
-        usedCredits: 5,
-        monthlyLimit: 20,
+        usedCredits: 20.57,
+        monthlyLimit: 50,
       });
     });
 

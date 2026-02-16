@@ -389,8 +389,8 @@ describe("getClaudeRateLimits", () => {
     expect(result?.modelLimits.sonnet.utilization).toBe(30);
     expect(result?.extraUsage).not.toBeNull();
     expect(result?.extraUsage?.isEnabled).toBe(true);
-    expect(result?.extraUsage?.usedCredits).toBe(50);
-    expect(result?.extraUsage?.monthlyLimit).toBe(200);
+    expect(result?.extraUsage?.usedCredits).toBe(0.5);
+    expect(result?.extraUsage?.monthlyLimit).toBe(2);
   });
 
   it("returns null when no OAuth token is available", async () => {

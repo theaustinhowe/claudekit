@@ -123,8 +123,8 @@ async function fetchRateLimits(token: string): Promise<ClaudeRateLimits> {
             (data.extra_usage.monthly_limit
               ? ((data.extra_usage.used_credits ?? 0) / data.extra_usage.monthly_limit) * 100
               : 0),
-          usedCredits: data.extra_usage.used_credits ?? 0,
-          monthlyLimit: data.extra_usage.monthly_limit ?? 0,
+          usedCredits: (data.extra_usage.used_credits ?? 0) / 100,
+          monthlyLimit: (data.extra_usage.monthly_limit ?? 0) / 100,
         }
       : null,
   };
