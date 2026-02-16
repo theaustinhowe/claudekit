@@ -46,6 +46,16 @@ export async function concatenateVideos(videoPaths: string[], outputPath: string
   await runFfmpeg(["-y", "-f", "concat", "-safe", "0", "-i", concatFile, "-c:v", "libx264", "-c:a", "aac", outputPath]);
 }
 
+export async function concatenateAudioFiles(audioPaths: string[], outputPath: string): Promise<void> {
+  const concatDir = join(process.cwd(), "data", "tmp");
+  await mkdir(concatDir, { recursive: true });
+  const concatFile = join(concatDir, "audio-concat.txt");
+  const content = audioPaths.map((p) => `file '${p}'`).join("\n");
+  await writeFile(concatFile, content);
+
+  await runFfmpeg(["-y", "-f", "concat", "-safe", "0", "-i", concatFile, "-c", "copy", outputPath]);
+}
+
 async function _convertToMp4(inputPath: string, outputPath: string): Promise<void> {
   await runFfmpeg(["-y", "-i", inputPath, "-c:v", "libx264", "-c:a", "aac", "-movflags", "+faststart", outputPath]);
 }

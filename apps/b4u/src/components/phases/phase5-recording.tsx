@@ -8,12 +8,12 @@ import type { FlowScript, RecordingStatus } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
 const STATUS_LABELS: Record<RecordingStatus["status"], string> = {
-  queued: "Queued",
-  seeding: "Seeding Data",
-  launching: "Launching App",
-  recording: "Recording",
-  processing: "Processing",
-  done: "Done",
+  queued: "— Queued",
+  seeding: "◇ Seeding Data",
+  launching: "▸ Launching App",
+  recording: "● Recording",
+  processing: "↻ Processing",
+  done: "✓ Done",
 };
 const STATUS_COLORS: Record<RecordingStatus["status"], string> = {
   queued: "hsl(var(--muted-foreground))",

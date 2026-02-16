@@ -27,12 +27,14 @@ export function Phase6Voiceover() {
   const [speed, setSpeed] = useState(1.0);
   const [hoveredParagraph, setHoveredParagraph] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
   const [editedScripts, setEditedScripts] = useState<Record<string, string[]>>({});
   const [editingParagraph, setEditingParagraph] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [paragraphErrors, setParagraphErrors] = useState<Record<string, Record<number, string>>>({});
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const MAX_PARAGRAPH_LENGTH = 5000;
 
   // Set defaults once data loads
@@ -53,6 +55,16 @@ export function Phase6Voiceover() {
       setEditedScripts(voiceoverScripts);
     }
   }, [voiceoverScripts]);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   const saveVoiceovers = useCallback(async (scripts: Record<string, string[]>) => {
     setSaving(true);
@@ -121,6 +133,64 @@ export function Phase6Voiceover() {
     debouncedSave(updated);
   };
 
+  const handlePreviewAudio = useCallback(async () => {
+    // Stop if already playing
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlaying(false);
+      return;
+    }
+
+    if (!selectedVoice || !activeFlow) return;
+    const paragraphs = editedScripts[activeFlow];
+    if (!paragraphs || paragraphs.length === 0) return;
+
+    // Use first paragraph as preview text
+    const previewText = paragraphs[0].slice(0, 200);
+    if (!previewText.trim()) return;
+
+    setAudioLoading(true);
+    setIsPlaying(true);
+
+    try {
+      const res = await fetch("/api/audio/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: previewText, voiceId: selectedVoice }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Preview failed");
+      }
+
+      const audioBlob = await res.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.playbackRate = speed;
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsPlaying(false);
+        audioRef.current = null;
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = () => {
+        setIsPlaying(false);
+        audioRef.current = null;
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      await audio.play();
+    } catch {
+      setIsPlaying(false);
+      audioRef.current = null;
+    } finally {
+      setAudioLoading(false);
+    }
+  }, [isPlaying, selectedVoice, activeFlow, editedScripts, speed]);
+
   const loading = l1 || l2 || l3 || l4;
   const error = e1 || e2 || e3 || e4;
 
@@ -141,6 +211,14 @@ export function Phase6Voiceover() {
 
   const paragraphs = activeFlow ? editedScripts[activeFlow] || [] : [];
   const markers = activeFlow ? timelineMarkers[activeFlow] || [] : [];
+
+  // Theme-aware timeline colors using HSL variables with varying opacity
+  const timelineColors = [
+    "hsl(var(--primary) / 0.7)",
+    "hsl(var(--primary) / 0.5)",
+    "hsl(var(--primary) / 0.6)",
+    "hsl(var(--primary) / 0.4)",
+  ];
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
@@ -181,7 +259,6 @@ export function Phase6Voiceover() {
             <div className="absolute inset-0 flex">
               {markers.map((marker, i) => {
                 const widthPct = 100 / markers.length;
-                const colors = ["#1e3a5f", "#2d1e5f", "#1e5f3a", "#5f3a1e"];
                 return (
                   <button
                     // biome-ignore lint/suspicious/noArrayIndexKey: timeline markers have no stable key
@@ -190,7 +267,7 @@ export function Phase6Voiceover() {
                     className="h-full flex items-center justify-center cursor-pointer transition-opacity"
                     style={{
                       width: `${widthPct}%`,
-                      background: colors[i % colors.length],
+                      background: timelineColors[i % timelineColors.length],
                       opacity: hoveredParagraph === marker.paragraphIndex ? 1 : 0.6,
                       borderRight: i < markers.length - 1 ? "1px solid hsl(var(--border))" : "none",
                     }}
@@ -241,7 +318,7 @@ export function Phase6Voiceover() {
                 step="0.1"
                 value={speed}
                 onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                className="w-[60px] accent-primary"
+                className="w-[100px] accent-primary"
               />
             </label>
             <span className="text-2xs w-[28px] text-muted-foreground">{speed.toFixed(1)}x</span>
@@ -250,15 +327,17 @@ export function Phase6Voiceover() {
           <Tooltip label={isPlaying ? "Stop audio preview" : "Preview voiceover audio"} position="top">
             <button
               type="button"
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={handlePreviewAudio}
+              disabled={audioLoading}
               className="ml-auto px-3 py-1.5 text-2xs font-medium transition-colors rounded-sm"
               style={{
                 background: isPlaying ? "hsl(var(--primary))" : "hsl(var(--muted))",
                 color: isPlaying ? "hsl(var(--background))" : "hsl(var(--primary))",
                 border: "1px solid hsl(var(--primary))",
+                opacity: audioLoading ? 0.7 : 1,
               }}
             >
-              {isPlaying ? "■ Stop" : "▶ Preview Audio"}
+              {audioLoading ? "Loading..." : isPlaying ? "■ Stop" : "▶ Preview Audio"}
             </button>
           </Tooltip>
         </div>
@@ -332,28 +411,26 @@ export function Phase6Voiceover() {
             );
           })}
 
-          {/* Waveform mock */}
+          {/* Audio playing indicator */}
           {isPlaying && (
             <div className="mt-2 p-3 bg-card border border-primary rounded-md">
-              <div className="flex items-center gap-1 h-[24px]">
-                {Array.from({ length: 40 }).map((_, i) => (
-                  <div
-                    // biome-ignore lint/suspicious/noArrayIndexKey: decorative waveform bars have no stable key
-                    key={i}
-                    className="flex-1"
-                    style={{
-                      background: "hsl(var(--primary))",
-                      height: `${Math.random() * 100}%`,
-                      minHeight: "2px",
-                      opacity: 0.6,
-                      animation: `pulse ${0.8 + Math.random()}s ease-in-out infinite`,
-                      animationDelay: `${i * 30}ms`,
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="text-2xs mt-1 text-center text-primary">
-                Playing preview — {voiceOptions.find((v) => v.id === selectedVoice)?.name}
+              <div className="flex items-center gap-2 justify-center">
+                <div className="flex items-center gap-0.5 h-[24px]">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                      // biome-ignore lint/suspicious/noArrayIndexKey: decorative animation bars
+                      key={i}
+                      className="w-[3px] bg-primary rounded-full"
+                      style={{
+                        animation: `pulse ${0.6 + i * 0.15}s ease-in-out infinite alternate`,
+                        height: `${8 + i * 3}px`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-2xs text-primary">
+                  Playing preview — {voiceOptions.find((v) => v.id === selectedVoice)?.name}
+                </span>
               </div>
             </div>
           )}

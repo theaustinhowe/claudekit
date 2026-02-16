@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { SessionRunner } from "@devkit/session";
 import { execute, getDb, queryAll } from "@/lib/db";
 import { generateChapters } from "@/lib/video/chapter-generator";
-import { concatenateVideos, mergeVideoAudio } from "@/lib/video/ffmpeg-merger";
+import { concatenateAudioFiles, concatenateVideos, mergeVideoAudio } from "@/lib/video/ffmpeg-merger";
 
 export function createFinalMergeRunner(): SessionRunner {
   return async ({ onProgress, signal }) => {
@@ -61,10 +61,17 @@ export function createFinalMergeRunner(): SessionRunner {
     if (audioFiles.length > 0) {
       onProgress({ type: "progress", message: "Merging audio track...", progress: 50 });
 
-      // Concatenate audio files first (simple concat for mp3)
       const audioPaths = audioFiles.map((a) => a.file_path);
-      // For now, use the first audio file (full merge would need ffmpeg concat)
-      const audioPath = audioPaths[0];
+      let audioPath: string;
+
+      if (audioPaths.length > 1) {
+        // Concatenate all audio files for multi-flow videos
+        onProgress({ type: "progress", message: "Concatenating audio tracks...", progress: 40 });
+        audioPath = join(outputDir, `${safeName}-audio.mp3`);
+        await concatenateAudioFiles(audioPaths, audioPath);
+      } else {
+        audioPath = audioPaths[0];
+      }
 
       finalPath = join(outputDir, `${safeName}-walkthrough.mp4`);
       await mergeVideoAudio({

@@ -14,11 +14,13 @@ import {
   Rocket,
   RotateCw,
   ScrollText,
+  Settings,
   Video,
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
 
 interface AppInfo {
   id: string;
@@ -98,6 +100,7 @@ function AppCardSkeleton({ index }: { index: number }) {
 
 export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
   const [apps, setApps] = useState<AppInfo[] | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const fetchApps = useCallback(async () => {
     try {
@@ -166,7 +169,18 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
       <div className="max-w-6xl mx-auto">
         {/* Applications */}
         <section className="mb-10">
-          <h2 className="text-lg font-semibold mb-4">Applications</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Applications</h2>
+            <button
+              type="button"
+              onClick={() => setSetupOpen(true)}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Setup Environment
+            </button>
+          </div>
+          <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
           <div className="grid gap-4 sm:grid-cols-2">
             {apps === null ? (
               <>

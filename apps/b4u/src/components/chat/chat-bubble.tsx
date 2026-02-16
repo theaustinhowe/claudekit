@@ -12,6 +12,18 @@ interface ChatBubbleProps {
 export function ChatBubble({ message, index }: ChatBubbleProps) {
   const isAI = message.role === "ai";
   const isUser = message.role === "user";
+  const isSystem = message.role === "system";
+
+  // System messages are compact inline notifications
+  if (isSystem) {
+    return (
+      <div className="flex justify-center animate-fade-in" style={{ animationDelay: `${Math.min(index * 30, 150)}ms` }}>
+        <div className="text-2xs px-3 py-1 rounded-full text-muted-foreground bg-muted border border-border">
+          {message.content}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

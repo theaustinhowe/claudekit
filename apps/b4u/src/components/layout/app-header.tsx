@@ -25,7 +25,7 @@ export function PhaseStepper() {
       )}
 
       {/* Phase stepper */}
-      <nav className="flex items-center gap-0.5 ml-auto overflow-x-auto scrollbar-none">
+      <nav aria-label="Phase progress" className="flex items-center gap-0.5 ml-auto overflow-x-auto scrollbar-none">
         {phases.map((phase, i) => {
           const status = state.phaseStatuses[phase];
           const isCompleted = status === "completed";
@@ -38,6 +38,8 @@ export function PhaseStepper() {
                 type="button"
                 onClick={() => handlePhaseClick(phase)}
                 title={PHASE_LABELS[phase]}
+                aria-label={`Phase ${phase}: ${PHASE_LABELS[phase]} — ${status}`}
+                aria-current={isActive ? "step" : undefined}
                 className={cn(
                   "flex items-center gap-1.5 py-1.5 text-2xs transition-all px-2 md:px-3 rounded-lg border",
                   isCompleted && "cursor-pointer hover:opacity-80 text-primary border-transparent",

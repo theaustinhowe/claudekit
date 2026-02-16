@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import { useApp } from "@/lib/store";
 import type { AuthOverride, EnvItem, MockDataEntity } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { uid } from "@/lib/utils";
 
 export function Phase3DataPlan() {
+  const { dispatch } = useApp();
   const {
     data: apiEntities,
     loading: l1,
@@ -17,6 +20,16 @@ export function Phase3DataPlan() {
 
   const [authOverrides, setAuthOverrides] = useState<AuthOverride[]>([]);
   const [envItems, setEnvItems] = useState<EnvItem[]>([]);
+
+  const notifyChange = useCallback(
+    (message: string) => {
+      dispatch({
+        type: "ADD_MESSAGE",
+        message: { id: uid(), role: "system", content: message, timestamp: Date.now() },
+      });
+    },
+    [dispatch],
+  );
 
   useEffect(() => {
     if (apiAuth) setAuthOverrides(apiAuth);
@@ -70,7 +83,10 @@ export function Phase3DataPlan() {
     setAuthOverrides((prev) => {
       const updated = prev.map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a));
       const item = updated.find((a) => a.id === id);
-      if (item) persistAuthToggle(id, item.enabled);
+      if (item) {
+        persistAuthToggle(id, item.enabled);
+        notifyChange(`Auth override "${item.label}" ${item.enabled ? "enabled" : "disabled"}`);
+      }
       return updated;
     });
   };
@@ -79,7 +95,10 @@ export function Phase3DataPlan() {
     setEnvItems((prev) => {
       const updated = prev.map((e) => (e.id === id ? { ...e, enabled: !e.enabled } : e));
       const item = updated.find((e) => e.id === id);
-      if (item) persistEnvToggle(id, item.enabled);
+      if (item) {
+        persistEnvToggle(id, item.enabled);
+        notifyChange(`Environment "${item.label}" ${item.enabled ? "enabled" : "disabled"}`);
+      }
       return updated;
     });
   };

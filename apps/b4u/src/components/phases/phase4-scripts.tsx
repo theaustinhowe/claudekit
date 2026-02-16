@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState, LoadingState } from "@/components/ui/api-state";
-import type { FlowScript } from "@/lib/types";
+import type { FlowScript, ScriptStep } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { uid } from "@/lib/utils";
 
 export function Phase4Scripts() {
   const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>("/api/flow-scripts");
@@ -12,6 +13,7 @@ export function Phase4Scripts() {
   const [saving, setSaving] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [editingStep, setEditingStep] = useState<string | null>(null);
 
   useEffect(() => {
     if (flowScripts && flowScripts.length > 0) {
@@ -37,6 +39,52 @@ export function Phase4Scripts() {
       setSaving(false);
     }
   }, []);
+
+  const updateStep = useCallback(
+    (stepId: string, field: keyof ScriptStep, value: string) => {
+      const updated = scripts.map((f) =>
+        f.flowId === activeTab
+          ? { ...f, steps: f.steps.map((s) => (s.id === stepId ? { ...s, [field]: value } : s)) }
+          : f,
+      );
+      setScripts(updated);
+      saveScripts(updated);
+    },
+    [scripts, activeTab, saveScripts],
+  );
+
+  const addStep = useCallback(() => {
+    const activeScript = scripts.find((f) => f.flowId === activeTab);
+    if (!activeScript) return;
+
+    const newStep: ScriptStep = {
+      id: uid(),
+      stepNumber: activeScript.steps.length + 1,
+      url: "/",
+      action: "New action",
+      expectedOutcome: "Expected result",
+      duration: "2s",
+    };
+
+    const updated = scripts.map((f) => (f.flowId === activeTab ? { ...f, steps: [...f.steps, newStep] } : f));
+    setScripts(updated);
+    setEditingStep(newStep.id);
+    saveScripts(updated);
+  }, [scripts, activeTab, saveScripts]);
+
+  const removeStep = useCallback(
+    (stepId: string) => {
+      const updated = scripts.map((f) => {
+        if (f.flowId !== activeTab) return f;
+        const filtered = f.steps.filter((s) => s.id !== stepId);
+        return { ...f, steps: filtered.map((s, i) => ({ ...s, stepNumber: i + 1 })) };
+      });
+      setScripts(updated);
+      setEditingStep(null);
+      saveScripts(updated);
+    },
+    [scripts, activeTab, saveScripts],
+  );
 
   const handleDragStart = (index: number) => {
     setDragIndex(index);
@@ -78,6 +126,34 @@ export function Phase4Scripts() {
     setDragIndex(null);
     setDragOverIndex(null);
   };
+
+  // Keyboard reorder support
+  const handleKeyboardReorder = useCallback(
+    (index: number, e: React.KeyboardEvent) => {
+      const activeScript = scripts.find((f) => f.flowId === activeTab);
+      if (!activeScript) return;
+
+      let newIndex: number | null = null;
+      if (e.altKey && e.key === "ArrowUp" && index > 0) {
+        newIndex = index - 1;
+      } else if (e.altKey && e.key === "ArrowDown" && index < activeScript.steps.length - 1) {
+        newIndex = index + 1;
+      }
+
+      if (newIndex === null) return;
+      e.preventDefault();
+
+      const newSteps = [...activeScript.steps];
+      const [moved] = newSteps.splice(index, 1);
+      newSteps.splice(newIndex, 0, moved);
+      const renumbered = newSteps.map((step, i) => ({ ...step, stepNumber: i + 1 }));
+
+      const updated = scripts.map((f) => (f.flowId === activeTab ? { ...f, steps: renumbered } : f));
+      setScripts(updated);
+      saveScripts(updated);
+    },
+    [scripts, activeTab, saveScripts],
+  );
 
   if (loading) return <LoadingState label="Loading demo scripts..." />;
   if (error || !flowScripts || flowScripts.length === 0)
@@ -124,6 +200,7 @@ export function Phase4Scripts() {
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={() => handleDrop(index)}
                 onDragEnd={handleDragEnd}
+                onKeyDown={(e) => handleKeyboardReorder(index, e)}
                 style={{
                   opacity: dragIndex === index ? 0.4 : 1,
                   borderTop:
@@ -150,18 +227,84 @@ export function Phase4Scripts() {
 
                 {/* Step content */}
                 <div className="flex-1 pb-4 mb-1 transition-colors border-b border-border">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-2xs px-1.5 py-0.5 bg-muted border border-border rounded-sm text-primary">
-                      {step.url}
-                    </span>
-                    <span className="text-2xs text-muted-foreground">~{step.duration}</span>
-                  </div>
-                  <div className="text-xs mb-1 text-foreground">{step.action}</div>
-                  <div className="text-2xs text-muted-foreground/70">→ {step.expectedOutcome}</div>
+                  {editingStep === step.id ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-[1fr_60px] gap-2">
+                        <StepField label="URL" value={step.url} onChange={(v) => updateStep(step.id, "url", v)} />
+                        <StepField
+                          label="Duration"
+                          value={step.duration}
+                          onChange={(v) => updateStep(step.id, "duration", v)}
+                        />
+                      </div>
+                      <StepField
+                        label="Action"
+                        value={step.action}
+                        onChange={(v) => updateStep(step.id, "action", v)}
+                      />
+                      <StepField
+                        label="Expected outcome"
+                        value={step.expectedOutcome}
+                        onChange={(v) => updateStep(step.id, "expectedOutcome", v)}
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingStep(null)}
+                          className="text-2xs px-2 py-1 text-primary bg-primary/10 border border-primary rounded-sm"
+                        >
+                          Done
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeStep(step.id)}
+                          className="text-2xs px-2 py-1 text-destructive border border-destructive rounded-sm bg-transparent"
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "transparent";
+                          }}
+                        >
+                          Remove step
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="w-full text-left bg-transparent border-none p-0 cursor-pointer"
+                      onClick={() => setEditingStep(step.id)}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-2xs px-1.5 py-0.5 bg-muted border border-border rounded-sm text-primary">
+                          {step.url}
+                        </span>
+                        <span className="text-2xs text-muted-foreground">~{step.duration}</span>
+                      </div>
+                      <div className="text-xs mb-1 text-foreground">{step.action}</div>
+                      <div className="text-2xs text-muted-foreground/70">→ {step.expectedOutcome}</div>
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Add step button */}
+          <button
+            type="button"
+            onClick={addStep}
+            className="flex items-center gap-1 mt-2 ml-8 text-2xs transition-colors text-muted-foreground"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "hsl(var(--primary))";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "hsl(var(--muted-foreground))";
+            }}
+          >
+            + Add step
+          </button>
         </div>
       </div>
 
@@ -170,8 +313,37 @@ export function Phase4Scripts() {
           {activeScript.steps.length} steps · Est.{" "}
           {activeScript.steps.reduce((sum, s) => sum + parseInt(s.duration, 10), 0)}s total
         </span>
-        <span>Drag steps to reorder</span>
+        <span>Click to edit · Drag to reorder · Alt+↑↓ to move</span>
       </div>
     </div>
+  );
+}
+
+function StepField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  return (
+    <label className="text-2xs block text-muted-foreground">
+      {label}
+      <input
+        type="text"
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onBlur={() => {
+          if (localValue !== value) onChange(localValue);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            if (localValue !== value) onChange(localValue);
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        className="w-full text-xs px-2 py-1 outline-none bg-input border border-input rounded-sm text-foreground"
+      />
+    </label>
   );
 }

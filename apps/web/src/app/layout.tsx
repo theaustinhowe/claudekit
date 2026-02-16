@@ -1,4 +1,5 @@
 import { ThemeFOUCScript } from "@devkit/hooks";
+import { Toaster } from "@devkit/ui/components/sonner";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Header } from "@/components/header";
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <Header />
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

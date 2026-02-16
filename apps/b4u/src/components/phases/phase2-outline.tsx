@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ErrorState, LoadingState } from "@/components/ui/api-state";
 import type { RouteEntry, UserFlow } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { uid } from "@/lib/utils";
 
 function validateRoute(route: RouteEntry): Record<string, string> {
   const errors: Record<string, string> = {};
@@ -33,6 +34,7 @@ export function Phase2Outline() {
   const [routes, setRoutes] = useState<RouteEntry[]>([]);
   const [flows, setFlows] = useState<UserFlow[]>([]);
   const [editingRoute, setEditingRoute] = useState<number | null>(null);
+  const [editingFlow, setEditingFlow] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"routes" | "flows">("routes");
   const [saving, setSaving] = useState(false);
   const [routeErrors, setRouteErrors] = useState<Record<number, Record<string, string>>>({});
@@ -71,16 +73,22 @@ export function Phase2Outline() {
     }
   }, []);
 
-  const _saveFlows = useCallback(async (updated: UserFlow[]) => {
+  const saveFlows = useCallback(async (updated: UserFlow[]) => {
     setSaving(true);
+    setSaveError(null);
     try {
       const res = await fetch("/api/user-flows", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
       });
-      if (!res.ok) throw new Error("Failed to save flows");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to save flows");
+      }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save flows";
+      setSaveError(msg);
       console.error("Failed to save flows:", err);
     } finally {
       setSaving(false);
@@ -101,7 +109,6 @@ export function Phase2Outline() {
     });
     const updated = routes.map((r, i) => (i === index ? updatedRoute : r));
     setRoutes(updated);
-    // Only save if no validation errors on this route
     if (Object.keys(errors).length === 0) {
       setSaveError(null);
       saveRoutes(updated);
@@ -123,6 +130,59 @@ export function Phase2Outline() {
     setRoutes(updated);
     setEditingRoute(null);
     saveRoutes(updated);
+  };
+
+  const addFlow = () => {
+    const newFlow: UserFlow = {
+      id: uid(),
+      name: "New Flow",
+      steps: ["Step 1"],
+    };
+    const updated = [...flows, newFlow];
+    setFlows(updated);
+    setEditingFlow(newFlow.id);
+    saveFlows(updated);
+  };
+
+  const removeFlow = (flowId: string) => {
+    const updated = flows.filter((f) => f.id !== flowId);
+    setFlows(updated);
+    setEditingFlow(null);
+    saveFlows(updated);
+  };
+
+  const updateFlowName = (flowId: string, name: string) => {
+    const updated = flows.map((f) => (f.id === flowId ? { ...f, name } : f));
+    setFlows(updated);
+    saveFlows(updated);
+  };
+
+  const updateFlowStep = (flowId: string, stepIndex: number, value: string) => {
+    const updated = flows.map((f) => {
+      if (f.id !== flowId) return f;
+      return { ...f, steps: f.steps.map((s, i) => (i === stepIndex ? value : s)) };
+    });
+    setFlows(updated);
+    saveFlows(updated);
+  };
+
+  const addFlowStep = (flowId: string) => {
+    const updated = flows.map((f) => {
+      if (f.id !== flowId) return f;
+      return { ...f, steps: [...f.steps, `Step ${f.steps.length + 1}`] };
+    });
+    setFlows(updated);
+    saveFlows(updated);
+  };
+
+  const removeFlowStep = (flowId: string, stepIndex: number) => {
+    const updated = flows.map((f) => {
+      if (f.id !== flowId) return f;
+      const steps = f.steps.filter((_, i) => i !== stepIndex);
+      return { ...f, steps: steps.length > 0 ? steps : ["Step 1"] };
+    });
+    setFlows(updated);
+    saveFlows(updated);
   };
 
   if (loading) return <LoadingState label="Loading app outline..." />;
@@ -288,20 +348,97 @@ export function Phase2Outline() {
           <div className="p-3 space-y-3">
             {flows.map((flow) => (
               <div key={flow.id} className="p-3.5 bg-card border border-border rounded-md">
-                <div className="text-xs font-medium mb-2 text-foreground">{flow.name}</div>
-                <div className="flex items-center gap-1 flex-wrap">
-                  {flow.steps.map((step, si) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: flow steps are plain strings with no stable key
-                    <div key={si} className="flex items-center gap-1">
-                      <span className="text-2xs px-1.5 py-0.5 bg-muted border border-border rounded-sm text-primary">
-                        {step}
-                      </span>
-                      {si < flow.steps.length - 1 && <span className="text-2xs text-muted-foreground">→</span>}
+                {editingFlow === flow.id ? (
+                  <div className="space-y-2">
+                    <EditField label="Flow name" value={flow.name} onChange={(v) => updateFlowName(flow.id, v)} />
+                    <div className="text-2xs text-muted-foreground mb-1">Steps</div>
+                    {flow.steps.map((step, si) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: flow steps are plain strings with no stable key
+                      <div key={si} className="flex items-center gap-1.5">
+                        <span className="text-2xs text-muted-foreground w-[16px] shrink-0">{si + 1}.</span>
+                        <FlowStepField value={step} onChange={(v) => updateFlowStep(flow.id, si, v)} />
+                        {flow.steps.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeFlowStep(flow.id, si)}
+                            className="text-2xs text-destructive shrink-0 px-1"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => addFlowStep(flow.id)}
+                        className="text-2xs text-muted-foreground transition-colors"
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "hsl(var(--primary))";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "hsl(var(--muted-foreground))";
+                        }}
+                      >
+                        + Add step
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingFlow(null)}
+                        className="text-2xs px-2 py-1 text-primary bg-primary/10 border border-primary rounded-sm"
+                      >
+                        Done
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFlow(flow.id)}
+                        className="text-2xs px-2 py-1 text-destructive border border-destructive rounded-sm bg-transparent"
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                        }}
+                      >
+                        Remove flow
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="w-full text-left bg-transparent border-none p-0 cursor-pointer"
+                    onClick={() => setEditingFlow(flow.id)}
+                  >
+                    <div className="text-xs font-medium mb-2 text-foreground">{flow.name}</div>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {flow.steps.map((step, si) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: flow steps are plain strings with no stable key
+                        <div key={si} className="flex items-center gap-1">
+                          <span className="text-2xs px-1.5 py-0.5 bg-muted border border-border rounded-sm text-primary">
+                            {step}
+                          </span>
+                          {si < flow.steps.length - 1 && <span className="text-2xs text-muted-foreground">→</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </button>
+                )}
               </div>
             ))}
+            <button
+              type="button"
+              onClick={addFlow}
+              className="flex items-center gap-1 px-3 py-2 text-2xs transition-colors text-muted-foreground"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "hsl(var(--primary))";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "hsl(var(--muted-foreground))";
+              }}
+            >
+              + Add flow
+            </button>
           </div>
         )}
       </div>
@@ -354,5 +491,31 @@ function EditField({
       </label>
       {error && <div className="text-2xs mt-0.5 text-destructive">{error}</div>}
     </div>
+  );
+}
+
+function FlowStepField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={() => {
+        if (localValue !== value) onChange(localValue);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          if (localValue !== value) onChange(localValue);
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      className="flex-1 text-xs px-2 py-1 outline-none bg-input border border-input rounded-sm text-foreground"
+    />
   );
 }
