@@ -1,11 +1,11 @@
 "use client";
 
+import { cn, formatBytes } from "@devkit/ui";
 import { File, Folder } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getLastCommitForPath } from "@/lib/actions/code-browser";
 import type { CodeCommitInfo, CodeTreeEntry } from "@/lib/types";
-import { cn } from "@devkit/ui";
-import { formatBytes, timeAgo } from "@/lib/utils";
+import { timeAgo } from "@/lib/utils";
 
 interface CodeDirectoryListingProps {
   repoId: string;

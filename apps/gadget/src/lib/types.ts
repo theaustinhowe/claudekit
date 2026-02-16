@@ -1,3 +1,5 @@
+import type { FileContent, FileTreeEntry } from "@devkit/ui";
+
 export type RepoType = "nextjs" | "node" | "react" | "library" | "monorepo" | "tanstack";
 export type PackageManager = "npm" | "pnpm" | "bun" | "yarn";
 export type Severity = "critical" | "warning" | "info";
@@ -308,23 +310,8 @@ export interface GitStatusResult {
 
 // --- Code Browser Types ---
 
-export interface CodeTreeEntry {
-  name: string;
-  path: string;
-  type: "file" | "directory";
-  size?: number;
-  sha?: string;
-  children?: CodeTreeEntry[];
-}
-
-export interface CodeFileContent {
-  path: string;
-  content: string;
-  size: number;
-  language: string;
-  isBinary: boolean;
-  lastCommit?: CodeCommitInfo;
-}
+export type CodeTreeEntry = FileTreeEntry;
+export type CodeFileContent = FileContent;
 
 export interface CodeCommitInfo {
   sha: string;

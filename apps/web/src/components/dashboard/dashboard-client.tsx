@@ -7,7 +7,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/
 import { ChevronDown, Cpu, ExternalLink, Rocket, ScrollText, Video, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 interface AppInfo {
   id: string;
@@ -21,6 +20,7 @@ interface AppInfo {
 
 interface LogFileInfo {
   app: string;
+  date: string | null;
   path: string;
   size: number;
   lastModified: string;
@@ -46,9 +46,9 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString();
+function formatDate(date: string): string {
+  const d = new Date(`${date}T00:00:00`);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function AppCardSkeleton() {
@@ -100,6 +100,18 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
       existing.push(file);
       map.set(file.app, existing);
     }
+    // Sort each app's logs by date descending (most recent first)
+    for (const [key, files] of map) {
+      map.set(
+        key,
+        files.sort((a, b) => {
+          if (!a.date && !b.date) return 0;
+          if (!a.date) return 1;
+          if (!b.date) return 1;
+          return b.date.localeCompare(a.date);
+        }),
+      );
+    }
     return map;
   }, [logFiles]);
 
@@ -108,20 +120,8 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
   const orphanLogs = logFiles.filter((f) => !knownAppIds.has(f.app));
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Gradient Hero Header */}
-        <div className="gradient-primary rounded-2xl p-8 mb-10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-          <div className="relative flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">ClaudeKit</h1>
-              <p className="text-white/80">Local development control center</p>
-            </div>
-            <ThemeToggle />
-          </div>
-        </div>
-
         {/* Applications */}
         <section className="mb-10">
           <h2 className="text-lg font-semibold mb-4">Applications</h2>
@@ -193,20 +193,19 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                         )}
                       </CardContent>
 
-                      {/* Collapsible log content */}
+                      {/* Collapsible log content — date-grouped entries */}
                       {appLogs.length > 0 && (
                         <CollapsibleContent>
                           <div className="px-6 pb-4 space-y-1.5">
                             {appLogs.map((file) => (
                               <Link
                                 key={file.path}
-                                href={`/logs/${file.app}`}
+                                href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
                                 className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
                               >
-                                <span className="font-medium">{file.app}</span>
+                                <span className="font-medium">{file.date ? formatDate(file.date) : "Legacy"}</span>
                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                   <span className="font-mono">{formatSize(file.size)}</span>
-                                  <span>{formatTime(file.lastModified)}</span>
                                 </div>
                               </Link>
                             ))}
@@ -236,17 +235,22 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
               <div className="grid gap-2">
                 {orphanLogs.map((file) => (
                   <Link
-                    key={file.app}
-                    href={`/logs/${file.app}`}
+                    key={file.path}
+                    href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
                     className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-accent transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <ScrollText className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium">{file.app}</span>
+                      {file.date && <span className="text-xs text-muted-foreground">{formatDate(file.date)}</span>}
+                      {!file.date && (
+                        <Badge variant="outline" className="text-xs">
+                          Legacy
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="font-mono">{formatSize(file.size)}</span>
-                      <span>{formatTime(file.lastModified)}</span>
                     </div>
                   </Link>
                 ))}

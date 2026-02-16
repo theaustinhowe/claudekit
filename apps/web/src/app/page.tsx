@@ -1,10 +1,10 @@
 import { statSync } from "node:fs";
-import { basename } from "node:path";
 import { listLogFiles } from "@devkit/logger";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 
 interface LogFileInfo {
   app: string;
+  date: string | null;
   path: string;
   size: number;
   lastModified: string;
@@ -13,13 +13,13 @@ interface LogFileInfo {
 function getLogFileInfos(): LogFileInfo[] {
   const files = listLogFiles();
   return files
-    .map((filePath) => {
+    .map((entry) => {
       try {
-        const stat = statSync(filePath);
-        const name = basename(filePath, ".ndjson");
+        const stat = statSync(entry.path);
         return {
-          app: name,
-          path: filePath,
+          app: entry.app,
+          date: entry.date,
+          path: entry.path,
           size: stat.size,
           lastModified: stat.mtime.toISOString(),
         };

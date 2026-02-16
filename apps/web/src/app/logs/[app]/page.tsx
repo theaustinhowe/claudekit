@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { getLogFilePath } from "@devkit/logger";
+import { getLogFilePath, listLogFiles } from "@devkit/logger";
 import Link from "next/link";
 import { LogViewerClient } from "@/components/log-viewer-client";
 
@@ -12,8 +12,18 @@ interface LogEntry {
   [key: string]: unknown;
 }
 
-function loadInitialLogs(app: string): LogEntry[] {
-  const logFile = getLogFilePath(app);
+function getTodayDate(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function formatDateLabel(date: string): string {
+  const d = new Date(`${date}T00:00:00`);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function loadInitialLogs(app: string, date?: string): LogEntry[] {
+  const logFile = getLogFilePath(app, undefined, date);
   if (!existsSync(logFile)) return [];
 
   const content = readFileSync(logFile, "utf-8");
@@ -32,20 +42,48 @@ function loadInitialLogs(app: string): LogEntry[] {
     .filter((e): e is LogEntry => e !== null);
 }
 
-export default async function AppLogPage({ params }: { params: Promise<{ app: string }> }) {
+function getAvailableDates(app: string): string[] {
+  const files = listLogFiles();
+  return files
+    .filter((f) => f.app === app && f.date !== null)
+    .map((f) => f.date as string)
+    .sort((a, b) => b.localeCompare(a));
+}
+
+export default async function AppLogPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ app: string }>;
+  searchParams: Promise<{ date?: string }>;
+}) {
   const { app } = await params;
-  const initialLogs = loadInitialLogs(app);
+  const { date: dateParam } = await searchParams;
+  const today = getTodayDate();
+  const date = dateParam || today;
+  const isToday = date === today;
+  const initialLogs = loadInitialLogs(app, date);
+  const availableDates = getAvailableDates(app);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b px-6 py-3 flex items-center gap-4">
+    <div className="flex flex-col" style={{ height: "calc(100vh - 65px)" }}>
+      <div className="border-b px-8 py-3 flex items-center gap-2 text-sm flex-shrink-0">
         <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
-          &larr; Dashboard
+          Dashboard
         </Link>
-        <h1 className="text-lg font-semibold">{app}</h1>
-        <span className="text-sm text-muted-foreground">{initialLogs.length} entries loaded</span>
-      </header>
-      <LogViewerClient app={app} initialLogs={initialLogs} />
+        <span className="text-muted-foreground">/</span>
+        <span className="font-medium">{app}</span>
+        <span className="text-muted-foreground">/</span>
+        <span className="font-medium">{formatDateLabel(date)}</span>
+        <span className="text-xs text-muted-foreground ml-2">{initialLogs.length} entries loaded</span>
+      </div>
+      <LogViewerClient
+        app={app}
+        date={date}
+        isToday={isToday}
+        initialLogs={initialLogs}
+        availableDates={availableDates}
+      />
     </div>
   );
 }

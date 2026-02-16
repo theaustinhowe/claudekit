@@ -4,9 +4,11 @@ import { createInterface } from "node:readline";
 import { getLogFilePath } from "@devkit/logger";
 import { NextResponse } from "next/server";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ app: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ app: string }> }) {
   const { app } = await params;
-  const logFile = getLogFilePath(app);
+  const url = new URL(request.url);
+  const date = url.searchParams.get("date") || undefined;
+  const logFile = getLogFilePath(app, undefined, date);
 
   if (!existsSync(logFile)) {
     return NextResponse.json({ error: "Log file not found" }, { status: 404 });

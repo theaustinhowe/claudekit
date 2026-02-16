@@ -18,7 +18,7 @@ export function getCuratedMcpServers(): McpServerListEntry[] {
       description: "Interact with GitHub repositories, issues, and pull requests",
       command: "npx",
       args: ["-y", "@modelcontextprotocol/server-github"],
-      env: { GITHUB_PERSONAL_ACCESS_TOKEN: "" },
+      env: { GITHUB_TOKEN: "" },
       tags: ["git", "collaboration"],
     },
     {

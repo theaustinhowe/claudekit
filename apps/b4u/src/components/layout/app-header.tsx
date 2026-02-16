@@ -83,7 +83,9 @@ export function AppHeader() {
             const isViewing = state.rightPanelContent === phase;
             return (
               <div key={phase} className="flex items-center shrink-0">
-                {i > 0 && <div className={cn("w-3 md:w-5 h-px", status === "locked" ? "bg-border" : "bg-primary/40")} />}
+                {i > 0 && (
+                  <div className={cn("w-3 md:w-5 h-px", status === "locked" ? "bg-border" : "bg-primary/40")} />
+                )}
                 <button
                   type="button"
                   onClick={() => handlePhaseClick(phase)}

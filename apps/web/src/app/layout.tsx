@@ -1,6 +1,7 @@
 import { ThemeFOUCScript } from "@devkit/hooks";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
+import { Header } from "@/components/header";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-background text-foreground antialiased">
         <ThemeFOUCScript />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <Header />
           {children}
         </ThemeProvider>
       </body>

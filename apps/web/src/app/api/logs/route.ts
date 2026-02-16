@@ -1,17 +1,17 @@
 import { statSync } from "node:fs";
-import { basename } from "node:path";
 import { listLogFiles } from "@devkit/logger";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   const files = listLogFiles();
   const result = files
-    .map((filePath) => {
+    .map((entry) => {
       try {
-        const stat = statSync(filePath);
+        const stat = statSync(entry.path);
         return {
-          app: basename(filePath, ".ndjson"),
-          path: filePath,
+          app: entry.app,
+          date: entry.date,
+          path: entry.path,
           size: stat.size,
           lastModified: stat.mtime.toISOString(),
         };

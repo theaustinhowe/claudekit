@@ -182,7 +182,8 @@ async function getGitHubPat(db: Awaited<ReturnType<typeof getDb>>, accountId: st
   // Fall back to env
   const { readEnvLocal } = await import("@/lib/actions/env-keys");
   const env = await readEnvLocal();
-  return env.GITHUB_PERSONAL_ACCESS_TOKEN?.length > 0 ? env.GITHUB_PERSONAL_ACCESS_TOKEN : null;
+  const token = env.GITHUB_TOKEN ?? env.GITHUB_PERSONAL_ACCESS_TOKEN;
+  return token?.length > 0 ? token : null;
 }
 
 // --- Local Helpers ---

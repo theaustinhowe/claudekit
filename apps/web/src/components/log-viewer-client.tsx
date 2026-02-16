@@ -2,8 +2,12 @@
 
 import { useAutoScroll } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
+import { Button } from "@devkit/ui/components/button";
+import { Calendar } from "@devkit/ui/components/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, Pause, Play, Search } from "lucide-react";
+import { ArrowDown, CalendarIcon, Pause, Play, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface LogEntry {
@@ -17,7 +21,10 @@ interface LogEntry {
 
 interface LogViewerClientProps {
   app: string;
+  date: string;
+  isToday: boolean;
   initialLogs: LogEntry[];
+  availableDates: string[];
 }
 
 const LEVEL_NAMES: Record<number, string> = {
@@ -61,23 +68,27 @@ function formatTimestamp(ms: number): string {
   return d.toLocaleTimeString("en-US", { hour12: false, fractionalSecondDigits: 3 });
 }
 
-export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
+export function LogViewerClient({ app, date, isToday, initialLogs, availableDates }: LogViewerClientProps) {
+  const router = useRouter();
   const [logs, setLogs] = useState<LogEntry[]>(initialLogs);
   const [filter, setFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState<Set<number>>(new Set());
-  const [tailing, setTailing] = useState(true);
+  const [tailing, setTailing] = useState(isToday);
   const { containerRef, isAtBottom, scrollToBottom } = useAutoScroll(tailing);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // SSE connection for real-time tailing
+  // Set of available date strings for calendar highlighting
+  const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
+
+  // SSE connection for real-time tailing (only when viewing today)
   useEffect(() => {
-    if (!tailing) {
+    if (!tailing || !isToday) {
       eventSourceRef.current?.close();
       eventSourceRef.current = null;
       return;
     }
 
-    const es = new EventSource(`/api/logs/${app}/stream`);
+    const es = new EventSource(`/api/logs/${app}/stream?date=${date}`);
     eventSourceRef.current = es;
 
     es.onmessage = (event) => {
@@ -100,7 +111,7 @@ export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
       es.close();
       eventSourceRef.current = null;
     };
-  }, [app, tailing]);
+  }, [app, date, tailing, isToday]);
 
   const filteredLogs = useMemo(() => {
     let result = logs;
@@ -136,10 +147,51 @@ export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
     });
   }, []);
 
+  const handleDateSelect = useCallback(
+    (selected: Date | undefined) => {
+      if (!selected) return;
+      const y = selected.getFullYear();
+      const m = String(selected.getMonth() + 1).padStart(2, "0");
+      const d = String(selected.getDate()).padStart(2, "0");
+      router.push(`/logs/${app}?date=${y}-${m}-${d}`);
+    },
+    [app, router],
+  );
+
+  const selectedDate = useMemo(() => new Date(`${date}T00:00:00`), [date]);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Toolbar */}
       <div className="border-b px-4 py-2 flex items-center gap-3 flex-shrink-0">
+        {/* Calendar day picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              disabled={(d) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, "0");
+                const day = String(d.getDate()).padStart(2, "0");
+                const ds = `${y}-${m}-${day}`;
+                return !availableDateSet.has(ds);
+              }}
+              defaultMonth={selectedDate}
+            />
+          </PopoverContent>
+        </Popover>
+
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
@@ -181,17 +233,19 @@ export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setTailing(!tailing)}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors",
-            tailing ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent",
-          )}
-        >
-          {tailing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-          {tailing ? "Pause" : "Tail"}
-        </button>
+        {isToday && (
+          <button
+            type="button"
+            onClick={() => setTailing(!tailing)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors",
+              tailing ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent",
+            )}
+          >
+            {tailing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+            {tailing ? "Pause" : "Tail"}
+          </button>
+        )}
 
         <span className="text-xs text-muted-foreground">{filteredLogs.length} entries</span>
       </div>

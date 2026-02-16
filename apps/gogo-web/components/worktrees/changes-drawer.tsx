@@ -1,11 +1,11 @@
 "use client";
 
-import { FileCode, Loader2, X } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@devkit/ui/components/button";
 import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { FileCode, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   type ChangedFile,
   fetchChangedFiles,
@@ -156,7 +156,7 @@ export function ChangesDrawer({ jobId, worktreePath, title, open, onOpenChange }
               ) : diffError ? (
                 <div className="p-4 text-sm text-red-500">{diffError}</div>
               ) : selectedFile ? (
-                <DiffViewer diff={diff} filePath={selectedFile} />
+                <DiffViewer patch={diff} />
               ) : !filesLoading && files.length === 0 && !filesError ? (
                 <div className="flex flex-col items-center justify-center p-8 text-muted-foreground text-center">
                   <FileCode className="h-8 w-8 mb-2 opacity-50" />

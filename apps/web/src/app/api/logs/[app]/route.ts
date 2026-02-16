@@ -4,13 +4,14 @@ import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ app: string }> }) {
   const { app } = await params;
-  const logFile = getLogFilePath(app);
+  const url = new URL(request.url);
+  const date = url.searchParams.get("date") || undefined;
+  const logFile = getLogFilePath(app, undefined, date);
 
   if (!existsSync(logFile)) {
     return NextResponse.json({ error: "Log file not found" }, { status: 404 });
   }
 
-  const url = new URL(request.url);
   const level = url.searchParams.get("level");
   const query = url.searchParams.get("q");
   const since = url.searchParams.get("since");

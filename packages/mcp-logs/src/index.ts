@@ -1,5 +1,4 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { basename } from "node:path";
 import { getLogFilePath, listLogFiles } from "@devkit/logger";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -97,17 +96,16 @@ function formatEntry(entry: LogEntry): string {
 
 server.tool(
   "list_log_files",
-  "List all devkit log files with size and last modified date",
+  "List all devkit log files with size, date, and last modified",
   { app: z.string().optional().describe("Filter by app name") },
   async ({ app }) => {
     const files = listLogFiles();
     const result = files
-      .map((filePath) => {
-        const name = basename(filePath, ".ndjson");
-        if (app && name !== app) return null;
+      .map((entry) => {
+        if (app && entry.app !== app) return null;
         try {
-          const stat = statSync(filePath);
-          return { app: name, size: stat.size, lastModified: stat.mtime.toISOString() };
+          const stat = statSync(entry.path);
+          return { app: entry.app, date: entry.date, size: stat.size, lastModified: stat.mtime.toISOString() };
         } catch {
           return null;
         }
@@ -124,18 +122,19 @@ server.tool(
   {
     query: z.string().describe("Text to search for in log messages"),
     app: z.string().optional().describe("Filter by app name"),
+    date: z.string().optional().describe("Filter by date (YYYY-MM-DD)"),
     level: z.string().optional().describe("Minimum log level: trace, debug, info, warn, error, fatal"),
     since: z.string().optional().describe("Time window, e.g. '1h', '30m', '7d'"),
     limit: z.number().optional().default(50).describe("Max entries to return"),
   },
-  async ({ query, app, level, since, limit }) => {
+  async ({ query, app, date, level, since, limit }) => {
     const files = listLogFiles();
     let allEntries: LogEntry[] = [];
 
-    for (const filePath of files) {
-      const name = basename(filePath, ".ndjson");
-      if (app && name !== app) continue;
-      allEntries = allEntries.concat(readLogEntries(filePath));
+    for (const entry of files) {
+      if (app && entry.app !== app) continue;
+      if (date && entry.date !== date) continue;
+      allEntries = allEntries.concat(readLogEntries(entry.path));
     }
 
     const q = query.toLowerCase();
@@ -162,11 +161,12 @@ server.tool(
   "Get the most recent log entries for an app",
   {
     app: z.string().describe("App name (e.g. 'gadget', 'gogo-orchestrator')"),
+    date: z.string().optional().describe("Date to read logs from (YYYY-MM-DD). Defaults to today."),
     lines: z.number().optional().default(50).describe("Number of lines to return"),
     level: z.string().optional().describe("Minimum log level filter"),
   },
-  async ({ app, lines, level }) => {
-    const logFile = getLogFilePath(app);
+  async ({ app, date, lines, level }) => {
+    const logFile = getLogFilePath(app, undefined, date);
     let entries = readLogEntries(logFile);
 
     if (level) {
@@ -192,10 +192,9 @@ server.tool(
     const files = listLogFiles();
     let allEntries: LogEntry[] = [];
 
-    for (const filePath of files) {
-      const name = basename(filePath, ".ndjson");
-      if (app && name !== app) continue;
-      const entries = readLogEntries(filePath);
+    for (const entry of files) {
+      if (app && entry.app !== app) continue;
+      const entries = readLogEntries(entry.path);
       allEntries = allEntries.concat(entries.filter((e) => e.level >= 50));
     }
 
@@ -206,7 +205,7 @@ server.tool(
 
     const text = filtered
       .map((e) => {
-        const appName = e.app || basename(getLogFilePath("unknown"), ".ndjson");
+        const appName = e.app || "unknown";
         return `[${appName}] ${formatEntry(e)}`;
       })
       .join("\n");
@@ -221,11 +220,12 @@ server.tool(
   {
     app: z.string().describe("App name"),
     timestamp: z.string().describe("ISO timestamp or epoch ms to center around"),
+    date: z.string().optional().describe("Date to read logs from (YYYY-MM-DD). Defaults to today."),
     before: z.number().optional().default(10).describe("Number of entries before the timestamp"),
     after: z.number().optional().default(10).describe("Number of entries after the timestamp"),
   },
-  async ({ app, timestamp, before, after }) => {
-    const logFile = getLogFilePath(app);
+  async ({ app, timestamp, date, before, after }) => {
+    const logFile = getLogFilePath(app, undefined, date);
     const entries = readLogEntries(logFile);
     const targetMs = timestamp.includes("T") ? new Date(timestamp).getTime() : Number.parseInt(timestamp, 10);
 

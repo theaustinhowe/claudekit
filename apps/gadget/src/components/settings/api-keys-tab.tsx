@@ -20,10 +20,10 @@ import { toast } from "sonner";
 import { writeEnvKey } from "@/lib/actions/env-keys";
 
 const KEY_HELP: Record<string, { title: string; steps: string[]; url: string; urlLabel: string }> = {
-  GITHUB_PERSONAL_ACCESS_TOKEN: {
+  GITHUB_TOKEN: {
     title: "Create a GitHub Personal Access Token",
     steps: [
-      'Give the token a descriptive name (e.g. "Gadget")',
+      'Give the token a descriptive name (e.g. "Devkit")',
       "Set an expiration (90 days recommended)",
       "The repo and workflow scopes will be pre-selected via the link below",
       'Click "Generate token" and copy the value',

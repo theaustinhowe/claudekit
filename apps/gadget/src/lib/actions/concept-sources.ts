@@ -104,10 +104,11 @@ async function getDefaultPat(): Promise<string | null> {
   if (!account) {
     const fallback = await queryOne<{ pat_encrypted: string }>(db, "SELECT pat_encrypted FROM github_accounts LIMIT 1");
     if (!fallback) {
-      // Fall back to .env.local GITHUB_PERSONAL_ACCESS_TOKEN
+      // Fall back to .env.local GITHUB_TOKEN (with GITHUB_PERSONAL_ACCESS_TOKEN compat)
       const { readEnvLocal } = await import("@/lib/actions/env-keys");
       const env = await readEnvLocal();
-      return env.GITHUB_PERSONAL_ACCESS_TOKEN?.length > 0 ? env.GITHUB_PERSONAL_ACCESS_TOKEN : null;
+      const token = env.GITHUB_TOKEN ?? env.GITHUB_PERSONAL_ACCESS_TOKEN;
+      return token?.length > 0 ? token : null;
     }
     const key = await getEncryptionKey();
     if (!key) return null;

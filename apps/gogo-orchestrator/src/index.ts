@@ -1,3 +1,14 @@
+import { config } from "dotenv";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+// Load root .env/.env.local for shared env vars (override: false so app-specific wins)
+const rootDir = resolve(import.meta.dirname, "../../..");
+const rootEnv = resolve(rootDir, ".env");
+const rootEnvLocal = resolve(rootDir, ".env.local");
+if (existsSync(rootEnv)) config({ path: rootEnv, override: false });
+if (existsSync(rootEnvLocal)) config({ path: rootEnvLocal, override: false });
+
 import { execute, queryAll } from "./db/helpers.js";
 import { getConn, initializeDatabase } from "./db/index.js";
 import { createServer } from "./server.js";
