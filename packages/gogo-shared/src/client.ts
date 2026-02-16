@@ -346,7 +346,7 @@ export function createGoGoClient(config: GoGoClientConfig) {
 
   async function get<T>(path: string): Promise<T> {
     const res = await fetch(`${baseUrl}${path}`, { headers: headers() });
-    return res.json();
+    return res.json() as Promise<T>;
   }
 
   async function post<T>(path: string, body?: unknown): Promise<T> {
@@ -355,7 +355,7 @@ export function createGoGoClient(config: GoGoClientConfig) {
       headers: headers(body !== undefined),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-    return res.json();
+    return res.json() as Promise<T>;
   }
 
   async function put<T>(path: string, body: unknown): Promise<T> {
@@ -364,7 +364,7 @@ export function createGoGoClient(config: GoGoClientConfig) {
       headers: headers(true),
       body: JSON.stringify(body),
     });
-    return res.json();
+    return res.json() as Promise<T>;
   }
 
   async function patch<T>(path: string, body: unknown): Promise<T> {
@@ -373,7 +373,7 @@ export function createGoGoClient(config: GoGoClientConfig) {
       headers: headers(true),
       body: JSON.stringify(body),
     });
-    return res.json();
+    return res.json() as Promise<T>;
   }
 
   async function del<T>(path: string): Promise<T> {
@@ -381,7 +381,7 @@ export function createGoGoClient(config: GoGoClientConfig) {
       method: "DELETE",
       headers: headers(),
     });
-    return res.json();
+    return res.json() as Promise<T>;
   }
 
   return {

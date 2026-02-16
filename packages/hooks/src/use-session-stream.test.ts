@@ -64,16 +64,16 @@ describe("useSessionStream", () => {
 
   it("stays idle when autoConnect is false", () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1", autoConnect: false }));
     expect(result.current.status).toBe("idle");
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it("auto-connects when sessionId is provided and autoConnect is true", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1", autoConnect: true }));
 
@@ -82,7 +82,7 @@ describe("useSessionStream", () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       "/api/sessions/s1/stream",
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
@@ -91,7 +91,7 @@ describe("useSessionStream", () => {
 
   it("uses custom baseUrl", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     renderHook(() => useSessionStream({ sessionId: "s1", baseUrl: "http://localhost:3000" }));
 
@@ -99,12 +99,12 @@ describe("useSessionStream", () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
-    expect(global.fetch).toHaveBeenCalledWith("http://localhost:3000/api/sessions/s1/stream", expect.any(Object));
+    expect(globalThis.fetch).toHaveBeenCalledWith("http://localhost:3000/api/sessions/s1/stream", expect.any(Object));
   });
 
   it("accumulates log events", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -130,7 +130,7 @@ describe("useSessionStream", () => {
 
   it("updates progress and phase from events", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -149,7 +149,7 @@ describe("useSessionStream", () => {
 
   it("accumulates events array", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -174,7 +174,7 @@ describe("useSessionStream", () => {
 
   it("sets status to done on [DONE] message", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -192,7 +192,7 @@ describe("useSessionStream", () => {
 
   it("sets error status on error event", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -211,7 +211,7 @@ describe("useSessionStream", () => {
 
   it("sets done status on done event from server", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -229,7 +229,7 @@ describe("useSessionStream", () => {
 
   it("calls onEvent callback for each event", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
     const onEvent = vi.fn();
 
     renderHook(() => useSessionStream({ sessionId: "s1", onEvent }));
@@ -248,7 +248,7 @@ describe("useSessionStream", () => {
 
   it("calls onComplete callback for done/error/cancelled events", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
     const onComplete = vi.fn();
 
     renderHook(() => useSessionStream({ sessionId: "s1", onComplete }));
@@ -267,7 +267,7 @@ describe("useSessionStream", () => {
 
   it("respects maxLogs cap", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1", maxLogs: 3 }));
 
@@ -289,7 +289,7 @@ describe("useSessionStream", () => {
 
   it("defaults logType to 'status' when not provided", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -307,7 +307,7 @@ describe("useSessionStream", () => {
 
   it("disconnect aborts the connection", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -323,12 +323,12 @@ describe("useSessionStream", () => {
 
     // The status stays where it was since disconnect doesn't set status
     // The abort controller is cleared
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
   it("skips heartbeat events", async () => {
     const mock = createMockStream();
-    global.fetch = mockFetchWithStream(mock);
+    globalThis.fetch = mockFetchWithStream(mock);
 
     const { result } = renderHook(() => useSessionStream({ sessionId: "s1" }));
 
@@ -345,7 +345,7 @@ describe("useSessionStream", () => {
   });
 
   it("handles non-ok response by setting error", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       body: null,
       status: 500,
