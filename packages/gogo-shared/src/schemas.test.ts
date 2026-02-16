@@ -23,7 +23,8 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const uuid = () => crypto.randomUUID();
+let _c = 0;
+const uuid = () => `00000000-0000-4000-8000-${String(++_c).padStart(12, "0")}`;
 const now = new Date().toISOString();
 
 function makeValidJob(overrides: Record<string, unknown> = {}) {

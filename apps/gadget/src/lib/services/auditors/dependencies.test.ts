@@ -8,6 +8,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import fs from "node:fs";
+import type { Policy } from "@/lib/types";
 import { auditDependencies } from "./dependencies";
 
 const mockExistsSync = vi.mocked(fs.existsSync);
@@ -27,8 +28,9 @@ function makePolicy(overrides: Record<string, unknown> = {}) {
     repo_types: [] as string[],
     is_builtin: false,
     created_at: "",
+    updated_at: "",
     ...overrides,
-  };
+  } as Policy;
 }
 
 beforeEach(() => {

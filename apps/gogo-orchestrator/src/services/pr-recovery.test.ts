@@ -31,8 +31,26 @@ vi.mock("./pr-reviewing.js", () => ({
 import { execute, queryAll, queryOne } from "../db/helpers.js";
 import { broadcast } from "../ws/handler.js";
 import { getIssueByNumber, getOpenPullRequestsForRepo } from "./github/index.js";
+import type { GitHubIssue } from "./github/types.js";
 import { recoverOrphanedPrs } from "./pr-recovery.js";
 import { enterPrReviewing } from "./pr-reviewing.js";
+
+function mockGitHubIssue(overrides: {
+  number: number;
+  title: string;
+  html_url: string;
+  body: string | null;
+}): GitHubIssue {
+  return {
+    state: "open",
+    labels: [],
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+    closed_at: null,
+    user: null,
+    ...overrides,
+  };
+}
 
 describe("pr-recovery", () => {
   beforeEach(() => {
@@ -56,8 +74,13 @@ describe("pr-recovery", () => {
   it("should skip PRs without agent branch pattern", async () => {
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 10, head_ref: "feature/new-thing", html_url: "https://github.com/test/repo/pull/10" },
-      { number: 11, head_ref: "fix/bug-123", html_url: "https://github.com/test/repo/pull/11" },
+      {
+        number: 10,
+        head_ref: "feature/new-thing",
+        html_url: "https://github.com/test/repo/pull/10",
+        state: "open" as const,
+      },
+      { number: 11, head_ref: "fix/bug-123", html_url: "https://github.com/test/repo/pull/11", state: "open" as const },
     ]);
 
     const result = await recoverOrphanedPrs();
@@ -72,19 +95,26 @@ describe("pr-recovery", () => {
 
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 20, head_ref: "agent/issue-42-fix-bug", html_url: "https://github.com/test/repo/pull/20" },
+      {
+        number: 20,
+        head_ref: "agent/issue-42-fix-bug",
+        html_url: "https://github.com/test/repo/pull/20",
+        state: "open" as const,
+      },
     ]);
     // jobExistsForIssue - no existing job
     vi.mocked(queryOne)
       .mockResolvedValueOnce(undefined) // no existing job
       .mockResolvedValueOnce({ id: "new-job" }); // newly created job
 
-    vi.mocked(getIssueByNumber).mockResolvedValue({
-      number: 42,
-      title: "Fix the bug",
-      html_url: "https://github.com/test/repo/issues/42",
-      body: "Bug description",
-    });
+    vi.mocked(getIssueByNumber).mockResolvedValue(
+      mockGitHubIssue({
+        number: 42,
+        title: "Fix the bug",
+        html_url: "https://github.com/test/repo/issues/42",
+        body: "Bug description",
+      }),
+    );
     vi.mocked(enterPrReviewing).mockResolvedValue(undefined);
 
     const result = await recoverOrphanedPrs();
@@ -98,18 +128,20 @@ describe("pr-recovery", () => {
 
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 30, head_ref: "agent/123-slug", html_url: "https://github.com/test/repo/pull/30" },
+      {
+        number: 30,
+        head_ref: "agent/123-slug",
+        html_url: "https://github.com/test/repo/pull/30",
+        state: "open" as const,
+      },
     ]);
     vi.mocked(queryOne)
       .mockResolvedValueOnce(undefined) // no existing job
       .mockResolvedValueOnce({ id: "new-job" }); // newly created job
 
-    vi.mocked(getIssueByNumber).mockResolvedValue({
-      number: 123,
-      title: "Task",
-      html_url: "https://github.com/test/repo/issues/123",
-      body: "",
-    });
+    vi.mocked(getIssueByNumber).mockResolvedValue(
+      mockGitHubIssue({ number: 123, title: "Task", html_url: "https://github.com/test/repo/issues/123", body: "" }),
+    );
     vi.mocked(enterPrReviewing).mockResolvedValue(undefined);
 
     const result = await recoverOrphanedPrs();
@@ -121,7 +153,12 @@ describe("pr-recovery", () => {
   it("should skip PRs when job already exists for the issue", async () => {
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 20, head_ref: "agent/issue-42-fix-bug", html_url: "https://github.com/test/repo/pull/20" },
+      {
+        number: 20,
+        head_ref: "agent/issue-42-fix-bug",
+        html_url: "https://github.com/test/repo/pull/20",
+        state: "open" as const,
+      },
     ]);
     vi.mocked(queryOne).mockResolvedValue({ id: "existing-job" }); // job already exists
 
@@ -134,7 +171,12 @@ describe("pr-recovery", () => {
   it("should record error when issue not found on GitHub", async () => {
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 20, head_ref: "agent/issue-99-missing", html_url: "https://github.com/test/repo/pull/20" },
+      {
+        number: 20,
+        head_ref: "agent/issue-99-missing",
+        html_url: "https://github.com/test/repo/pull/20",
+        state: "open" as const,
+      },
     ]);
     vi.mocked(queryOne).mockResolvedValue(undefined); // no existing job
     vi.mocked(getIssueByNumber).mockResolvedValue(null);
@@ -151,18 +193,25 @@ describe("pr-recovery", () => {
 
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 20, head_ref: "agent/issue-42-fix", html_url: "https://github.com/test/repo/pull/20" },
+      {
+        number: 20,
+        head_ref: "agent/issue-42-fix",
+        html_url: "https://github.com/test/repo/pull/20",
+        state: "open" as const,
+      },
     ]);
     vi.mocked(queryOne)
       .mockResolvedValueOnce(undefined) // no existing job
       .mockResolvedValueOnce({ id: "recovered-job", status: "pr_reviewing" }); // newly created
 
-    vi.mocked(getIssueByNumber).mockResolvedValue({
-      number: 42,
-      title: "Fix bug",
-      html_url: "https://github.com/test/repo/issues/42",
-      body: "Description",
-    });
+    vi.mocked(getIssueByNumber).mockResolvedValue(
+      mockGitHubIssue({
+        number: 42,
+        title: "Fix bug",
+        html_url: "https://github.com/test/repo/issues/42",
+        body: "Description",
+      }),
+    );
     vi.mocked(enterPrReviewing).mockResolvedValue(undefined);
 
     await recoverOrphanedPrs();
@@ -192,16 +241,18 @@ describe("pr-recovery", () => {
 
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 20, head_ref: "agent/issue-42-fix", html_url: "https://github.com/test/repo/pull/20" },
+      {
+        number: 20,
+        head_ref: "agent/issue-42-fix",
+        html_url: "https://github.com/test/repo/pull/20",
+        state: "open" as const,
+      },
     ]);
     vi.mocked(queryOne).mockResolvedValueOnce(undefined).mockResolvedValueOnce({ id: "job-1", status: "pr_reviewing" });
 
-    vi.mocked(getIssueByNumber).mockResolvedValue({
-      number: 42,
-      title: "Fix",
-      html_url: "https://github.com/test/repo/issues/42",
-      body: null,
-    });
+    vi.mocked(getIssueByNumber).mockResolvedValue(
+      mockGitHubIssue({ number: 42, title: "Fix", html_url: "https://github.com/test/repo/issues/42", body: null }),
+    );
     vi.mocked(enterPrReviewing).mockRejectedValue(new Error("PR monitoring failed"));
 
     const result = await recoverOrphanedPrs();
@@ -222,18 +273,20 @@ describe("pr-recovery", () => {
   it("should record error when job creation fails (queryOne returns null)", async () => {
     vi.mocked(queryAll).mockResolvedValue([{ id: "repo-1", owner: "test", name: "repo", is_active: true }]);
     vi.mocked(getOpenPullRequestsForRepo).mockResolvedValue([
-      { number: 20, head_ref: "agent/issue-42-fix", html_url: "https://github.com/test/repo/pull/20" },
+      {
+        number: 20,
+        head_ref: "agent/issue-42-fix",
+        html_url: "https://github.com/test/repo/pull/20",
+        state: "open" as const,
+      },
     ]);
     vi.mocked(queryOne)
       .mockResolvedValueOnce(undefined) // no existing job
       .mockResolvedValueOnce(null); // INSERT failed
 
-    vi.mocked(getIssueByNumber).mockResolvedValue({
-      number: 42,
-      title: "Fix",
-      html_url: "https://github.com/test/repo/issues/42",
-      body: null,
-    });
+    vi.mocked(getIssueByNumber).mockResolvedValue(
+      mockGitHubIssue({ number: 42, title: "Fix", html_url: "https://github.com/test/repo/issues/42", body: null }),
+    );
 
     const result = await recoverOrphanedPrs();
 

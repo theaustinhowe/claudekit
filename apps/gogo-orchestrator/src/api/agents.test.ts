@@ -108,19 +108,25 @@ describe("agents API", () => {
     it("should return all known agents with status", async () => {
       vi.mocked(agentRegistry.has).mockReturnValue(true);
       vi.mocked(getClaudeRunnerStatus).mockResolvedValue({
+        type: "claude-code",
         available: true,
         configured: true,
         message: "Ready",
         cliInstalled: true,
         settingsEnabled: true,
+        registered: true,
+        stub: false,
       });
       vi.mocked(getCodexRunnerStatus).mockResolvedValue({
+        type: "openai-codex",
         available: false,
         configured: false,
         message: "Not configured",
         featureFlagEnabled: false,
         apiKeySet: false,
         cliInstalled: false,
+        registered: false,
+        stub: false,
       });
 
       const handler = routes.find((r) => r.path === "/all")?.handler;
@@ -175,11 +181,14 @@ describe("agents API", () => {
   describe("GET /:type/status", () => {
     it("should return Claude Code status", async () => {
       const status = {
+        type: "claude-code",
         available: true,
         configured: true,
         message: "Ready",
         cliInstalled: true,
         settingsEnabled: true,
+        registered: true,
+        stub: false,
       };
       vi.mocked(getClaudeRunnerStatus).mockResolvedValue(status);
 
@@ -191,12 +200,15 @@ describe("agents API", () => {
 
     it("should return OpenAI Codex status", async () => {
       const status = {
+        type: "openai-codex",
         available: false,
         configured: false,
         message: "Not configured",
         featureFlagEnabled: false,
         apiKeySet: false,
         cliInstalled: false,
+        registered: false,
+        stub: false,
       };
       vi.mocked(getCodexRunnerStatus).mockResolvedValue(status);
 

@@ -93,8 +93,10 @@ describe("plan-approval", () => {
         {
           id: 150,
           body: "Approved! Go ahead.",
-          user: { login: "reviewer" },
+          user: { login: "reviewer", type: "User", avatar_url: "https://github.com/reviewer.png" },
           html_url: "https://github.com/comment/150",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
         },
       ]);
       vi.mocked(isHumanComment).mockReturnValue(true);
@@ -137,7 +139,14 @@ describe("plan-approval", () => {
 
         vi.mocked(queryAll).mockResolvedValue([makeJob()]);
         vi.mocked(getIssueCommentsForRepo).mockResolvedValue([
-          { id: 200, body: phrase, user: { login: "user" }, html_url: "https://github.com/c/200" },
+          {
+            id: 200,
+            body: phrase,
+            user: { login: "user", type: "User", avatar_url: "https://github.com/user.png" },
+            html_url: "https://github.com/c/200",
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          },
         ]);
         vi.mocked(isHumanComment).mockReturnValue(true);
         vi.mocked(queryOne).mockResolvedValue({ ...makeJob(), status: "running" });
@@ -160,8 +169,10 @@ describe("plan-approval", () => {
         {
           id: 160,
           body: "Please also handle edge case X",
-          user: { login: "reviewer" },
+          user: { login: "reviewer", type: "User", avatar_url: "https://github.com/reviewer.png" },
           html_url: "https://github.com/comment/160",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
         },
       ]);
       vi.mocked(isHumanComment).mockReturnValue(true);
@@ -186,8 +197,22 @@ describe("plan-approval", () => {
 
       vi.mocked(queryAll).mockResolvedValue([makeJob()]);
       vi.mocked(getIssueCommentsForRepo).mockResolvedValue([
-        { id: 120, body: "Bot message", user: { login: "bot" }, html_url: "https://github.com/c/120" },
-        { id: 130, body: "Another bot", user: { login: "bot" }, html_url: "https://github.com/c/130" },
+        {
+          id: 120,
+          body: "Bot message",
+          user: { login: "bot", type: "Bot", avatar_url: "https://github.com/bot.png" },
+          html_url: "https://github.com/c/120",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
+        {
+          id: 130,
+          body: "Another bot",
+          user: { login: "bot", type: "Bot", avatar_url: "https://github.com/bot.png" },
+          html_url: "https://github.com/c/130",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
       ]);
       vi.mocked(isHumanComment).mockReturnValue(false);
 

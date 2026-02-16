@@ -212,7 +212,7 @@ describe("issues API", () => {
         .mockResolvedValueOnce(localIssue) // local issue found
         .mockResolvedValueOnce(newJob); // createJobFromIssue
 
-      vi.mocked(mapIssue).mockReturnValue(localIssue as ReturnType<typeof mapIssue>);
+      vi.mocked(mapIssue).mockReturnValue(localIssue as unknown as ReturnType<typeof mapIssue>);
 
       const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/issues/:issueNumber/job")?.handler;
       const result = await handler?.({ params: { id: "repo-1", issueNumber: "42" } }, createMockReply());

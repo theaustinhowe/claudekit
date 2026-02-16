@@ -26,7 +26,9 @@ function makeRule(overrides: Partial<CustomRule> = {}): CustomRule {
     config: {},
     suggested_actions: ["Fix it"],
     is_enabled: true,
+    is_builtin: false,
     created_at: "",
+    updated_at: "",
     ...overrides,
   };
 }

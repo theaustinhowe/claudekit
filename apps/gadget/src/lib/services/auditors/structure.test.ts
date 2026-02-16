@@ -218,7 +218,7 @@ describe("auditStructure", () => {
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
     mockReaddirSync.mockReturnValue([
       { name: "utils", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
-    ]);
+    ] as any);
 
     const findings = auditStructure("/repo", stubPolicy);
     const wsPkgFinding = findings.find((f) => f.title === "Missing package.json in workspace: utils");
@@ -244,7 +244,7 @@ describe("resolveWorkspacePackages", () => {
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
     mockReaddirSync.mockReturnValue([
       { name: "ui", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
-    ]);
+    ] as any);
 
     const packages = resolveWorkspacePackages("/repo");
     expect(packages).toHaveLength(1);
@@ -269,7 +269,7 @@ describe("resolveWorkspacePackages", () => {
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
     mockReaddirSync.mockReturnValue([
       { name: "web", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
-    ]);
+    ] as any);
 
     const packages = resolveWorkspacePackages("/repo");
     expect(packages).toHaveLength(1);

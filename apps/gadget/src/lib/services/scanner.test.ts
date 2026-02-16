@@ -64,7 +64,7 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation((p: unknown) => {
+    mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
         return [makeDirent("my-app", true)] as unknown as fs.Dirent[];
@@ -73,7 +73,7 @@ describe("discoverRepos", () => {
         return [makeDirent(".git", true), makeDirent("package.json", false, true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
-    });
+    }) as any);
 
     mockReadFileSync.mockImplementation((p: unknown) => {
       const path = p as string;
@@ -115,13 +115,13 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation((p: unknown) => {
+    mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
         return [makeDirent("node_modules", true), makeDirent("dist", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
-    });
+    }) as any);
 
     const repos = discoverRepos({ roots: ["/projects"] });
     expect(repos).toHaveLength(0);
@@ -134,13 +134,13 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation((p: unknown) => {
+    mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
         return [makeDirent(".hidden", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
-    });
+    }) as any);
 
     const repos = discoverRepos({ roots: ["/projects"] });
     expect(repos).toHaveLength(0);
@@ -154,7 +154,7 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation((p: unknown) => {
+    mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
         return [makeDirent("mono", true)] as unknown as fs.Dirent[];
@@ -163,7 +163,7 @@ describe("discoverRepos", () => {
         return [makeDirent(".git", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
-    });
+    }) as any);
 
     mockStatSync.mockImplementation(() => {
       return { isDirectory: () => true, mtime: new Date() } as fs.Stats;
@@ -183,7 +183,7 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation((p: unknown) => {
+    mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
         return [makeDirent("level1", true)] as unknown as fs.Dirent[];
@@ -192,7 +192,7 @@ describe("discoverRepos", () => {
         return [makeDirent("level2", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
-    });
+    }) as any);
 
     const repos = discoverRepos({ roots: ["/projects"], maxDepth: 1 });
     expect(repos).toHaveLength(0);
@@ -204,7 +204,7 @@ describe("discoverRepos", () => {
       return path === "/home/user/projects";
     });
 
-    mockReaddirSync.mockReturnValue([] as unknown as fs.Dirent[]);
+    mockReaddirSync.mockReturnValue([] as any);
 
     const repos = discoverRepos({ roots: ["~/projects"] });
     expect(repos).toHaveLength(0);
@@ -218,7 +218,7 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation((p: unknown) => {
+    mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
         return [makeDirent("unnamed", true)] as unknown as fs.Dirent[];
@@ -227,7 +227,7 @@ describe("discoverRepos", () => {
         return [makeDirent(".git", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
-    });
+    }) as any);
 
     mockReadFileSync.mockReturnValue(JSON.stringify({}));
     mockStatSync.mockReturnValue({ isDirectory: () => true, mtime: new Date() } as fs.Stats);

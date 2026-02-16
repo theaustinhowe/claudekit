@@ -68,6 +68,7 @@ describe("needs-info", () => {
       vi.mocked(validateTransition).mockReturnValue({
         valid: false,
         error: "Cannot transition from done to needs_info",
+        eventType: "error",
       });
 
       await expect(enterNeedsInfo("job-1", "Question?")).rejects.toThrow("Cannot transition from done to needs_info");
@@ -245,8 +246,10 @@ describe("needs-info", () => {
         {
           id: 15,
           body: "Use the prod key",
-          user: { login: "developer" },
+          user: { login: "developer", type: "User", avatar_url: "https://github.com/developer.png" },
           html_url: "https://github.com/comment/15",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
         },
       ]);
       vi.mocked(isHumanComment).mockReturnValue(true);
