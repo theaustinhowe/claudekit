@@ -401,13 +401,10 @@ export async function resumeAgent(jobId: string, message?: string, agentType?: s
 
       // Clear the stale session ID
       const clearNow = new Date().toISOString();
-      const clearClaudeSession = null;
-      const clearCodexSession = job.codex_session_id;
-      const clearSessionData = job.agent_session_data;
       await execute(
         conn,
-        "UPDATE jobs SET claude_session_id = ?, codex_session_id = ?, agent_session_data = ?, updated_at = ? WHERE id = ?",
-        [clearClaudeSession, clearCodexSession, clearSessionData, clearNow, jobId],
+        "UPDATE jobs SET claude_session_id = NULL, agent_session_data = NULL, updated_at = ? WHERE id = ?",
+        [clearNow, jobId],
       );
 
       // Return error with explanation - caller can decide to start fresh

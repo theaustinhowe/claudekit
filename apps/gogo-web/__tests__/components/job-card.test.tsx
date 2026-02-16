@@ -57,7 +57,6 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     needsInfoCommentId: null,
     lastCheckedCommentId: null,
     claudeSessionId: null,
-    codexSessionId: null,
     injectMode: "immediate",
     pendingInjection: null,
     processPid: null,

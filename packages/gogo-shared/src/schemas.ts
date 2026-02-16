@@ -67,7 +67,6 @@ export const JobSchema = z.object({
   needsInfoCommentId: z.number().int().nullable(),
   lastCheckedCommentId: z.number().int().nullable(),
   claudeSessionId: z.string().nullable(),
-  codexSessionId: z.string().nullable(),
   injectMode: InjectModeSchema,
   pendingInjection: z.string().nullable(),
   processPid: z.number().int().nullable(),

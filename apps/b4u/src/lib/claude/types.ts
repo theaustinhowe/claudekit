@@ -1,5 +1,3 @@
-export type SessionStatus = "pending" | "running" | "done" | "error" | "cancelled";
-
 export type SessionType =
   | "analyze-project"
   | "generate-outline"

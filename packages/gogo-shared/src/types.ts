@@ -73,8 +73,6 @@ export interface Job {
   lastCheckedCommentId: number | null;
   // Claude Code session tracking
   claudeSessionId: string | null;
-  // OpenAI Codex session tracking
-  codexSessionId: string | null;
   injectMode: InjectMode;
   pendingInjection: string | null;
   // Process tracking

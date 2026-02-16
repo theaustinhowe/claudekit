@@ -1,4 +1,3 @@
-import type { SessionRunner } from "@devkit/session";
 import { createSessionManager } from "@devkit/session";
 import { executePrepared, query } from "@/lib/db";
 import { ensureDatabase } from "@/lib/db-init";
@@ -81,9 +80,7 @@ const manager = createSessionManager({
 });
 
 // Re-export manager methods for drop-in compatibility (no consumer changes needed)
-export const { startSession, cancelSession, subscribe, getLiveSession, setCleanupFn, setSessionPid } = manager;
+export const { startSession, cancelSession, subscribe, getLiveSession } = manager;
 
 // Export the manager instance itself (needed by SSE route)
 export { manager as sessionManager };
-
-export type { SessionRunner };

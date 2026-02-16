@@ -68,7 +68,6 @@ const JOB_FIELDS = [
   "needs_info_comment_id",
   "last_checked_comment_id",
   "claude_session_id",
-  "codex_session_id",
   "inject_mode",
   "pending_injection",
   "process_pid",
@@ -243,7 +242,6 @@ describe("Schema validation", () => {
       expect(JOB_FIELDS).toContain("agent_type");
       expect(JOB_FIELDS).toContain("agent_session_data");
       expect(JOB_FIELDS).toContain("claude_session_id");
-      expect(JOB_FIELDS).toContain("codex_session_id");
     });
 
     it("should have process tracking fields defined", () => {

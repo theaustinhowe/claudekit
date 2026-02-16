@@ -15,8 +15,6 @@ const JobStatusSchema = z.enum([
   "done",
 ]);
 
-export type JobStatusType = z.infer<typeof JobStatusSchema>;
-
 // Query params for listing jobs
 export const JobsQuerySchema = z.object({
   status: JobStatusSchema.optional(),
@@ -24,8 +22,6 @@ export const JobsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
-
-export type JobsQuery = z.infer<typeof JobsQuerySchema>;
 
 // Job action types
 export const JobActionSchema = z.discriminatedUnion("type", [
@@ -74,8 +70,6 @@ export const JobActionSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-export type JobAction = z.infer<typeof JobActionSchema>;
-
 // Query params for fetching events
 export const EventsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(100),
@@ -83,16 +77,12 @@ export const EventsQuerySchema = z.object({
   after: z.string().datetime().optional(),
 });
 
-export type EventsQuery = z.infer<typeof EventsQuerySchema>;
-
 // Query params for fetching logs
 export const LogsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(1000).default(200),
   afterSequence: z.coerce.number().int().min(0).default(0),
   stream: z.enum(["stdout", "stdout:tool", "stdout:thinking", "stdout:content", "stderr", "system"]).optional(),
 });
-
-export type LogsQuery = z.infer<typeof LogsQuerySchema>;
 
 // WebSocket client message types
 export const WsClientMessageSchema = z.discriminatedUnion("type", [
@@ -126,8 +116,6 @@ export const WsClientMessageSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-export type WsClientMessage = z.infer<typeof WsClientMessageSchema>;
-
 // Create job request body
 export const CreateJobSchema = z.object({
   issueNumber: z.number().int().positive(),
@@ -136,13 +124,9 @@ export const CreateJobSchema = z.object({
   issueBody: z.string().optional(),
 });
 
-export type CreateJob = z.infer<typeof CreateJobSchema>;
-
 // Create manual job request body (no GitHub issue required)
 export const CreateManualJobSchema = z.object({
   repositoryId: z.string().uuid(),
   title: z.string().min(1).max(500),
   description: z.string().optional(),
 });
-
-export type CreateManualJob = z.infer<typeof CreateManualJobSchema>;

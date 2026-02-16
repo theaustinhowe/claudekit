@@ -11,7 +11,7 @@ export interface ClaudeCodeSettings {
 }
 
 // Default runtime: 2 hours to prevent runaway agents while allowing complex tasks
-export const DEFAULT_MAX_RUNTIME_MS = 7200000; // 2 hours
+const DEFAULT_MAX_RUNTIME_MS = 7200000; // 2 hours
 
 const DEFAULT_CLAUDE_SETTINGS: ClaudeCodeSettings = {
   enabled: true,

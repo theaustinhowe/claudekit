@@ -66,7 +66,6 @@ export interface DbJob {
   last_checked_comment_id: number | null;
   last_checked_pr_review_comment_id: number | null;
   claude_session_id: string | null;
-  codex_session_id: string | null;
   inject_mode: string;
   pending_injection: string | null;
   process_pid: number | null;
@@ -263,7 +262,6 @@ export function mapJob(row: DbJob): Job {
     needsInfoCommentId: row.needs_info_comment_id,
     lastCheckedCommentId: row.last_checked_comment_id,
     claudeSessionId: row.claude_session_id,
-    codexSessionId: row.codex_session_id,
     injectMode: row.inject_mode as Job["injectMode"],
     pendingInjection: row.pending_injection,
     processPid: row.process_pid,

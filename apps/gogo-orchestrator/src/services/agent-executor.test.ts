@@ -113,7 +113,6 @@ describe("agent-executor", () => {
         branch: "feature/test",
         repository_id: "repo-1",
         agent_session_data: null,
-        codex_session_id: null,
       };
 
       vi.mocked(agentRegistry.get).mockReturnValue(mockRunner as AgentRunner);
@@ -170,7 +169,6 @@ describe("agent-executor", () => {
         branch: "feature/test",
         repository_id: "repo-1",
         agent_session_data: null,
-        codex_session_id: null,
       };
 
       // Job changed to running during transaction (race condition)
@@ -319,7 +317,6 @@ describe("agent-executor", () => {
         claude_session_id: null, // No session to resume
         worktree_path: "/path",
         branch: "main",
-        codex_session_id: null,
       };
 
       vi.mocked(agentRegistry.get).mockReturnValue(mockRunner as AgentRunner);
@@ -350,7 +347,6 @@ describe("agent-executor", () => {
         claude_session_id: "session-123",
         worktree_path: "/path",
         branch: "main",
-        codex_session_id: null,
       };
 
       vi.mocked(agentRegistry.get).mockReturnValue(mockRunner as AgentRunner);

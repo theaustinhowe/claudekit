@@ -53,7 +53,6 @@ CREATE TABLE IF NOT EXISTS jobs (
     last_checked_comment_id INTEGER,
     last_checked_pr_review_comment_id INTEGER,
     claude_session_id VARCHAR,
-    codex_session_id VARCHAR,
     inject_mode VARCHAR DEFAULT 'immediate',
     pending_injection VARCHAR,
     process_pid INTEGER,

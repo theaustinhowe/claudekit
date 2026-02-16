@@ -43,7 +43,6 @@ const mockJobsResponse = {
       needsInfoCommentId: null,
       lastCheckedCommentId: null,
       claudeSessionId: null,
-      codexSessionId: null,
       injectMode: "immediate",
       pendingInjection: null,
       processPid: null,
