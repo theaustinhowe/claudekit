@@ -363,7 +363,7 @@ export async function getSessionSuggestions(sessionId: string) {
  * Extract text content from a stream-json line.
  * Handles content_block_delta, message/assistant content blocks, and plain text fallback.
  */
-function extractText(line: string): string | null {
+export function extractText(line: string): string | null {
   try {
     const msg = JSON.parse(line);
 
@@ -419,7 +419,7 @@ const VALID_SEVERITIES = ["low", "medium", "high", "critical"];
  * Extract all complete SUGGESTION_START...SUGGESTION_END blocks from text.
  * Returns the parsed suggestions and any remaining text after the last complete block.
  */
-function extractCompleteSuggestions(text: string): {
+export function extractCompleteSuggestions(text: string): {
   suggestions: ParsedSuggestion[];
   remaining: string;
 } {
@@ -450,7 +450,7 @@ function extractCompleteSuggestions(text: string): {
   return { suggestions, remaining };
 }
 
-function parseSuggestionBlock(block: string): ParsedSuggestion | null {
+export function parseSuggestionBlock(block: string): ParsedSuggestion | null {
   const fields: Record<string, string> = {};
 
   for (const line of block.split("\n")) {
@@ -518,7 +518,7 @@ async function storeSuggestion(sessionId: string, suggestion: ParsedSuggestion):
 // Prompt building
 // ---------------------------------------------------------------------------
 
-function buildResearchPrompt(focusAreas: ResearchCategory[]): string {
+export function buildResearchPrompt(focusAreas: ResearchCategory[]): string {
   const areaDescriptions: Record<ResearchCategory, string> = {
     ui: "UI: Visual improvements, component design, responsive issues, layout problems",
     ux: "UX: User flow, interaction patterns, navigation, feedback mechanisms",

@@ -55,11 +55,15 @@ import { execSync } from "node:child_process";
 import { execute, queryOne } from "@devkit/duckdb";
 import type { DbJob } from "../db/schema.js";
 import {
+  buildPrompt,
   CLAUDE_ERRORS,
+  detectPhase,
+  detectSignal,
   getActiveRunCount,
   getClaudeAvailabilityError,
   isClaudeCliAvailable,
   isRunning,
+  parseStreamJsonLine,
   startClaudeRun,
   stopClaudeRun,
 } from "./claude-code-agent";
@@ -237,5 +241,225 @@ describe("stopClaudeRun", () => {
   it("returns false when no active process", async () => {
     const result = await stopClaudeRun("nonexistent-job");
     expect(result).toBe(false);
+  });
+});
+
+describe("buildPrompt", () => {
+  const baseJob = {
+    issueNumber: 42,
+    issueTitle: "Fix login bug",
+    issueBody: "Login page crashes",
+    worktreePath: "/tmp/work",
+    branch: "fix/login-42",
+  };
+  const workspace = { owner: "org", name: "repo" };
+  const settings = { enabled: true, max_runtime_ms: 7200000, max_parallel_jobs: 3, test_command: "npm test" };
+
+  it("generates implementing prompt by default", () => {
+    const prompt = buildPrompt(baseJob, workspace, settings);
+    expect(prompt).toContain("# Task Assignment");
+    expect(prompt).toContain("## Issue #42: Fix login bug");
+    expect(prompt).toContain("Login page crashes");
+    expect(prompt).toContain("`npm test`");
+    expect(prompt).toContain("READY_TO_PR");
+  });
+
+  it("generates planning prompt", () => {
+    const prompt = buildPrompt(baseJob, workspace, settings, { phase: "planning" });
+    expect(prompt).toContain("# Planning Phase");
+    expect(prompt).toContain("PLANNING phase");
+    expect(prompt).toContain("Do NOT implement any code changes");
+    expect(prompt).toContain("PLAN:");
+  });
+
+  it("includes feedback in planning prompt", () => {
+    const prompt = buildPrompt(baseJob, workspace, settings, {
+      phase: "planning",
+      feedback: "Add error handling for edge cases",
+    });
+    expect(prompt).toContain("Previous Plan Feedback");
+    expect(prompt).toContain("Add error handling for edge cases");
+  });
+
+  it("generates implementing_with_plan prompt", () => {
+    const prompt = buildPrompt(baseJob, workspace, settings, {
+      phase: "implementing_with_plan",
+      approvedPlan: "## Step 1\nDo the thing",
+    });
+    expect(prompt).toContain("Approved Plan");
+    expect(prompt).toContain("## Step 1\nDo the thing");
+    expect(prompt).toContain("Follow it closely");
+  });
+
+  it("uses manual job header for negative issue numbers", () => {
+    const prompt = buildPrompt({ ...baseJob, issueNumber: -1, source: "manual" }, workspace, settings);
+    expect(prompt).toContain("## Task: Fix login bug");
+    expect(prompt).not.toContain("## Issue #");
+  });
+
+  it("includes repo context", () => {
+    const prompt = buildPrompt(baseJob, workspace, settings);
+    expect(prompt).toContain("Owner: org");
+    expect(prompt).toContain("Repository: repo");
+    expect(prompt).toContain("Working Directory: /tmp/work");
+    expect(prompt).toContain("Branch: fix/login-42");
+  });
+
+  it("handles null issueBody", () => {
+    const prompt = buildPrompt({ ...baseJob, issueBody: null }, workspace, settings);
+    expect(prompt).toContain("No description provided.");
+  });
+});
+
+describe("detectSignal", () => {
+  it("detects READY_TO_PR", () => {
+    const result = detectSignal("All tests pass. READY_TO_PR");
+    expect(result).toEqual({
+      type: "signal",
+      signal: "READY_TO_PR",
+      content: "All tests pass. READY_TO_PR",
+    });
+  });
+
+  it("detects NEEDS_INFO with question", () => {
+    const result = detectSignal("NEEDS_INFO: What database should I use?");
+    expect(result).toEqual({
+      type: "signal",
+      signal: "NEEDS_INFO",
+      question: "What database should I use?",
+      content: "NEEDS_INFO: What database should I use?",
+    });
+  });
+
+  it("detects PLAN signal", () => {
+    const result = detectSignal("PLAN:\n## Step 1\nDo the thing");
+    expect(result).toEqual({
+      type: "signal",
+      signal: "PLAN",
+      planContent: "## Step 1\nDo the thing",
+      content: "PLAN:\n## Step 1\nDo the thing",
+    });
+  });
+
+  it("returns null for regular text", () => {
+    expect(detectSignal("Just doing some work")).toBeNull();
+  });
+});
+
+describe("detectPhase", () => {
+  it("detects analysis phase from read tools", () => {
+    const result = detectPhase({ type: "tool", content: "Tool: Read" });
+    expect(result).toEqual({ phase: "analysis", progress: 25 });
+  });
+
+  it("detects analysis phase from search tools", () => {
+    const result = detectPhase({ type: "tool", content: "Tool: Grep" });
+    expect(result).toEqual({ phase: "analysis", progress: 25 });
+  });
+
+  it("detects implementation phase from write tools", () => {
+    const result = detectPhase({ type: "tool", content: "Tool: Write" });
+    expect(result).toEqual({ phase: "implementation", progress: 50 });
+  });
+
+  it("detects implementation phase from edit tools", () => {
+    const result = detectPhase({ type: "tool", content: "Tool: Edit" });
+    expect(result).toEqual({ phase: "implementation", progress: 50 });
+  });
+
+  it("detects testing phase from bash tools", () => {
+    const result = detectPhase({ type: "tool", content: "Tool: Bash" });
+    expect(result).toEqual({ phase: "testing", progress: 75 });
+  });
+
+  it("detects analysis from text content", () => {
+    const result = detectPhase({ type: "text", content: "Analyzing the codebase structure" });
+    expect(result).toEqual({ phase: "analysis", progress: 25 });
+  });
+
+  it("detects implementation from text content", () => {
+    const result = detectPhase({ type: "text", content: "Implementing the fix now" });
+    expect(result).toEqual({ phase: "implementation", progress: 50 });
+  });
+
+  it("detects testing from text content", () => {
+    const result = detectPhase({ type: "text", content: "Running tests to verify" });
+    expect(result).toEqual({ phase: "testing", progress: 75 });
+  });
+
+  it("detects complete phase from READY_TO_PR signal", () => {
+    const result = detectPhase({ type: "signal", signal: "READY_TO_PR" });
+    expect(result).toEqual({ phase: "complete", progress: 100 });
+  });
+
+  it("returns null for unrelated text", () => {
+    expect(detectPhase({ type: "text", content: "hello world" })).toBeNull();
+  });
+
+  it("returns null for unknown type", () => {
+    expect(detectPhase({ type: "unknown" })).toBeNull();
+  });
+});
+
+describe("parseStreamJsonLine", () => {
+  const logState = { sequence: 0 };
+
+  it("returns unknown for empty line", () => {
+    expect(parseStreamJsonLine("", "job-1", logState)).toEqual({ type: "unknown" });
+  });
+
+  it("parses error message", () => {
+    const line = JSON.stringify({ type: "error", error: { message: "Rate limit exceeded" } });
+    const result = parseStreamJsonLine(line, "job-1", logState);
+    expect(result).toEqual({ type: "error", content: "Rate limit exceeded" });
+  });
+
+  it("parses session result", () => {
+    const line = JSON.stringify({ type: "result", result: { session_id: "sess-123" } });
+    const result = parseStreamJsonLine(line, "job-1", logState);
+    expect(result).toEqual({ type: "session", sessionId: "sess-123" });
+  });
+
+  it("parses content block delta text", () => {
+    const line = JSON.stringify({ type: "content_block_delta", delta: { text: "Hello world" } });
+    const result = parseStreamJsonLine(line, "job-1", logState);
+    expect(result).toEqual({ type: "text", content: "Hello world" });
+  });
+
+  it("detects signal in delta text", () => {
+    const line = JSON.stringify({ type: "content_block_delta", delta: { text: "READY_TO_PR" } });
+    const result = parseStreamJsonLine(line, "job-1", logState);
+    expect(result.type).toBe("signal");
+    expect(result.signal).toBe("READY_TO_PR");
+  });
+
+  it("parses message with text content", () => {
+    const line = JSON.stringify({
+      type: "message",
+      message: { content: [{ type: "text", text: "Analyzing code" }] },
+    });
+    const result = parseStreamJsonLine(line, "job-1", logState);
+    expect(result).toEqual({ type: "text", content: "Analyzing code" });
+  });
+
+  it("parses message with tool use", () => {
+    const line = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", tool_use: { name: "Read", input: {} } }] },
+    });
+    const result = parseStreamJsonLine(line, "job-1", logState);
+    expect(result).toEqual({ type: "tool", content: "Tool: Read" });
+  });
+
+  it("treats non-JSON as plain text", () => {
+    const result = parseStreamJsonLine("Just plain output", "job-1", logState);
+    expect(result).toEqual({ type: "text", content: "Just plain output" });
+  });
+
+  it("detects signal in plain text", () => {
+    const result = parseStreamJsonLine("NEEDS_INFO: How should I handle auth?", "job-1", logState);
+    expect(result.type).toBe("signal");
+    expect(result.signal).toBe("NEEDS_INFO");
+    expect(result.question).toBe("How should I handle auth?");
   });
 });

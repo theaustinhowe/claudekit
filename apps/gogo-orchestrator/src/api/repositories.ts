@@ -68,7 +68,7 @@ const DeleteRepoQuerySchema = z.object({
 });
 
 /** Map camelCase field names from Zod schemas to snake_case DB column names */
-function toSnakeCaseFields(data: Record<string, unknown>): Record<string, unknown> {
+export function toSnakeCaseFields(data: Record<string, unknown>): Record<string, unknown> {
   const mapping: Record<string, string> = {
     displayName: "display_name",
     githubToken: "github_token",

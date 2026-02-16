@@ -97,7 +97,7 @@ interface StreamJsonMessage {
  * @param approvedPlan - The approved plan to follow (when phase is "implementing_with_plan")
  * @param feedback - Feedback from human to incorporate when revising a plan
  */
-function buildPrompt(
+export function buildPrompt(
   job: {
     issueNumber: number;
     issueTitle: string;
@@ -250,7 +250,7 @@ type ParsedLine = {
  * Check text for agent signals (READY_TO_PR, NEEDS_INFO, PLAN).
  * Returns a signal result if found, or null.
  */
-function detectSignal(text: string): ParsedLine | null {
+export function detectSignal(text: string): ParsedLine | null {
   if (text.includes("READY_TO_PR")) {
     return { type: "signal", signal: "READY_TO_PR", content: text };
   }
@@ -282,7 +282,7 @@ function detectSignal(text: string): ParsedLine | null {
  * Detect the current agent phase from parsed output.
  * Returns null if phase cannot be determined from this line.
  */
-function detectPhase(parsed: ParsedLine): { phase: string; progress?: number } | null {
+export function detectPhase(parsed: ParsedLine): { phase: string; progress?: number } | null {
   if (parsed.type === "tool") {
     const toolName = parsed.content?.replace("Tool: ", "").toLowerCase() || "";
     // Read/search tools indicate analysis phase
@@ -330,7 +330,7 @@ function detectPhase(parsed: ParsedLine): { phase: string; progress?: number } |
 /**
  * Parse a line of stream-json output from Claude CLI
  */
-function parseStreamJsonLine(line: string, _jobId: string, _logState: LogState): ParsedLine {
+export function parseStreamJsonLine(line: string, _jobId: string, _logState: LogState): ParsedLine {
   if (!line.trim()) {
     return { type: "unknown" };
   }
