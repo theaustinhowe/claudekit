@@ -93,6 +93,25 @@ export const WithForm: Story = {
   ),
 };
 
+export const SlowAnimation: Story = {
+  render: () => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Slow Open (500ms)</Button>
+      </DialogTrigger>
+      <DialogContent duration={500}>
+        <DialogHeader>
+          <DialogTitle>Slow animation</DialogTitle>
+          <DialogDescription>This dialog opens with a 500ms animation.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button>OK</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  ),
+};
+
 export const ScrollableContent: Story = {
   render: () => (
     <Dialog>

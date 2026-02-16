@@ -40,6 +40,22 @@ export const Default: Story = {
   ),
 };
 
+export const FastAnimation: Story = {
+  render: () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Fast Sheet (200ms)</Button>
+      </SheetTrigger>
+      <SheetContent duration={200}>
+        <SheetHeader>
+          <SheetTitle>Fast animation</SheetTitle>
+          <SheetDescription>This sheet opens with a 200ms animation.</SheetDescription>
+        </SheetHeader>
+      </SheetContent>
+    </Sheet>
+  ),
+};
+
 export const Left: Story = {
   render: () => (
     <Sheet>

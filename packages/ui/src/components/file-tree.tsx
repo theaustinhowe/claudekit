@@ -26,7 +26,7 @@ export function FileTree({ rootEntries, currentPath, currentPathIsDirectory, onS
     return expanded;
   });
   const [childrenCache, setChildrenCache] = useState<Map<string, FileTreeEntry[]>>(new Map());
-  const prevPath = useRef(currentPath);
+  const prevPath = useRef("");
 
   // Auto-expand ancestor directories when currentPath changes
   useEffect(() => {

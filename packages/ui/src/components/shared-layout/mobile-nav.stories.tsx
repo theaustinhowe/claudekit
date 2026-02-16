@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { FolderKanban, Home, Layers, Search, Settings } from "lucide-react";
+import type { ComponentType } from "react";
 import { MobileBottomNav, MobileMenuButton, MobileSidebar } from "./mobile-nav";
 import type { AppLayoutConfig } from "./types";
 
@@ -23,6 +24,13 @@ const sampleConfig: AppLayoutConfig = {
   port: 2000,
 };
 
+const mobileOverride = (Story: ComponentType) => (
+  <>
+    <style>{`.md\\:hidden { display: flex !important; } .safe-bottom { padding-bottom: 0; }`}</style>
+    <Story />
+  </>
+);
+
 const meta: Meta = {
   title: "Components/SharedLayout/MobileNav",
   tags: ["autodocs"],
@@ -33,6 +41,7 @@ export default meta;
 type Story = StoryObj;
 
 export const MenuButton: Story = {
+  decorators: [mobileOverride],
   render: () => (
     <div className="p-4">
       <MobileMenuButton onClick={() => {}} />
@@ -42,6 +51,7 @@ export const MenuButton: Story = {
 
 export const BottomNavBar: Story = {
   decorators: [
+    mobileOverride,
     (Story) => {
       setMockPathname("/");
       return (

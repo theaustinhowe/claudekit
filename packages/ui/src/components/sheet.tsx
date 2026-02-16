@@ -101,7 +101,14 @@ const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 SheetHeader.displayName = "SheetHeader";
 
 const SheetFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)} {...props} />
+  <div
+    className={cn(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "sticky bottom-0 -mx-6 -mb-6 px-6 pb-6 pt-4 bg-background border-t border-border",
+      className,
+    )}
+    {...props}
+  />
 );
 SheetFooter.displayName = "SheetFooter";
 

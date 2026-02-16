@@ -12,10 +12,6 @@ export default meta;
 type Story = StoryObj<typeof SharedHeader>;
 
 export const Default: Story = {
-  args: {},
-};
-
-export const WithStatusIndicator: Story = {
   args: {
     statusIndicator: (
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -72,5 +68,11 @@ export const WithClaudeUsage: Story = {
         extraUsage: null,
       }),
     },
+    statusIndicator: (
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="w-2 h-2 rounded-full bg-green-500" />
+        Connected
+      </div>
+    ),
   },
 };

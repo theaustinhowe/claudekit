@@ -23,7 +23,7 @@ const DropdownMenuGroup = MenuPrimitive.Group;
 
 const DropdownMenuPortal = MenuPrimitive.Portal;
 
-const DropdownMenuSub = MenuPrimitive.Root;
+const DropdownMenuSub = MenuPrimitive.SubmenuRoot;
 
 const DropdownMenuRadioGroup = MenuPrimitive.RadioGroup;
 
