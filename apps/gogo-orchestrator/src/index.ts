@@ -161,7 +161,7 @@ async function main() {
 
   // Start server
   const server = await createServer();
-  const port = Number.parseInt(process.env.PORT || "2101", 10);
+  const port = Number.parseInt(process.env.PORT || "2201", 10);
   await server.listen({ port, host: "0.0.0.0" });
   log.info({ port }, "Orchestrator running");
 

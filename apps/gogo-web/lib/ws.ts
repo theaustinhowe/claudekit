@@ -12,12 +12,12 @@ function getWsUrl(): string {
     baseUrl = process.env.NEXT_PUBLIC_WS_URL;
   } else if (typeof window === "undefined") {
     // In SSR context, fall back to localhost
-    return "ws://localhost:2101/ws";
+    return "ws://localhost:2201/ws";
   } else {
     // Use the same hostname the browser is connected to
     const hostname = window.location.hostname;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const orchestratorPort = process.env.NEXT_PUBLIC_ORCHESTRATOR_PORT || "2101";
+    const orchestratorPort = process.env.NEXT_PUBLIC_ORCHESTRATOR_PORT || "2201";
     baseUrl = `${protocol}//${hostname}:${orchestratorPort}/ws`;
   }
 

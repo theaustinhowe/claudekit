@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-pnpm dev          # Start dev server at http://localhost:2000
+pnpm dev          # Start dev server at http://localhost:2100
 pnpm build        # Production build (also runs type-check)
 pnpm lint         # Biome check (lint + format check)
 pnpm lint:fix     # Biome check with auto-fix

@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import pino from "pino";
 
-export type AppName = "gadget" | "gogo-web" | "gogo-orchestrator" | "b4u" | "logs" | "dev-runner";
+export type AppName = "gadget" | "gogo-web" | "gogo-orchestrator" | "b4u" | "web" | "dev-runner";
 
 export interface LoggerConfig {
   app: AppName;

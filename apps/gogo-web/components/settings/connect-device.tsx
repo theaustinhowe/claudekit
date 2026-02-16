@@ -43,7 +43,7 @@ export function ConnectDevice() {
   }, [fetchInfo]);
 
   const getUrl = (ip: string) => {
-    const webPort = process.env.NEXT_PUBLIC_WEB_PORT || "2100";
+    const webPort = process.env.NEXT_PUBLIC_WEB_PORT || "2200";
     return `http://${ip}:${webPort}`;
   };
 

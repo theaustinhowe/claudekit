@@ -37,7 +37,7 @@ Edit `.env.local` and fill in the keys you need (see [Environment Variables](#en
 pnpm dev
 ```
 
-The app will be available at **http://localhost:2000**.
+The app will be available at **http://localhost:2100**.
 
 On first startup the database is created automatically at `~/.gadget/data.duckdb`, the schema is initialized, and built-in seed data (policies, templates, fix packs, custom rules, concept sources) is inserted.
 
@@ -69,9 +69,9 @@ These are only needed if you configure the corresponding MCP server integrations
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start Next.js dev server on port 2000 with hot reload |
+| `pnpm dev` | Start Next.js dev server on port 2100 with hot reload |
 | `pnpm build` | Production build (includes type-checking) |
-| `pnpm start` | Start production server on port 2000 |
+| `pnpm start` | Start production server on port 2100 |
 | `pnpm lint` | Run Biome lint + format check on `src/` |
 | `pnpm lint:fix` | Run Biome with auto-fix |
 | `pnpm format` | Run Biome format (write mode) |
@@ -254,10 +254,10 @@ pnpm dev
 
 Or just remove the WAL file: `rm ~/.gadget/data.duckdb.wal`
 
-### Port 2000 already in use
+### Port 2100 already in use
 
 ```bash
-lsof -ti:2000 | xargs kill -9
+lsof -ti:2100 | xargs kill -9
 pnpm dev
 ```
 

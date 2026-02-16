@@ -107,15 +107,15 @@ Additional optional API keys for MCP server integrations (Brave, Firecrawl, Exa,
 pnpm dev
 ```
 
-Open [http://localhost:2000](http://localhost:2000). On first launch, the database is created automatically at `~/.gadget/data.duckdb` with schema applied and built-in data seeded.
+Open [http://localhost:2100](http://localhost:2100). On first launch, the database is created automatically at `~/.gadget/data.duckdb` with schema applied and built-in data seeded.
 
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `pnpm dev` | Start dev server at localhost:2000 |
+| `pnpm dev` | Start dev server at localhost:2100 |
 | `pnpm build` | Production build (includes type-check) |
-| `pnpm start` | Start production server at localhost:2000 |
+| `pnpm start` | Start production server at localhost:2100 |
 | `pnpm lint` | Run Biome checks (lint + format) |
 | `pnpm lint:fix` | Run Biome with auto-fix |
 | `pnpm format` | Format all files with Biome |

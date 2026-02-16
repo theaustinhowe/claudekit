@@ -11,11 +11,11 @@ interface App {
 }
 
 const apps: App[] = [
-  { name: "gadget", filter: "gadget", color: "\x1b[35m", port: 2000 }, // magenta
-  { name: "gogo-web", filter: "gogo-web", color: "\x1b[36m", port: 2100 }, // cyan
-  { name: "gogo-orch", filter: "gogo-orchestrator", color: "\x1b[33m", port: 2101 }, // yellow
-  { name: "b4u", filter: "b4u", color: "\x1b[32m", port: 2200 }, // green
-  { name: "logs", filter: "logs", color: "\x1b[34m", port: 2300 }, // blue
+  { name: "web", filter: "web", color: "\x1b[34m", port: 2000 }, // blue
+  { name: "gadget", filter: "gadget", color: "\x1b[35m", port: 2100 }, // magenta
+  { name: "gogo-web", filter: "gogo-web", color: "\x1b[36m", port: 2200 }, // cyan
+  { name: "gogo-orch", filter: "gogo-orchestrator", color: "\x1b[33m", port: 2201 }, // yellow
+  { name: "b4u", filter: "b4u", color: "\x1b[32m", port: 2300 }, // green
 ];
 
 const RESET = "\x1b[0m";

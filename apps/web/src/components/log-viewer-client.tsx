@@ -38,6 +38,20 @@ const LEVEL_COLORS: Record<number, string> = {
   60: "text-red-500 font-bold",
 };
 
+const MSG_COLORS: Record<number, string> = {
+  10: "text-muted-foreground/70",
+  20: "text-muted-foreground",
+  40: "text-yellow-300/90",
+  50: "text-red-300",
+  60: "text-red-400 font-bold",
+};
+
+const ROW_BG_COLORS: Record<number, string> = {
+  40: "bg-yellow-500/5",
+  50: "bg-red-500/8",
+  60: "bg-red-500/15",
+};
+
 function getLevelName(level: number): string {
   return LEVEL_NAMES[level] || `L${level}`;
 }
@@ -138,7 +152,19 @@ export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
         </div>
 
         <div className="flex gap-1">
-          {[30, 40, 50, 60].map((level) => (
+          <button
+            type="button"
+            onClick={() => setLevelFilter(new Set())}
+            className={cn(
+              "px-2 py-1 text-xs rounded border transition-colors",
+              levelFilter.size === 0
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border hover:bg-accent",
+            )}
+          >
+            All
+          </button>
+          {[10, 20, 30, 40, 50, 60].map((level) => (
             <button
               key={level}
               type="button"
@@ -192,7 +218,10 @@ export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
                   height: `${virtualItem.size}px`,
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
-                className="flex items-center px-4 hover:bg-accent/50 border-b border-border/30"
+                className={cn(
+                  "flex items-center px-4 hover:bg-accent/50 border-b border-border/30",
+                  ROW_BG_COLORS[entry.level],
+                )}
               >
                 <span className="w-20 flex-shrink-0 text-muted-foreground">{formatTimestamp(entry.time)}</span>
                 <span className={cn("w-12 flex-shrink-0 font-semibold", LEVEL_COLORS[entry.level] || "")}>
@@ -201,7 +230,7 @@ export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
                 {entry.service && (
                   <span className="w-24 flex-shrink-0 text-muted-foreground truncate">[{entry.service}]</span>
                 )}
-                <span className="truncate">{entry.msg}</span>
+                <span className={cn("truncate", MSG_COLORS[entry.level])}>{entry.msg}</span>
               </div>
             );
           })}

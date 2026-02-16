@@ -7,7 +7,7 @@ Gadget is a **local-first developer tool** built on **Next.js 16 App Router**. I
 ```
  User (Browser)
       |
- Next.js App Router (localhost:2000)
+ Next.js App Router (localhost:2100)
       |
       +--- Server Components (pages)        -- fetch data via Server Actions
       +--- Client Components ("use client")  -- interactivity, state, animations

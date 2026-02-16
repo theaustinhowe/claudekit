@@ -7,7 +7,7 @@ B4U is a prototype UI for an automated repo walkthrough video generator. It uses
 ## Commands
 
 ```bash
-pnpm dev          # Start dev server (Turbopack, port 2200)
+pnpm dev          # Start dev server (Turbopack, port 2300)
 pnpm build        # Production build
 pnpm lint         # Biome check
 pnpm lint:fix     # Biome check with auto-fix

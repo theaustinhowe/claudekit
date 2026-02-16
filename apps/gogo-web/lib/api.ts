@@ -21,13 +21,13 @@ function getApiUrl(): string {
 
   // In SSR context, fall back to localhost
   if (typeof window === "undefined") {
-    return "http://localhost:2101";
+    return "http://localhost:2201";
   }
 
   // Use the same hostname the browser is connected to
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
-  const orchestratorPort = process.env.NEXT_PUBLIC_ORCHESTRATOR_PORT || "2101";
+  const orchestratorPort = process.env.NEXT_PUBLIC_ORCHESTRATOR_PORT || "2201";
 
   return `${protocol}//${hostname}:${orchestratorPort}`;
 }

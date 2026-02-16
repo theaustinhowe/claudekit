@@ -40,7 +40,7 @@ export default async function AppLogPage({ params }: { params: Promise<{ app: st
     <div className="min-h-screen flex flex-col">
       <header className="border-b px-6 py-3 flex items-center gap-4">
         <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
-          &larr; Back
+          &larr; Dashboard
         </Link>
         <h1 className="text-lg font-semibold">{app}</h1>
         <span className="text-sm text-muted-foreground">{initialLogs.length} entries loaded</span>

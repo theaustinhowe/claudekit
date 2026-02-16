@@ -4,8 +4,8 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Devkit Logs",
-  description: "Log viewer for devkit apps",
+  title: "Devkit",
+  description: "Local development control center",
 };
 
 export const dynamic = "force-dynamic";

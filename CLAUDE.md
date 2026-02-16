@@ -10,10 +10,11 @@ This file provides guidance to Claude Code when working in this monorepo.
 
 | App | Port | Framework | Description |
 |-----|------|-----------|-------------|
-| `apps/gadget` | 2000 | Next.js 16 | Repository auditor, AI integrations, project scaffolding |
-| `apps/gogo-web` | 2100 | Next.js 16 | Job orchestration dashboard for multi-repo AI agents |
-| `apps/gogo-orchestrator` | 2101 | Fastify 5 | Backend orchestrator for GoGo job execution |
-| `apps/b4u` | 2200 | Next.js 16 | Automated repo walkthrough video generator |
+| `apps/web` | 2000 | Next.js 16 | Devkit dashboard, app health monitor, log viewer |
+| `apps/gadget` | 2100 | Next.js 16 | Repository auditor, AI integrations, project scaffolding |
+| `apps/gogo-web` | 2200 | Next.js 16 | Job orchestration dashboard for multi-repo AI agents |
+| `apps/gogo-orchestrator` | 2201 | Fastify 5 | Backend orchestrator for GoGo job execution |
+| `apps/b4u` | 2300 | Next.js 16 | Automated repo walkthrough video generator |
 
 ## Shared Packages
 
@@ -31,9 +32,10 @@ This file provides guidance to Claude Code when working in this monorepo.
 
 ```bash
 pnpm dev              # Start all apps (colored output via scripts/dev.ts)
-pnpm dev:gadget       # Just Gadget (port 2000)
+pnpm dev:web          # Just Web dashboard (port 2000)
+pnpm dev:gadget       # Just Gadget (port 2100)
 pnpm dev:gogo         # GoGo web + orchestrator (split terminal)
-pnpm dev:b4u          # Just B4U (port 2200)
+pnpm dev:b4u          # Just B4U (port 2300)
 pnpm build            # Build all packages and apps
 pnpm typecheck        # TypeScript check across everything
 pnpm lint             # Biome check

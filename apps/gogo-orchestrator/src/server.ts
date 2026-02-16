@@ -29,7 +29,7 @@ export async function createServer() {
   // to make requests to the orchestrator API when it's running.
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",")
-    : ["http://localhost:2100", "http://127.0.0.1:2100", "http://localhost:3000", "http://127.0.0.1:3000"];
+    : ["http://localhost:2200", "http://127.0.0.1:2200", "http://localhost:3000", "http://127.0.0.1:3000"];
   await app.register(cors, {
     origin: allowedOrigins,
   });

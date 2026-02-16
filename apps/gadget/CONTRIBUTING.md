@@ -47,7 +47,7 @@ cp .env.local.example .env.local
 # Edit .env.local — see "Environment Variables" below
 
 # 3. Start developing
-pnpm dev         # → http://localhost:2000
+pnpm dev         # → http://localhost:2100
 ```
 
 On first launch, the database is created automatically at `~/.gadget/data.duckdb`. Schema tables are initialized and built-in seed data (policies, templates, fix packs, concept sources) is inserted — no manual setup required.
@@ -69,9 +69,9 @@ Additional optional API keys for MCP server integrations (Brave, Firecrawl, Noti
 
 | Command | What It Does |
 |---|---|
-| `pnpm dev` | Start Next.js dev server at `http://localhost:2000` with hot reload |
+| `pnpm dev` | Start Next.js dev server at `http://localhost:2100` with hot reload |
 | `pnpm build` | Production build — runs TypeScript type-checking then builds the app |
-| `pnpm start` | Start production server at port 2000 (run `pnpm build` first) |
+| `pnpm start` | Start production server at port 2100 (run `pnpm build` first) |
 | `pnpm lint` | Check for lint and formatting errors with Biome (read-only) |
 | `pnpm lint:fix` | Auto-fix lint and formatting issues with Biome |
 | `pnpm format` | Format all source files with Biome |
@@ -493,12 +493,12 @@ git add -u
 git commit
 ```
 
-### Port 2000 already in use
+### Port 2100 already in use
 
 Kill the existing process:
 
 ```bash
-lsof -ti:2000 | xargs kill -9
+lsof -ti:2100 | xargs kill -9
 pnpm dev
 ```
 

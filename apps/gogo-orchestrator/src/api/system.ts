@@ -3,7 +3,7 @@ import type { NetworkInfo } from "@devkit/gogo-shared";
 import type { FastifyPluginAsync } from "fastify";
 
 // Get the configured ports
-const HTTP_PORT = Number.parseInt(process.env.PORT || "2101", 10);
+const HTTP_PORT = Number.parseInt(process.env.PORT || "2201", 10);
 const WS_PORT = HTTP_PORT; // WebSocket runs on same port
 
 export const systemRouter: FastifyPluginAsync = async (fastify) => {

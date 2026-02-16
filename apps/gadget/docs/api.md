@@ -2,7 +2,7 @@
 
 27 REST endpoints under `/api/`. Gadget is a local-first dev tool — all endpoints are served on `localhost` with no authentication by default.
 
-**Base URL:** `http://localhost:2000`
+**Base URL:** `http://localhost:2100`
 
 **Streaming protocols:**
 - **SSE** — Server-Sent Events over `text/event-stream` with `data: <json>\n\n` framing (used by the session stream endpoint)
