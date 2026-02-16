@@ -25,8 +25,8 @@ export function PageTabs<T extends string = string>({
   actions,
 }: PageTabsProps<T>) {
   return (
-    <div className={cn("flex h-12 shrink-0 items-center gap-1 border-b bg-background px-4", className)}>
-      <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+    <div className={cn("flex h-12 shrink-0 items-center gap-8 border-b bg-background px-4", className)}>
+      <div className="flex items-center overflow-x-auto [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
         {tabs.map((tab) => {
           const isActive = tab.id === value;
 
