@@ -43,9 +43,9 @@ export function AppLayout({
             {contentBanner && <ContentBanner>{contentBanner}</ContentBanner>}
           </>
         }
+        footer={showFooter ? <SharedFooter currentPort={config.port} /> : undefined}
       >
         <div className="pb-16 md:pb-0 flex-1 min-h-0 flex flex-col">{children}</div>
-        {showFooter && <SharedFooter currentPort={config.port} />}
       </AppShell>
 
       <MobileBottomNav config={config} contextSwitcher={contextSwitcher} mobileSidebarContent={mobileSidebarContent} />

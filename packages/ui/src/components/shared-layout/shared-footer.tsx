@@ -1,6 +1,7 @@
 "use client";
 
 import { Clapperboard, LayoutDashboard, Search, Swords } from "lucide-react";
+import { Fragment } from "react";
 import { cn } from "../../utils";
 import type { DevkitAppLink } from "./types";
 
@@ -13,25 +14,30 @@ const DEFAULT_APPS: DevkitAppLink[] = [
 
 export function SharedFooter({ currentPort }: { currentPort: number }) {
   return (
-    <footer className="border-t border-border bg-muted/30 py-2 px-4">
-      <nav className="flex items-center gap-1 flex-wrap">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50 mr-1">Apps</span>
-        {DEFAULT_APPS.map((app) => {
+    <footer className="hidden md:flex items-center justify-center border-t border-border bg-muted/20 shrink-0 py-1.5 px-4">
+      <nav className="flex items-center gap-0.5">
+        {DEFAULT_APPS.map((app, i) => {
           const isCurrent = app.port === currentPort;
           return (
-            <a
-              key={app.port}
-              href={`http://localhost:${app.port}`}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors",
-                isCurrent
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+            <Fragment key={app.port}>
+              {i > 0 && (
+                <span className="text-border text-[10px] mx-1" aria-hidden="true">
+                  &middot;
+                </span>
               )}
-            >
-              <app.icon className="w-3.5 h-3.5" />
-              <span>{app.label}</span>
-            </a>
+              <a
+                href={`http://localhost:${app.port}`}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors",
+                  isCurrent
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                )}
+              >
+                <app.icon className="w-3.5 h-3.5" />
+                <span>{app.label}</span>
+              </a>
+            </Fragment>
           );
         })}
       </nav>

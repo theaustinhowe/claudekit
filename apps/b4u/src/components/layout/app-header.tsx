@@ -15,17 +15,17 @@ export function PhaseStepper() {
   };
 
   return (
-    <div className="flex items-center h-10 px-4 gap-2">
+    <div className="flex items-center h-12 px-6 gap-3">
       {/* Project name badge */}
       {state.projectName && (
-        <div className="hidden md:flex items-center gap-1.5 mr-4 px-2.5 py-1 text-2xs bg-card border border-border rounded-lg text-muted-foreground">
+        <div className="hidden md:flex items-center gap-1.5 mr-2 px-3 py-1.5 text-2xs bg-card border border-border rounded-lg text-muted-foreground">
           <span className="text-muted-foreground/60">project</span>
-          <span className="text-primary">{state.projectName}</span>
+          <span className="text-primary font-medium">{state.projectName}</span>
         </div>
       )}
 
       {/* Phase stepper */}
-      <nav className="flex items-center gap-0 ml-auto overflow-x-auto scrollbar-none">
+      <nav className="flex items-center gap-0.5 ml-auto overflow-x-auto scrollbar-none">
         {phases.map((phase, i) => {
           const status = state.phaseStatuses[phase];
           const isCompleted = status === "completed";
@@ -33,13 +33,13 @@ export function PhaseStepper() {
           const isViewing = state.rightPanelContent === phase;
           return (
             <div key={phase} className="flex items-center shrink-0">
-              {i > 0 && <div className={cn("w-3 md:w-5 h-px", status === "locked" ? "bg-border" : "bg-primary/40")} />}
+              {i > 0 && <div className={cn("w-5 md:w-8 h-px", status === "locked" ? "bg-border" : "bg-primary/40")} />}
               <button
                 type="button"
                 onClick={() => handlePhaseClick(phase)}
                 title={PHASE_LABELS[phase]}
                 className={cn(
-                  "flex items-center gap-1.5 py-1.5 text-2xs transition-all px-1 md:px-2.5 rounded-lg border",
+                  "flex items-center gap-1.5 py-1.5 text-2xs transition-all px-2 md:px-3 rounded-lg border",
                   isCompleted && "cursor-pointer hover:opacity-80 text-primary border-transparent",
                   isActive && "text-primary-foreground bg-primary border-primary",
                   !isCompleted && !isActive && "cursor-default text-foreground/60 border-transparent",
