@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "exclude": ["optionalPeerDependencies"],
   "workspaces": {
     ".": {
       "entry": ["scripts/*.ts"]
@@ -15,8 +16,7 @@
     "apps/b4u": {},
     "packages/ui": {
       "entry": ["src/components/*.tsx"],
-      "ignore": ["src/components/*.stories.tsx"],
-      "ignoreDependencies": ["next-themes", "sonner"]
+      "ignore": ["src/components/*.stories.tsx"]
     },
     "packages/duckdb": {},
     "packages/hooks": {},
