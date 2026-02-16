@@ -74,13 +74,7 @@ vi.mock("../services/github/index.js", () => ({
 }));
 
 vi.mock("../services/settings-helper.js", () => ({
-  validateWorkspaceSettings: vi.fn(() => Promise.resolve({ valid: true })),
-  getWorkspaceSettings: vi.fn(() =>
-    Promise.resolve({
-      workdirPath: "/tmp/workdir",
-    }),
-  ),
-  toGitConfig: vi.fn(() => mockGitConfig),
+  toGitConfigFromRepo: vi.fn(() => mockGitConfig),
 }));
 
 vi.mock("../ws/handler.js", () => ({

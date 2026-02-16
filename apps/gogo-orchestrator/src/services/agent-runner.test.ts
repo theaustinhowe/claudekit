@@ -31,9 +31,6 @@ vi.mock("./git.js", () => ({
 }));
 
 vi.mock("./settings-helper.js", () => ({
-  validateWorkspaceSettings: vi.fn(),
-  getWorkspaceSettings: vi.fn(),
-  toGitConfig: vi.fn(),
   toGitConfigFromRepo: vi.fn().mockReturnValue({
     workdir: "/tmp/repos",
     owner: "testowner",
@@ -47,7 +44,6 @@ vi.mock("./settings-helper.js", () => ({
 import { execute, queryOne } from "../db/helpers.js";
 import { broadcast } from "../ws/handler.js";
 import { isRunning, startJobRun, stopJobRun } from "./agent-runner.js";
-import { getWorkspaceSettings, toGitConfig, validateWorkspaceSettings } from "./settings-helper.js";
 
 const makeJob = (overrides?: Partial<Record<string, unknown>>) => ({
   id: "job-1",
@@ -173,39 +169,7 @@ describe("agent-runner", () => {
       expect(result.error).toBe("Repository is not active");
     });
 
-    it("should fall back to legacy workspace settings when no repositoryId", async () => {
-      const claimedJob = makeJob({ status: "running", repository_id: null });
-
-      vi.mocked(execute).mockResolvedValue(undefined);
-      vi.mocked(queryOne).mockResolvedValueOnce(claimedJob);
-
-      vi.mocked(validateWorkspaceSettings).mockResolvedValue({
-        valid: true,
-        errors: [],
-      });
-      vi.mocked(getWorkspaceSettings).mockResolvedValue({
-        workdir: "/tmp/repos",
-        owner: "testowner",
-        name: "testrepo",
-        token: "ghp_test",
-        repoUrl: "https://github.com/testowner/testrepo",
-      });
-      vi.mocked(toGitConfig).mockReturnValue({
-        workdir: "/tmp/repos",
-        owner: "testowner",
-        name: "testrepo",
-        token: "ghp_test",
-        repoUrl: "https://github.com/testowner/testrepo",
-        baseBranch: "main",
-      });
-
-      const result = await startJobRun("job-1");
-
-      expect(result.success).toBe(true);
-      expect(validateWorkspaceSettings).toHaveBeenCalled();
-    });
-
-    it("should revert to failed when workspace settings are invalid", async () => {
+    it("should revert to failed when job has no repository_id", async () => {
       const claimedJob = makeJob({ status: "running", repository_id: null });
 
       vi.mocked(execute).mockResolvedValue(undefined);
@@ -213,15 +177,10 @@ describe("agent-runner", () => {
         .mockResolvedValueOnce(claimedJob) // claimed job
         .mockResolvedValueOnce(undefined); // failedJob lookup
 
-      vi.mocked(validateWorkspaceSettings).mockResolvedValue({
-        valid: false,
-        errors: ["GitHub token not set"],
-      });
-
       const result = await startJobRun("job-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Workspace settings invalid");
+      expect(result.error).toBe("Job has no associated repository");
     });
   });
 

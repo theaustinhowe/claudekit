@@ -164,8 +164,6 @@ async function main() {
   // Log configuration status
   if (validation.hasActiveRepositories) {
     log.info("Active repositories configured - polling will create jobs automatically");
-  } else if (validation.hasLegacySettings) {
-    log.info("Using legacy workspace settings");
   } else {
     log.info("No repositories configured - jobs must be created manually");
   }
