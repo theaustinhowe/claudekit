@@ -16,7 +16,7 @@ describe("GET /api/health/apps", () => {
     const response = await GET();
     const data = await response.json();
 
-    expect(data).toHaveLength(5);
+    expect(data).toHaveLength(6);
     for (const app of data) {
       expect(app.status).toBe("running");
     }
@@ -28,7 +28,7 @@ describe("GET /api/health/apps", () => {
     const response = await GET();
     const data = await response.json();
 
-    expect(data).toHaveLength(5);
+    expect(data).toHaveLength(6);
     for (const app of data) {
       expect(app.status).toBe("stopped");
     }
@@ -41,7 +41,7 @@ describe("GET /api/health/apps", () => {
     const data = await response.json();
 
     const ids = data.map((a: { id: string }) => a.id);
-    expect(ids).toEqual(["gadget", "gogo-web", "gogo-orchestrator", "b4u", "storybook"]);
+    expect(ids).toEqual(["gadget", "gogo-web", "gogo-orchestrator", "b4u", "storybook", "web"]);
   });
 
   it("builds correct urls from ports", async () => {
@@ -56,6 +56,7 @@ describe("GET /api/health/apps", () => {
       "gogo-orchestrator": 2201,
       b4u: 2300,
       storybook: 6006,
+      web: 2000,
     };
 
     for (const app of data) {
@@ -75,6 +76,7 @@ describe("GET /api/health/apps", () => {
     expect(calledUrls).toContain("http://localhost:2201");
     expect(calledUrls).toContain("http://localhost:2300");
     expect(calledUrls).toContain("http://localhost:6006");
+    expect(calledUrls).toContain("http://localhost:2000");
   });
 
   it("handles mixed running and stopped apps", async () => {

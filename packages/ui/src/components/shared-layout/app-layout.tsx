@@ -44,7 +44,7 @@ export function AppLayout({
           </>
         }
       >
-        <div className="pb-16 md:pb-0 h-full">{children}</div>
+        <div className="pb-16 md:pb-0 flex-1 min-h-0 flex flex-col">{children}</div>
         {showFooter && <SharedFooter currentPort={config.port} />}
       </AppShell>
 
