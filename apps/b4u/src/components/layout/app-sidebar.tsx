@@ -244,19 +244,11 @@ export function SessionList({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* New thread button */}
-      {onNewThread && (
-        <div className={cn("px-2 pt-2", collapsed && "flex justify-center")}>
-          {collapsed ? (
-            <button
-              type="button"
-              onClick={onNewThread}
-              className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
-              title="New thread"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          ) : (
+      {/* Header: New + History on same row */}
+      {!collapsed ? (
+        <div className="flex items-center justify-between px-2 pt-2">
+          <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider px-2">History</span>
+          {onNewThread && (
             <button
               type="button"
               onClick={onNewThread}
@@ -267,31 +259,36 @@ export function SessionList({
             </button>
           )}
         </div>
+      ) : (
+        onNewThread && (
+          <div className="px-2 pt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={onNewThread}
+              className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+              title="New thread"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        )
       )}
 
       {/* Session list */}
       <div className="flex-1 overflow-y-auto p-2 min-h-0 scrollbar-none">
-        {!collapsed && (
-          <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2 block">
-            History
-          </span>
-        )}
-
         {loading ? (
           <div className="flex items-center justify-center py-8 gap-2">
             <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse" />
             {!collapsed && <span className="text-xs text-muted-foreground">Loading...</span>}
           </div>
         ) : runs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 pt-16">
-            <Clock className="w-6 h-6 text-muted-foreground/40" />
-            {!collapsed && (
-              <>
-                <span className="text-xs text-muted-foreground">No sessions yet</span>
-                <span className="text-2xs text-muted-foreground/70">Select a project to get started</span>
-              </>
-            )}
-          </div>
+          !collapsed ? (
+            <div className="flex flex-col items-center justify-center gap-2 pt-16">
+              <Clock className="w-6 h-6 text-muted-foreground/40" />
+              <span className="text-xs text-muted-foreground">No sessions yet</span>
+              <span className="text-2xs text-muted-foreground/70">Select a project to get started</span>
+            </div>
+          ) : null
         ) : (
           <div className={cn("flex flex-col gap-1.5", collapsed && "items-center")}>
             {runs.map((run, idx) => (
