@@ -12,7 +12,8 @@ function CollapsibleTrigger({
   ...props
 }: React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Trigger> & { asChild?: boolean }) {
   if (asChild && React.isValidElement(children)) {
-    return <CollapsiblePrimitive.Trigger render={children} nativeButton={false} {...props} />;
+    const isNativeButton = typeof children.type === "string" && children.type === "button";
+    return <CollapsiblePrimitive.Trigger render={children} nativeButton={isNativeButton} {...props} />;
   }
   return <CollapsiblePrimitive.Trigger {...props}>{children}</CollapsiblePrimitive.Trigger>;
 }

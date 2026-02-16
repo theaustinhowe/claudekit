@@ -280,7 +280,7 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
                 loading={checking && results.size === 0}
               />
               <SummaryCard
-                label="Check Failures"
+                label="Validate"
                 value={withErrors.length}
                 icon={AlertCircle}
                 variant="warning"
