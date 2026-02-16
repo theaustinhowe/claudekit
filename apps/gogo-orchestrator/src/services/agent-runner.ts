@@ -6,12 +6,7 @@ import { emitLog, type LogState, updateJobStatus } from "../utils/job-logging.js
 import { broadcast } from "../ws/handler.js";
 import type { GitConfig } from "./git.js";
 import { createWorktree, ensureBaseClone, fetchUpdates } from "./git.js";
-import {
-  getWorkspaceSettings,
-  toGitConfig,
-  toGitConfigFromRepo,
-  validateWorkspaceSettings,
-} from "./settings-helper.js";
+import { toGitConfigFromRepo } from "./settings-helper.js";
 
 // Track active job runs
 const activeRuns = new Map<string, { cancelled: boolean }>();
@@ -94,44 +89,31 @@ export async function startJobRun(jobId: string): Promise<{ success: boolean; er
     }
   };
 
-  if (job.repository_id) {
-    // Use repository-specific settings
-    const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repository_id]);
-
-    if (!repo) {
-      await revertToFailed("Repository not found");
-      return { success: false, error: "Repository not found" };
-    }
-
-    if (!repo.is_active) {
-      await revertToFailed("Repository is not active");
-      return { success: false, error: "Repository is not active" };
-    }
-
-    gitConfig = toGitConfigFromRepo({
-      owner: repo.owner,
-      name: repo.name,
-      githubToken: repo.github_token,
-      workdirPath: repo.workdir_path,
-      baseBranch: repo.base_branch,
-    });
-  } else {
-    // Fall back to legacy workspace settings
-    const validation = await validateWorkspaceSettings();
-    if (!validation.valid) {
-      const error = `Workspace settings invalid: ${validation.errors.join(", ")}`;
-      await revertToFailed(error);
-      return { success: false, error };
-    }
-
-    const workspaceSettings = await getWorkspaceSettings();
-    if (!workspaceSettings) {
-      await revertToFailed("Failed to load workspace settings");
-      return { success: false, error: "Failed to load workspace settings" };
-    }
-
-    gitConfig = toGitConfig(workspaceSettings);
+  if (!job.repository_id) {
+    await revertToFailed("Job has no associated repository");
+    return { success: false, error: "Job has no associated repository" };
   }
+
+  // Use repository-specific settings
+  const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repository_id]);
+
+  if (!repo) {
+    await revertToFailed("Repository not found");
+    return { success: false, error: "Repository not found" };
+  }
+
+  if (!repo.is_active) {
+    await revertToFailed("Repository is not active");
+    return { success: false, error: "Repository is not active" };
+  }
+
+  gitConfig = toGitConfigFromRepo({
+    owner: repo.owner,
+    name: repo.name,
+    githubToken: repo.github_token,
+    workdirPath: repo.workdir_path,
+    baseBranch: repo.base_branch,
+  });
   const runState = { cancelled: false };
   activeRuns.set(jobId, runState);
 

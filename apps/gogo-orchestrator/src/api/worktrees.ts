@@ -13,12 +13,7 @@ import {
   removeWorktree,
 } from "../services/git.js";
 import { getOctokitForRepo, getRepoConfigById } from "../services/github/index.js";
-import {
-  getWorkspaceSettings,
-  toGitConfig,
-  toGitConfigFromRepo,
-  validateWorkspaceSettings,
-} from "../services/settings-helper.js";
+import { toGitConfigFromRepo } from "../services/settings-helper.js";
 import { broadcast } from "../ws/handler.js";
 
 interface CleanupRequestBody {
@@ -132,44 +127,6 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    // Fallback: if no active repos, try legacy workspace settings
-    if (activeRepos.length === 0) {
-      const validation = await validateWorkspaceSettings();
-      if (validation.valid) {
-        const workspaceSettings = await getWorkspaceSettings();
-        if (workspaceSettings) {
-          try {
-            const gitConfig = toGitConfig(workspaceSettings);
-            const worktrees = await listWorktrees(gitConfig);
-
-            for (const wt of worktrees) {
-              const job = worktreeToJob.get(wt.path);
-              allWorktrees.push({
-                path: wt.path,
-                branch: wt.branch,
-                commit: wt.commit,
-                job: job
-                  ? {
-                      id: job.id,
-                      issueNumber: job.issueNumber,
-                      issueTitle: job.issueTitle,
-                      status: job.status,
-                      prNumber: job.prNumber,
-                      prUrl: job.prUrl,
-                      updatedAt: job.updatedAt?.toISOString() ?? null,
-                    }
-                  : null,
-                repository: null, // Legacy mode has no repository record
-              });
-            }
-          } catch (error) {
-            // Legacy settings may not have a base clone yet - log for debugging
-            fastify.log.debug({ error }, "Failed to list worktrees for legacy workspace settings");
-          }
-        }
-      }
-    }
-
     return { data: allWorktrees };
   });
 
@@ -252,31 +209,19 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
     let gitConfig: GitConfig;
     let baseBranch = "main";
 
-    if (job.repositoryId) {
-      const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repositoryId]);
-
-      if (!repoRow) {
-        return reply.status(400).send({ error: "Repository not found" });
-      }
-
-      const repo = mapRepositoryFull(repoRow);
-      gitConfig = toGitConfigFromRepo(repo);
-      baseBranch = repo.baseBranch || "main";
-    } else {
-      // Legacy: use workspace settings
-      const validation = await validateWorkspaceSettings();
-      if (!validation.valid) {
-        return reply.status(400).send({ error: "Workspace settings invalid" });
-      }
-
-      const workspaceSettings = await getWorkspaceSettings();
-      if (!workspaceSettings) {
-        return reply.status(500).send({ error: "Failed to load workspace settings" });
-      }
-
-      gitConfig = toGitConfig(workspaceSettings);
-      // Legacy workspace settings don't have baseBranch, use default
+    if (!job.repositoryId) {
+      return reply.status(400).send({ error: "Job has no associated repository" });
     }
+
+    const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repositoryId]);
+
+    if (!repoRow) {
+      return reply.status(400).send({ error: "Repository not found" });
+    }
+
+    const repo = mapRepositoryFull(repoRow);
+    gitConfig = toGitConfigFromRepo(repo);
+    baseBranch = repo.baseBranch || "main";
 
     try {
       const files = await getChangedFiles(gitConfig, job.worktreePath, baseBranch);
@@ -318,31 +263,19 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
     let gitConfig: GitConfig;
     let baseBranch = "main";
 
-    if (job.repositoryId) {
-      const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repositoryId]);
-
-      if (!repoRow) {
-        return reply.status(400).send({ error: "Repository not found" });
-      }
-
-      const repo = mapRepositoryFull(repoRow);
-      gitConfig = toGitConfigFromRepo(repo);
-      baseBranch = repo.baseBranch || "main";
-    } else {
-      // Legacy: use workspace settings
-      const validation = await validateWorkspaceSettings();
-      if (!validation.valid) {
-        return reply.status(400).send({ error: "Workspace settings invalid" });
-      }
-
-      const workspaceSettings = await getWorkspaceSettings();
-      if (!workspaceSettings) {
-        return reply.status(500).send({ error: "Failed to load workspace settings" });
-      }
-
-      gitConfig = toGitConfig(workspaceSettings);
-      // Legacy workspace settings don't have baseBranch, use default
+    if (!job.repositoryId) {
+      return reply.status(400).send({ error: "Job has no associated repository" });
     }
+
+    const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repositoryId]);
+
+    if (!repoRow) {
+      return reply.status(400).send({ error: "Repository not found" });
+    }
+
+    const repo = mapRepositoryFull(repoRow);
+    gitConfig = toGitConfigFromRepo(repo);
+    baseBranch = repo.baseBranch || "main";
 
     try {
       const diff = await getFileDiff(gitConfig, job.worktreePath, baseBranch, filePath);
@@ -394,26 +327,6 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
         gitConfig = toGitConfigFromRepo(repo);
         baseBranch = repo.baseBranch || "main";
         break;
-      }
-    }
-
-    if (!gitConfig) {
-      // Try legacy workspace settings
-      const validation = await validateWorkspaceSettings();
-      if (validation.valid) {
-        const workspaceSettings = await getWorkspaceSettings();
-        if (workspaceSettings) {
-          const repoDir = getRepoDir(toGitConfig(workspaceSettings));
-          let resolvedRepoDir: string;
-          try {
-            resolvedRepoDir = await realpath(repoDir);
-          } catch {
-            resolvedRepoDir = resolve(repoDir);
-          }
-          if (resolvedWorktreePath.startsWith(resolvedRepoDir)) {
-            gitConfig = toGitConfig(workspaceSettings);
-          }
-        }
       }
     }
 
@@ -475,26 +388,6 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
         gitConfig = toGitConfigFromRepo(repo);
         baseBranch = repo.baseBranch || "main";
         break;
-      }
-    }
-
-    if (!gitConfig) {
-      // Try legacy workspace settings
-      const validation = await validateWorkspaceSettings();
-      if (validation.valid) {
-        const workspaceSettings = await getWorkspaceSettings();
-        if (workspaceSettings) {
-          const repoDir = getRepoDir(toGitConfig(workspaceSettings));
-          let resolvedRepoDir: string;
-          try {
-            resolvedRepoDir = await realpath(repoDir);
-          } catch {
-            resolvedRepoDir = resolve(repoDir);
-          }
-          if (resolvedWorktreePath.startsWith(resolvedRepoDir)) {
-            gitConfig = toGitConfig(workspaceSettings);
-          }
-        }
       }
     }
 
@@ -575,35 +468,23 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
 
     // Get git config for this job's repository
     let gitConfig: GitConfig;
-    if (job.repositoryId) {
-      // Multi-repo: get config from repository record
-      const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repositoryId]);
-
-      if (!repoRow) {
-        return reply.status(400).send({
-          error: "Cannot cleanup job",
-          details: "Job's repository not found",
-        });
-      }
-
-      gitConfig = toGitConfigFromRepo(mapRepositoryFull(repoRow));
-    } else {
-      // Legacy: use workspace settings
-      const validation = await validateWorkspaceSettings();
-      if (!validation.valid) {
-        return reply.status(400).send({
-          error: "Workspace settings invalid",
-          details: validation.errors,
-        });
-      }
-
-      const workspaceSettings = await getWorkspaceSettings();
-      if (!workspaceSettings) {
-        return reply.status(500).send({ error: "Failed to load workspace settings" });
-      }
-
-      gitConfig = toGitConfig(workspaceSettings);
+    if (!job.repositoryId) {
+      return reply.status(400).send({
+        error: "Cannot cleanup job",
+        details: "Job has no associated repository",
+      });
     }
+
+    const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repositoryId]);
+
+    if (!repoRow) {
+      return reply.status(400).send({
+        error: "Cannot cleanup job",
+        details: "Job's repository not found",
+      });
+    }
+
+    gitConfig = toGitConfigFromRepo(mapRepositoryFull(repoRow));
 
     // Path traversal check - validate against repo directory, not just workdir
     const repoDir = getRepoDir(gitConfig);
@@ -741,18 +622,6 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    // Load legacy workspace settings if any jobs don't have a repository ID
-    let legacyConfig: GitConfig | null = null;
-    if (jobsByRepo.has(null)) {
-      const validation = await validateWorkspaceSettings();
-      if (validation.valid) {
-        const workspaceSettings = await getWorkspaceSettings();
-        if (workspaceSettings) {
-          legacyConfig = toGitConfig(workspaceSettings);
-        }
-      }
-    }
-
     const result: CleanupResult = {
       cleaned: [],
       errors: [],
@@ -766,17 +635,12 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       }
 
       // Get the appropriate config for this job
-      let gitConfig: GitConfig | null = null;
-      if (job.repositoryId) {
-        gitConfig = repoConfigs.get(job.repositoryId) ?? null;
-      } else {
-        gitConfig = legacyConfig;
-      }
+      const gitConfig: GitConfig | null = job.repositoryId ? (repoConfigs.get(job.repositoryId) ?? null) : null;
 
       if (!gitConfig) {
         result.skipped.push({
           jobId: job.id,
-          reason: job.repositoryId ? "Repository config not found" : "Legacy workspace settings not configured",
+          reason: job.repositoryId ? "Repository config not found" : "Job has no associated repository",
         });
         continue;
       }

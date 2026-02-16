@@ -134,19 +134,19 @@ describe("repositories API", () => {
     });
 
     it("should accept valid agentProvider values", () => {
-      const validProviders = ["claude-code", "codex", "mock"];
+      const validProviders = ["claude-code", "mock"];
 
       for (const provider of validProviders) {
-        const isValid = ["claude-code", "codex", "mock"].includes(provider);
+        const isValid = ["claude-code", "mock"].includes(provider);
         expect(isValid).toBe(true);
       }
     });
 
     it("should reject invalid agentProvider values", () => {
-      const invalidProviders = ["gpt-4", "anthropic", "invalid"];
+      const invalidProviders = ["gpt-4", "anthropic", "codex", "invalid"];
 
       for (const provider of invalidProviders) {
-        const isValid = ["claude-code", "codex", "mock"].includes(provider);
+        const isValid = ["claude-code", "mock"].includes(provider);
         expect(isValid).toBe(false);
       }
     });

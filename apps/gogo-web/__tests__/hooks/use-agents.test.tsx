@@ -29,15 +29,6 @@ const mockAgents = [
       supportsStreaming: true,
     },
   },
-  {
-    type: "codex",
-    displayName: "Codex",
-    capabilities: {
-      canResume: false,
-      canInject: false,
-      supportsStreaming: false,
-    },
-  },
 ];
 
 describe("useAgents", () => {
@@ -60,9 +51,8 @@ describe("useAgents", () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toHaveLength(2);
+    expect(result.current.data).toHaveLength(1);
     expect(result.current.data?.[0].type).toBe("claude-code");
-    expect(result.current.data?.[1].type).toBe("codex");
   });
 
   it("returns empty array when data is null", async () => {

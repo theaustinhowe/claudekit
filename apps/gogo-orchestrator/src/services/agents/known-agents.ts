@@ -40,35 +40,4 @@ export const KNOWN_AGENTS: KnownAgentMetadata[] = [
     installInstructions:
       "Install the Claude CLI: npm install -g @anthropic-ai/claude-code, then run 'claude login' to authenticate.",
   },
-  {
-    type: "openai-codex",
-    displayName: "OpenAI Codex",
-    description:
-      "OpenAI Codex CLI for autonomous coding tasks. Requires the Codex CLI installed, an API key, and feature flag enabled.",
-    capabilities: {
-      canResume: true,
-      canInject: true,
-      supportsStreaming: true,
-    },
-    envVars: [
-      {
-        name: "ENABLE_OPENAI_CODEX",
-        description: "Set to 'true' to enable the OpenAI Codex agent",
-        required: true,
-      },
-      {
-        name: "OPENAI_API_KEY",
-        description: "Your OpenAI API key",
-        required: true,
-      },
-      {
-        name: "OPENAI_MODEL",
-        description: "Model to use (defaults to o4-mini)",
-        required: false,
-      },
-    ],
-    docsUrl: "https://github.com/openai/codex",
-    installInstructions:
-      "Install the Codex CLI: npm install -g @openai/codex. Set ENABLE_OPENAI_CODEX=true and OPENAI_API_KEY in your environment, then restart the orchestrator.",
-  },
 ];

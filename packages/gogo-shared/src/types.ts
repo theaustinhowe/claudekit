@@ -1,5 +1,5 @@
 // Agent provider types
-export type AgentProviderType = "claude-code" | "openai-codex";
+export type AgentProviderType = "claude-code";
 
 // Job source - distinguishes GitHub-issue-based jobs from manually created ones
 export type JobSource = "github_issue" | "manual";

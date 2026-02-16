@@ -11,9 +11,9 @@ import { Button } from "@devkit/ui/components/button";
 import { cn } from "@devkit/ui";
 ```
 
-## Components (32)
+## Components (31)
 
-accordion, alert-dialog, badge, button, calendar, card, checkbox, collapsible, dialog, diff-viewer, directory-picker, dropdown-menu, file-tree, file-viewer, input, label, markdown-renderer, popover, progress, scroll-area, select, separator, sheet, skeleton, slider, sonner, switch, syntax-highlighter, table, tabs, textarea, tooltip
+alert-dialog, badge, button, calendar, card, checkbox, collapsible, dialog, diff-viewer, directory-picker, dropdown-menu, file-tree, file-viewer, input, label, markdown-renderer, popover, progress, scroll-area, select, separator, sheet, skeleton, slider, sonner, switch, syntax-highlighter, table, tabs, textarea, tooltip
 
 ## Utilities
 
@@ -37,7 +37,6 @@ Base UI uses simplified data attributes:
 
 Keyframe animations reference Base UI CSS variables:
 - `--collapsible-panel-height` for collapsible content height
-- `--accordion-panel-height` for accordion content height
 - `--anchor-width` for trigger width (used by select, popover)
 - `--available-height` for available dropdown height
 

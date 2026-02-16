@@ -2,7 +2,6 @@ import type { FastifyPluginAsync } from "fastify";
 import { listAgents } from "../services/agent-executor.js";
 import { getClaudeRunnerStatus } from "../services/agents/claude-code-runner.js";
 import { agentRegistry, KNOWN_AGENTS } from "../services/agents/index.js";
-import { getCodexRunnerStatus } from "../services/agents/openai-codex-runner.js";
 
 export const agentsRouter: FastifyPluginAsync = async (fastify) => {
   // List available agent types (only registered/configured agents)
@@ -32,18 +31,6 @@ export const agentsRouter: FastifyPluginAsync = async (fastify) => {
             details: {
               cliInstalled: claudeStatus.cliInstalled,
               settingsEnabled: claudeStatus.settingsEnabled,
-            },
-          };
-        } else if (knownAgent.type === "openai-codex") {
-          const codexStatus = await getCodexRunnerStatus();
-          status = {
-            available: codexStatus.available,
-            configured: codexStatus.configured,
-            message: codexStatus.message,
-            details: {
-              featureFlagEnabled: codexStatus.featureFlagEnabled,
-              apiKeySet: codexStatus.apiKeySet,
-              cliInstalled: codexStatus.cliInstalled,
             },
           };
         } else {
@@ -85,11 +72,6 @@ export const agentsRouter: FastifyPluginAsync = async (fastify) => {
   // Get agent configuration status
   fastify.get<{ Params: { type: string } }>("/:type/status", async (request, reply) => {
     const { type } = request.params;
-
-    // Handle OpenAI Codex status check
-    if (type === "openai-codex") {
-      return { data: await getCodexRunnerStatus() };
-    }
 
     // Handle Claude Code status check
     if (type === "claude-code") {

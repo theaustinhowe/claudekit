@@ -4,7 +4,7 @@ import { Badge } from "@devkit/ui/components/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { Skeleton } from "@devkit/ui/components/skeleton";
-import { AlertCircle, Bot, Check, ExternalLink, Info, Sparkles, X } from "lucide-react";
+import { AlertCircle, Bot, Check, ExternalLink, Info, X } from "lucide-react";
 import { useAllAgents } from "@/hooks/use-agents";
 import type { KnownAgentInfo } from "@/lib/api";
 
@@ -13,8 +13,6 @@ const AgentIcon = ({ type }: { type: string }) => {
   switch (type) {
     case "claude-code":
       return <Bot className={`${iconClass} text-orange-500`} />;
-    case "openai-codex":
-      return <Sparkles className={`${iconClass} text-emerald-500`} />;
     default:
       return <Bot className={`${iconClass} text-muted-foreground`} />;
   }

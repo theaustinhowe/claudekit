@@ -11,7 +11,7 @@ import { agentRegistry } from "./agents/index.js";
 import type { AgentCallbacks, AgentConfig, AgentJobContext, AgentSignal, AgentStartResult } from "./agents/types.js";
 import { AGENT_COMMENT_MARKER, createIssueCommentForRepo, getRepoConfigById } from "./github/index.js";
 import { emitHealthEvent } from "./health-events.js";
-import { getClaudeSettings, getCodexSettings } from "./settings-helper.js";
+import { getClaudeSettings } from "./settings-helper.js";
 import { applyAction, applyTransitionAtomic } from "./state-machine.js";
 
 /**
@@ -30,14 +30,8 @@ async function setupExecutorTimeout(jobId: string, agentType: string): Promise<v
   clearExecutorTimeout(jobId);
 
   // Get the configured max runtime for this agent type
-  let maxRuntimeMs: number;
-  if (agentType === "openai-codex") {
-    const settings = await getCodexSettings();
-    maxRuntimeMs = settings.max_runtime_ms;
-  } else {
-    const settings = await getClaudeSettings();
-    maxRuntimeMs = settings.max_runtime_ms;
-  }
+  const settings = await getClaudeSettings();
+  const maxRuntimeMs = settings.max_runtime_ms;
 
   // Add 10% buffer over the agent's own timeout to let it handle timeout gracefully first
   const executorTimeoutMs = Math.round(maxRuntimeMs * 1.1);
@@ -117,22 +111,6 @@ function validateClaudeSession(sessionId: string, worktreePath: string): Session
 }
 
 /**
- * Validate an OpenAI Codex session exists
- * The Codex CLI manages session files internally — we just need a non-empty session ID.
- */
-function validateCodexSession(sessionId: string): SessionValidationResult {
-  if (!sessionId) {
-    return {
-      valid: false,
-      error: "No Codex session ID to resume from",
-      canStartFresh: true,
-    };
-  }
-
-  return { valid: true };
-}
-
-/**
  * Validate session before attempting resume
  * Returns validation result with error details if invalid
  */
@@ -150,24 +128,14 @@ function validateSession(
     };
   }
 
-  switch (agentType) {
-    case "claude-code":
-      if (!worktreePath) {
-        return {
-          valid: false,
-          error: "No worktree path for Claude session validation",
-          canStartFresh: false,
-        };
-      }
-      return validateClaudeSession(sessionId, worktreePath);
-
-    case "openai-codex":
-      return validateCodexSession(sessionId);
-
-    default:
-      // Unknown agent type - assume session is valid if ID exists
-      return { valid: true };
+  if (!worktreePath) {
+    return {
+      valid: false,
+      error: "No worktree path for session validation",
+      canStartFresh: false,
+    };
   }
+  return validateClaudeSession(sessionId, worktreePath);
 }
 
 /**
@@ -390,8 +358,7 @@ export async function resumeAgent(jobId: string, message?: string, agentType?: s
     };
   }
 
-  // Determine the actual session ID based on agent type
-  const sessionId = type === "openai-codex" ? job.codex_session_id : job.claude_session_id;
+  const sessionId = job.claude_session_id;
 
   if (!sessionId) {
     return { success: false, error: "No session ID to resume from" };
@@ -434,9 +401,9 @@ export async function resumeAgent(jobId: string, message?: string, agentType?: s
 
       // Clear the stale session ID
       const clearNow = new Date().toISOString();
-      const clearClaudeSession = type === "claude-code" ? null : job.claude_session_id;
-      const clearCodexSession = type === "openai-codex" ? null : job.codex_session_id;
-      const clearSessionData = type === "openai-codex" ? null : job.agent_session_data;
+      const clearClaudeSession = null;
+      const clearCodexSession = job.codex_session_id;
+      const clearSessionData = job.agent_session_data;
       await execute(
         conn,
         "UPDATE jobs SET claude_session_id = ?, codex_session_id = ?, agent_session_data = ?, updated_at = ? WHERE id = ?",

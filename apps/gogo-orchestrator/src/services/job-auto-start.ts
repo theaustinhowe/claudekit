@@ -7,7 +7,7 @@ import { startAgent } from "./agent-executor.js";
 import { startJobRun } from "./agent-runner.js";
 import { agentRegistry } from "./agents/index.js";
 import { getClaudeAvailabilityError } from "./claude-code-agent.js";
-import { getClaudeSettings, getCodexSettings } from "./settings-helper.js";
+import { getClaudeSettings } from "./settings-helper.js";
 
 interface AutoStartResult {
   started: number;
@@ -81,14 +81,10 @@ async function getRunningJobCount(): Promise<number> {
 
 /**
  * Get max parallel jobs from agent settings
- * Uses the higher of Claude or Codex settings since either could be used
  */
 async function getMaxParallelJobs(): Promise<number> {
   const claudeSettings = await getClaudeSettings();
-  const codexSettings = await getCodexSettings();
-
-  // Use the configured agent's limit, defaulting to Claude's
-  return Math.max(claudeSettings.max_parallel_jobs, codexSettings.max_parallel_jobs);
+  return claudeSettings.max_parallel_jobs;
 }
 
 /**

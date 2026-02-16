@@ -20,7 +20,6 @@ import {
   Pause,
   PauseCircle,
   Play,
-  Sparkles,
   TestTube2,
   XCircle,
 } from "lucide-react";
@@ -291,17 +290,9 @@ export function JobCard({ job, onClick, queuePosition }: JobCardProps) {
             {job.agentType && (
               <div
                 className="flex items-center gap-1"
-                title={
-                  job.agentType === "openai-codex"
-                    ? "OpenAI Codex"
-                    : job.agentType === "mock"
-                      ? "Mock Agent (Dev)"
-                      : "Claude Code"
-                }
+                title={job.agentType === "mock" ? "Mock Agent (Dev)" : "Claude Code"}
               >
-                {job.agentType === "openai-codex" ? (
-                  <Sparkles className="h-3 w-3 text-emerald-500" />
-                ) : job.agentType === "mock" ? (
+                {job.agentType === "mock" ? (
                   <TestTube2 className="h-3 w-3 text-gray-500" />
                 ) : (
                   <Bot className="h-3 w-3 text-orange-500" />

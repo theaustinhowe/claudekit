@@ -23,25 +23,17 @@ vi.mock("../services/agents/claude-code-runner.js", () => ({
   getClaudeRunnerStatus: vi.fn(),
 }));
 
-vi.mock("../services/agents/openai-codex-runner.js", () => ({
-  getCodexRunnerStatus: vi.fn(),
-}));
-
 vi.mock("../services/agents/index.js", () => ({
   agentRegistry: {
     has: vi.fn(),
     get: vi.fn(),
   },
-  KNOWN_AGENTS: [
-    { type: "claude-code", displayName: "Claude Code", description: "Anthropic Claude" },
-    { type: "openai-codex", displayName: "OpenAI Codex", description: "OpenAI Codex" },
-  ],
+  KNOWN_AGENTS: [{ type: "claude-code", displayName: "Claude Code", description: "Anthropic Claude" }],
 }));
 
 import { listAgents } from "../services/agent-executor.js";
 import { getClaudeRunnerStatus } from "../services/agents/claude-code-runner.js";
 import { agentRegistry } from "../services/agents/index.js";
-import { getCodexRunnerStatus } from "../services/agents/openai-codex-runner.js";
 import { agentsRouter } from "./agents.js";
 
 interface RouteHandler {
@@ -117,22 +109,11 @@ describe("agents API", () => {
         registered: true,
         stub: false,
       });
-      vi.mocked(getCodexRunnerStatus).mockResolvedValue({
-        type: "openai-codex",
-        available: false,
-        configured: false,
-        message: "Not configured",
-        featureFlagEnabled: false,
-        apiKeySet: false,
-        cliInstalled: false,
-        registered: false,
-        stub: false,
-      });
 
       const handler = routes.find((r) => r.path === "/all")?.handler;
       const result = (await handler?.({}, createMockReply())) as { data: unknown[] };
 
-      expect(result.data).toHaveLength(2);
+      expect(result.data).toHaveLength(1);
       expect(result.data[0]).toEqual(
         expect.objectContaining({
           type: "claude-code",
@@ -194,26 +175,6 @@ describe("agents API", () => {
 
       const handler = routes.find((r) => r.path === "/:type/status")?.handler;
       const result = await handler?.({ params: { type: "claude-code" } }, createMockReply());
-
-      expect(result).toEqual({ data: status });
-    });
-
-    it("should return OpenAI Codex status", async () => {
-      const status = {
-        type: "openai-codex",
-        available: false,
-        configured: false,
-        message: "Not configured",
-        featureFlagEnabled: false,
-        apiKeySet: false,
-        cliInstalled: false,
-        registered: false,
-        stub: false,
-      };
-      vi.mocked(getCodexRunnerStatus).mockResolvedValue(status);
-
-      const handler = routes.find((r) => r.path === "/:type/status")?.handler;
-      const result = await handler?.({ params: { type: "openai-codex" } }, createMockReply());
 
       expect(result).toEqual({ data: status });
     });

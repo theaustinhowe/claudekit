@@ -3,14 +3,6 @@ import { getConn } from "../db/index.js";
 import type { DbRepository, DbSetting } from "../db/schema.js";
 import type { GitConfig } from "./git.js";
 
-interface WorkspaceSettings {
-  workdir: string;
-  owner: string;
-  name: string;
-  token: string;
-  repoUrl: string;
-}
-
 export interface ClaudeCodeSettings {
   enabled: boolean;
   max_runtime_ms: number;
@@ -28,110 +20,10 @@ const DEFAULT_CLAUDE_SETTINGS: ClaudeCodeSettings = {
   test_command: "npm test",
 };
 
-export interface OpenAICodexSettings {
-  enabled: boolean;
-  max_runtime_ms: number;
-  max_parallel_jobs: number;
-  model: string;
-  approval_mode: "full-auto" | "suggest" | "auto-edit";
-  test_command: string;
-}
-
-const DEFAULT_CODEX_SETTINGS: OpenAICodexSettings = {
-  enabled: true,
-  max_runtime_ms: DEFAULT_MAX_RUNTIME_MS,
-  max_parallel_jobs: 3,
-  model: "o4-mini",
-  approval_mode: "full-auto",
-  test_command: "npm test",
-};
-
-interface ValidationResult {
-  valid: boolean;
-  errors: string[];
-}
-
 async function getSetting<T>(key: string): Promise<T | null> {
   const conn = getConn();
   const row = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", [key]);
   return row ? parseJsonField<T>(row.value, null as T) : null;
-}
-
-export async function getWorkspaceSettings(): Promise<WorkspaceSettings | null> {
-  const [github, workspace] = await Promise.all([
-    getSetting<{ owner?: string; name?: string; token?: string }>("github"),
-    getSetting<{ workdir?: string }>("workspace"),
-  ]);
-
-  if (!github || !workspace) {
-    return null;
-  }
-
-  const { owner, name, token } = github;
-  const { workdir } = workspace;
-
-  if (!owner || !name || !token || !workdir) {
-    return null;
-  }
-
-  const repoUrl = `https://github.com/${owner}/${name}`;
-
-  return {
-    workdir,
-    owner,
-    name,
-    token,
-    repoUrl,
-  };
-}
-
-export async function validateWorkspaceSettings(): Promise<ValidationResult> {
-  const errors: string[] = [];
-
-  const github = await getSetting<{
-    owner?: string;
-    name?: string;
-    token?: string;
-  }>("github");
-  const workspace = await getSetting<{ workdir?: string }>("workspace");
-
-  if (!github) {
-    errors.push("GitHub settings not configured");
-  } else {
-    if (!github.owner) {
-      errors.push("GitHub repository owner not set");
-    }
-    if (!github.name) {
-      errors.push("GitHub repository name not set");
-    }
-    if (!github.token) {
-      errors.push("GitHub token not set");
-    }
-  }
-
-  if (!workspace) {
-    errors.push("Workspace settings not configured");
-  } else {
-    if (!workspace.workdir) {
-      errors.push("Workspace directory (workdir) not set");
-    }
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-}
-
-export function toGitConfig(settings: WorkspaceSettings): GitConfig {
-  return {
-    workdir: settings.workdir,
-    repoUrl: settings.repoUrl,
-    token: settings.token,
-    owner: settings.owner,
-    name: settings.name,
-    baseBranch: "main",
-  };
 }
 
 /**
@@ -171,50 +63,16 @@ export async function getClaudeSettings(): Promise<ClaudeCodeSettings> {
   };
 }
 
-export async function getCodexSettings(): Promise<OpenAICodexSettings> {
-  const saved = await getSetting<Partial<OpenAICodexSettings>>("openai_codex");
-
-  if (!saved) {
-    return DEFAULT_CODEX_SETTINGS;
-  }
-
-  return {
-    enabled: saved.enabled ?? DEFAULT_CODEX_SETTINGS.enabled,
-    max_runtime_ms: saved.max_runtime_ms ?? DEFAULT_CODEX_SETTINGS.max_runtime_ms,
-    max_parallel_jobs: saved.max_parallel_jobs ?? DEFAULT_CODEX_SETTINGS.max_parallel_jobs,
-    model: saved.model ?? DEFAULT_CODEX_SETTINGS.model,
-    approval_mode: saved.approval_mode ?? DEFAULT_CODEX_SETTINGS.approval_mode,
-    test_command: saved.test_command ?? DEFAULT_CODEX_SETTINGS.test_command,
-  };
-}
-
-/**
- * Check if OpenAI Codex is available and properly configured
- */
-export function isCodexEnabled(): boolean {
-  return process.env.ENABLE_OPENAI_CODEX === "true";
-}
-
-/**
- * Check if OPENAI_API_KEY is set
- */
-export function hasOpenAIApiKey(): boolean {
-  return !!process.env.OPENAI_API_KEY;
-}
-
 interface StartupValidationResult {
   ready: boolean;
   warnings: string[];
   errors: string[];
   hasActiveRepositories: boolean;
-  hasLegacySettings: boolean;
 }
 
 /**
  * Validates that the orchestrator has the necessary configuration to operate.
- * Checks for either:
- * 1. At least one active repository in the repositories table
- * 2. Legacy workspace settings (for backwards compatibility)
+ * Checks for at least one active repository in the repositories table.
  *
  * Returns warnings for non-critical issues and errors for critical ones.
  */
@@ -232,10 +90,6 @@ export async function validateStartupSettings(): Promise<StartupValidationResult
 
   const hasActiveRepositories = activeRepos.length > 0;
 
-  // Check legacy workspace settings
-  const legacyValidation = await validateWorkspaceSettings();
-  const hasLegacySettings = legacyValidation.valid;
-
   // Check for repositories with missing critical fields
   for (const repo of activeRepos) {
     const fullRepo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repo.id]);
@@ -251,15 +105,11 @@ export async function validateStartupSettings(): Promise<StartupValidationResult
   }
 
   // Determine overall readiness
-  if (!hasActiveRepositories && !hasLegacySettings) {
+  if (!hasActiveRepositories) {
     warnings.push(
       "No active repositories configured. Jobs will not be created automatically. " +
         "Configure a repository in Settings or add one via the API.",
     );
-  }
-
-  if (hasLegacySettings && !hasActiveRepositories) {
-    warnings.push("Using legacy workspace settings. Consider migrating to the repositories system.");
   }
 
   // The orchestrator can still start even without repositories (user might add them later)
@@ -271,6 +121,5 @@ export async function validateStartupSettings(): Promise<StartupValidationResult
     warnings,
     errors,
     hasActiveRepositories,
-    hasLegacySettings,
   };
 }

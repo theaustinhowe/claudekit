@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@devkit/ui/components/slider";
 import { Switch } from "@devkit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { AlertCircle, Bot, ChevronDown, GitBranch, Loader2, Shield, Sparkles, TestTube2 } from "lucide-react";
+import { AlertCircle, Bot, ChevronDown, GitBranch, Loader2, Shield, TestTube2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAgentStatus, useAgents } from "@/hooks/use-agents";
@@ -23,8 +23,6 @@ const AgentIcon = ({ type, className }: { type: string; className?: string }) =>
   switch (type) {
     case "claude-code":
       return <Bot className={`${iconClass} text-orange-500`} />;
-    case "openai-codex":
-      return <Sparkles className={`${iconClass} text-emerald-500`} />;
     case "mock":
       return <TestTube2 className={`${iconClass} text-gray-500`} />;
     default:
@@ -52,7 +50,6 @@ function AgentSelectOption({
 
   const getStatusHint = () => {
     if (isMock) return "(Dev Only)";
-    if (!status?.featureFlagEnabled && agent.type === "openai-codex") return "Not enabled";
     if (needsConfig) return "Missing API key";
     if (!isConfigured) return "Not configured";
     return null;
@@ -412,11 +409,7 @@ function AgentProviderSelect({
         {selectedStatus && !selectedStatus.available && value !== "mock" && (
           <p className="mt-1.5 text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
-            {value === "openai-codex" && !selectedStatus.featureFlagEnabled
-              ? "OpenAI Codex requires ENABLE_OPENAI_CODEX=true"
-              : !selectedStatus.apiKeySet
-                ? "Missing OPENAI_API_KEY environment variable"
-                : selectedStatus.message}
+            {selectedStatus.message}
           </p>
         )}
       </div>

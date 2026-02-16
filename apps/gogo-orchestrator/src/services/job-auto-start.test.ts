@@ -47,14 +47,6 @@ vi.mock("./settings-helper.js", () => ({
     max_parallel_jobs: 3,
     test_command: "npm test",
   }),
-  getCodexSettings: vi.fn().mockResolvedValue({
-    enabled: true,
-    max_runtime_ms: 7200000,
-    max_parallel_jobs: 2,
-    test_command: "npm test",
-    model: "o4-mini",
-    approval_mode: "full-auto",
-  }),
 }));
 
 vi.mock("../utils/job-logging.js", () => ({
@@ -84,20 +76,12 @@ describe("job-auto-start", () => {
     vi.clearAllMocks();
 
     // Re-set mocks that must survive clearing
-    const { getClaudeSettings, getCodexSettings } = await import("./settings-helper.js");
+    const { getClaudeSettings } = await import("./settings-helper.js");
     vi.mocked(getClaudeSettings).mockResolvedValue({
       enabled: true,
       max_runtime_ms: 7200000,
       max_parallel_jobs: 3,
       test_command: "npm test",
-    });
-    vi.mocked(getCodexSettings).mockResolvedValue({
-      enabled: true,
-      max_runtime_ms: 7200000,
-      max_parallel_jobs: 2,
-      test_command: "npm test",
-      model: "o4-mini",
-      approval_mode: "full-auto",
     });
 
     const { getClaudeAvailabilityError } = await import("./claude-code-agent.js");

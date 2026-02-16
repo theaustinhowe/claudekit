@@ -39,7 +39,7 @@ const UpdateRepositorySchema = z.object({
 const RepoSettingsSchema = z.object({
   pollIntervalMs: z.number().int().min(5000).max(300000).optional(),
   testCommand: z.string().optional().nullable(),
-  agentProvider: z.enum(["claude-code", "codex", "mock"]).optional(),
+  agentProvider: z.enum(["claude-code", "mock"]).optional(),
   triggerLabel: z.string().min(1).optional(),
   branchPattern: z.string().min(1).optional(),
   baseBranch: z.string().min(1).optional(),

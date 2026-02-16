@@ -38,7 +38,6 @@ import {
   Play,
   RefreshCcw,
   RefreshCw,
-  Sparkles,
   StopCircle,
   Terminal,
   TestTube2,
@@ -246,21 +245,13 @@ export function JobDetailDrawer({ jobId, open, onOpenChange, queuePosition, jobs
                   <Badge
                     variant="outline"
                     className={`text-xs gap-1 ${
-                      job.agentType === "openai-codex"
-                        ? "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
-                        : job.agentType === "mock"
-                          ? "border-gray-400/50 text-gray-600 dark:text-gray-400"
-                          : "border-orange-500/50 text-orange-600 dark:text-orange-400"
+                      job.agentType === "mock"
+                        ? "border-gray-400/50 text-gray-600 dark:text-gray-400"
+                        : "border-orange-500/50 text-orange-600 dark:text-orange-400"
                     }`}
                   >
-                    {job.agentType === "openai-codex" ? (
-                      <Sparkles className="h-3 w-3" />
-                    ) : job.agentType === "mock" ? (
-                      <TestTube2 className="h-3 w-3" />
-                    ) : (
-                      <Bot className="h-3 w-3" />
-                    )}
-                    {job.agentType === "openai-codex" ? "Codex" : job.agentType === "mock" ? "Mock" : "Claude"}
+                    {job.agentType === "mock" ? <TestTube2 className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                    {job.agentType === "mock" ? "Mock" : "Claude"}
                   </Badge>
                 )}
               </div>
