@@ -1,30 +1,29 @@
-import { describe, it, expect } from "vitest";
-import { randomUUID } from "node:crypto";
+import { describe, expect, it } from "vitest";
 import {
-  JobStatusSchema,
-  JobEventTypeSchema,
-  LogStreamSchema,
-  JobSourceSchema,
-  InjectModeSchema,
-  JobSchema,
-  RepositorySchema,
-  JobEventSchema,
-  JobLogSchema,
-  CreateManualJobSchema,
-  JobActionSchema,
-  PaginatedResponseSchema,
   ApiResponseSchema,
-  WsMessageTypeSchema,
-  WsMessageSchema,
-  WsClientMessageTypeSchema,
+  CreateManualJobSchema,
+  InjectModeSchema,
+  JobActionSchema,
+  JobEventSchema,
+  JobEventTypeSchema,
+  JobLogSchema,
+  JobSchema,
+  JobSourceSchema,
+  JobStatusSchema,
+  LogStreamSchema,
+  PaginatedResponseSchema,
+  RepositorySchema,
   WsClientMessageSchema,
+  WsClientMessageTypeSchema,
+  WsMessageSchema,
+  WsMessageTypeSchema,
 } from "./schemas";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const uuid = () => randomUUID();
+const uuid = () => crypto.randomUUID();
 const now = new Date().toISOString();
 
 function makeValidJob(overrides: Record<string, unknown> = {}) {
