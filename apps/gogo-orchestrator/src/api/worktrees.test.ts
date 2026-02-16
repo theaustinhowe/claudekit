@@ -237,7 +237,10 @@ describe("worktrees API", () => {
       vi.mocked(getRepoConfigById).mockResolvedValueOnce({ owner: "org", name: "repo" } as never);
 
       const handler = getRoute("GET", "/:jobId/pr-status");
-      const result = (await handler({ params: { jobId: "job-1" } }, createMockReply())) as { merged: boolean };
+      const result = (await handler({ params: { jobId: "job-1" } }, createMockReply())) as {
+        merged: boolean;
+        prNumber: number;
+      };
 
       expect(result.merged).toBe(true);
       expect(result.prNumber).toBe(101);
@@ -259,7 +262,10 @@ describe("worktrees API", () => {
       vi.mocked(queryOne).mockResolvedValueOnce({ ...mockJob, repositoryId: null });
 
       const handler = getRoute("GET", "/:jobId/pr-status");
-      const result = (await handler({ params: { jobId: "job-1" } }, createMockReply())) as { merged: boolean };
+      const result = (await handler({ params: { jobId: "job-1" } }, createMockReply())) as {
+        merged: boolean;
+        prNumber: number;
+      };
 
       expect(result.merged).toBe(false);
       expect(result.prNumber).toBe(101);

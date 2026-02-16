@@ -95,7 +95,7 @@ describe("setup API", () => {
       vi.mocked(queryAll).mockResolvedValueOnce([]);
 
       const handler = getHandler("/status");
-      const result = (await handler({}, createMockReply())) as { needsSetup: boolean };
+      const result = (await handler({}, createMockReply())) as { needsSetup: boolean; repositoryCount: number };
 
       expect(result.needsSetup).toBe(true);
       expect(result.repositoryCount).toBe(0);
@@ -105,7 +105,7 @@ describe("setup API", () => {
       vi.mocked(queryAll).mockResolvedValueOnce([{ id: "r1" }]);
 
       const handler = getHandler("/status");
-      const result = (await handler({}, createMockReply())) as { needsSetup: boolean };
+      const result = (await handler({}, createMockReply())) as { needsSetup: boolean; repositoryCount: number };
 
       expect(result.needsSetup).toBe(false);
       expect(result.repositoryCount).toBe(1);
