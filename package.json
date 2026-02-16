@@ -1,0 +1,39 @@
+{
+  "name": "devkit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "dev:gadget": "pnpm --filter gadget dev",
+    "dev:gogo": "stmux -w always -e ERROR -m beep -- [ -t \"web\" \"exec pnpm --filter gogo-web dev\" .. -t \"orchestrator\" \"exec pnpm --filter gogo-orchestrator dev\" ]",
+    "dev:b4u": "pnpm --filter b4u dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "pnpm -r test",
+    "knip": "knip",
+    "check": "pnpm typecheck && pnpm lint && pnpm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.15",
+    "knip": "^5.83.1",
+    "stmux": "^1.8.11",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@duckdb/node-bindings",
+      "esbuild",
+      "playwright",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

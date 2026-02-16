@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "devkit-logs": {
+      "command": "tsx",
+      "args": ["packages/mcp-logs/src/index.ts"]
+    }
+  }
+}

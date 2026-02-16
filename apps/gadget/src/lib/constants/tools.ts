@@ -1,0 +1,215 @@
+import type { ToolCategory } from "@/lib/types";
+
+export type VersionParser = "semver-line" | "first-line" | "regex";
+
+export type LatestVersionSource =
+  | { type: "npm"; package: string }
+  | { type: "github-release"; repo: string }
+  | { type: "url"; url: string; parser: "nodejs-lts" | "python-eol" }
+  | { type: "none" };
+
+export interface ToolDefinition {
+  id: string;
+  name: string;
+  category: ToolCategory;
+  description: string;
+  binary: string;
+  versionCommand: string;
+  versionParser: VersionParser;
+  versionRegex?: string;
+  installUrl: string;
+  installCommand?: string;
+  latestCommand?: string;
+  /** Where to fetch the latest stable version from */
+  latestVersionSource?: LatestVersionSource;
+  /** Command to update this tool (if different from installCommand) */
+  updateCommand?: string;
+  /** If true, requires special shell handling (e.g. nvm is a shell function) */
+  shellFunction?: boolean;
+}
+
+export const DEFAULT_TOOLS: ToolDefinition[] = [
+  {
+    id: "homebrew",
+    name: "Homebrew",
+    category: "package-manager",
+    description: "macOS/Linux package manager",
+    binary: "brew",
+    versionCommand: "brew --version",
+    versionParser: "regex",
+    versionRegex: "Homebrew ([\\d.]+)",
+    installUrl: "https://brew.sh",
+    installCommand: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+    latestVersionSource: { type: "github-release", repo: "Homebrew/brew" },
+  },
+  {
+    id: "node",
+    name: "Node.js",
+    category: "runtime",
+    description: "JavaScript runtime",
+    binary: "node",
+    versionCommand: "node --version",
+    versionParser: "semver-line",
+    installUrl: "https://nodejs.org",
+    installCommand: "brew install node",
+    updateCommand: "brew upgrade node",
+    latestVersionSource: { type: "url", url: "https://nodejs.org/dist/index.json", parser: "nodejs-lts" },
+  },
+  {
+    id: "nvm",
+    name: "nvm",
+    category: "dev-tool",
+    description: "Node version manager",
+    binary: "nvm",
+    versionCommand: 'bash -c "source ~/.nvm/nvm.sh 2>/dev/null && nvm --version"',
+    versionParser: "first-line",
+    installUrl: "https://github.com/nvm-sh/nvm",
+    installCommand: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash",
+    latestVersionSource: { type: "github-release", repo: "nvm-sh/nvm" },
+    shellFunction: true,
+  },
+  {
+    id: "pnpm",
+    name: "pnpm",
+    category: "package-manager",
+    description: "Fast, disk space efficient package manager",
+    binary: "pnpm",
+    versionCommand: "pnpm --version",
+    versionParser: "first-line",
+    installUrl: "https://pnpm.io/installation",
+    installCommand: "npm install -g pnpm",
+    updateCommand: "npm update -g pnpm",
+    latestVersionSource: { type: "npm", package: "pnpm" },
+  },
+  {
+    id: "npm",
+    name: "npm",
+    category: "package-manager",
+    description: "Node package manager (bundled with Node.js)",
+    binary: "npm",
+    versionCommand: "npm --version",
+    versionParser: "first-line",
+    installUrl: "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
+    latestVersionSource: { type: "npm", package: "npm" },
+  },
+  {
+    id: "npx",
+    name: "npx",
+    category: "dev-tool",
+    description: "Bundled with Node.js — execute npm packages without installing",
+    binary: "npx",
+    versionCommand: "npx --version",
+    versionParser: "first-line",
+    installUrl: "https://docs.npmjs.com/cli/v10/commands/npx",
+    installCommand: "npm install -g npm",
+    latestVersionSource: { type: "none" },
+  },
+  {
+    id: "bun",
+    name: "Bun",
+    category: "runtime",
+    description: "Fast all-in-one JavaScript runtime & toolkit",
+    binary: "bun",
+    versionCommand: "bun --version",
+    versionParser: "first-line",
+    installUrl: "https://bun.sh",
+    installCommand: "curl -fsSL https://bun.sh/install | bash",
+    latestVersionSource: { type: "github-release", repo: "oven-sh/bun" },
+  },
+  {
+    id: "git",
+    name: "Git",
+    category: "vcs",
+    description: "Distributed version control system",
+    binary: "git",
+    versionCommand: "git --version",
+    versionParser: "regex",
+    versionRegex: "git version ([\\d.]+)",
+    installUrl: "https://git-scm.com/downloads",
+    installCommand: "brew install git",
+    updateCommand: "brew upgrade git",
+    latestVersionSource: { type: "github-release", repo: "git/git" },
+  },
+  {
+    id: "gh",
+    name: "GitHub CLI",
+    category: "vcs",
+    description: "GitHub's official command-line tool",
+    binary: "gh",
+    versionCommand: "gh --version",
+    versionParser: "regex",
+    versionRegex: "gh version ([\\d.]+)",
+    installUrl: "https://cli.github.com",
+    installCommand: "brew install gh",
+    updateCommand: "brew upgrade gh",
+    latestVersionSource: { type: "github-release", repo: "cli/cli" },
+  },
+  {
+    id: "claude",
+    name: "Claude Code",
+    category: "ai-tool",
+    description: "Anthropic's Claude Code CLI",
+    binary: "claude",
+    versionCommand: "claude --version",
+    versionParser: "first-line",
+    installUrl: "https://docs.anthropic.com/en/docs/claude-code",
+    installCommand: "npm install -g @anthropic-ai/claude-code",
+    updateCommand: "npm update -g @anthropic-ai/claude-code",
+    latestVersionSource: { type: "npm", package: "@anthropic-ai/claude-code" },
+  },
+  {
+    id: "python",
+    name: "Python",
+    category: "runtime",
+    description: "Python programming language",
+    binary: "python3",
+    versionCommand: "python3 --version",
+    versionParser: "regex",
+    versionRegex: "Python ([\\d.]+)",
+    installUrl: "https://www.python.org/downloads/",
+    installCommand: "brew install python",
+    updateCommand: "brew upgrade python",
+    latestVersionSource: { type: "url", url: "https://endoflife.date/api/python.json", parser: "python-eol" },
+  },
+  {
+    id: "docker",
+    name: "Docker",
+    category: "dev-tool",
+    description: "Container platform for building and running apps",
+    binary: "docker",
+    versionCommand: "docker --version",
+    versionParser: "regex",
+    versionRegex: "Docker version ([\\d.]+)",
+    installUrl: "https://docs.docker.com/get-docker/",
+    installCommand: "brew install --cask docker",
+    updateCommand: "brew upgrade --cask docker",
+    latestVersionSource: { type: "github-release", repo: "moby/moby" },
+  },
+  {
+    id: "playwright",
+    name: "Playwright",
+    category: "dev-tool",
+    description: "Browser automation for screenshots and testing",
+    binary: "npx",
+    versionCommand: "npx playwright --version",
+    versionParser: "regex",
+    versionRegex: "Version ([\\d.]+)",
+    installUrl: "https://playwright.dev",
+    installCommand: "npx playwright install chromium",
+    latestVersionSource: { type: "npm", package: "playwright" },
+  },
+];
+
+export const DEFAULT_TOOL_IDS = DEFAULT_TOOLS.map((t) => t.id);
+
+export function getToolById(id: string): ToolDefinition | undefined {
+  return DEFAULT_TOOLS.find((t) => t.id === id);
+}
+
+export const TOOL_CATEGORY_LABELS: Record<ToolCategory, string> = {
+  "ai-tool": "AI Tools",
+  "package-manager": "Package Managers",
+  runtime: "Runtimes",
+  "dev-tool": "Dev Tools",
+  vcs: "Version Control",
+};
