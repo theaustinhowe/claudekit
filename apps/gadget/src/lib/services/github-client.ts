@@ -1,3 +1,6 @@
+import { createServiceLogger } from "@/lib/logger";
+
+const log = createServiceLogger("github-client");
 const GITHUB_API = "https://api.github.com";
 
 // --- ETag Response Cache ---
@@ -25,7 +28,7 @@ function updateRateLimit(headers: Headers): void {
   if (reset != null) rateLimitReset = Number.parseInt(reset, 10);
 
   if (rateLimitRemaining > 0 && rateLimitRemaining < 100) {
-    console.warn(`[GitHub] Rate limit low: ${rateLimitRemaining} requests remaining`);
+    log.warn({ remaining: rateLimitRemaining }, "GitHub rate limit low");
   }
 }
 

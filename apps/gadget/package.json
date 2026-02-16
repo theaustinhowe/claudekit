@@ -22,6 +22,7 @@
     "@devkit/duckdb": "workspace:*",
     "@devkit/session": "workspace:*",
     "@devkit/hooks": "workspace:*",
+    "@devkit/logger": "workspace:*",
     "@devkit/ui": "workspace:*",
     "@dayflow/blossom-color-picker": "^2.0.1",
     "@dayflow/blossom-color-picker-react": "^1.0.1",

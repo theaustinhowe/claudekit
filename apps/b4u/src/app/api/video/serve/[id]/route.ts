@@ -1,13 +1,16 @@
 import { createReadStream, statSync } from "node:fs";
 import { Readable } from "node:stream";
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { getDb, queryAll } from "@/lib/db";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const rows = await query<{ file_path: string; format: string }>(
-    `SELECT file_path, format FROM final_videos WHERE id = '${id.replace(/'/g, "''")}'`,
+  const conn = await getDb();
+  const rows = await queryAll<{ file_path: string; format: string }>(
+    conn,
+    "SELECT file_path, format FROM final_videos WHERE id = ?",
+    [id],
   );
 
   if (rows.length === 0) {

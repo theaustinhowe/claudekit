@@ -1,20 +1,22 @@
 import { runClaude } from "@devkit/claude-runner";
+import type { SessionRunner } from "@devkit/session";
 import { buildGenerateOutlinePrompt } from "@/lib/claude/prompts/generate-outline";
-import type { SessionRunner } from "@/lib/claude/types";
-import { execute, query } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
 
 export function createGenerateOutlineRunner(): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading project context...", progress: 10 });
 
+    const conn = await getDb();
+
     // Read project context from DB
-    const summaryRows = await query<{
+    const summaryRows = await queryAll<{
       name: string;
       framework: string;
       auth: string;
       database_info: string;
       project_path: string;
-    }>("SELECT name, framework, auth, database_info, project_path FROM project_summary LIMIT 1");
+    }>(conn, "SELECT name, framework, auth, database_info, project_path FROM project_summary LIMIT 1");
 
     if (summaryRows.length === 0) {
       throw new Error("No project summary found. Run analyze-project first.");
@@ -22,12 +24,12 @@ export function createGenerateOutlineRunner(): SessionRunner {
 
     const summary = summaryRows[0];
 
-    const routeRows = await query<{
+    const routeRows = await queryAll<{
       path: string;
       title: string;
       auth_required: boolean;
       description: string;
-    }>("SELECT path, title, auth_required, description FROM routes ORDER BY id");
+    }>(conn, "SELECT path, title, auth_required, description FROM routes ORDER BY id");
 
     const projectContext = {
       name: summary.name,
@@ -84,29 +86,32 @@ export function createGenerateOutlineRunner(): SessionRunner {
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
     // Clear existing data
-    await execute("DELETE FROM routes");
-    await execute("DELETE FROM user_flows");
+    await execute(conn, "DELETE FROM routes");
+    await execute(conn, "DELETE FROM user_flows");
 
     // Save updated routes
     if (outline.routes && Array.isArray(outline.routes)) {
       for (let i = 0; i < outline.routes.length; i++) {
         const r = outline.routes[i];
-        await execute(`
-          INSERT INTO routes (id, path, title, auth_required, description)
-          VALUES (${i + 1}, '${(r.path || "").replace(/'/g, "''")}', '${(r.title || "").replace(/'/g, "''")}',
-            ${!!r.authRequired}, '${(r.description || "").replace(/'/g, "''")}')
-        `);
+        await execute(
+          conn,
+          `INSERT INTO routes (id, path, title, auth_required, description)
+          VALUES (?, ?, ?, ?, ?)`,
+          [i + 1, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
+        );
       }
     }
 
     // Save user flows
     if (outline.flows && Array.isArray(outline.flows)) {
       for (const flow of outline.flows) {
-        const steps = (flow.steps || []).map((s: string) => `'${s.replace(/'/g, "''")}'`).join(", ");
-        await execute(`
-          INSERT INTO user_flows (id, name, steps)
-          VALUES ('${(flow.id || "").replace(/'/g, "''")}', '${(flow.name || "").replace(/'/g, "''")}', [${steps}])
-        `);
+        const steps = flow.steps || [];
+        await execute(
+          conn,
+          `INSERT INTO user_flows (id, name, steps)
+          VALUES (?, ?, ?)`,
+          [flow.id || "", flow.name || "", steps],
+        );
       }
     }
 

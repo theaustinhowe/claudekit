@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { execute, executePrepared, query } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
 import { parseBody, voiceoverScriptsSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
-    const rows = await query<{
+    const conn = await getDb();
+    const rows = await queryAll<{
       flow_id: string;
       paragraph_index: number;
       text: string;
-    }>("SELECT flow_id, paragraph_index, text FROM voiceover_scripts ORDER BY flow_id, paragraph_index");
+    }>(conn, "SELECT flow_id, paragraph_index, text FROM voiceover_scripts ORDER BY flow_id, paragraph_index");
 
     // Group by flow_id into Record<string, string[]>
     const scripts: Record<string, string[]> = {};
@@ -34,14 +35,16 @@ export async function PUT(request: NextRequest) {
   const scripts = parsed.data;
 
   try {
-    await execute("DELETE FROM voiceover_scripts");
+    const conn = await getDb();
+    await execute(conn, "DELETE FROM voiceover_scripts");
 
     for (const [flowId, paragraphs] of Object.entries(scripts)) {
       for (let i = 0; i < paragraphs.length; i++) {
-        await executePrepared(
-          "INSERT INTO voiceover_scripts (flow_id, paragraph_index, text) VALUES ($flowId, $idx, $text)",
-          { $flowId: flowId, $idx: i, $text: paragraphs[i] },
-        );
+        await execute(conn, "INSERT INTO voiceover_scripts (flow_id, paragraph_index, text) VALUES (?, ?, ?)", [
+          flowId,
+          i,
+          paragraphs[i],
+        ]);
       }
     }
 

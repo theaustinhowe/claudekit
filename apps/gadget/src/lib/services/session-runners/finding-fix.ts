@@ -2,6 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import fs from "node:fs";
 import { runClaude } from "@devkit/claude-runner";
 import { getDb, queryAll, queryOne } from "@/lib/db";
+import { createServiceLogger } from "@/lib/logger";
 import { classifyFinding } from "@/lib/services/finding-classifier";
 import { buildFindingsFixPrompt } from "@/lib/services/finding-prompt-builder";
 import type { SessionRunner } from "@/lib/services/session-manager";
@@ -130,7 +131,7 @@ export function createFindingFixRunner(metadata: Record<string, unknown>): Sessi
         }
       }
     } catch (err) {
-      console.error("[findings-fix] Failed to re-audit:", err);
+      createServiceLogger("findings-fix").error({ err }, "Failed to re-audit");
     }
 
     // Git commit

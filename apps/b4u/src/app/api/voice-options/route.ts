@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { getDb, queryAll } from "@/lib/db";
 
 export async function GET() {
   try {
-    const rows = await query<{
+    const conn = await getDb();
+    const rows = await queryAll<{
       id: string;
       name: string;
       style: string;
-    }>("SELECT id, name, style FROM voice_options");
+    }>(conn, "SELECT id, name, style FROM voice_options");
 
     return NextResponse.json(rows);
   } catch (error) {

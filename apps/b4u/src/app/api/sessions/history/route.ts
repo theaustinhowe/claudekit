@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
-import { ensureDatabase } from "@/lib/db-init";
+import { getDb, queryAll } from "@/lib/db";
 
 type SessionRow = Record<string, unknown> & {
   id: string;
@@ -59,9 +58,10 @@ function buildRunEntry(projectPath: string, sessions: SessionRow[]): RunEntry {
 
 export async function GET() {
   try {
-    await ensureDatabase();
+    const conn = await getDb();
 
-    const rows = await query<SessionRow>(
+    const rows = await queryAll<SessionRow>(
+      conn,
       `SELECT id, session_type, status, label, project_path, run_id,
               started_at, completed_at, created_at, error_message
        FROM sessions

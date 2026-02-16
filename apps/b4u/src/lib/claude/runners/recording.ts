@@ -1,4 +1,4 @@
-import type { SessionRunner } from "@/lib/claude/types";
+import type { SessionRunner } from "@devkit/session";
 import { runRecordingPipeline } from "@/lib/recording/recording-orchestrator";
 
 export function createRecordingRunner(projectPath: string, flowIds?: string[]): SessionRunner {

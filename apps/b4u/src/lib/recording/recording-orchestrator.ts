@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { SessionEvent } from "@/lib/claude/types";
-import { query } from "@/lib/db";
+import type { SessionEvent } from "@devkit/session";
+import { execute, getDb, queryAll } from "@/lib/db";
 import type { FlowScript } from "@/lib/types";
 import { startDevServer, stopDevServer } from "./app-launcher";
 import { injectEnvOverrides, restoreProject } from "./data-seeder";
@@ -24,10 +24,13 @@ export async function runRecordingPipeline(
   // 1. Load flow scripts from DB
   onProgress({ type: "progress", message: "Loading flow scripts...", progress: 5 });
 
-  const flowScriptRows = await query<{ flow_id: string; flow_name: string }>(
+  const conn = await getDb();
+
+  const flowScriptRows = await queryAll<{ flow_id: string; flow_name: string }>(
+    conn,
     "SELECT flow_id, flow_name FROM flow_scripts",
   );
-  const stepRows = await query<{
+  const stepRows = await queryAll<{
     flow_id: string;
     id: string;
     step_number: number;
@@ -35,7 +38,7 @@ export async function runRecordingPipeline(
     action: string;
     expected_outcome: string;
     duration: string;
-  }>("SELECT * FROM script_steps ORDER BY flow_id, step_number");
+  }>(conn, "SELECT * FROM script_steps ORDER BY flow_id, step_number");
 
   // Build flow scripts
   let scripts: FlowScript[] = flowScriptRows.map((f) => ({
@@ -61,9 +64,15 @@ export async function runRecordingPipeline(
   if (scripts.length === 0) throw new Error("No flow scripts found");
 
   // 2. Load data plan for env overrides
-  const entities = await query<{ name: string; count: number; note: string }>("SELECT * FROM mock_data_entities");
-  const authOverrides = await query<{ id: string; label: string; enabled: boolean }>("SELECT * FROM auth_overrides");
-  const envItems = await query<{ id: string; label: string; enabled: boolean }>("SELECT * FROM env_items");
+  const entities = await queryAll<{ name: string; count: number; note: string }>(
+    conn,
+    "SELECT * FROM mock_data_entities",
+  );
+  const authOverrides = await queryAll<{ id: string; label: string; enabled: boolean }>(
+    conn,
+    "SELECT * FROM auth_overrides",
+  );
+  const envItems = await queryAll<{ id: string; label: string; enabled: boolean }>(conn, "SELECT * FROM env_items");
 
   // 3. Inject env overrides
   onProgress({ type: "progress", message: "Configuring environment...", progress: 10 });
@@ -115,12 +124,11 @@ export async function runRecordingPipeline(
       recordings.push({ flowId: script.flowId, videoPath: result.videoPath, duration: result.durationSeconds });
 
       // Save recording to DB
-      await import("@/lib/db").then((db) =>
-        db.execute(`
-        INSERT INTO recordings (id, flow_id, project_path, video_path, duration_seconds, status)
-        VALUES ('rec-${script.flowId}', '${script.flowId}', '${projectPath.replace(/'/g, "''")}',
-          '${result.videoPath.replace(/'/g, "''")}', ${result.durationSeconds}, 'done')
-      `),
+      await execute(
+        conn,
+        `INSERT INTO recordings (id, flow_id, project_path, video_path, duration_seconds, status)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [`rec-${script.flowId}`, script.flowId, projectPath, result.videoPath, result.durationSeconds, "done"],
       );
 
       onProgress({

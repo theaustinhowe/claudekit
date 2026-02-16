@@ -1,8 +1,11 @@
 import os from "node:os";
 import path from "node:path";
-import { createDatabase, execute } from "@devkit/duckdb";
+import { fileURLToPath } from "node:url";
+import { createDatabase, execute, queryOne, runMigrations } from "@devkit/duckdb";
 import { nowTimestamp } from "@/lib/utils";
-import { initSchema } from "./schema";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 
 const DB_DIR = path.join(os.homedir(), ".gadget");
 const DB_PATH = process.env.DB_PATH || path.join(DB_DIR, "data.duckdb");
@@ -11,8 +14,8 @@ const db = createDatabase({
   dbPath: DB_PATH,
   useGlobalCache: true,
   async onInit(conn) {
-    // Initialize schema
-    await initSchema(conn);
+    // Run numbered migrations
+    await runMigrations(conn, { migrationsDir: MIGRATIONS_DIR });
 
     // Reconcile orphaned scans left in 'running' state from crashed processes
     await execute(conn, "UPDATE scans SET status = 'error', completed_at = ? WHERE status = 'running'", [
@@ -35,6 +38,13 @@ const db = createDatabase({
     await execute(conn, "DELETE FROM sessions WHERE created_at < ? AND status NOT IN ('running', 'pending')", [
       sessionCutoff,
     ]);
+
+    // Seed built-in data if not yet seeded
+    const seeded = await queryOne<{ value: string }>(conn, "SELECT value FROM settings WHERE key = 'seeded_at'");
+    if (!seeded) {
+      const { seedDatabase } = await import("./seed");
+      await seedDatabase(conn);
+    }
   },
 });
 

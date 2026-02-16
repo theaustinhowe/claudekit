@@ -1,25 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/db", () => ({
-  query: vi.fn(),
-  execute: vi.fn(),
-  executePrepared: vi.fn(),
+const { mockConn } = vi.hoisted(() => ({
+  mockConn: Symbol("conn"),
 }));
 
-vi.mock("@/lib/db-init", () => ({
-  ensureDatabase: vi.fn().mockResolvedValue(undefined),
+vi.mock("@/lib/db", () => ({
+  getDb: vi.fn().mockResolvedValue(mockConn),
+  execute: vi.fn().mockResolvedValue(undefined),
+  queryOne: vi.fn(),
 }));
 
 import { cancelSession, createSession, getLiveSession, startSession, subscribe } from "@/lib/claude/session-manager";
-import { executePrepared, query } from "@/lib/db";
+import { execute, getDb, queryOne } from "@/lib/db";
 
-const mockQuery = vi.mocked(query);
-const mockExecutePrepared = vi.mocked(executePrepared);
+const mockQueryOne = vi.mocked(queryOne);
+const mockExecute = vi.mocked(execute);
+const mockGetDb = vi.mocked(getDb);
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.useFakeTimers();
-  mockExecutePrepared.mockResolvedValue(undefined);
+  mockGetDb.mockResolvedValue(mockConn as never);
+  mockExecute.mockResolvedValue(undefined as never);
 
   const g = globalThis as typeof globalThis & { __session_manager?: Map<string, unknown> };
   g.__session_manager = undefined;
@@ -38,12 +40,10 @@ describe("createSession", () => {
 
     expect(typeof id).toBe("string");
     expect(id.length).toBeGreaterThan(0);
-    expect(mockExecutePrepared).toHaveBeenCalledWith(
+    expect(mockExecute).toHaveBeenCalledWith(
+      mockConn,
       expect.stringContaining("INSERT INTO sessions"),
-      expect.objectContaining({
-        session_type: "analyze-project",
-        label: "Test session",
-      }),
+      expect.arrayContaining(["analyze-project", "Test session"]),
     );
   });
 
@@ -55,12 +55,10 @@ describe("createSession", () => {
       runId: "run-123",
     });
 
-    expect(mockExecutePrepared).toHaveBeenCalledWith(
+    expect(mockExecute).toHaveBeenCalledWith(
+      mockConn,
       expect.any(String),
-      expect.objectContaining({
-        project_path: "/home/user/project",
-        run_id: "run-123",
-      }),
+      expect.arrayContaining(["/home/user/project", "run-123"]),
     );
   });
 
@@ -70,13 +68,7 @@ describe("createSession", () => {
       label: "Chat",
     });
 
-    expect(mockExecutePrepared).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        project_path: null,
-        run_id: null,
-      }),
-    );
+    expect(mockExecute).toHaveBeenCalledWith(mockConn, expect.any(String), expect.arrayContaining([null, null]));
   });
 });
 
@@ -84,24 +76,22 @@ describe("startSession", () => {
   it("starts a session and transitions to running", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQuery.mockResolvedValue([
-      {
-        id: sessionId,
-        session_type: "analyze-project",
-        status: "pending",
-        label: "Test",
-        project_path: null,
-        run_id: null,
-        pid: null,
-        progress: null,
-        phase: null,
-        started_at: null,
-        completed_at: null,
-        error_message: null,
-        result_json: null,
-        created_at: new Date().toISOString(),
-      },
-    ] as never);
+    mockQueryOne.mockResolvedValue({
+      id: sessionId,
+      session_type: "analyze-project",
+      status: "pending",
+      label: "Test",
+      project_path: null,
+      run_id: null,
+      pid: null,
+      progress: null,
+      phase: null,
+      started_at: null,
+      completed_at: null,
+      error_message: null,
+      result_json: null,
+      created_at: new Date().toISOString(),
+    } as never);
 
     const runner = vi.fn().mockResolvedValue({ result: { done: true } });
     const liveSession = await startSession(sessionId, runner);
@@ -109,14 +99,15 @@ describe("startSession", () => {
     expect(liveSession.id).toBe(sessionId);
     expect(liveSession.status).toBe("running");
 
-    expect(mockExecutePrepared).toHaveBeenCalledWith(
+    expect(mockExecute).toHaveBeenCalledWith(
+      mockConn,
       expect.stringContaining("UPDATE sessions SET"),
-      expect.objectContaining({ status: "running" }),
+      expect.arrayContaining(["running"]),
     );
   });
 
   it("throws if session not found in DB", async () => {
-    mockQuery.mockResolvedValue([] as never);
+    mockQueryOne.mockResolvedValue(undefined as never);
 
     await expect(startSession("nonexistent-id", vi.fn())).rejects.toThrow("Session nonexistent-id not found");
   });
@@ -124,24 +115,22 @@ describe("startSession", () => {
   it("returns existing session if already running", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQuery.mockResolvedValue([
-      {
-        id: sessionId,
-        session_type: "analyze-project",
-        status: "pending",
-        label: "Test",
-        project_path: null,
-        run_id: null,
-        pid: null,
-        progress: null,
-        phase: null,
-        started_at: null,
-        completed_at: null,
-        error_message: null,
-        result_json: null,
-        created_at: new Date().toISOString(),
-      },
-    ] as never);
+    mockQueryOne.mockResolvedValue({
+      id: sessionId,
+      session_type: "analyze-project",
+      status: "pending",
+      label: "Test",
+      project_path: null,
+      run_id: null,
+      pid: null,
+      progress: null,
+      phase: null,
+      started_at: null,
+      completed_at: null,
+      error_message: null,
+      result_json: null,
+      created_at: new Date().toISOString(),
+    } as never);
 
     const runner = vi
       .fn()
@@ -162,24 +151,22 @@ describe("subscribe", () => {
   it("replays buffered events and subscribes to new ones", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQuery.mockResolvedValue([
-      {
-        id: sessionId,
-        session_type: "analyze-project",
-        status: "pending",
-        label: "Test",
-        project_path: null,
-        run_id: null,
-        pid: null,
-        progress: null,
-        phase: null,
-        started_at: null,
-        completed_at: null,
-        error_message: null,
-        result_json: null,
-        created_at: new Date().toISOString(),
-      },
-    ] as never);
+    mockQueryOne.mockResolvedValue({
+      id: sessionId,
+      session_type: "analyze-project",
+      status: "pending",
+      label: "Test",
+      project_path: null,
+      run_id: null,
+      pid: null,
+      progress: null,
+      phase: null,
+      started_at: null,
+      completed_at: null,
+      error_message: null,
+      result_json: null,
+      created_at: new Date().toISOString(),
+    } as never);
 
     const runner = vi
       .fn()
@@ -206,24 +193,22 @@ describe("getLiveSession", () => {
   it("returns the live session after it is started", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQuery.mockResolvedValue([
-      {
-        id: sessionId,
-        session_type: "analyze-project",
-        status: "pending",
-        label: "Test",
-        project_path: null,
-        run_id: null,
-        pid: null,
-        progress: null,
-        phase: null,
-        started_at: null,
-        completed_at: null,
-        error_message: null,
-        result_json: null,
-        created_at: new Date().toISOString(),
-      },
-    ] as never);
+    mockQueryOne.mockResolvedValue({
+      id: sessionId,
+      session_type: "analyze-project",
+      status: "pending",
+      label: "Test",
+      project_path: null,
+      run_id: null,
+      pid: null,
+      progress: null,
+      phase: null,
+      started_at: null,
+      completed_at: null,
+      error_message: null,
+      result_json: null,
+      created_at: new Date().toISOString(),
+    } as never);
 
     const runner = vi
       .fn()
@@ -238,60 +223,57 @@ describe("getLiveSession", () => {
 
 describe("cancelSession", () => {
   it("returns false for non-existent session with no DB record", async () => {
-    mockQuery.mockResolvedValue([] as never);
+    mockQueryOne.mockResolvedValue(undefined as never);
     const result = await cancelSession("nonexistent");
     expect(result).toBe(false);
   });
 
   it("returns false for already completed session", async () => {
-    mockQuery.mockResolvedValue([
-      {
-        id: "done-sess",
-        session_type: "analyze-project",
-        status: "done",
-        label: "Done",
-        project_path: null,
-        run_id: null,
-        pid: null,
-        progress: 100,
-        phase: null,
-        started_at: null,
-        completed_at: new Date().toISOString(),
-        error_message: null,
-        result_json: null,
-        created_at: new Date().toISOString(),
-      },
-    ] as never);
+    mockQueryOne.mockResolvedValue({
+      id: "done-sess",
+      session_type: "analyze-project",
+      status: "done",
+      label: "Done",
+      project_path: null,
+      run_id: null,
+      pid: null,
+      progress: 100,
+      phase: null,
+      started_at: null,
+      completed_at: new Date().toISOString(),
+      error_message: null,
+      result_json: null,
+      created_at: new Date().toISOString(),
+    } as never);
 
     const result = await cancelSession("done-sess");
     expect(result).toBe(false);
   });
 
   it("cancels an orphaned running session in DB", async () => {
-    mockQuery.mockResolvedValue([
-      {
-        id: "orphan-sess",
-        session_type: "analyze-project",
-        status: "running",
-        label: "Orphan",
-        project_path: null,
-        run_id: null,
-        pid: null,
-        progress: 50,
-        phase: null,
-        started_at: new Date().toISOString(),
-        completed_at: null,
-        error_message: null,
-        result_json: null,
-        created_at: new Date().toISOString(),
-      },
-    ] as never);
+    mockQueryOne.mockResolvedValue({
+      id: "orphan-sess",
+      session_type: "analyze-project",
+      status: "running",
+      label: "Orphan",
+      project_path: null,
+      run_id: null,
+      pid: null,
+      progress: 50,
+      phase: null,
+      started_at: new Date().toISOString(),
+      completed_at: null,
+      error_message: null,
+      result_json: null,
+      created_at: new Date().toISOString(),
+    } as never);
 
     const result = await cancelSession("orphan-sess");
     expect(result).toBe(true);
-    expect(mockExecutePrepared).toHaveBeenCalledWith(
+    expect(mockExecute).toHaveBeenCalledWith(
+      mockConn,
       expect.stringContaining("UPDATE sessions SET"),
-      expect.objectContaining({ status: "cancelled" }),
+      expect.arrayContaining(["cancelled"]),
     );
   });
 });

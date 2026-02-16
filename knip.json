@@ -29,10 +29,6 @@
     "packages/claude-usage": {
       "entry": ["src/components/*.tsx"]
     },
-    "packages/mcp-logs": {},
-    "packages/config": {
-      "entry": ["*.json"],
-      "project": ["*.json"]
-    }
+    "packages/mcp-logs": {}
   }
 }

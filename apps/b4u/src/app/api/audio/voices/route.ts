@@ -13,8 +13,9 @@ export async function GET() {
     return NextResponse.json(options);
   } catch (_err) {
     // Fallback to DB voices if API fails
-    const { query } = await import("@/lib/db");
-    const voices = await query("SELECT * FROM voice_options");
+    const { getDb, queryAll } = await import("@/lib/db");
+    const conn = await getDb();
+    const voices = await queryAll(conn, "SELECT * FROM voice_options");
     return NextResponse.json(voices);
   }
 }

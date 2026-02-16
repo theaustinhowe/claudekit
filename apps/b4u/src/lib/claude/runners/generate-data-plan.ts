@@ -1,20 +1,22 @@
 import { runClaude } from "@devkit/claude-runner";
+import type { SessionRunner } from "@devkit/session";
 import { buildGenerateDataPlanPrompt } from "@/lib/claude/prompts/generate-data-plan";
-import type { SessionRunner } from "@/lib/claude/types";
-import { execute, query } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
 
 export function createGenerateDataPlanRunner(): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading project context...", progress: 10 });
 
+    const conn = await getDb();
+
     // Read project context from DB
-    const summaryRows = await query<{
+    const summaryRows = await queryAll<{
       name: string;
       framework: string;
       auth: string;
       database_info: string;
       project_path: string;
-    }>("SELECT name, framework, auth, database_info, project_path FROM project_summary LIMIT 1");
+    }>(conn, "SELECT name, framework, auth, database_info, project_path FROM project_summary LIMIT 1");
 
     if (summaryRows.length === 0) {
       throw new Error("No project summary found. Run analyze-project first.");
@@ -22,16 +24,16 @@ export function createGenerateDataPlanRunner(): SessionRunner {
 
     const summary = summaryRows[0];
 
-    const routeRows = await query<{
+    const routeRows = await queryAll<{
       path: string;
       title: string;
-    }>("SELECT path, title FROM routes ORDER BY id");
+    }>(conn, "SELECT path, title FROM routes ORDER BY id");
 
-    const flowRows = await query<{
+    const flowRows = await queryAll<{
       id: string;
       name: string;
       steps: string[];
-    }>("SELECT id, name, steps FROM user_flows ORDER BY id");
+    }>(conn, "SELECT id, name, steps FROM user_flows ORDER BY id");
 
     if (flowRows.length === 0) {
       throw new Error("No user flows found. Run generate-outline first.");
@@ -88,41 +90,44 @@ export function createGenerateDataPlanRunner(): SessionRunner {
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
     // Clear existing data
-    await execute("DELETE FROM mock_data_entities");
-    await execute("DELETE FROM auth_overrides");
-    await execute("DELETE FROM env_items");
+    await execute(conn, "DELETE FROM mock_data_entities");
+    await execute(conn, "DELETE FROM auth_overrides");
+    await execute(conn, "DELETE FROM env_items");
 
     // Save mock data entities
     if (dataPlan.entities && Array.isArray(dataPlan.entities)) {
       for (let i = 0; i < dataPlan.entities.length; i++) {
         const e = dataPlan.entities[i];
-        await execute(`
-          INSERT INTO mock_data_entities (id, name, count, note)
-          VALUES (${i + 1}, '${(e.name || "").replace(/'/g, "''")}', ${e.count || 5},
-            '${(e.note || "").replace(/'/g, "''")}')
-        `);
+        await execute(
+          conn,
+          `INSERT INTO mock_data_entities (id, name, count, note)
+          VALUES (?, ?, ?, ?)`,
+          [i + 1, e.name || "", e.count || 5, e.note || ""],
+        );
       }
     }
 
     // Save auth overrides
     if (dataPlan.authOverrides && Array.isArray(dataPlan.authOverrides)) {
       for (const ao of dataPlan.authOverrides) {
-        await execute(`
-          INSERT INTO auth_overrides (id, label, enabled)
-          VALUES ('${(ao.id || "").replace(/'/g, "''")}', '${(ao.label || "").replace(/'/g, "''")}',
-            ${ao.enabled !== false})
-        `);
+        await execute(
+          conn,
+          `INSERT INTO auth_overrides (id, label, enabled)
+          VALUES (?, ?, ?)`,
+          [ao.id || "", ao.label || "", ao.enabled !== false],
+        );
       }
     }
 
     // Save env items
     if (dataPlan.envItems && Array.isArray(dataPlan.envItems)) {
       for (const ei of dataPlan.envItems) {
-        await execute(`
-          INSERT INTO env_items (id, label, enabled)
-          VALUES ('${(ei.id || "").replace(/'/g, "''")}', '${(ei.label || "").replace(/'/g, "''")}',
-            ${ei.enabled !== false})
-        `);
+        await execute(
+          conn,
+          `INSERT INTO env_items (id, label, enabled)
+          VALUES (?, ?, ?)`,
+          [ei.id || "", ei.label || "", ei.enabled !== false],
+        );
       }
     }
 

@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
-  query: vi.fn(),
+  getDb: vi.fn().mockResolvedValue({}),
+  queryAll: vi.fn(),
   execute: vi.fn(),
-  executePrepared: vi.fn(),
 }));
 
 import { GET, PATCH } from "@/app/api/env-config/route";
-import { executePrepared, query } from "@/lib/db";
+import { execute, queryAll } from "@/lib/db";
 
-const mockQuery = vi.mocked(query);
-const mockExecutePrepared = vi.mocked(executePrepared);
+const mockQueryAll = vi.mocked(queryAll);
+const mockExecute = vi.mocked(execute);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -22,7 +22,7 @@ describe("GET /api/env-config", () => {
       { id: "seed-db", label: "Seed database on start", enabled: true },
       { id: "disable-rate", label: "Disable rate limiting", enabled: true },
     ];
-    mockQuery.mockResolvedValue(items as never);
+    mockQueryAll.mockResolvedValue(items as never);
 
     const response = await GET();
     const data = await response.json();
@@ -32,7 +32,7 @@ describe("GET /api/env-config", () => {
   });
 
   it("returns empty array when no items exist", async () => {
-    mockQuery.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue([] as never);
 
     const response = await GET();
     const data = await response.json();
@@ -42,7 +42,7 @@ describe("GET /api/env-config", () => {
   });
 
   it("returns 500 on database error", async () => {
-    mockQuery.mockRejectedValue(new Error("DB error"));
+    mockQueryAll.mockRejectedValue(new Error("DB error"));
 
     const response = await GET();
     const data = await response.json();
@@ -54,7 +54,7 @@ describe("GET /api/env-config", () => {
 
 describe("PATCH /api/env-config", () => {
   it("updates an env item toggle", async () => {
-    mockExecutePrepared.mockResolvedValue(undefined);
+    mockExecute.mockResolvedValue(undefined as never);
 
     const req = new Request("http://localhost/api/env-config", {
       method: "PATCH",
@@ -67,9 +67,10 @@ describe("PATCH /api/env-config", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockExecutePrepared).toHaveBeenCalledWith(
+    expect(mockExecute).toHaveBeenCalledWith(
+      expect.anything(),
       expect.stringContaining("UPDATE env_items SET enabled"),
-      expect.objectContaining({ $id: "seed-db", $enabled: false }),
+      expect.arrayContaining([false, "seed-db"]),
     );
   });
 
@@ -110,7 +111,7 @@ describe("PATCH /api/env-config", () => {
   });
 
   it("returns 500 on database error during update", async () => {
-    mockExecutePrepared.mockRejectedValue(new Error("DB write failed"));
+    mockExecute.mockRejectedValue(new Error("DB write failed"));
 
     const req = new Request("http://localhost/api/env-config", {
       method: "PATCH",

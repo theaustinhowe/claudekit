@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { getDb, queryAll } from "@/lib/db";
 
 export async function GET() {
   try {
-    const rows = await query<{
+    const conn = await getDb();
+    const rows = await queryAll<{
       flow_id: string;
       timestamp: string;
       label: string;
       paragraph_index: number;
-    }>("SELECT flow_id, timestamp, label, paragraph_index FROM timeline_markers ORDER BY flow_id, id");
+    }>(conn, "SELECT flow_id, timestamp, label, paragraph_index FROM timeline_markers ORDER BY flow_id, id");
 
     // Group by flow_id into Record<string, TimelineMarker[]>
     const markers: Record<string, { timestamp: string; label: string; paragraphIndex: number }[]> = {};

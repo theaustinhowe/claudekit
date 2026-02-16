@@ -1,5 +1,14 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { getLogFilePath, listLogFiles } from "@devkit/logger";
+import { statSync } from "node:fs";
+import {
+  filterLogEntries,
+  formatLogEntry,
+  getLogFilePath,
+  type LogEntry,
+  listLogFiles,
+  nameToLevel,
+  parseSince,
+  readLogEntries,
+} from "@devkit/logger";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -8,89 +17,6 @@ const server = new McpServer({
   name: "devkit-logs",
   version: "0.1.0",
 });
-
-// --- Helpers ---
-
-interface LogEntry {
-  level: number;
-  time: number;
-  msg: string;
-  app?: string;
-  service?: string;
-  [key: string]: unknown;
-}
-
-function pinoLevelToName(level: number): string {
-  if (level <= 10) return "trace";
-  if (level <= 20) return "debug";
-  if (level <= 30) return "info";
-  if (level <= 40) return "warn";
-  if (level <= 50) return "error";
-  return "fatal";
-}
-
-function nameToLevel(name: string): number {
-  switch (name) {
-    case "trace":
-      return 10;
-    case "debug":
-      return 20;
-    case "info":
-      return 30;
-    case "warn":
-      return 40;
-    case "error":
-      return 50;
-    case "fatal":
-      return 60;
-    default:
-      return 0;
-  }
-}
-
-function parseSince(since: string): number {
-  const match = since.match(/^(\d+)([smhd])$/);
-  if (!match) return 0;
-  const value = Number.parseInt(match[1], 10);
-  const unit = match[2];
-  const now = Date.now();
-  switch (unit) {
-    case "s":
-      return now - value * 1000;
-    case "m":
-      return now - value * 60 * 1000;
-    case "h":
-      return now - value * 60 * 60 * 1000;
-    case "d":
-      return now - value * 24 * 60 * 60 * 1000;
-    default:
-      return 0;
-  }
-}
-
-function readLogEntries(filePath: string): LogEntry[] {
-  if (!existsSync(filePath)) return [];
-  const content = readFileSync(filePath, "utf-8");
-  return content
-    .trim()
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => {
-      try {
-        return JSON.parse(line) as LogEntry;
-      } catch {
-        return null;
-      }
-    })
-    .filter((e): e is LogEntry => e !== null);
-}
-
-function formatEntry(entry: LogEntry): string {
-  const time = new Date(entry.time).toISOString();
-  const level = pinoLevelToName(entry.level).toUpperCase().padEnd(5);
-  const service = entry.service ? `[${entry.service}] ` : "";
-  return `${time} ${level} ${service}${entry.msg}`;
-}
 
 // --- Tools ---
 
@@ -137,21 +63,14 @@ server.tool(
       allEntries = allEntries.concat(readLogEntries(entry.path));
     }
 
-    const q = query.toLowerCase();
-    let filtered = allEntries.filter((e) => JSON.stringify(e).toLowerCase().includes(q));
+    let filtered = filterLogEntries(allEntries, { query, since, limit });
 
     if (level) {
       const minLevel = nameToLevel(level);
       filtered = filtered.filter((e) => e.level >= minLevel);
     }
 
-    if (since) {
-      const sinceMs = parseSince(since);
-      filtered = filtered.filter((e) => e.time >= sinceMs);
-    }
-
-    filtered = filtered.slice(-limit);
-    const text = filtered.map(formatEntry).join("\n");
+    const text = filtered.map(formatLogEntry).join("\n");
     return { content: [{ type: "text" as const, text: text || "No matching entries found." }] };
   },
 );
@@ -175,7 +94,7 @@ server.tool(
     }
 
     entries = entries.slice(-lines);
-    const text = entries.map(formatEntry).join("\n");
+    const text = entries.map(formatLogEntry).join("\n");
     return { content: [{ type: "text" as const, text: text || `No log entries found for ${app}.` }] };
   },
 );
@@ -206,7 +125,7 @@ server.tool(
     const text = filtered
       .map((e) => {
         const appName = e.app || "unknown";
-        return `[${appName}] ${formatEntry(e)}`;
+        return `[${appName}] ${formatLogEntry(e)}`;
       })
       .join("\n");
 
@@ -247,7 +166,7 @@ server.tool(
     const text = context
       .map((e, i) => {
         const marker = startIdx + i === closestIdx ? ">>>" : "   ";
-        return `${marker} ${formatEntry(e)}`;
+        return `${marker} ${formatLogEntry(e)}`;
       })
       .join("\n");
 

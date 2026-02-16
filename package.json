@@ -20,7 +20,7 @@
     "test:coverage": "tsx scripts/test.ts --coverage",
     "db:reset": "tsx scripts/db-reset.ts",
     "knip": "knip",
-    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && NODE_ENV=production pnpm build",
     "storybook": "pnpm --filter @devkit/ui storybook"
   },
   "devDependencies": {

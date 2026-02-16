@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { executePrepared } from "@/lib/db";
-import { ensureDatabase } from "@/lib/db-init";
+import { execute, getDb } from "@/lib/db";
 
 async function saveState(
   runId: string,
@@ -12,26 +11,27 @@ async function saveState(
     return NextResponse.json({ error: "messages, currentPhase, and phaseStatuses are required" }, { status: 400 });
   }
 
-  await ensureDatabase();
+  const conn = await getDb();
 
-  await executePrepared(
+  await execute(
+    conn,
     `INSERT INTO run_state (run_id, messages_json, current_phase, phase_statuses_json, project_path, project_name, updated_at)
-     VALUES ($run_id, $messages, $phase, $statuses, $project_path, $project_name, CURRENT_TIMESTAMP)
+     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
      ON CONFLICT (run_id) DO UPDATE SET
-       messages_json = $messages,
-       current_phase = $phase,
-       phase_statuses_json = $statuses,
-       project_path = COALESCE($project_path, run_state.project_path),
-       project_name = COALESCE($project_name, run_state.project_name),
+       messages_json = excluded.messages_json,
+       current_phase = excluded.current_phase,
+       phase_statuses_json = excluded.phase_statuses_json,
+       project_path = COALESCE(excluded.project_path, run_state.project_path),
+       project_name = COALESCE(excluded.project_name, run_state.project_name),
        updated_at = CURRENT_TIMESTAMP`,
-    {
-      $run_id: runId,
-      $messages: JSON.stringify(messages),
-      $phase: currentPhase,
-      $statuses: JSON.stringify(phaseStatuses),
-      $project_path: projectPath ?? null,
-      $project_name: projectName ?? null,
-    },
+    [
+      runId,
+      JSON.stringify(messages),
+      currentPhase,
+      JSON.stringify(phaseStatuses),
+      projectPath ?? null,
+      projectName ?? null,
+    ],
   );
 
   return NextResponse.json({ ok: true });

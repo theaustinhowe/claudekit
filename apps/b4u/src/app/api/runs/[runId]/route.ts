@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { execute, query } from "@/lib/db";
-import { ensureDatabase } from "@/lib/db-init";
+import { execute, getDb, queryAll } from "@/lib/db";
 
 type SessionRow = {
   id: string;
@@ -43,22 +42,24 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
   }
 
   try {
-    await ensureDatabase();
+    const conn = await getDb();
 
-    const safeRunId = runId.replace(/'/g, "''");
-
-    // Query both tables — run_state may exist without sessions (phase 1)
-    const stateRows = await query<RunStateRow>(
+    // Query both tables -- run_state may exist without sessions (phase 1)
+    const stateRows = await queryAll<RunStateRow>(
+      conn,
       `SELECT messages_json, current_phase, phase_statuses_json, project_path, project_name
        FROM run_state
-       WHERE run_id = '${safeRunId}'`,
+       WHERE run_id = ?`,
+      [runId],
     );
 
-    const sessionRows = await query<SessionRow>(
+    const sessionRows = await queryAll<SessionRow>(
+      conn,
       `SELECT id, session_type, status, project_path, created_at
        FROM sessions
-       WHERE run_id = '${safeRunId}'
+       WHERE run_id = ?
        ORDER BY created_at ASC`,
+      [runId],
     );
 
     // If neither exists, this run doesn't exist
@@ -139,12 +140,12 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
 
   try {
-    await ensureDatabase();
-
-    const safeId = runId.replace(/'/g, "''");
-    await execute(`DELETE FROM session_logs WHERE session_id IN (SELECT id FROM sessions WHERE run_id = '${safeId}')`);
-    await execute(`DELETE FROM sessions WHERE run_id = '${safeId}'`);
-    await execute(`DELETE FROM run_state WHERE run_id = '${safeId}'`);
+    const conn = await getDb();
+    await execute(conn, "DELETE FROM session_logs WHERE session_id IN (SELECT id FROM sessions WHERE run_id = ?)", [
+      runId,
+    ]);
+    await execute(conn, "DELETE FROM sessions WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM run_state WHERE run_id = ?", [runId]);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

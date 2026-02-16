@@ -20,13 +20,15 @@ This file provides guidance to Claude Code when working in this monorepo.
 
 | Package | Description |
 |---------|-------------|
-| `@devkit/duckdb` | DuckDB connection factory + query helpers (async mutex, typed params) |
-| `@devkit/claude-runner` | Claude CLI spawn + stream-json parsing |
+| `@devkit/duckdb` | DuckDB connection factory, query helpers, migration runner (async mutex, typed params) |
+| `@devkit/claude-runner` | Claude CLI spawn + stream-json parsing, progress estimator, JSON extractor |
 | `@devkit/session` | Session lifecycle manager (ring buffer, batch log flush, DI persistence) |
-| `@devkit/ui` | shadcn/ui components + cn() utility (25 components) |
+| `@devkit/ui` | shadcn/ui components + cn() utility (65 components) |
 | `@devkit/hooks` | Shared React hooks (useAppTheme, useAutoScroll, useIsMobile, useSessionStream) |
-| `@devkit/gogo-shared` | GoGo domain types (Job, Repository, etc.) |
-| `@devkit/config` | Base tsconfig and biome configs |
+| `@devkit/gogo-shared` | GoGo domain types, Zod schemas, typed API client |
+| `@devkit/logger` | Pino-based structured logging with daily-rotating NDJSON files + log querying utilities |
+| `@devkit/claude-usage` | Claude API usage tracking |
+| `@devkit/mcp-logs` | MCP server for log file access (5 tools) |
 
 ## Commands
 
@@ -42,7 +44,7 @@ pnpm lint             # Biome check
 pnpm lint:fix         # Biome check with auto-fix
 pnpm format           # Biome format
 pnpm test             # All tests
-pnpm check            # typecheck + lint + test
+pnpm check            # typecheck + lint + test + build
 ```
 
 ## Code Style
@@ -61,7 +63,8 @@ All apps use `@devkit/duckdb` for database access:
 - `queryAll<T>`, `queryOne<T>`, `execute` — query helpers with async mutex
 - `withTransaction` — automatic BEGIN/COMMIT/ROLLBACK
 - `buildUpdate` — dynamic UPDATE from partial objects
-- Each app has its own schema definitions and seed scripts
+- `runMigrations(conn, { migrationsDir })` — numbered `.sql` migrations tracked in `_migrations` table
+- Each app has its own migrations directory and seed scripts
 
 ### Session System
 
@@ -93,5 +96,5 @@ All apps share 9 color themes via `@devkit/hooks`:
 
 - **Scope your work**: Use `pnpm --filter <package> <command>` to run commands in specific packages
 - **Package changes**: When modifying a shared package, check which apps use it: `grep -r "@devkit/packagename" apps/`
-- **No migrations**: All DuckDB tables use `CREATE TABLE IF NOT EXISTS`. Use `pnpm --filter <app> db:reset` for schema changes
+- **Migrations**: Apps use numbered `.sql` files in `migrations/` directories with `runMigrations()` from `@devkit/duckdb`. Use `pnpm --filter <app> db:reset` for full schema reset during development
 - **Each app has its own CLAUDE.md** with domain-specific context

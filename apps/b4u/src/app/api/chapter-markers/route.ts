@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { getDb, queryAll } from "@/lib/db";
 
 export async function GET() {
   try {
-    const rows = await query<{
+    const conn = await getDb();
+    const rows = await queryAll<{
       flow_name: string;
       start_time: string;
-    }>("SELECT flow_name, start_time FROM chapter_markers ORDER BY id");
+    }>(conn, "SELECT flow_name, start_time FROM chapter_markers ORDER BY id");
 
     const markers = rows.map((r) => ({
       flowName: r.flow_name,

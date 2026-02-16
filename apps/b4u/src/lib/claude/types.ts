@@ -10,23 +10,6 @@ export type SessionType =
   | "edit-content"
   | "chat";
 
-export interface SessionEvent {
-  type: "init" | "progress" | "log" | "chunk" | "done" | "error" | "cancelled";
-  message?: string;
-  progress?: number;
-  phase?: string;
-  data?: Record<string, unknown>;
-  log?: string;
-  logType?: "tool" | "thinking" | "status";
-  chunk?: string;
-}
-
-export type SessionRunner = (ctx: {
-  onProgress: (event: SessionEvent) => void;
-  signal: AbortSignal;
-  sessionId: string;
-}) => Promise<{ result?: Record<string, unknown> }>;
-
 export interface SessionRow {
   [key: string]: string | number | null;
   id: string;

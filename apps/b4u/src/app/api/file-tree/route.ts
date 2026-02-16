@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { execute, query } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
 
 export async function GET() {
   try {
-    const rows = await query<{ tree_json: string }>("SELECT tree_json FROM file_tree WHERE id = 1");
+    const conn = await getDb();
+    const rows = await queryAll<{ tree_json: string }>(conn, "SELECT tree_json FROM file_tree WHERE id = 1");
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "File tree not found" }, { status: 404 });
@@ -28,8 +29,9 @@ export async function PUT(request: Request) {
     const { tree, name } = await request.json();
     if (!tree) return NextResponse.json({ error: "tree required" }, { status: 400 });
     const treeJson = JSON.stringify({ name: name || "root", type: "directory", children: tree });
-    await execute("DELETE FROM file_tree");
-    await execute(`INSERT INTO file_tree (id, tree_json) VALUES (1, '${treeJson.replace(/'/g, "''")}')`);
+    const conn = await getDb();
+    await execute(conn, "DELETE FROM file_tree");
+    await execute(conn, "INSERT INTO file_tree (id, tree_json) VALUES (1, ?)", [treeJson]);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Failed to save file tree:", error);

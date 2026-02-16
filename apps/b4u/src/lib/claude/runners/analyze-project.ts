@@ -1,7 +1,7 @@
 import { runClaude } from "@devkit/claude-runner";
+import type { SessionRunner } from "@devkit/session";
 import { buildAnalyzeProjectPrompt } from "@/lib/claude/prompts/analyze-project";
-import type { SessionRunner } from "@/lib/claude/types";
-import { execute } from "@/lib/db";
+import { execute, getDb } from "@/lib/db";
 
 export function createAnalyzeProjectRunner(projectPath: string): SessionRunner {
   return async ({ onProgress, signal }) => {
@@ -51,36 +51,46 @@ export function createAnalyzeProjectRunner(projectPath: string): SessionRunner {
 
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
+    const conn = await getDb();
+
     // Clear existing data and save new
-    await execute("DELETE FROM project_summary");
-    await execute("DELETE FROM routes");
+    await execute(conn, "DELETE FROM project_summary");
+    await execute(conn, "DELETE FROM routes");
 
     // Save project summary
-    const dirs = (analysis.directories || []).map((d: string) => `'${d.replace(/'/g, "''")}'`).join(", ");
-    await execute(`
-      INSERT INTO project_summary (id, name, framework, directories, auth, database_info, project_path)
-      VALUES (1, '${(analysis.name || "").replace(/'/g, "''")}', '${(analysis.framework || "").replace(/'/g, "''")}',
-        [${dirs}], '${(analysis.auth || "None").replace(/'/g, "''")}', '${(analysis.database || "None").replace(/'/g, "''")}',
-        '${projectPath.replace(/'/g, "''")}')
-    `);
+    const dirs = analysis.directories || [];
+    await execute(
+      conn,
+      `INSERT INTO project_summary (id, name, framework, directories, auth, database_info, project_path)
+      VALUES (1, ?, ?, ?, ?, ?, ?)`,
+      [
+        analysis.name || "",
+        analysis.framework || "",
+        dirs,
+        analysis.auth || "None",
+        analysis.database || "None",
+        projectPath,
+      ],
+    );
 
     // Save routes if present
     if (analysis.routes && Array.isArray(analysis.routes)) {
       for (let i = 0; i < analysis.routes.length; i++) {
         const r = analysis.routes[i];
-        await execute(`
-          INSERT INTO routes (id, path, title, auth_required, description)
-          VALUES (${i + 1}, '${(r.path || "").replace(/'/g, "''")}', '${(r.title || "").replace(/'/g, "''")}',
-            ${!!r.authRequired}, '${(r.description || "").replace(/'/g, "''")}')
-        `);
+        await execute(
+          conn,
+          `INSERT INTO routes (id, path, title, auth_required, description)
+          VALUES (?, ?, ?, ?, ?)`,
+          [i + 1, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
+        );
       }
     }
 
     // Save file tree if Claude returned one
     if (analysis.fileTree || analysis.file_tree) {
-      await execute("DELETE FROM file_tree");
-      const treeJson = JSON.stringify(analysis.fileTree || analysis.file_tree).replace(/'/g, "''");
-      await execute(`INSERT INTO file_tree (id, tree_json) VALUES (1, '${treeJson}')`);
+      await execute(conn, "DELETE FROM file_tree");
+      const treeJson = JSON.stringify(analysis.fileTree || analysis.file_tree);
+      await execute(conn, "INSERT INTO file_tree (id, tree_json) VALUES (1, ?)", [treeJson]);
     }
 
     onProgress({ type: "progress", message: "Analysis complete", progress: 100 });

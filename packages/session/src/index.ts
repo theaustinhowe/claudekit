@@ -1,6 +1,6 @@
 export { createSessionManager } from "./session-manager";
-export { createSessionSSEResponse } from "./sse";
 export type { SSEReplayCallbacks } from "./sse";
+export { createSessionSSEResponse } from "./sse";
 export type {
   LiveSession,
   SessionEvent,

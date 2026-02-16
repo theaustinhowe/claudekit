@@ -1,15 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { execute, executePrepared, query } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
 import { flowScriptsArraySchema, parseBody } from "@/lib/validations";
 
 export async function GET() {
   try {
-    const flows = await query<{
+    const conn = await getDb();
+    const flows = await queryAll<{
       flow_id: string;
       flow_name: string;
-    }>("SELECT flow_id, flow_name FROM flow_scripts ORDER BY id");
+    }>(conn, "SELECT flow_id, flow_name FROM flow_scripts ORDER BY id");
 
-    const steps = await query<{
+    const steps = await queryAll<{
       id: string;
       flow_id: string;
       step_number: number;
@@ -18,6 +19,7 @@ export async function GET() {
       expected_outcome: string;
       duration: string;
     }>(
+      conn,
       "SELECT id, flow_id, step_number, url, action, expected_outcome, duration FROM script_steps ORDER BY flow_id, step_number",
     );
 
@@ -51,21 +53,15 @@ export async function PUT(request: NextRequest) {
   const flowScripts = parsed.data;
 
   try {
-    await execute("DELETE FROM script_steps");
+    const conn = await getDb();
+    await execute(conn, "DELETE FROM script_steps");
 
     for (const flow of flowScripts) {
       for (const step of flow.steps) {
-        await executePrepared(
-          "INSERT INTO script_steps (id, flow_id, step_number, url, action, expected_outcome, duration) VALUES ($id, $flowId, $stepNum, $url, $action, $outcome, $duration)",
-          {
-            $id: step.id,
-            $flowId: flow.flowId,
-            $stepNum: step.stepNumber,
-            $url: step.url,
-            $action: step.action,
-            $outcome: step.expectedOutcome,
-            $duration: step.duration,
-          },
+        await execute(
+          conn,
+          "INSERT INTO script_steps (id, flow_id, step_number, url, action, expected_outcome, duration) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          [step.id, flow.flowId, step.stepNumber, step.url, step.action, step.expectedOutcome, step.duration],
         );
       }
     }

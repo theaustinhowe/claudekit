@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { getDb, queryAll } from "@/lib/db";
 
 export async function GET() {
   try {
-    const rows = await query<{
+    const conn = await getDb();
+    const rows = await queryAll<{
       name: string;
       framework: string;
       directories: string[];
       auth: string;
       database_info: string;
-    }>("SELECT name, framework, directories, auth, database_info FROM project_summary WHERE id = 1");
+    }>(conn, "SELECT name, framework, directories, auth, database_info FROM project_summary WHERE id = 1");
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "Project summary not found" }, { status: 404 });

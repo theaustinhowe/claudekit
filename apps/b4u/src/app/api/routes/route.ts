@@ -1,16 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { execute, executePrepared, query } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
 import { parseBody, routesArraySchema } from "@/lib/validations";
 
 export async function GET() {
   try {
-    const rows = await query<{
+    const conn = await getDb();
+    const rows = await queryAll<{
       id: number;
       path: string;
       title: string;
       auth_required: boolean;
       description: string;
-    }>("SELECT id, path, title, auth_required, description FROM routes ORDER BY id");
+    }>(conn, "SELECT id, path, title, auth_required, description FROM routes ORDER BY id");
 
     const routes = rows.map((r) => ({
       path: r.path,
@@ -34,14 +35,18 @@ export async function PUT(request: NextRequest) {
   const routes = parsed.data;
 
   try {
-    await execute("DELETE FROM routes");
+    const conn = await getDb();
+    await execute(conn, "DELETE FROM routes");
 
     for (let i = 0; i < routes.length; i++) {
       const r = routes[i];
-      await executePrepared(
-        "INSERT INTO routes (id, path, title, auth_required, description) VALUES ($id, $path, $title, $auth, $desc)",
-        { $id: i + 1, $path: r.path, $title: r.title, $auth: r.authRequired, $desc: r.description },
-      );
+      await execute(conn, "INSERT INTO routes (id, path, title, auth_required, description) VALUES (?, ?, ?, ?, ?)", [
+        i + 1,
+        r.path,
+        r.title,
+        r.authRequired,
+        r.description,
+      ]);
     }
 
     return NextResponse.json({ success: true });

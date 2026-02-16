@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { SessionRunner } from "@/lib/claude/types";
-import { execute, query } from "@/lib/db";
+import type { SessionRunner } from "@devkit/session";
+import { execute, getDb, queryAll } from "@/lib/db";
 import { generateChapters } from "@/lib/video/chapter-generator";
 import { concatenateVideos, mergeVideoAudio } from "@/lib/video/ffmpeg-merger";
 
@@ -9,22 +9,27 @@ export function createFinalMergeRunner(): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading recordings and audio...", progress: 5 });
 
+    const conn = await getDb();
+
     // Load recordings from DB
-    const recordings = await query<{
+    const recordings = await queryAll<{
       id: string;
       flow_id: string;
       video_path: string;
       duration_seconds: number;
-    }>("SELECT * FROM recordings WHERE status = 'done' ORDER BY flow_id");
+    }>(conn, "SELECT * FROM recordings WHERE status = 'done' ORDER BY flow_id");
 
-    const audioFiles = await query<{
+    const audioFiles = await queryAll<{
       id: string;
       flow_id: string;
       file_path: string;
       duration_seconds: number;
-    }>("SELECT * FROM audio_files ORDER BY flow_id");
+    }>(conn, "SELECT * FROM audio_files ORDER BY flow_id");
 
-    const flowScripts = await query<{ flow_id: string; flow_name: string }>("SELECT * FROM flow_scripts ORDER BY id");
+    const flowScripts = await queryAll<{ flow_id: string; flow_name: string }>(
+      conn,
+      "SELECT * FROM flow_scripts ORDER BY id",
+    );
 
     if (recordings.length === 0) throw new Error("No recordings found");
 
@@ -32,7 +37,8 @@ export function createFinalMergeRunner(): SessionRunner {
     await mkdir(outputDir, { recursive: true });
 
     // Get project name
-    const projectRows = await query<{ name: string; project_path: string }>(
+    const projectRows = await queryAll<{ name: string; project_path: string }>(
+      conn,
       "SELECT name, project_path FROM project_summary LIMIT 1",
     );
     const projectName = projectRows[0]?.name || "project";
@@ -85,25 +91,28 @@ export function createFinalMergeRunner(): SessionRunner {
     const chapters = generateChapters(recordingInfo);
 
     // Save chapters to DB
-    await execute("DELETE FROM chapter_markers");
+    await execute(conn, "DELETE FROM chapter_markers");
     for (let i = 0; i < chapters.length; i++) {
-      await execute(`
-        INSERT INTO chapter_markers (id, flow_name, start_time)
-        VALUES (${i + 1}, '${chapters[i].flowName.replace(/'/g, "''")}', '${chapters[i].startTime}')
-      `);
+      await execute(
+        conn,
+        `INSERT INTO chapter_markers (id, flow_name, start_time)
+        VALUES (?, ?, ?)`,
+        [i + 1, chapters[i].flowName, chapters[i].startTime],
+      );
     }
 
     // Save final video to DB
-    await execute("DELETE FROM final_videos");
+    await execute(conn, "DELETE FROM final_videos");
     const { statSync } = await import("node:fs");
     const stats = statSync(finalPath);
     const totalDuration = recordingInfo.reduce((sum, r) => sum + r.durationSeconds, 0);
 
-    await execute(`
-      INSERT INTO final_videos (id, project_path, file_path, duration_seconds, format, size_bytes)
-      VALUES ('final-1', '${(projectRows[0]?.project_path || "").replace(/'/g, "''")}',
-        '${finalPath.replace(/'/g, "''")}', ${totalDuration}, 'mp4', ${stats.size})
-    `);
+    await execute(
+      conn,
+      `INSERT INTO final_videos (id, project_path, file_path, duration_seconds, format, size_bytes)
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      ["final-1", projectRows[0]?.project_path || "", finalPath, totalDuration, "mp4", stats.size],
+    );
 
     onProgress({ type: "progress", message: "Video merge complete!", progress: 100 });
 

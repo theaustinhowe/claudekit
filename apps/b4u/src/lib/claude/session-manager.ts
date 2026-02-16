@@ -1,6 +1,5 @@
 import { createSessionManager } from "@devkit/session";
-import { executePrepared, query } from "@/lib/db";
-import { ensureDatabase } from "@/lib/db-init";
+import { execute, getDb, queryOne } from "@/lib/db";
 import type { SessionRow, SessionType } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -14,21 +13,22 @@ export async function createSession(opts: {
   runId?: string | null;
   metadata?: Record<string, unknown>;
 }): Promise<string> {
-  await ensureDatabase();
+  const conn = await getDb();
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  await executePrepared(
+  await execute(
+    conn,
     `INSERT INTO sessions (id, session_type, status, label, project_path, run_id, result_json, created_at)
-     VALUES ($id, $session_type, 'pending', $label, $project_path, $run_id, $result_json, $created_at)`,
-    {
+     VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)`,
+    [
       id,
-      session_type: opts.sessionType,
-      label: opts.label,
-      project_path: opts.projectPath ?? null,
-      run_id: opts.runId ?? null,
-      result_json: opts.metadata ? JSON.stringify(opts.metadata) : null,
-      created_at: now,
-    },
+      opts.sessionType,
+      opts.label,
+      opts.projectPath ?? null,
+      opts.runId ?? null,
+      opts.metadata ? JSON.stringify(opts.metadata) : null,
+      now,
+    ],
   );
   return id;
 }
@@ -40,37 +40,36 @@ export async function createSession(opts: {
 const manager = createSessionManager({
   persistence: {
     loadSession: async (id) => {
-      const rows = await query<SessionRow>(`SELECT * FROM sessions WHERE id = '${id}' LIMIT 1`);
-      const row = rows[0];
+      const conn = await getDb();
+      const row = await queryOne<SessionRow>(conn, "SELECT * FROM sessions WHERE id = ? LIMIT 1", [id]);
       if (!row) return null;
       return { session_type: row.session_type, label: row.label, status: row.status, pid: row.pid ?? null };
     },
     updateSession: async (sessionId, updates) => {
       const setClauses: string[] = [];
-      const params: Record<string, string | number | boolean | null> = { id: sessionId };
+      const params: unknown[] = [];
 
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
-          setClauses.push(`${key} = $${key}`);
-          params[key] = value as string | number | null;
+          setClauses.push(`${key} = ?`);
+          params.push(value);
         }
       }
 
       if (setClauses.length === 0) return;
-      await executePrepared(`UPDATE sessions SET ${setClauses.join(", ")} WHERE id = $id`, params);
+      params.push(sessionId);
+      const conn = await getDb();
+      await execute(conn, `UPDATE sessions SET ${setClauses.join(", ")} WHERE id = ?`, params);
     },
     persistLogs: async (sessionId, logs) => {
+      const conn = await getDb();
       for (const entry of logs) {
         const now = new Date().toISOString();
-        await executePrepared(
+        await execute(
+          conn,
           `INSERT INTO session_logs (session_id, log, log_type, created_at)
-           VALUES ($session_id, $log, $log_type, $created_at)`,
-          {
-            session_id: sessionId,
-            log: entry.log,
-            log_type: entry.logType,
-            created_at: now,
-          },
+           VALUES (?, ?, ?, ?)`,
+          [sessionId, entry.log, entry.logType, now],
         );
       }
     },

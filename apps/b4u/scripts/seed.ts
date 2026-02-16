@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { DuckDBInstance } from "@duckdb/node-api";
 import {
   AUTH_OVERRIDES,
@@ -13,7 +15,8 @@ import {
   VOICE_OPTIONS,
   VOICEOVER_SCRIPTS,
 } from "../src/lib/mock-data";
-import { SCHEMA_SQL } from "../src/lib/schema";
+
+const SCHEMA_SQL = fs.readFileSync(path.join(import.meta.dirname, "../src/lib/db/migrations/001_initial.sql"), "utf-8");
 
 const DB_PATH = process.env.DUCKDB_PATH || "data/b4u.duckdb";
 
@@ -27,8 +30,6 @@ function arrayLiteral(arr: string[]): string {
 
 async function seed() {
   // Ensure data directory exists
-  const fs = await import("node:fs");
-  const path = await import("node:path");
   const dir = path.dirname(DB_PATH);
   if (dir && !fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

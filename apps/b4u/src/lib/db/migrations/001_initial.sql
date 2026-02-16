@@ -1,4 +1,6 @@
-export const SCHEMA_SQL = `
+-- B4U Initial Schema
+-- All tables and sequences
+
 -- Project summary (singleton)
 CREATE TABLE IF NOT EXISTS project_summary (
   id INTEGER PRIMARY KEY DEFAULT 1,
@@ -180,4 +182,3 @@ CREATE TABLE IF NOT EXISTS final_videos (
   status VARCHAR NOT NULL DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-`;
