@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import { ErrorState } from "@/components/ui/api-state";
+import { Phase2OutlineSkeleton } from "@/components/ui/phase-skeletons";
 import type { RouteEntry, UserFlow } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
@@ -39,6 +40,13 @@ export function Phase2Outline() {
   const [saving, setSaving] = useState(false);
   const [routeErrors, setRouteErrors] = useState<Record<number, Record<string, string>>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [flowDragIndex, setFlowDragIndex] = useState<number | null>(null);
+  const [flowDragOverIndex, setFlowDragOverIndex] = useState<number | null>(null);
+  const [stepDragState, setStepDragState] = useState<{
+    flowId: string;
+    dragIndex: number;
+    overIndex: number | null;
+  } | null>(null);
 
   useEffect(() => {
     if (apiRoutes) setRoutes(apiRoutes);
@@ -185,7 +193,79 @@ export function Phase2Outline() {
     saveFlows(updated);
   };
 
-  if (loading) return <LoadingState label="Loading app outline..." />;
+  // Drag-to-reorder flows
+  const handleFlowDrop = (targetIndex: number) => {
+    if (flowDragIndex === null || flowDragIndex === targetIndex) {
+      setFlowDragIndex(null);
+      setFlowDragOverIndex(null);
+      return;
+    }
+    const reordered = [...flows];
+    const [moved] = reordered.splice(flowDragIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+    setFlows(reordered);
+    saveFlows(reordered);
+    setFlowDragIndex(null);
+    setFlowDragOverIndex(null);
+  };
+
+  // Drag-to-reorder steps within a flow
+  const handleStepDrop = (flowId: string, targetIndex: number) => {
+    if (!stepDragState || stepDragState.flowId !== flowId || stepDragState.dragIndex === targetIndex) {
+      setStepDragState(null);
+      return;
+    }
+    const updated = flows.map((f) => {
+      if (f.id !== flowId) return f;
+      const newSteps = [...f.steps];
+      const [moved] = newSteps.splice(stepDragState.dragIndex, 1);
+      newSteps.splice(targetIndex, 0, moved);
+      return { ...f, steps: newSteps };
+    });
+    setFlows(updated);
+    saveFlows(updated);
+    setStepDragState(null);
+  };
+
+  // Keyboard reorder for steps (Alt+Up/Down)
+  const handleStepKeyboardReorder = (flowId: string, index: number, e: React.KeyboardEvent) => {
+    const flow = flows.find((f) => f.id === flowId);
+    if (!flow || !e.altKey) return;
+
+    let newIndex: number | null = null;
+    if (e.key === "ArrowUp" && index > 0) newIndex = index - 1;
+    else if (e.key === "ArrowDown" && index < flow.steps.length - 1) newIndex = index + 1;
+    if (newIndex === null) return;
+
+    e.preventDefault();
+    const updated = flows.map((f) => {
+      if (f.id !== flowId) return f;
+      const newSteps = [...f.steps];
+      const [moved] = newSteps.splice(index, 1);
+      newSteps.splice(newIndex, 0, moved);
+      return { ...f, steps: newSteps };
+    });
+    setFlows(updated);
+    saveFlows(updated);
+  };
+
+  // Keyboard reorder for flows (Alt+Up/Down)
+  const handleFlowKeyboardReorder = (index: number, e: React.KeyboardEvent) => {
+    if (!e.altKey) return;
+    let newIndex: number | null = null;
+    if (e.key === "ArrowUp" && index > 0) newIndex = index - 1;
+    else if (e.key === "ArrowDown" && index < flows.length - 1) newIndex = index + 1;
+    if (newIndex === null) return;
+
+    e.preventDefault();
+    const reordered = [...flows];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(newIndex, 0, moved);
+    setFlows(reordered);
+    saveFlows(reordered);
+  };
+
+  if (loading) return <Phase2OutlineSkeleton />;
   if (error)
     return (
       <ErrorState
@@ -346,84 +426,150 @@ export function Phase2Outline() {
           </div>
         ) : (
           <div className="p-3 space-y-3">
-            {flows.map((flow) => (
-              <div key={flow.id} className="p-3.5 bg-card border border-border rounded-md">
-                {editingFlow === flow.id ? (
-                  <div className="space-y-2">
-                    <EditField label="Flow name" value={flow.name} onChange={(v) => updateFlowName(flow.id, v)} />
-                    <div className="text-2xs text-muted-foreground mb-1">Steps</div>
-                    {flow.steps.map((step, si) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: flow steps are plain strings with no stable key
-                      <div key={si} className="flex items-center gap-1.5">
-                        <span className="text-2xs text-muted-foreground w-[16px] shrink-0">{si + 1}.</span>
-                        <FlowStepField value={step} onChange={(v) => updateFlowStep(flow.id, si, v)} />
-                        {flow.steps.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeFlowStep(flow.id, si)}
-                            className="text-2xs text-destructive shrink-0 px-1"
+            {flows.map((flow, flowIndex) => (
+              // biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop flow cards require native drag events
+              <div
+                key={flow.id}
+                className="bg-card border border-border rounded-md group/flow"
+                draggable={editingFlow !== flow.id}
+                onDragStart={() => setFlowDragIndex(flowIndex)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setFlowDragOverIndex(flowIndex);
+                }}
+                onDrop={() => handleFlowDrop(flowIndex)}
+                onDragEnd={() => {
+                  setFlowDragIndex(null);
+                  setFlowDragOverIndex(null);
+                }}
+                onKeyDown={(e) => handleFlowKeyboardReorder(flowIndex, e)}
+                style={{
+                  opacity: flowDragIndex === flowIndex ? 0.4 : 1,
+                  borderTop:
+                    flowDragOverIndex === flowIndex && flowDragIndex !== null && flowDragIndex !== flowIndex
+                      ? "2px solid hsl(var(--primary))"
+                      : "2px solid transparent",
+                }}
+              >
+                <div className="p-3.5">
+                  {editingFlow === flow.id ? (
+                    <div className="space-y-2">
+                      <EditField label="Flow name" value={flow.name} onChange={(v) => updateFlowName(flow.id, v)} />
+                      <div className="text-2xs text-muted-foreground mb-1">Steps · Drag or Alt+↑↓ to reorder</div>
+                      {flow.steps.map((step, si) => {
+                        const stepKey = `${flow.id}-step-${si}`;
+                        return (
+                          <div
+                            key={stepKey}
+                            className="flex items-center gap-1.5"
+                            draggable
+                            onDragStart={(e) => {
+                              e.stopPropagation();
+                              setStepDragState({ flowId: flow.id, dragIndex: si, overIndex: null });
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setStepDragState((prev) => (prev ? { ...prev, overIndex: si } : null));
+                            }}
+                            onDrop={(e) => {
+                              e.stopPropagation();
+                              handleStepDrop(flow.id, si);
+                            }}
+                            onDragEnd={() => setStepDragState(null)}
+                            onKeyDown={(e) => handleStepKeyboardReorder(flow.id, si, e)}
+                            tabIndex={0}
+                            role="option"
+                            aria-label={`Step ${si + 1}: ${step}`}
+                            style={{
+                              opacity: stepDragState?.flowId === flow.id && stepDragState.dragIndex === si ? 0.4 : 1,
+                              borderTop:
+                                stepDragState?.flowId === flow.id &&
+                                stepDragState.overIndex === si &&
+                                stepDragState.dragIndex !== si
+                                  ? "2px solid hsl(var(--primary))"
+                                  : "2px solid transparent",
+                            }}
                           >
-                            ×
-                          </button>
-                        )}
+                            <span className="text-2xs text-muted-foreground cursor-grab active:cursor-grabbing select-none">
+                              ⋮⋮
+                            </span>
+                            <span className="text-2xs text-muted-foreground w-[16px] shrink-0">{si + 1}.</span>
+                            <FlowStepField value={step} onChange={(v) => updateFlowStep(flow.id, si, v)} />
+                            {flow.steps.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeFlowStep(flow.id, si)}
+                                className="text-2xs text-destructive shrink-0 px-1"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => addFlowStep(flow.id)}
+                          className="text-2xs text-muted-foreground transition-colors"
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = "hsl(var(--primary))";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "hsl(var(--muted-foreground))";
+                          }}
+                        >
+                          + Add step
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingFlow(null)}
+                          className="text-2xs px-2 py-1 text-primary bg-primary/10 border border-primary rounded-sm"
+                        >
+                          Done
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeFlow(flow.id)}
+                          className="text-2xs px-2 py-1 text-destructive border border-destructive rounded-sm bg-transparent"
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "transparent";
+                          }}
+                        >
+                          Remove flow
+                        </button>
                       </div>
-                    ))}
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        type="button"
-                        onClick={() => addFlowStep(flow.id)}
-                        className="text-2xs text-muted-foreground transition-colors"
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color = "hsl(var(--primary))";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-                        }}
-                      >
-                        + Add step
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingFlow(null)}
-                        className="text-2xs px-2 py-1 text-primary bg-primary/10 border border-primary rounded-sm"
-                      >
-                        Done
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeFlow(flow.id)}
-                        className="text-2xs px-2 py-1 text-destructive border border-destructive rounded-sm bg-transparent"
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent";
-                        }}
-                      >
-                        Remove flow
-                      </button>
                     </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="w-full text-left bg-transparent border-none p-0 cursor-pointer"
-                    onClick={() => setEditingFlow(flow.id)}
-                  >
-                    <div className="text-xs font-medium mb-2 text-foreground">{flow.name}</div>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {flow.steps.map((step, si) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: flow steps are plain strings with no stable key
-                        <div key={si} className="flex items-center gap-1">
-                          <span className="text-2xs px-1.5 py-0.5 bg-muted border border-border rounded-sm text-primary">
-                            {step}
-                          </span>
-                          {si < flow.steps.length - 1 && <span className="text-2xs text-muted-foreground">→</span>}
+                  ) : (
+                    <div className="flex items-start gap-2">
+                      <span className="text-2xs cursor-grab active:cursor-grabbing opacity-0 group-hover/flow:opacity-100 transition-opacity select-none text-muted-foreground mt-0.5">
+                        ⋮⋮
+                      </span>
+                      <button
+                        type="button"
+                        className="flex-1 text-left bg-transparent border-none p-0 cursor-pointer"
+                        onClick={() => setEditingFlow(flow.id)}
+                      >
+                        <div className="text-xs font-medium mb-2 text-foreground">{flow.name}</div>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {flow.steps.map((step, si) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: flow steps are plain strings with no stable key
+                            <div key={si} className="flex items-center gap-1">
+                              <span className="text-2xs px-1.5 py-0.5 bg-muted border border-border rounded-sm text-primary">
+                                {step}
+                              </span>
+                              {si < flow.steps.length - 1 && <span className="text-2xs text-muted-foreground">→</span>}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </button>
                     </div>
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             ))}
             <button

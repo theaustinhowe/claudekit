@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import { ErrorState } from "@/components/ui/api-state";
+import { Phase3DataPlanSkeleton } from "@/components/ui/phase-skeletons";
 import { useApp } from "@/lib/store";
 import type { AuthOverride, EnvItem, MockDataEntity } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
@@ -66,7 +67,7 @@ export function Phase3DataPlan() {
     }
   }, []);
 
-  if (loading) return <LoadingState label="Loading data plan..." />;
+  if (loading) return <Phase3DataPlanSkeleton />;
   if (error || !apiEntities)
     return (
       <ErrorState

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import { ErrorState } from "@/components/ui/api-state";
+import { Phase6VoiceoverSkeleton } from "@/components/ui/phase-skeletons";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { FlowScript, TimelineMarker, VoiceOption } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
@@ -34,7 +35,9 @@ export function Phase6Voiceover() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [paragraphErrors, setParagraphErrors] = useState<Record<string, Record<number, string>>>({});
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markerSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [localMarkers, setLocalMarkers] = useState<Record<string, TimelineMarker[]>>({});
   const MAX_PARAGRAPH_LENGTH = 5000;
 
   // Set defaults once data loads
@@ -55,6 +58,12 @@ export function Phase6Voiceover() {
       setEditedScripts(voiceoverScripts);
     }
   }, [voiceoverScripts]);
+
+  useEffect(() => {
+    if (timelineMarkers) {
+      setLocalMarkers(timelineMarkers);
+    }
+  }, [timelineMarkers]);
 
   // Cleanup audio on unmount
   useEffect(() => {
@@ -86,6 +95,48 @@ export function Phase6Voiceover() {
     } finally {
       setSaving(false);
     }
+  }, []);
+
+  const recalculateMarkers = useCallback((_flowId: string, paragraphs: string[], currentMarkers: TimelineMarker[]) => {
+    if (paragraphs.length === 0) return currentMarkers;
+
+    const wordCounts = paragraphs.map((p) => p.split(/\s+/).filter(Boolean).length);
+    const totalWords = wordCounts.reduce((a, b) => a + b, 0);
+    if (totalWords === 0) return currentMarkers;
+
+    // Estimate total duration from existing markers or default to 60s per paragraph
+    const estimatedDuration = currentMarkers.length > 0 ? paragraphs.length * 15 : paragraphs.length * 15;
+
+    let elapsed = 0;
+    return paragraphs.map((_, i) => {
+      const proportion = totalWords > 0 ? wordCounts[i] / totalWords : 1 / paragraphs.length;
+      const segDuration = proportion * estimatedDuration;
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = Math.floor(elapsed % 60);
+      const timestamp = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+      const marker: TimelineMarker = {
+        timestamp,
+        label: currentMarkers[i]?.label || `Paragraph ${i + 1}`,
+        paragraphIndex: i,
+      };
+      elapsed += segDuration;
+      return marker;
+    });
+  }, []);
+
+  const debouncedSaveMarkers = useCallback((flowId: string, markers: TimelineMarker[]) => {
+    if (markerSaveTimeoutRef.current) clearTimeout(markerSaveTimeoutRef.current);
+    markerSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await fetch("/api/timeline-markers", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [flowId]: markers }),
+        });
+      } catch {
+        // Best effort
+      }
+    }, 1200);
   }, []);
 
   const debouncedSave = useCallback(
@@ -131,6 +182,12 @@ export function Phase6Voiceover() {
     };
     setEditedScripts(updated);
     debouncedSave(updated);
+
+    // Recalculate timeline markers proportionally based on updated word counts
+    const currentFlowMarkers = localMarkers[flowId] || [];
+    const newMarkers = recalculateMarkers(flowId, updated[flowId], currentFlowMarkers);
+    setLocalMarkers((prev) => ({ ...prev, [flowId]: newMarkers }));
+    debouncedSaveMarkers(flowId, newMarkers);
   };
 
   const handlePreviewAudio = useCallback(async () => {
@@ -194,7 +251,7 @@ export function Phase6Voiceover() {
   const loading = l1 || l2 || l3 || l4;
   const error = e1 || e2 || e3 || e4;
 
-  if (loading) return <LoadingState label="Loading voiceover editor..." />;
+  if (loading) return <Phase6VoiceoverSkeleton />;
   if (error || !flowScripts || !voiceoverScripts || !voiceOptions || !timelineMarkers) {
     return (
       <ErrorState
@@ -210,7 +267,7 @@ export function Phase6Voiceover() {
   }
 
   const paragraphs = activeFlow ? editedScripts[activeFlow] || [] : [];
-  const markers = activeFlow ? timelineMarkers[activeFlow] || [] : [];
+  const markers = activeFlow ? localMarkers[activeFlow] || [] : [];
 
   // Theme-aware timeline colors using HSL variables with varying opacity
   const timelineColors = [
@@ -275,12 +332,8 @@ export function Phase6Voiceover() {
                     onMouseLeave={() => setHoveredParagraph(null)}
                   >
                     <div className="text-center">
-                      <div className="text-2xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-                        {marker.timestamp}
-                      </div>
-                      <div className="text-2xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                        {marker.label}
-                      </div>
+                      <div className="text-2xs text-primary-foreground/90">{marker.timestamp}</div>
+                      <div className="text-2xs text-primary-foreground/50">{marker.label}</div>
                     </div>
                   </button>
                 );

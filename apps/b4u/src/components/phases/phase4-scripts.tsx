@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import { ErrorState } from "@/components/ui/api-state";
+import { Phase4ScriptsSkeleton } from "@/components/ui/phase-skeletons";
 import type { FlowScript, ScriptStep } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
@@ -155,7 +156,7 @@ export function Phase4Scripts() {
     [scripts, activeTab, saveScripts],
   );
 
-  if (loading) return <LoadingState label="Loading demo scripts..." />;
+  if (loading) return <Phase4ScriptsSkeleton />;
   if (error || !flowScripts || flowScripts.length === 0)
     return <ErrorState message={error || "No scripts data"} onRetry={refetch} />;
 
@@ -189,11 +190,15 @@ export function Phase4Scripts() {
           {/* Vertical line */}
           <div className="absolute left-[11px] top-[16px] bottom-[16px] w-[1px] bg-border" />
 
-          <div className="space-y-0">
+          <div role="listbox" aria-roledescription="sortable" aria-label="Demo script steps" className="space-y-0">
             {activeScript.steps.map((step, index) => (
-              // biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop uses native drag events
               <div
                 key={step.id}
+                role="option"
+                aria-selected={editingStep === step.id}
+                aria-grabbed={dragIndex === index}
+                aria-label={`Step ${step.stepNumber}: ${step.action}`}
+                tabIndex={0}
                 className="flex gap-3 relative group"
                 draggable
                 onDragStart={() => handleDragStart(index)}
@@ -313,7 +318,7 @@ export function Phase4Scripts() {
           {activeScript.steps.length} steps · Est.{" "}
           {activeScript.steps.reduce((sum, s) => sum + parseInt(s.duration, 10), 0)}s total
         </span>
-        <span>Click to edit · Drag to reorder · Alt+↑↓ to move</span>
+        <span>Click to edit · Drag to reorder · Alt+↑↓ to move · Tab to focus</span>
       </div>
     </div>
   );

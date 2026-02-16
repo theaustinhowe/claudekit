@@ -56,6 +56,21 @@ export async function concatenateAudioFiles(audioPaths: string[], outputPath: st
   await runFfmpeg(["-y", "-f", "concat", "-safe", "0", "-i", concatFile, "-c", "copy", outputPath]);
 }
 
+export async function generateSilence(outputPath: string, durationSeconds: number): Promise<void> {
+  await runFfmpeg([
+    "-y",
+    "-f",
+    "lavfi",
+    "-i",
+    `anullsrc=r=22050:cl=mono`,
+    "-t",
+    String(durationSeconds),
+    "-c:a",
+    "libmp3lame",
+    outputPath,
+  ]);
+}
+
 async function _convertToMp4(inputPath: string, outputPath: string): Promise<void> {
   await runFfmpeg(["-y", "-i", inputPath, "-c:v", "libx264", "-c:a", "aac", "-movflags", "+faststart", outputPath]);
 }

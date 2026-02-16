@@ -2,7 +2,8 @@
 
 import { useSessionStream } from "@devkit/hooks";
 import { useEffect, useState } from "react";
-import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import { ErrorState } from "@/components/ui/api-state";
+import { Phase5RecordingSkeleton } from "@/components/ui/phase-skeletons";
 import { useApp } from "@/lib/store";
 import type { FlowScript, RecordingStatus } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
@@ -34,6 +35,37 @@ export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
   const { events, status: streamStatus } = useSessionStream({ sessionId: state.activeSessionId });
   const [recordings, setRecordings] = useState<RecordingStatus[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
+  const [recoveryChecked, setRecoveryChecked] = useState(false);
+
+  // Check for recoverable recordings on mount
+  useEffect(() => {
+    if (recoveryChecked || !state.runId) return;
+    setRecoveryChecked(true);
+
+    fetch(`/api/recording/status?runId=${state.runId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.hasRecoverable && data.sessions?.length > 0) {
+          // Check the last session status
+          const lastSession = data.sessions[0];
+          if (lastSession.status === "running" && state.activeSessionId) {
+            // Already tracking this session — do nothing
+          } else if (lastSession.status === "error") {
+            // Show the error state — recordings failed, user can retry
+            setRecordings((prev) =>
+              prev.map((rec) => ({
+                ...rec,
+                status: "queued" as const,
+                progress: 0,
+              })),
+            );
+          }
+        }
+      })
+      .catch(() => {
+        // Silently ignore recovery check errors
+      });
+  }, [state.runId, state.activeSessionId, recoveryChecked]);
 
   // Initialize recordings from API data
   useEffect(() => {
@@ -101,7 +133,7 @@ export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
     }
   }, [streamStatus]);
 
-  if (loading) return <LoadingState label="Preparing recording..." />;
+  if (loading) return <Phase5RecordingSkeleton />;
   if (error || !flowScripts) return <ErrorState message={error || "No flow data"} onRetry={refetch} />;
 
   const allDone = recordings.length > 0 && recordings.every((r) => r.status === "done");

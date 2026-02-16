@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import { ErrorState } from "@/components/ui/api-state";
+import { Phase1TreeSkeleton } from "@/components/ui/phase-skeletons";
 import type { FileTreeNode } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
@@ -51,7 +52,7 @@ function TreeNode({ node, depth = 0 }: { node: FileTreeNode; depth?: number }) {
 export function Phase1Tree() {
   const { data: fileTree, loading, error, refetch } = useApi<FileTreeNode>("/api/file-tree");
 
-  if (loading) return <LoadingState label="Loading project structure..." />;
+  if (loading) return <Phase1TreeSkeleton />;
   if (error || !fileTree) return <ErrorState message={error || "No file tree data"} onRetry={refetch} />;
 
   return (

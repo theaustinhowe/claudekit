@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from "react";
 import type { ChatMessage, Phase, PhaseStatus } from "./types";
+import { PHASE_LABELS } from "./types";
 
 interface AppState {
   currentPhase: Phase;
@@ -57,6 +58,7 @@ type AppAction =
   | { type: "UPDATE_MESSAGE"; id: string; updates: Partial<Pick<ChatMessage, "content" | "actionCard">> }
   | { type: "SET_HISTORY_SIDEBAR_OPEN"; open: boolean }
   | { type: "SET_RUN_ID"; runId: string }
+  | { type: "SIDEBAR_EDIT"; phase: Phase; description: string }
   | {
       type: "RESTORE_RUN";
       runId: string;
@@ -162,6 +164,20 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case "SET_RUN_ID":
       return { ...state, runId: action.runId };
+
+    case "SIDEBAR_EDIT":
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          {
+            id: `sidebar-${Date.now()}`,
+            role: "system" as const,
+            content: `Updated ${action.description} in ${PHASE_LABELS[action.phase]}`,
+            timestamp: Date.now(),
+          },
+        ],
+      };
 
     case "RESTORE_RUN":
       return {

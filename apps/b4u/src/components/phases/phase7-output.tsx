@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ErrorState, LoadingState } from "@/components/ui/api-state";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { ErrorState } from "@/components/ui/api-state";
+import { Phase7OutputSkeleton } from "@/components/ui/phase-skeletons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePhaseController } from "@/lib/phase-controller";
 import type { ChapterMarker } from "@/lib/types";
@@ -96,6 +97,67 @@ export function Phase7Output() {
     }
   }, []);
 
+  const handleMuteToggle = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      switch (e.key) {
+        case " ":
+          e.preventDefault();
+          handlePlay();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 5);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          video.currentTime = Math.min(duration, video.currentTime + 5);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          video.volume = Math.min(1, video.volume + 0.1);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          video.volume = Math.max(0, video.volume - 0.1);
+          break;
+        case "f":
+        case "F":
+          e.preventDefault();
+          handleFullscreen();
+          break;
+        case "m":
+        case "M":
+          e.preventDefault();
+          handleMuteToggle();
+          break;
+      }
+    },
+    [duration, handlePlay, handleFullscreen, handleMuteToggle],
+  );
+
+  const handleDownloadAudio = useCallback(async () => {
+    try {
+      const res = await fetch("/api/voiceover-scripts");
+      if (!res.ok) return;
+      // Trigger audio download — the combined audio is available at the same path as video
+      const a = document.createElement("a");
+      a.href = "/api/audio/serve";
+      a.download = "walkthrough-audio.mp3";
+      a.click();
+    } catch {
+      // ignore download errors
+    }
+  }, []);
+
   // Update active chapter based on current time
   useEffect(() => {
     if (!chapterMarkers || chapterMarkers.length === 0) return;
@@ -136,7 +198,7 @@ export function Phase7Output() {
     }
   }, []);
 
-  if (loading) return <LoadingState label="Preparing final output..." />;
+  if (loading) return <Phase7OutputSkeleton />;
   if (error || !chapterMarkers) {
     return (
       <ErrorState
@@ -161,7 +223,7 @@ export function Phase7Output() {
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Video player */}
-        <div ref={containerRef} className="bg-background border border-border rounded-lg overflow-hidden">
+        <VideoPlayerShell ref={containerRef} onKeyDown={handleKeyDown}>
           {/* Video area */}
           <div className="relative aspect-video bg-black flex items-center justify-center">
             {videoSrc && !videoError ? (
@@ -237,7 +299,16 @@ export function Phase7Output() {
             <span className="text-2xs text-muted-foreground">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
-            <Tooltip label="Fullscreen" position="top">
+            <Tooltip label="Mute toggle (M)" position="top">
+              <button
+                type="button"
+                onClick={handleMuteToggle}
+                className="text-xs w-[24px] h-[24px] flex items-center justify-center text-muted-foreground/70"
+              >
+                🔊
+              </button>
+            </Tooltip>
+            <Tooltip label="Fullscreen (F)" position="top">
               <button
                 type="button"
                 onClick={handleFullscreen}
@@ -247,7 +318,7 @@ export function Phase7Output() {
               </button>
             </Tooltip>
           </div>
-        </div>
+        </VideoPlayerShell>
 
         {/* Chapter markers */}
         <div>
@@ -259,17 +330,7 @@ export function Phase7Output() {
                 // biome-ignore lint/suspicious/noArrayIndexKey: chapter markers have no stable key
                 key={i}
                 onClick={() => jumpToChapter(i)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all rounded-md"
-                style={{
-                  background: activeChapter === i ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
-                  border: activeChapter === i ? "1px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
-                }}
-                onMouseEnter={(e) => {
-                  if (activeChapter !== i) e.currentTarget.style.background = "hsl(var(--muted))";
-                }}
-                onMouseLeave={(e) => {
-                  if (activeChapter !== i) e.currentTarget.style.background = "hsl(var(--card))";
-                }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all rounded-md ${activeChapter === i ? "bg-primary/10 border border-primary" : "bg-card border border-border hover:bg-muted"}`}
               >
                 <span className="text-2xs w-[36px] shrink-0 text-primary">{chapter.startTime}</span>
                 <span className="text-xs text-foreground">{chapter.flowName}</span>
@@ -284,19 +345,14 @@ export function Phase7Output() {
             <button
               type="button"
               onClick={handleDownloadVideo}
-              className="flex items-center gap-2 px-3 py-2.5 text-2xs font-medium transition-all bg-primary text-primary-foreground rounded-md"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
+              className="flex items-center gap-2 px-3 py-2.5 text-2xs font-medium transition-opacity bg-primary text-primary-foreground rounded-md hover:opacity-90"
             >
               <span>↓</span>
               Download Video
             </button>
           </Tooltip>
           {[
+            { label: "Download Audio", icon: "♪", tip: "Download voiceover audio (MP3)", action: handleDownloadAudio },
             { label: "Download Script", icon: "⊞", tip: "Download narration script", action: handleDownloadScript },
             {
               label: "Re-record",
@@ -315,15 +371,7 @@ export function Phase7Output() {
               <button
                 type="button"
                 onClick={action.action}
-                className="flex items-center gap-2 px-3 py-2.5 text-2xs font-medium transition-all bg-card border border-border rounded-md text-muted-foreground"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "hsl(var(--primary))";
-                  e.currentTarget.style.color = "hsl(var(--primary))";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "hsl(var(--border))";
-                  e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-                }}
+                className="flex items-center gap-2 px-3 py-2.5 text-2xs font-medium transition-colors bg-card border border-border rounded-md text-muted-foreground hover:border-primary hover:text-primary"
               >
                 <span>{action.icon}</span>
                 {action.label}
@@ -335,6 +383,24 @@ export function Phase7Output() {
     </div>
   );
 }
+
+const VideoPlayerShell = React.forwardRef<
+  HTMLDivElement,
+  { onKeyDown: (e: React.KeyboardEvent) => void; children: React.ReactNode }
+>(({ onKeyDown, children }, ref) =>
+  React.createElement(
+    "div",
+    {
+      ref,
+      tabIndex: 0,
+      role: "application",
+      className: "bg-background border border-border rounded-lg overflow-hidden",
+      onKeyDown,
+    },
+    children,
+  ),
+);
+VideoPlayerShell.displayName = "VideoPlayerShell";
 
 function formatTime(seconds: number): string {
   const s = Math.floor(seconds);

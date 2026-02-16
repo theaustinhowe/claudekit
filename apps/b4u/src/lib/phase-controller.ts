@@ -246,10 +246,13 @@ export function usePhaseController() {
               await addAIMessage(`Deep analysis encountered an issue: ${msg}. Continuing with basic scan results.`);
             }
 
-            await runSessionPhase("/api/analyze/outline", null, "Generating app outline...");
+            const outlineResult = await runSessionPhase("/api/analyze/outline", null, "Generating app outline...");
 
+            // Build context summary from result data
+            const routeCount = (outlineResult as { routeCount?: number })?.routeCount ?? "several";
+            const flowCount = (outlineResult as { flowCount?: number })?.flowCount ?? "multiple";
             await addAIMessage(
-              "I've mapped out the routes and user flows on the right. Does this look right? You can edit the outline on the right, or tell me what to change.",
+              `I've mapped out ${routeCount} routes and ${flowCount} user flows on the right. Review the outline and edit anything that needs adjusting.`,
               { type: "approve", phase: 2 },
               500,
             );
@@ -265,10 +268,12 @@ export function usePhaseController() {
             );
             dispatch({ type: "SET_RIGHT_PANEL", phase: 3 });
 
-            await runSessionPhase("/api/analyze/data-plan", null, "Generating data plan...");
+            const dataPlanResult = await runSessionPhase("/api/analyze/data-plan", null, "Generating data plan...");
 
+            const entityCount = (dataPlanResult as { entityCount?: number })?.entityCount ?? "several";
+            const authCount = (dataPlanResult as { authCount?: number })?.authCount ?? "some";
             await addAIMessage(
-              "The data plan is ready on the right \u2014 mock entities, auth overrides, and environment config. Toggle anything you'd like to change.",
+              `The data plan is ready \u2014 ${entityCount} mock data entities and ${authCount} auth overrides configured. Toggle settings on the right.`,
               { type: "approve", phase: 3 },
               700,
             );
@@ -284,10 +289,16 @@ export function usePhaseController() {
             );
             dispatch({ type: "SET_RIGHT_PANEL", phase: 4 });
 
-            await runSessionPhase("/api/analyze/scripts", null, "Generating demo scripts and voiceover text...");
+            const scriptsResult = await runSessionPhase(
+              "/api/analyze/scripts",
+              null,
+              "Generating demo scripts and voiceover text...",
+            );
 
+            const scriptFlowCount = (scriptsResult as { flowCount?: number })?.flowCount ?? "multiple";
+            const totalSteps = (scriptsResult as { totalSteps?: number })?.totalSteps ?? "several";
             await addAIMessage(
-              "Here are the scripted walkthroughs for each feature flow. Each step includes the target URL, action, expected result, and timing. Review each tab on the right.",
+              `Created scripts for ${scriptFlowCount} flows with ${totalSteps} total steps. Each step includes URL, action, expected result, and timing.`,
               undefined,
               800,
             );
@@ -467,13 +478,45 @@ export function usePhaseController() {
       busyRef.current = true;
 
       addMessage("user", message);
+      dispatch({ type: "SET_TYPING", isTyping: true });
 
-      const response = getPhaseContext(state.currentPhase, message);
-      await addAIMessage(response, undefined, 600);
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            phase: stateRef.current.currentPhase,
+            runId: stateRef.current.runId,
+          }),
+        });
+
+        dispatch({ type: "SET_TYPING", isTyping: false });
+
+        if (res.ok) {
+          const data = await res.json();
+          const actionCard =
+            data.suggestedAction === "approve"
+              ? ({ type: "approve", phase: stateRef.current.currentPhase } as ActionCard)
+              : data.suggestedAction === "edit"
+                ? ({ type: "approve", phase: stateRef.current.currentPhase, label: "Edit..." } as ActionCard)
+                : undefined;
+          await addAIMessage(data.response, actionCard, 300);
+        } else {
+          // Fallback to keyword matching
+          const response = getPhaseContext(stateRef.current.currentPhase, message);
+          await addAIMessage(response, undefined, 300);
+        }
+      } catch {
+        dispatch({ type: "SET_TYPING", isTyping: false });
+        // Fallback to keyword matching on network error
+        const response = getPhaseContext(stateRef.current.currentPhase, message);
+        await addAIMessage(response, undefined, 300);
+      }
 
       busyRef.current = false;
     },
-    [addAIMessage, addMessage, getPhaseContext, state.currentPhase],
+    [addAIMessage, addMessage, dispatch, getPhaseContext],
   );
 
   // -----------------------------------------------------------------------
@@ -536,10 +579,38 @@ export function usePhaseController() {
   // Go back / restart from a phase
   // -----------------------------------------------------------------------
 
+  /**
+   * Check if going back to a phase would discard completed work.
+   * Returns the list of phases that would be reset.
+   */
+  const getAffectedPhases = useCallback((targetPhase: Phase): Phase[] => {
+    const affected: Phase[] = [];
+    for (let p = targetPhase + 1; p <= 7; p++) {
+      const phase = p as Phase;
+      if (stateRef.current.phaseStatuses[phase] === "completed") {
+        affected.push(phase);
+      }
+    }
+    return affected;
+  }, []);
+
   const handleGoBackToPhase = useCallback(
     async (phase: Phase) => {
       if (busyRef.current) return;
       busyRef.current = true;
+
+      // Check if any completed phases would be lost
+      const affected = getAffectedPhases(phase);
+      if (affected.length > 0) {
+        const phaseNames = affected.map((p) => PHASE_LABELS[p]).join(", ");
+        await addAIMessage(
+          `Going back will reset completed phases: ${phaseNames}. Continue?`,
+          { type: "confirm-restart" as "approve", phase, label: `Yes, go back to ${PHASE_LABELS[phase]}` },
+          400,
+        );
+        busyRef.current = false;
+        return;
+      }
 
       dispatch({ type: "RESTART_FROM_PHASE", phase });
 
@@ -551,13 +622,27 @@ export function usePhaseController() {
 
       busyRef.current = false;
     },
-    [addAIMessage, dispatch],
+    [addAIMessage, dispatch, getAffectedPhases],
   );
 
   const handleEditPhaseFromPanel = useCallback(
     async (phase: Phase) => {
       if (busyRef.current) return;
       busyRef.current = true;
+
+      // Check if any completed phases would be lost
+      const affected = getAffectedPhases(phase);
+      if (affected.length > 0) {
+        const phaseNames = affected.map((p) => PHASE_LABELS[p]).join(", ");
+        addMessage("user", `I want to go back and edit ${PHASE_LABELS[phase]}.`);
+        await addAIMessage(
+          `Going back will reset completed phases: ${phaseNames}. Are you sure?`,
+          { type: "approve", phase, label: `Yes, restart from ${PHASE_LABELS[phase]}` },
+          400,
+        );
+        busyRef.current = false;
+        return;
+      }
 
       addMessage("user", `I want to go back and edit ${PHASE_LABELS[phase]}.`);
       dispatch({ type: "RESTART_FROM_PHASE", phase });
@@ -570,7 +655,17 @@ export function usePhaseController() {
 
       busyRef.current = false;
     },
-    [addAIMessage, addMessage, dispatch],
+    [addAIMessage, addMessage, dispatch, getAffectedPhases],
+  );
+
+  /**
+   * Notify the chat when a sidebar edit is made (e.g., route updated, flow reordered).
+   */
+  const notifySidebarEdit = useCallback(
+    (phase: Phase, description: string) => {
+      dispatch({ type: "SIDEBAR_EDIT", phase, description });
+    },
+    [dispatch],
   );
 
   return {
@@ -583,5 +678,6 @@ export function usePhaseController() {
     handleEditSubmit,
     handleGoBackToPhase,
     handleEditPhaseFromPanel,
+    notifySidebarEdit,
   };
 }

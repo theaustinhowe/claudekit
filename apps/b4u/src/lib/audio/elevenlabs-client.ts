@@ -59,3 +59,21 @@ export async function previewVoice(text: string, voiceId: string): Promise<Buffe
   const preview = text.slice(0, 200);
   return generateSpeech(preview, voiceId);
 }
+
+/**
+ * Look up a real ElevenLabs voice ID from a friendly name.
+ * Falls back to the provided name (which may already be a voice ID).
+ */
+export async function getDefaultVoiceId(friendlyName: string): Promise<string> {
+  try {
+    const voices = await listVoices();
+    const match = voices.find((v) => v.name.toLowerCase() === friendlyName.toLowerCase());
+    if (match) return match.voice_id;
+    // If no match by name, check if the input is already a valid voice ID
+    const idMatch = voices.find((v) => v.voice_id === friendlyName);
+    if (idMatch) return idMatch.voice_id;
+  } catch {
+    // API unavailable — fall through
+  }
+  return friendlyName;
+}

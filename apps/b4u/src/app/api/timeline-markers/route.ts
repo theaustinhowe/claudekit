@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDb, queryAll } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
 
 export async function GET() {
   try {
@@ -27,6 +27,32 @@ export async function GET() {
     return NextResponse.json(markers);
   } catch (error) {
     console.error("Failed to fetch timeline markers:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body: Record<string, { timestamp: string; label: string; paragraphIndex: number }[]> = await request.json();
+    const conn = await getDb();
+
+    for (const [flowId, markers] of Object.entries(body)) {
+      // Delete existing markers for this flow
+      await execute(conn, "DELETE FROM timeline_markers WHERE flow_id = ?", [flowId]);
+
+      // Insert updated markers
+      for (const marker of markers) {
+        await execute(
+          conn,
+          "INSERT INTO timeline_markers (flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?)",
+          [flowId, marker.timestamp, marker.label, marker.paragraphIndex],
+        );
+      }
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Failed to save timeline markers:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

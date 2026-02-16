@@ -59,15 +59,7 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
                 <button
                   type="button"
                   onClick={() => controller.handleGoBackToPhase(card.phase)}
-                  className="px-2.5 py-2 text-xs transition-all text-muted-foreground border border-border rounded-md"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "hsl(var(--primary))";
-                    e.currentTarget.style.color = "hsl(var(--primary))";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "hsl(var(--border))";
-                    e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-                  }}
+                  className="px-2.5 py-2 text-xs transition-colors text-muted-foreground border border-border rounded-md hover:border-primary hover:text-primary"
                 >
                   ↩
                 </button>
@@ -79,13 +71,7 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
                 <button
                   type="button"
                   onClick={() => controller.approvePhase(card.phase)}
-                  className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-all bg-primary text-primary-foreground rounded-md"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = "0.9";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-opacity bg-primary text-primary-foreground rounded-md hover:opacity-90"
                 >
                   {card.label || "Approve & Continue"} →
                 </button>
@@ -94,15 +80,7 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
                 <button
                   type="button"
                   onClick={() => controller.handleEditRequest(card.phase)}
-                  className="px-3 py-2.5 text-xs transition-colors text-muted-foreground/70 border border-border rounded-md"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "hsl(var(--primary))";
-                    e.currentTarget.style.color = "hsl(var(--primary))";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "hsl(var(--border))";
-                    e.currentTarget.style.color = "hsl(var(--muted-foreground) / 0.7)";
-                  }}
+                  className="px-3 py-2.5 text-xs transition-colors text-muted-foreground/70 border border-border rounded-md hover:border-primary hover:text-primary"
                 >
                   Edit...
                 </button>

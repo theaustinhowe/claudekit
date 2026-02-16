@@ -51,8 +51,13 @@ export function RightPanel() {
       <Phase1Empty />
     );
 
+  const phaseLabel = content !== null ? PHASE_LABELS[content as Phase] : null;
+
   return (
-    <div className="h-full flex flex-col relative bg-card">
+    <section className="h-full flex flex-col relative bg-card" aria-label="Phase content panel">
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {phaseLabel ? `Now showing: ${phaseLabel}` : ""}
+      </div>
       <ErrorBoundary
         key={content ?? "empty"}
         fallbackLabel={content ? `Phase ${content} encountered an error` : undefined}
@@ -61,13 +66,7 @@ export function RightPanel() {
       </ErrorBoundary>
 
       {isViewingCompleted && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center z-10"
-          style={{
-            background: "rgba(20, 18, 22, 0.75)",
-            backdropFilter: "blur(2px)",
-          }}
-        >
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/85 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 p-6 rounded-lg">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>✓</span>
@@ -76,15 +75,7 @@ export function RightPanel() {
             <button
               type="button"
               onClick={handleEditClick}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-medium transition-all bg-muted border border-border rounded-md text-foreground"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "hsl(var(--primary))";
-                e.currentTarget.style.color = "hsl(var(--primary))";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "hsl(var(--border))";
-                e.currentTarget.style.color = "hsl(var(--foreground))";
-              }}
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-medium transition-all bg-muted border border-border rounded-md text-foreground hover:border-primary hover:text-primary"
             >
               <span>✎</span>
               <span>Edit this step</span>
@@ -93,6 +84,6 @@ export function RightPanel() {
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
