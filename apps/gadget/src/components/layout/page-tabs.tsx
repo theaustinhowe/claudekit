@@ -26,7 +26,7 @@ export function PageTabs<T extends string = string>({
 }: PageTabsProps<T>) {
   return (
     <div className={cn("flex h-12 shrink-0 items-center gap-1 border-b bg-background px-4", className)}>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
         {tabs.map((tab) => {
           const isActive = tab.id === value;
 
@@ -36,7 +36,7 @@ export function PageTabs<T extends string = string>({
               key={tab.id}
               onClick={() => onValueChange(tab.id as T)}
               className={cn(
-                "relative flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
+                "relative flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors",
                 isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
