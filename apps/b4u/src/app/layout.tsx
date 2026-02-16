@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geist.variable} ${geistMono.variable}`}>
-        <ThemeFOUCScript legacyKeys={["b4u-theme"]} />
+        <ThemeFOUCScript />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>

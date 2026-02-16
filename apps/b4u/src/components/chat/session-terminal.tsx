@@ -12,7 +12,7 @@ interface SessionTerminalProps {
   logs: LogEntry[];
   progress: number;
   phase: string | null;
-  status: "idle" | "connecting" | "streaming" | "done" | "error" | "cancelled";
+  status: "idle" | "connecting" | "streaming" | "done" | "error" | "cancelled" | "reconnecting";
   error: string | null;
   elapsed: number;
   label: string;

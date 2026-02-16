@@ -56,11 +56,7 @@ export function SettingsClient({
   );
 
   const { theme, setTheme } = useTheme();
-  const {
-    theme: appTheme,
-    setTheme: setAppTheme,
-    mounted: themeMounted,
-  } = useAppTheme({ legacyKeys: ["workbench-theme", "workbench-color-scheme"] });
+  const { theme: appTheme, setTheme: setAppTheme, mounted: themeMounted } = useAppTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [roots, setRoots] = useState<ScanRoot[]>(initialScanRoots.length > 0 ? initialScanRoots : []);

@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { THEMES, useAppTheme } from "./use-app-theme";
 import type { ThemeDefinition } from "./use-app-theme";
+import { THEMES, useAppTheme } from "./use-app-theme";
 
 // --- localStorage mock -------------------------------------------------------
 
@@ -168,28 +168,6 @@ describe("useAppTheme", () => {
     const { result } = renderHook(() => useAppTheme({ defaultTheme: "ruby" }));
     // Before mount effect reads localStorage, state is the defaultTheme
     expect(result.current.theme).toBe("ruby");
-  });
-
-  // --- legacy key migration ---
-
-  it("migrates theme from legacy key", () => {
-    mockStorage.set("old-theme-key", "emerald");
-    const { result } = renderHook(() => useAppTheme({ legacyKeys: ["old-theme-key"] }));
-    expect(result.current.theme).toBe("emerald");
-    expect(mockStorage.get("devkit-theme")).toBe("emerald");
-    expect(mockStorage.has("old-theme-key")).toBe(false);
-  });
-
-  it("migrates from first matching legacy key only", () => {
-    mockStorage.set("old-key-1", "ruby");
-    mockStorage.set("old-key-2", "forest");
-    // Use a stable array reference to prevent effect re-runs
-    const legacyKeys = ["old-key-1", "old-key-2"];
-    const { result } = renderHook(() => useAppTheme({ legacyKeys }));
-    expect(result.current.theme).toBe("ruby");
-    // Only the first matching key is removed
-    expect(mockStorage.has("old-key-1")).toBe(false);
-    expect(mockStorage.has("old-key-2")).toBe(true);
   });
 
   it("currentTheme reflects the active selection after switching", () => {

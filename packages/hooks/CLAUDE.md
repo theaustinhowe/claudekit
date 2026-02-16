@@ -7,7 +7,7 @@ Shared React hooks for all devkit apps.
 ### `useAppTheme(options?)`
 Color theme switching with 9 themes (Amethyst, Sapphire, Emerald, Ruby, Amber, Slate, Midnight, Sunset, Forest). Persists to localStorage, applies CSS class to `<html>`.
 
-Options: `storageKey`, `defaultTheme`, `legacyKeys`
+Options: `storageKey`, `defaultTheme`
 
 ### `useAutoScroll(enabled?)`
 Auto-scroll container when content changes. Uses MutationObserver, respects user scroll intent. Returns `{ containerRef, isAtBottom, scrollToBottom }`.

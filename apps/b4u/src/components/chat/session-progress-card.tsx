@@ -10,7 +10,9 @@ interface SessionProgressCardProps {
 }
 
 export function SessionProgressCard({ sessionId, label }: SessionProgressCardProps) {
-  const { status, logs, progress, phase, error, elapsed, cancel, reconnect, events } = useSessionStream({ sessionId });
+  const stream = useSessionStream({ sessionId });
+  const { status, logs, phase, error, elapsed, cancel, reconnect, events } = stream;
+  const progress = stream.progress ?? 0;
   const lastEvent = events.length > 0 ? events[events.length - 1] : null;
   const [expanded, setExpanded] = useState(false);
 

@@ -12,7 +12,7 @@ interface ActionCardRendererProps {
 }
 
 export function ActionCardRenderer({ card }: ActionCardRendererProps) {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
   const controller = usePhaseController();
 
   switch (card.type) {
