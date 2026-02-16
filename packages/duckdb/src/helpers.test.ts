@@ -114,6 +114,7 @@ describe("queryAll", () => {
     const result = await queryAll<{ id: string; name: string }>(conn, "SELECT * FROM jobs");
 
     expect(result).toEqual(rows);
+    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
     expect((conn as any).prepare).toHaveBeenCalledWith("SELECT * FROM jobs");
   });
 
@@ -123,6 +124,7 @@ describe("queryAll", () => {
 
     await queryAll(conn, "SELECT * FROM jobs WHERE status = ? AND id = ?", ["running", "abc"]);
 
+    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
     expect((conn as any).prepare).toHaveBeenCalledWith("SELECT * FROM jobs WHERE status = $1 AND id = $2");
   });
 
@@ -248,6 +250,7 @@ describe("execute", () => {
 
     await execute(conn, "INSERT INTO jobs (id) VALUES (?)", ["job-1"]);
 
+    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
     expect((conn as any).prepare).toHaveBeenCalledWith("INSERT INTO jobs (id) VALUES ($1)");
     expect(prepared.bindVarchar).toHaveBeenCalledWith(1, "job-1");
     expect(prepared.run).toHaveBeenCalled();
