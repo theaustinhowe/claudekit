@@ -174,6 +174,8 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                 <AppCardSkeleton index={1} />
                 <AppCardSkeleton index={2} />
                 <AppCardSkeleton index={3} />
+                <AppCardSkeleton index={4} />
+                <AppCardSkeleton index={5} />
               </>
             ) : (
               apps.map((app) => {

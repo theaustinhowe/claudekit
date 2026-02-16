@@ -15,13 +15,14 @@ type Story = StoryObj<typeof DirectoryPicker>;
 const mockBrowse = async (path: string): Promise<BrowseResult> => {
   // Simulate a directory listing
   await new Promise((resolve) => setTimeout(resolve, 300));
+  const resolved = path === "~" ? "/Users/demo" : path;
   return {
-    currentPath: path === "~" ? "/Users/demo" : path,
-    parentPath: path === "/" ? "/" : path.split("/").slice(0, -1).join("/") || "/",
+    currentPath: resolved,
+    parentPath: resolved === "/" ? null : resolved.split("/").slice(0, -1).join("/") || "/",
     entries: [
-      { name: "Documents", path: `${path === "~" ? "/Users/demo" : path}/Documents`, hasChildren: true },
-      { name: "Projects", path: `${path === "~" ? "/Users/demo" : path}/Projects`, hasChildren: true },
-      { name: "Desktop", path: `${path === "~" ? "/Users/demo" : path}/Desktop`, hasChildren: false },
+      { name: "Documents", path: `${resolved}/Documents`, hasChildren: true },
+      { name: "Projects", path: `${resolved}/Projects`, hasChildren: true },
+      { name: "Desktop", path: `${resolved}/Desktop`, hasChildren: false },
     ],
   };
 };
