@@ -65,7 +65,9 @@ export function DescribeStep({ scanRoots, installedPMs }: DescribeStepProps) {
   // Project
   const [projectName, setProjectName] = useState("");
   const [projectNameTouched, setProjectNameTouched] = useState(false);
-  const [projectPath, setProjectPath] = useState(scanRoots[0]?.path ?? "~/Projects");
+  const [projectPath, setProjectPath] = useState(
+    scanRoots[0]?.path ?? process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects",
+  );
   const [packageManager, setPackageManager] = useState(installedPMs.find((r) => r.installed)?.toolId ?? "pnpm");
   const [initGit, setInitGit] = useState(true);
   const [projectOpen, setProjectOpen] = useState(false);
@@ -353,7 +355,11 @@ export function DescribeStep({ scanRoots, installedPMs }: DescribeStepProps) {
                 <div>
                   <Label>Local Path</Label>
                   <div className="mt-1">
-                    <DirectoryPicker value={projectPath} onChange={setProjectPath} placeholder="~/Projects" />
+                    <DirectoryPicker
+                      value={projectPath}
+                      onChange={setProjectPath}
+                      placeholder={process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects"}
+                    />
                   </div>
                 </div>
                 <div>

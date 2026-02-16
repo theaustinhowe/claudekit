@@ -16,7 +16,7 @@ interface GeneralSettingsState {
 }
 
 const defaults: GeneralSettingsState = {
-  workDirectory: "/tmp/agent-worktrees",
+  workDirectory: process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "/tmp/agent-worktrees",
   maxParallelJobs: 3,
 };
 
@@ -72,7 +72,7 @@ export function GeneralSettings() {
           </Label>
           <Input
             id="workDirectory"
-            placeholder="/tmp/agent-worktrees"
+            placeholder={process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "/tmp/agent-worktrees"}
             value={settings.workDirectory}
             onChange={(e) =>
               setSettings((prev) => ({

@@ -240,7 +240,32 @@ describe("saveSetupEnv", () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
       if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      throw new Error("ENOENT");
+      // buildKeyToApps reads these to map keys → app IDs
+      if (p === `${FAKE_ROOT}/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=\nLOG_LEVEL=" as never;
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
+      if (p === `${FAKE_ROOT}/apps/gadget/.env.local.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=" as never;
+      if (p === `${FAKE_ROOT}/apps/gogo-orchestrator/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=" as never;
+      if (p === `${FAKE_ROOT}/apps/gogo-web/.env.example`) return "" as never;
+      throw new Error(`ENOENT: ${p}`);
+    });
+    mockParseEnvExample.mockImplementation((content: string) => {
+      const vars = [];
+      if (content.includes("ELEVENLABS_API_KEY")) {
+        vars.push({ key: "ELEVENLABS_API_KEY", defaultValue: "", description: "", required: true, group: "" });
+      }
+      if (content.includes("GITHUB_PERSONAL_ACCESS_TOKEN")) {
+        vars.push({
+          key: "GITHUB_PERSONAL_ACCESS_TOKEN",
+          defaultValue: "",
+          description: "",
+          required: true,
+          group: "",
+        });
+      }
+      if (content.includes("LOG_LEVEL")) {
+        vars.push({ key: "LOG_LEVEL", defaultValue: "info", description: "", required: true, group: "" });
+      }
+      return vars;
     });
     mockWriteFile.mockResolvedValue();
   });
@@ -263,6 +288,7 @@ describe("saveSetupEnv", () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
       if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
       if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "ELEVENLABS_API_KEY=old-key\n" as never;
       throw new Error("ENOENT");
     });
@@ -278,6 +304,7 @@ describe("saveSetupEnv", () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
       if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
       if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "# ELEVENLABS_API_KEY=\n" as never;
       throw new Error("ENOENT");
     });
@@ -293,6 +320,7 @@ describe("saveSetupEnv", () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
       if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
       if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "OTHER=value\n" as never;
       throw new Error("ENOENT");
     });
@@ -315,6 +343,7 @@ describe("saveSetupEnv", () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
       if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
       if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "UNRELATED=keep\nELEVENLABS_API_KEY=old\n" as never;
       throw new Error("ENOENT");
     });
@@ -395,5 +424,31 @@ describe("saveSetupEnv", () => {
     expect(writePaths).toContain(`${FAKE_ROOT}/.env.local`);
     expect(writePaths).toContain(`${FAKE_ROOT}/apps/gadget/.env.local`);
     expect(writePaths).toContain(`${FAKE_ROOT}/apps/gogo-orchestrator/.env.local`);
+  });
+
+  it("keeps commented line unchanged when clearing value on already-commented key", async () => {
+    mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
+      const p = filePath.toString();
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "# ELEVENLABS_API_KEY=old-val\n" as never;
+      throw new Error("ENOENT");
+    });
+
+    await saveSetupEnv({ ELEVENLABS_API_KEY: "" });
+
+    const written = mockWriteFile.mock.calls[0][1].toString();
+    // Empty value on already-commented line should preserve original comment
+    expect(written).toContain("# ELEVENLABS_API_KEY=old-val");
+  });
+
+  it("handles non-Error exception in write failure", async () => {
+    mockWriteFile.mockRejectedValue("string error");
+
+    const result = await saveSetupEnv({ ELEVENLABS_API_KEY: "val" });
+
+    expect(result.success).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toContain("Failed to write");
   });
 });

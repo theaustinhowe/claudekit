@@ -94,49 +94,22 @@ export async function loadSetupData(): Promise<SetupWizardData> {
 }
 
 // Track which appIds each variable key belongs to (for save routing)
-function buildKeyToApps(): Map<string, string[]> {
-  // Hardcoded from ENV_FILES config — matches the .env.example structure
+async function buildKeyToApps(): Promise<Map<string, string[]>> {
+  const root = await findMonorepoRoot();
   const map = new Map<string, string[]>();
 
-  // Variables and which apps they appear in (from the .env.example files)
-  const mapping: Record<string, string[]> = {
-    // Shared (root + others)
-    GITHUB_PERSONAL_ACCESS_TOKEN: ["root", "gadget", "gogo-orchestrator"],
-    LOG_LEVEL: ["root"],
-    DATABASE_PATH: ["root", "gogo-orchestrator", "b4u"],
-    // B4U
-    ELEVENLABS_API_KEY: ["b4u"],
-    // Gadget
-    MCP_API_TOKEN: ["gadget"],
-    DB_PATH: ["gadget"],
-    BRAVE_API_KEY: ["gadget"],
-    FIRECRAWL_API_KEY: ["gadget"],
-    EXA_API_KEY: ["gadget"],
-    TAVILY_API_KEY: ["gadget"],
-    NOTION_API_KEY: ["gadget"],
-    GOOGLE_MAPS_API_KEY: ["gadget"],
-    RESEND_API_KEY: ["gadget"],
-    AXIOM_API_TOKEN: ["gadget"],
-    RAYGUN_API_KEY: ["gadget"],
-    STRIPE_API_KEY: ["gadget"],
-    REPLICATE_API_TOKEN: ["gadget"],
-    GITLAB_TOKEN: ["gadget"],
-    SLACK_BOT_TOKEN: ["gadget"],
-    SLACK_TEAM_ID: ["gadget"],
-    SENTRY_AUTH_TOKEN: ["gadget"],
-    LINEAR_API_KEY: ["gadget"],
-    SUPABASE_ACCESS_TOKEN: ["gadget"],
-    // GoGo Web
-    NEXT_PUBLIC_API_URL: ["gogo-web"],
-    NEXT_PUBLIC_WS_URL: ["gogo-web"],
-    NEXT_PUBLIC_ORCHESTRATOR_PORT: ["gogo-web"],
-    // GoGo Orchestrator
-    PORT: ["gogo-orchestrator"],
-    ALLOWED_ORIGINS: ["gogo-orchestrator"],
-  };
-
-  for (const [key, apps] of Object.entries(mapping)) {
-    map.set(key, apps);
+  for (const config of ENV_FILES) {
+    try {
+      const content = await readFile(join(root, config.example), "utf-8");
+      const variables = parseEnvExample(content);
+      for (const v of variables) {
+        const apps = map.get(v.key) ?? [];
+        apps.push(config.appId);
+        map.set(v.key, apps);
+      }
+    } catch {
+      // Skip missing files
+    }
   }
 
   return map;
@@ -191,7 +164,7 @@ async function updateEnvFile(filePath: string, updates: Record<string, string>):
 /** Save wizard values to all relevant .env.local files. */
 export async function saveSetupEnv(values: Record<string, string>): Promise<SaveEnvResult> {
   const root = await findMonorepoRoot();
-  const keyToApps = buildKeyToApps();
+  const keyToApps = await buildKeyToApps();
   const filesWritten: string[] = [];
   const errors: string[] = [];
 

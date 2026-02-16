@@ -53,7 +53,7 @@ const defaultState: SetupState = {
   githubToken: "",
   reuseTokenFromRepoId: null,
   selectedRepos: [],
-  workspacePath: "/tmp/agent-work",
+  workspacePath: process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "/tmp/agent-worktrees",
   discoveryPath: "~",
 };
 

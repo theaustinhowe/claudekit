@@ -43,7 +43,9 @@ export function ScanWizard({ policies, repos: _repos, savedScanRoots }: ScanWiza
   const router = useRouter();
   const [step, setStep] = useState<ScanStep>("roots");
   const [scanRoots, setScanRoots] = useState<string[]>(
-    savedScanRoots.length > 0 ? savedScanRoots.map((r) => r.path) : ["~"],
+    savedScanRoots.length > 0
+      ? savedScanRoots.map((r) => r.path)
+      : [process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects"],
   );
   const [excludePatterns, setExcludePatterns] = useState<string>(defaultExcludePatterns.join(", "));
   const [policyOverrides, setPolicyOverrides] = useState<Record<string, string>>({});

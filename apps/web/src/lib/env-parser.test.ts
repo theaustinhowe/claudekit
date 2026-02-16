@@ -125,6 +125,26 @@ describe("parseEnvExample", () => {
     expect(result[0].url).toBeUndefined();
   });
 
+  it("attaches @url to commented variable", () => {
+    const content = "# @url https://docs.example.com\n# API_KEY=abc";
+    const result = parseEnvExample(content);
+    expect(result[0].url).toBe("https://docs.example.com");
+    expect(result[0].required).toBe(false);
+  });
+
+  it("attaches @hint to commented variable", () => {
+    const content = "# @hint Use staging key\n# API_KEY=abc";
+    const result = parseEnvExample(content);
+    expect(result[0].hint).toBe("Use staging key");
+  });
+
+  it("ignores lines that do not match any pattern", () => {
+    const content = "some-random-text\nAPI_KEY=abc";
+    const result = parseEnvExample(content);
+    expect(result).toHaveLength(1);
+    expect(result[0].key).toBe("API_KEY");
+  });
+
   it("clears defaultValue and sets placeholder for placeholder pattern", () => {
     const result = parseEnvExample("API_KEY=your-api-key-here");
     expect(result[0].defaultValue).toBe("");

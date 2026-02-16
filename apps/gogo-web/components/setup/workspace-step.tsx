@@ -42,7 +42,7 @@ export function WorkspaceStep({
           <Label htmlFor="workspace-path">Directory Path</Label>
           <Input
             id="workspace-path"
-            placeholder="/tmp/agent-work"
+            placeholder={process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "/tmp/agent-worktrees"}
             value={path}
             onChange={(e) => onPathChange(e.target.value)}
           />
