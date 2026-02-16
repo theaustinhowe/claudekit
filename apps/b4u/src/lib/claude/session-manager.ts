@@ -387,7 +387,7 @@ export function getLiveSession(sessionId: string): LiveSession | undefined {
 /**
  * Update the PID of a running session in the DB.
  */
-async function setSessionPid(sessionId: string, pid: number): Promise<void> {
+async function _setSessionPid(sessionId: string, pid: number): Promise<void> {
   const session = getSessions().get(sessionId);
   if (session) {
     await updateSessionRecord(sessionId, { pid }).catch(() => {});

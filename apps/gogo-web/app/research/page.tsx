@@ -178,7 +178,7 @@ function ResearchPageContent() {
     if (terminalOpen) {
       outputEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [outputLines.length, terminalOpen]);
+  }, [terminalOpen]);
 
   // Auto-collapse terminal when session completes
   const prevStatusRef = useRef(activeSession?.status);

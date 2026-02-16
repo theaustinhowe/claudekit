@@ -29,6 +29,6 @@ function formatTimestamp(seconds: number): string {
   return `${min}:${sec.toString().padStart(2, "0")}`;
 }
 
-function getTotalDuration(recordings: Recording[]): number {
+function _getTotalDuration(recordings: Recording[]): number {
   return recordings.reduce((sum, r) => sum + r.durationSeconds, 0);
 }

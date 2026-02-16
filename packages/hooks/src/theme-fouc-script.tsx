@@ -28,5 +28,6 @@ export function ThemeFOUCScript({
 
   const script = `(function(){try{var k=${JSON.stringify(storageKey)};var s=localStorage.getItem(k);${legacyMigration}if(s&&s!=="amethyst")document.documentElement.classList.add("theme-"+s)}catch(e){}})()`;
 
+  // biome-ignore lint/security/noDangerouslySetInnerHtml: Inline script for FOUC prevention, content is not user-controlled
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }

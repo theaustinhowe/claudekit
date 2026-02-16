@@ -258,24 +258,16 @@ export function RepositoryStep({
                           {repo.owner}/{repo.name}
                         </span>
                         {failed && <XCircle className="h-3.5 w-3.5 text-destructive" />}
-                        <div
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent"
                           onClick={(e) => {
                             e.stopPropagation();
                             onRemoveRepo(index);
                           }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              onRemoveRepo(index);
-                            }
-                          }}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                        </div>
+                        </button>
                       </button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>

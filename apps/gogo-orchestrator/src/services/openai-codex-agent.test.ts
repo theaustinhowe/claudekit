@@ -229,7 +229,7 @@ describe("OpenAI Codex Agent (CLI)", () => {
       const result = parseCodexJsonlLine(line);
       expect(result.type).toBe("tool");
       expect(result.content).toContain("...");
-      expect(result.content!.length).toBeLessThan(150);
+      expect(result.content?.length).toBeLessThan(150);
     });
   });
 

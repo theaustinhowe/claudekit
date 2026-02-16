@@ -140,7 +140,7 @@ function validateSession(
   agentType: string,
   sessionId: string | null,
   worktreePath: string | null,
-  agentSessionData: unknown,
+  _agentSessionData: unknown,
 ): SessionValidationResult {
   if (!sessionId) {
     return {

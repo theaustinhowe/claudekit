@@ -27,8 +27,8 @@ function arrayLiteral(arr: string[]): string {
 
 async function seed() {
   // Ensure data directory exists
-  const fs = await import("fs");
-  const path = await import("path");
+  const fs = await import("node:fs");
+  const path = await import("node:path");
   const dir = path.dirname(DB_PATH);
   if (dir && !fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

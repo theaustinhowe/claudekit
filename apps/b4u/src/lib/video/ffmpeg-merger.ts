@@ -46,6 +46,6 @@ export async function concatenateVideos(videoPaths: string[], outputPath: string
   await runFfmpeg(["-y", "-f", "concat", "-safe", "0", "-i", concatFile, "-c:v", "libx264", "-c:a", "aac", outputPath]);
 }
 
-async function convertToMp4(inputPath: string, outputPath: string): Promise<void> {
+async function _convertToMp4(inputPath: string, outputPath: string): Promise<void> {
   await runFfmpeg(["-y", "-i", inputPath, "-c:v", "libx264", "-c:a", "aac", "-movflags", "+faststart", outputPath]);
 }

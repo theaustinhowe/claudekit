@@ -85,7 +85,7 @@ export async function executePrepared(
   });
 }
 
-async function closeDatabase(): Promise<void> {
+async function _closeDatabase(): Promise<void> {
   if (globalForDb.__duckdb_instance) {
     const instance = await globalForDb.__duckdb_instance;
     instance.closeSync();

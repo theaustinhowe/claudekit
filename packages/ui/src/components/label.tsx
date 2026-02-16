@@ -10,7 +10,10 @@ const labelVariants = cva("text-sm font-medium leading-none peer-disabled:cursor
 const Label = React.forwardRef<
   HTMLLabelElement,
   React.LabelHTMLAttributes<HTMLLabelElement> & VariantProps<typeof labelVariants>
->(({ className, ...props }, ref) => <label ref={ref} className={cn(labelVariants(), className)} {...props} />);
+>(({ className, ...props }, ref) => (
+  // biome-ignore lint/a11y/noLabelWithoutControl: Generic reusable Label component, control association is done by consumers
+  <label ref={ref} className={cn(labelVariants(), className)} {...props} />
+));
 Label.displayName = "Label";
 
 export { Label };
