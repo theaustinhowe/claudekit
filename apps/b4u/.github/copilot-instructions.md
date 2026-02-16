@@ -27,7 +27,7 @@ B4U is a prototype UI for an automated repo walkthrough video generator. It uses
 
 ## Component Patterns
 - All components use `"use client"` directive
-- No external UI libraries (except Radix primitives for popovers/tooltips)
+- No external UI libraries (except Base UI primitives via @devkit/ui)
 - Layout: `LayoutShell` > `AppSidebar` + `AppHeader` + main content
 - Icons: `lucide-react`
 - Animations: `motion` (framer-motion)

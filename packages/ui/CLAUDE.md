@@ -18,7 +18,7 @@ accordion, alert-dialog, badge, button, calendar, card, checkbox, collapsible, d
 ## Utilities
 
 - `cn(...inputs)` — `clsx` + `tailwind-merge` class name utility
-- `Slot` — lightweight slot utility for `asChild` pattern (replaces `@radix-ui/react-slot`)
+- `Slot` — lightweight slot utility for `asChild` pattern
 
 ## Dependencies
 
@@ -26,20 +26,20 @@ Components use **Base UI** (`@base-ui/react`) primitives, lucide-react icons, an
 
 ### Data Attributes (Base UI)
 
-Base UI uses simplified data attributes compared to Radix:
-- `data-[open]` / `data-[closed]` (not `data-[state=open]`)
-- `data-[checked]` / `data-[unchecked]` (not `data-[state=checked]`)
-- `data-[active]` (not `data-[state=active]`) — used by Tabs for the selected tab
-- `data-[highlighted]` (not `focus:` for menu items)
-- `data-[hidden]` (for hidden tab panels)
+Base UI uses simplified data attributes:
+- `data-[open]` / `data-[closed]` for open/close state
+- `data-[checked]` / `data-[unchecked]` for checked state
+- `data-[active]` for active state — used by Tabs for the selected tab
+- `data-[highlighted]` for highlighted menu items
+- `data-[hidden]` for hidden tab panels
 
 ### CSS Variables
 
 Keyframe animations reference Base UI CSS variables:
-- `--collapsible-panel-height` (not `--radix-collapsible-content-height`)
-- `--accordion-panel-height` (not `--radix-accordion-content-height`)
-- `--anchor-width` (not `--radix-select-trigger-width` or `--radix-popover-trigger-width`)
-- `--available-height` (not `--radix-dropdown-menu-content-available-height`)
+- `--collapsible-panel-height` for collapsible content height
+- `--accordion-panel-height` for accordion content height
+- `--anchor-width` for trigger width (used by select, popover)
+- `--available-height` for available dropdown height
 
 ## Storybook
 

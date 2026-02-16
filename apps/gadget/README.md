@@ -56,7 +56,7 @@ Export audit results as JSON, Markdown, or PR description format with aggregated
 |---|---|
 | Framework | Next.js 16 (App Router), React 19, TypeScript 5.9 |
 | Database | DuckDB 1.4 via `@duckdb/node-api` (embedded, zero config) |
-| Styling | Tailwind CSS 4, shadcn/ui, Radix UI |
+| Styling | Tailwind CSS 4, shadcn/ui, Base UI |
 | Animation | Motion (Framer Motion) 12 |
 | Icons | Lucide React |
 | Theming | next-themes (dark/light/system) |

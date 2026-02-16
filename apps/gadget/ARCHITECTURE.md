@@ -42,7 +42,7 @@ Gadget is a **local-first developer tool** built on **Next.js 16 App Router**. I
 | Framework      | Next.js 16 (App Router, React 19, RSC)                         |
 | Language       | TypeScript 5.9 (strict mode, `@/` path alias)                  |
 | Database       | DuckDB via `@duckdb/node-api` (local file, WAL mode)           |
-| UI Framework   | shadcn/ui (Radix primitives), Tailwind CSS v4                   |
+| UI Framework   | shadcn/ui (Base UI primitives), Tailwind CSS v4                  |
 | Animations     | Motion (Framer Motion v12)                                      |
 | Icons          | Lucide React                                                    |
 | Theming        | next-themes (light/dark/system), custom workbench color schemes |

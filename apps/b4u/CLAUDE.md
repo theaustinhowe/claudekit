@@ -37,7 +37,7 @@ pnpm format       # Biome format
 
 - Tailwind semantic token colors (not raw color values)
 - Sans-serif-first typography (Geist), monospace for code only
-- Radix UI primitives for popovers/tooltips only
+- Base UI primitives via @devkit/ui
 - Icons: `lucide-react`
 - Animations: `motion` (framer-motion)
 

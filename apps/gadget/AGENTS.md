@@ -8,7 +8,7 @@ Coordination guide for breaking work into specialized agents across the Gadget c
 |-------|------|
 | Framework | Next.js 16, React 19, TypeScript 5.9 |
 | Database | DuckDB 1.4 (`@duckdb/node-api`, 32 tables) |
-| Styling | Tailwind CSS v4 (`@tailwindcss/postcss`), shadcn/ui, Radix UI |
+| Styling | Tailwind CSS v4 (`@tailwindcss/postcss`), shadcn/ui, Base UI |
 | Animation | Motion 12 (Framer Motion) |
 | Linting | Biome 2 (lint + format, replaces ESLint/Prettier) |
 | Testing | Vitest 4 |

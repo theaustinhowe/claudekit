@@ -61,7 +61,7 @@ It is not a SaaS — it runs entirely on the developer's machine, with an embedd
 | Runtime | Node.js 22+ | Required for native DuckDB bindings |
 | Language | TypeScript (strict mode) | All imports use `@/` alias for `src/` |
 | Database | DuckDB via `@duckdb/node-api` | Embedded, file-based at `~/.gadget/data.duckdb` |
-| UI Components | shadcn/ui + Radix primitives | 24 components in `src/components/ui/` |
+| UI Components | shadcn/ui + Base UI primitives | 24 components in `src/components/ui/` |
 | Styling | Tailwind CSS v4 | `@tailwindcss/postcss` plugin, HSL design tokens |
 | Animation | Motion (Framer Motion v12) | Dynamic imports with `ssr: false` |
 | Icons | Lucide React | |
