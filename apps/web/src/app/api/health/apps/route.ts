@@ -46,6 +46,13 @@ const APP_DEFINITIONS = [
     port: 6006,
     icon: "BookOpen",
   },
+  {
+    id: "web",
+    name: "Web",
+    description: "Devkit dashboard, app health monitor, and log viewer",
+    port: 2000,
+    icon: "Monitor",
+  },
 ];
 
 async function checkAppHealth(port: number): Promise<boolean> {

@@ -44,6 +44,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Cpu: <Cpu className="h-5 w-5" />,
   Video: <Video className="h-5 w-5" />,
   BookOpen: <BookOpen className="h-5 w-5" />,
+  Monitor: <Monitor className="h-5 w-5" />,
 };
 
 const ACCENT_COLORS: Record<string, string> = {
@@ -52,6 +53,7 @@ const ACCENT_COLORS: Record<string, string> = {
   "gogo-orchestrator": "border-l-cyan-500",
   b4u: "border-l-amber-500",
   storybook: "border-l-pink-500",
+  web: "border-l-emerald-500",
 };
 
 function formatSize(bytes: number): string {
@@ -184,18 +186,21 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                         ACCENT_COLORS[app.id] ?? "border-l-primary",
                       )}
                     >
-                      {/* Upper zone — click to open app */}
+                      {/* Upper zone — click to open app (disabled for web since you're already here) */}
                       <div
-                        role={app.status === "running" ? "link" : undefined}
-                        tabIndex={app.status === "running" ? 0 : -1}
-                        className={cn("w-full text-left", app.status === "running" && "cursor-pointer")}
+                        role={app.id !== "web" && app.status === "running" ? "link" : undefined}
+                        tabIndex={app.id !== "web" && app.status === "running" ? 0 : -1}
+                        className={cn(
+                          "w-full text-left",
+                          app.id !== "web" && app.status === "running" && "cursor-pointer",
+                        )}
                         onClick={() => {
-                          if (app.status === "running") {
+                          if (app.id !== "web" && app.status === "running") {
                             window.open(app.url, "_blank", "noopener,noreferrer");
                           }
                         }}
                         onKeyDown={(e) => {
-                          if (app.status === "running" && (e.key === "Enter" || e.key === " ")) {
+                          if (app.id !== "web" && app.status === "running" && (e.key === "Enter" || e.key === " ")) {
                             e.preventDefault();
                             window.open(app.url, "_blank", "noopener,noreferrer");
                           }
@@ -226,7 +231,9 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                               />
                               <span className="text-xs text-muted-foreground capitalize">{app.status}</span>
                             </div>
-                            {app.status === "running" ? (
+                            {app.id === "web" ? (
+                              <span className="text-xs text-muted-foreground italic">You are here</span>
+                            ) : app.status === "running" ? (
                               <a
                                 href={app.url}
                                 target="_blank"
