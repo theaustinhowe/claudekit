@@ -63,6 +63,8 @@ export function StepAppSpecific({ appVariables, values, onChange }: StepAppSpeci
                         required={v.required}
                         placeholder={v.placeholder}
                         defaultValue={v.defaultValue}
+                        url={v.url}
+                        hint={v.hint}
                         value={values[v.key] ?? ""}
                         onChange={onChange}
                       />

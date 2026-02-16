@@ -5,6 +5,8 @@ export interface EnvVariable {
   required: boolean;
   group: string;
   placeholder?: string;
+  url?: string;
+  hint?: string;
 }
 
 export interface EnvExampleFile {
@@ -37,6 +39,8 @@ export function parseEnvExample(content: string): EnvVariable[] {
   const variables: EnvVariable[] = [];
   let commentBuffer: string[] = [];
   let currentGroup = "";
+  let currentUrl: string | undefined;
+  let currentHint: string | undefined;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -44,12 +48,29 @@ export function parseEnvExample(content: string): EnvVariable[] {
     // Blank line — reset comment buffer
     if (!trimmed) {
       commentBuffer = [];
+      currentUrl = undefined;
+      currentHint = undefined;
       continue;
     }
 
-    // Pure comment line — could be a group header or description
+    // Pure comment line — could be a group header, description, or directive
     if (trimmed.startsWith("#") && !trimmed.match(/^#\s*\w+=/) && !trimmed.match(/^#\s*[A-Z_]+=$/)) {
       const commentText = trimmed.replace(/^#\s*/, "");
+
+      // Extract @url directive
+      const urlMatch = commentText.match(/^@url\s+(.+)$/);
+      if (urlMatch) {
+        currentUrl = urlMatch[1].trim();
+        continue;
+      }
+
+      // Extract @hint directive
+      const hintMatch = commentText.match(/^@hint\s+(.+)$/);
+      if (hintMatch) {
+        currentHint = hintMatch[1].trim();
+        continue;
+      }
+
       // Detect group headers (short lines that look like section titles)
       if (
         commentText.match(/^(Required|Optional|MCP Server)/i) ||
@@ -79,8 +100,12 @@ export function parseEnvExample(content: string): EnvVariable[] {
         required: false,
         group: currentGroup,
         ...(isPlaceholder ? { placeholder: rawValue } : {}),
+        ...(currentUrl ? { url: currentUrl } : {}),
+        ...(currentHint ? { hint: currentHint } : {}),
       });
       commentBuffer = [];
+      currentUrl = undefined;
+      currentHint = undefined;
       continue;
     }
 
@@ -97,8 +122,12 @@ export function parseEnvExample(content: string): EnvVariable[] {
         required: true,
         group: currentGroup,
         ...(isPlaceholder ? { placeholder: rawValue } : {}),
+        ...(currentUrl ? { url: currentUrl } : {}),
+        ...(currentHint ? { hint: currentHint } : {}),
       });
       commentBuffer = [];
+      currentUrl = undefined;
+      currentHint = undefined;
     }
   }
 
@@ -140,6 +169,8 @@ export function deduplicateVariables(files: EnvExampleFile[]): Omit<SetupWizardD
         required: vars.some((v) => v.required),
         group: vars[0].group,
         placeholder: vars.find((v) => v.placeholder)?.placeholder,
+        url: vars.find((v) => v.url)?.url,
+        hint: vars.find((v) => v.hint)?.hint,
         sources,
       };
       sharedVariables.push(merged);

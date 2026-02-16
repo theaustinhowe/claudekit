@@ -26,6 +26,8 @@ export function StepShared({ variables, values, onChange }: StepSharedProps) {
             sources={v.sources}
             placeholder={v.placeholder}
             defaultValue={v.defaultValue}
+            url={v.url}
+            hint={v.hint}
             value={values[v.key] ?? ""}
             onChange={onChange}
           />

@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@devkit/ui/components/dialog";
+import { TooltipProvider } from "@devkit/ui/components/tooltip";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -77,62 +78,64 @@ export function SetupWizardDialog({ open, onOpenChange }: SetupWizardDialogProps
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <StepIndicator currentStep={step} />
-          <DialogTitle>Environment Setup</DialogTitle>
-          <DialogDescription>Configure environment variables for all devkit apps.</DialogDescription>
-        </DialogHeader>
+        <TooltipProvider delayDuration={300}>
+          <DialogHeader>
+            <StepIndicator currentStep={step} />
+            <DialogTitle>Environment Setup</DialogTitle>
+            <DialogDescription>Configure environment variables for all devkit apps.</DialogDescription>
+          </DialogHeader>
 
-        <DialogBody>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : wizardData ? (
-            <>
-              {step === 0 && (
-                <StepShared variables={wizardData.sharedVariables} values={values} onChange={handleChange} />
-              )}
-              {step === 1 && (
-                <StepAppSpecific appVariables={wizardData.appVariables} values={values} onChange={handleChange} />
-              )}
-              {step === 2 && <StepReview wizardData={wizardData} values={values} />}
-            </>
-          ) : null}
-        </DialogBody>
+          <DialogBody>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : wizardData ? (
+              <>
+                {step === 0 && (
+                  <StepShared variables={wizardData.sharedVariables} values={values} onChange={handleChange} />
+                )}
+                {step === 1 && (
+                  <StepAppSpecific appVariables={wizardData.appVariables} values={values} onChange={handleChange} />
+                )}
+                {step === 2 && <StepReview wizardData={wizardData} values={values} />}
+              </>
+            ) : null}
+          </DialogBody>
 
-        <DialogFooter>
-          <div className="flex items-center justify-between w-full">
-            <div>
-              {step > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => setStep((s) => s - 1)} disabled={isSaving}>
-                  Back
+          <DialogFooter>
+            <div className="flex items-center justify-between w-full">
+              <div>
+                {step > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setStep((s) => s - 1)} disabled={isSaving}>
+                    Back
+                  </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isSaving}>
+                  {isLastStep ? "Cancel" : "Skip"}
                 </Button>
-              )}
+                {isLastStep ? (
+                  <Button size="sm" onClick={handleSave} disabled={isLoading || isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save All"
+                    )}
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => setStep((s) => s + 1)} disabled={isLoading}>
+                    Next
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isSaving}>
-                {isLastStep ? "Cancel" : "Skip"}
-              </Button>
-              {isLastStep ? (
-                <Button size="sm" onClick={handleSave} disabled={isLoading || isSaving}>
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save All"
-                  )}
-                </Button>
-              ) : (
-                <Button size="sm" onClick={() => setStep((s) => s + 1)} disabled={isLoading}>
-                  Next
-                </Button>
-              )}
-            </div>
-          </div>
-        </DialogFooter>
+          </DialogFooter>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   );

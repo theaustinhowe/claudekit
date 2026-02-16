@@ -103,9 +103,9 @@ function buildKeyToApps(): Map<string, string[]> {
     // Shared (root + others)
     GITHUB_PERSONAL_ACCESS_TOKEN: ["root", "gadget", "gogo-orchestrator"],
     LOG_LEVEL: ["root"],
-    DATABASE_PATH: ["root", "gogo-orchestrator"],
+    DATABASE_PATH: ["root", "gogo-orchestrator", "b4u"],
     // B4U
-    DUCKDB_PATH: ["b4u"],
+    ELEVENLABS_API_KEY: ["b4u"],
     // Gadget
     MCP_API_TOKEN: ["gadget"],
     DB_PATH: ["gadget"],

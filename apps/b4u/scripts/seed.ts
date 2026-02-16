@@ -18,7 +18,7 @@ import {
 
 const SCHEMA_SQL = fs.readFileSync(path.join(import.meta.dirname, "../src/lib/db/migrations/001_initial.sql"), "utf-8");
 
-const DB_PATH = process.env.DUCKDB_PATH || "data/b4u.duckdb";
+const DB_PATH = process.env.DATABASE_PATH || "data/b4u.duckdb";
 
 function escapeStr(s: string): string {
   return s.replace(/'/g, "''");

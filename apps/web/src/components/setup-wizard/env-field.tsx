@@ -4,7 +4,8 @@ import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { ExternalLink, Eye, EyeOff, Info } from "lucide-react";
 import { useCallback, useState } from "react";
 
 const SENSITIVE_PATTERNS = /token|key|secret|password|pat$/i;
@@ -16,6 +17,8 @@ interface EnvFieldProps {
   sources?: Array<{ appId: string; label: string }>;
   placeholder?: string;
   defaultValue?: string;
+  url?: string;
+  hint?: string;
   value: string;
   onChange: (key: string, value: string) => void;
 }
@@ -27,6 +30,8 @@ export function EnvField({
   sources,
   placeholder,
   defaultValue,
+  url,
+  hint,
   value,
   onChange,
 }: EnvFieldProps) {
@@ -56,6 +61,21 @@ export function EnvField({
               {s.label}
             </Badge>
           ))}
+        {hint && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {hint}
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {url && (
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
       </div>
       {description && <p className="text-xs text-muted-foreground">{description}</p>}
       <div className="relative">
