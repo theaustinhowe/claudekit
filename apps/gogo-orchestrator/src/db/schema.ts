@@ -269,10 +269,7 @@ export function mapJob(row: DbJob): Job {
     processPid: row.process_pid,
     processStartedAt: toDateOrNull(row.process_started_at),
     agentType: row.agent_type,
-    agentSessionData: parseJsonField<Record<string, unknown> | null>(
-      row.agent_session_data,
-      null,
-    ),
+    agentSessionData: parseJsonField<Record<string, unknown> | null>(row.agent_session_data, null),
     planContent: row.plan_content,
     planCommentId: row.plan_comment_id,
     lastCheckedPlanCommentId: row.last_checked_plan_comment_id,
@@ -292,10 +289,7 @@ export function mapJobEvent(row: DbJobEvent): JobEvent {
     fromStatus: row.from_status as JobEvent["fromStatus"],
     toStatus: row.to_status as JobEvent["toStatus"],
     message: row.message,
-    metadata: parseJsonField<Record<string, unknown> | null>(
-      row.metadata,
-      null,
-    ),
+    metadata: parseJsonField<Record<string, unknown> | null>(row.metadata, null),
     createdAt: toDate(row.created_at),
   };
 }
@@ -374,9 +368,7 @@ export function mapResearchSession(row: DbResearchSession): ResearchSession {
   };
 }
 
-export function mapResearchSuggestion(
-  row: DbResearchSuggestion,
-): ResearchSuggestion {
+export function mapResearchSuggestion(row: DbResearchSuggestion): ResearchSuggestion {
   return {
     id: row.id,
     sessionId: row.session_id,

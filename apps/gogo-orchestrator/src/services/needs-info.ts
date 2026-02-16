@@ -13,14 +13,9 @@ import { applyTransitionAtomic, validateTransition } from "./state-machine.js";
 /**
  * Transition a job to NEEDS_INFO state and post a question to GitHub
  */
-export async function enterNeedsInfo(
-  jobId: string,
-  question: string,
-): Promise<void> {
+export async function enterNeedsInfo(jobId: string, question: string): Promise<void> {
   const conn = getConn();
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (!job) {
     throw new Error(`Job ${jobId} not found`);
@@ -42,18 +37,12 @@ export async function enterNeedsInfo(
     if (!result.success) {
       throw new Error(result.error || "Failed to transition to needs_info");
     }
-    console.log(
-      `[needs-info] Manual job ${jobId} entered needs_info state (no GitHub comment)`,
-    );
+    console.log(`[needs-info] Manual job ${jobId} entered needs_info state (no GitHub comment)`);
     return;
   }
 
   const commentBody = `${AGENT_COMMENT_MARKER}\n🤖 **Agent Question:**\n\n${question}`;
-  const { id: commentId } = await createIssueCommentForRepo(
-    job.repository_id,
-    job.issue_number,
-    commentBody,
-  );
+  const { id: commentId } = await createIssueCommentForRepo(job.repository_id, job.issue_number, commentBody);
 
   const result = await applyTransitionAtomic(jobId, "needs_info", question, {
     needsInfoQuestion: question,
@@ -65,9 +54,7 @@ export async function enterNeedsInfo(
     throw new Error(result.error || "Failed to transition to needs_info");
   }
 
-  console.log(
-    `[needs-info] Job ${jobId} entered needs_info state, GitHub comment ID: ${commentId}`,
-  );
+  console.log(`[needs-info] Job ${jobId} entered needs_info state, GitHub comment ID: ${commentId}`);
 }
 
 /**
@@ -75,11 +62,7 @@ export async function enterNeedsInfo(
  */
 export async function pollNeedsInfoJobs(): Promise<void> {
   const conn = getConn();
-  const needsInfoJobs = await queryAll<DbJob>(
-    conn,
-    "SELECT * FROM jobs WHERE status = ?",
-    ["needs_info"],
-  );
+  const needsInfoJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ?", ["needs_info"]);
 
   if (needsInfoJobs.length === 0) {
     return;
@@ -90,9 +73,7 @@ export async function pollNeedsInfoJobs(): Promise<void> {
     return;
   }
 
-  console.log(
-    `[needs-info] Polling ${githubJobs.length} jobs for responses...`,
-  );
+  console.log(`[needs-info] Polling ${githubJobs.length} jobs for responses...`);
 
   for (const job of githubJobs) {
     try {
@@ -120,13 +101,9 @@ interface CheckResponseResult {
 /**
  * Check a specific job by ID for a response (for manual trigger)
  */
-export async function checkJobForResponseById(
-  jobId: string,
-): Promise<CheckResponseResult> {
+export async function checkJobForResponseById(jobId: string): Promise<CheckResponseResult> {
   const conn = getConn();
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (!job) {
     throw new Error(`Job ${jobId} not found`);
@@ -139,9 +116,7 @@ export async function checkJobForResponseById(
   return checkJobForResponse(job);
 }
 
-async function checkJobForResponse(
-  job: JobWithNeedsInfo,
-): Promise<CheckResponseResult> {
+async function checkJobForResponse(job: JobWithNeedsInfo): Promise<CheckResponseResult> {
   if (!job.needs_info_comment_id) {
     console.warn(`[needs-info] Job ${job.id} missing needs_info_comment_id`);
     return { responseFound: false };
@@ -164,11 +139,7 @@ async function checkJobForResponse(
     if (comments.length > 0) {
       const lastCommentId = Math.max(...comments.map((c) => c.id));
       const conn = getConn();
-      await execute(
-        conn,
-        "UPDATE jobs SET last_checked_comment_id = ? WHERE id = ?",
-        [lastCommentId, job.id],
-      );
+      await execute(conn, "UPDATE jobs SET last_checked_comment_id = ? WHERE id = ?", [lastCommentId, job.id]);
     }
     return { responseFound: false };
   }
@@ -198,19 +169,12 @@ async function checkJobForResponse(
     ],
   );
 
-  const result = await applyTransitionAtomic(
-    job.id,
-    "running",
-    `Human responded on GitHub: ${response.user?.login}`,
-    {
-      last_checked_comment_id: response.id,
-    },
-  );
+  const result = await applyTransitionAtomic(job.id, "running", `Human responded on GitHub: ${response.user?.login}`, {
+    last_checked_comment_id: response.id,
+  });
 
   if (!result.success) {
-    console.error(
-      `[needs-info] Failed to transition job ${job.id} to running: ${result.error}`,
-    );
+    console.error(`[needs-info] Failed to transition job ${job.id} to running: ${result.error}`);
     return { responseFound: false };
   }
 

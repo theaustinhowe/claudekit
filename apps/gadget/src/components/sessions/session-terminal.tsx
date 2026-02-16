@@ -1,5 +1,10 @@
 "use client";
 
+import { useAutoScroll } from "@devkit/hooks";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Progress } from "@devkit/ui/components/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   AlertCircle,
   ArrowDown,
@@ -17,11 +22,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Progress } from "@devkit/ui/components/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { useAutoScroll } from "@devkit/hooks";
 import { cn, formatElapsed } from "@/lib/utils";
 
 type TerminalStatus = "idle" | "connecting" | "streaming" | "done" | "error" | "reconnecting";

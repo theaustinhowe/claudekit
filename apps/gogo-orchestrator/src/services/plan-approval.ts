@@ -11,11 +11,7 @@ const APPROVAL_PATTERN = /\b(approve[d]?|lgtm|looks good|ship it|go ahead)\b/i;
  */
 export async function pollPlanApprovalJobs(): Promise<void> {
   const conn = getConn();
-  const awaitingJobs = await queryAll<DbJob>(
-    conn,
-    "SELECT * FROM jobs WHERE status = ?",
-    ["awaiting_plan_approval"],
-  );
+  const awaitingJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ?", ["awaiting_plan_approval"]);
 
   if (awaitingJobs.length === 0) {
     return;
@@ -26,9 +22,7 @@ export async function pollPlanApprovalJobs(): Promise<void> {
     return;
   }
 
-  console.log(
-    `[plan-approval] Polling ${githubJobs.length} jobs for plan approval...`,
-  );
+  console.log(`[plan-approval] Polling ${githubJobs.length} jobs for plan approval...`);
 
   for (const job of githubJobs) {
     try {
@@ -72,11 +66,7 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
     if (comments.length > 0) {
       const lastCommentId = Math.max(...comments.map((c) => c.id));
       const conn = getConn();
-      await execute(
-        conn,
-        "UPDATE jobs SET last_checked_plan_comment_id = ? WHERE id = ?",
-        [lastCommentId, job.id],
-      );
+      await execute(conn, "UPDATE jobs SET last_checked_plan_comment_id = ? WHERE id = ?", [lastCommentId, job.id]);
     }
     return;
   }
@@ -87,9 +77,7 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
   const isApproval = APPROVAL_PATTERN.test(response.body);
 
   if (isApproval) {
-    console.log(
-      `[plan-approval] Job ${job.id} plan approved by ${response.user?.login}`,
-    );
+    console.log(`[plan-approval] Job ${job.id} plan approved by ${response.user?.login}`);
 
     await execute(
       conn,
@@ -109,25 +97,20 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
       ],
     );
 
-    await execute(
-      conn,
-      "UPDATE jobs SET status = ?, last_checked_plan_comment_id = ?, updated_at = ? WHERE id = ?",
-      ["running", response.id, now, job.id],
-    );
+    await execute(conn, "UPDATE jobs SET status = ?, last_checked_plan_comment_id = ?, updated_at = ? WHERE id = ?", [
+      "running",
+      response.id,
+      now,
+      job.id,
+    ]);
 
-    const updated = await queryOne<DbJob>(
-      conn,
-      "SELECT * FROM jobs WHERE id = ?",
-      [job.id],
-    );
+    const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [job.id]);
     if (updated) {
       const { broadcast } = await import("../ws/handler.js");
       broadcast({ type: "job:updated", payload: updated });
     }
 
-    console.log(
-      `[plan-approval] Job ${job.id} transitioned to running after plan approval`,
-    );
+    console.log(`[plan-approval] Job ${job.id} transitioned to running after plan approval`);
   } else {
     console.log(
       `[plan-approval] Job ${job.id} received feedback from ${response.user?.login}: ${response.body.substring(0, 100)}...`,
@@ -152,24 +135,19 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
       ],
     );
 
-    await execute(
-      conn,
-      "UPDATE jobs SET status = ?, last_checked_plan_comment_id = ?, updated_at = ? WHERE id = ?",
-      ["planning", response.id, now, job.id],
-    );
+    await execute(conn, "UPDATE jobs SET status = ?, last_checked_plan_comment_id = ?, updated_at = ? WHERE id = ?", [
+      "planning",
+      response.id,
+      now,
+      job.id,
+    ]);
 
-    const updated = await queryOne<DbJob>(
-      conn,
-      "SELECT * FROM jobs WHERE id = ?",
-      [job.id],
-    );
+    const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [job.id]);
     if (updated) {
       const { broadcast } = await import("../ws/handler.js");
       broadcast({ type: "job:updated", payload: updated });
     }
 
-    console.log(
-      `[plan-approval] Job ${job.id} returned to planning for revision`,
-    );
+    console.log(`[plan-approval] Job ${job.id} returned to planning for revision`);
   }
 }

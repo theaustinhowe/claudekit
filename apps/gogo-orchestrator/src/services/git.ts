@@ -101,11 +101,7 @@ export function getJobsDir(config: GitConfig): string {
   return join(getRepoDir(config), "jobs");
 }
 
-async function execGit(
-  args: string[],
-  cwd: string,
-  config: GitConfig,
-): Promise<{ stdout: string; stderr: string }> {
+async function execGit(args: string[], cwd: string, config: GitConfig): Promise<{ stdout: string; stderr: string }> {
   const operationName = `git ${args[0] || "command"}`;
   try {
     const { stdout, stderr } = await withTimeout(
@@ -125,19 +121,14 @@ async function execGit(
     const err = error as Error & { stdout?: string; stderr?: string };
     const sanitizedMessage = sanitizeToken(err.message || "", config.token);
     const sanitizedStderr = sanitizeToken(err.stderr || "", config.token);
-    throw new Error(
-      `Git command failed: ${sanitizedMessage}\n${sanitizedStderr}`,
-    );
+    throw new Error(`Git command failed: ${sanitizedMessage}\n${sanitizedStderr}`);
   }
 }
 
 /**
  * Check if a branch exists on the remote.
  */
-export async function remoteBranchExists(
-  config: GitConfig,
-  branch: string,
-): Promise<boolean> {
+export async function remoteBranchExists(config: GitConfig, branch: string): Promise<boolean> {
   const bareRepoPath = getBareRepoPath(config);
   try {
     const { stdout } = await execGit(
@@ -179,11 +170,7 @@ export async function fetchUpdates(config: GitConfig): Promise<void> {
     throw new Error("Base repository not found. Call ensureBaseClone first.");
   }
 
-  await execGit(
-    ["-C", bareRepoPath, "fetch", "origin", "--prune"],
-    config.workdir,
-    config,
-  );
+  await execGit(["-C", bareRepoPath, "fetch", "origin", "--prune"], config.workdir, config);
 }
 
 /**
@@ -191,19 +178,11 @@ export async function fetchUpdates(config: GitConfig): Promise<void> {
  * In bare repos, branches are stored directly in refs/heads/*, not refs/remotes/origin/*.
  * Checks for main and master, then falls back to the first available branch.
  */
-async function detectBaseBranch(
-  config: GitConfig,
-  bareRepoPath: string,
-  preferredBranch: string,
-): Promise<string> {
+async function detectBaseBranch(config: GitConfig, bareRepoPath: string, preferredBranch: string): Promise<string> {
   // In a bare repo, use `git branch` to list local branches (which are the actual branches)
   // `git branch -r` won't work because bare repos don't have remote tracking refs
   try {
-    const { stdout } = await execGit(
-      ["-C", bareRepoPath, "branch"],
-      config.workdir,
-      config,
-    );
+    const { stdout } = await execGit(["-C", bareRepoPath, "branch"], config.workdir, config);
     const branches = stdout
       .split("\n")
       .map((b) => b.replace(/^\*?\s*/, "").trim()) // Remove leading * and whitespace
@@ -212,13 +191,7 @@ async function detectBaseBranch(
     if (branches.length === 0) {
       // Try for-each-ref as a fallback for bare repos
       const { stdout: refOutput } = await execGit(
-        [
-          "-C",
-          bareRepoPath,
-          "for-each-ref",
-          "--format=%(refname:short)",
-          "refs/heads/",
-        ],
+        ["-C", bareRepoPath, "for-each-ref", "--format=%(refname:short)", "refs/heads/"],
         config.workdir,
         config,
       );
@@ -252,18 +225,14 @@ async function detectBaseBranch(
     // Fallback: try common default branch names
     for (const fallback of ["main", "master"]) {
       if (branches.includes(fallback)) {
-        console.log(
-          `[git] Configured branch '${preferredBranch}' not found, using '${fallback}'`,
-        );
+        console.log(`[git] Configured branch '${preferredBranch}' not found, using '${fallback}'`);
         return fallback;
       }
     }
 
     // Last resort: use the first available branch
     const firstBranch = branches[0];
-    console.log(
-      `[git] No standard branch found, using first available branch: '${firstBranch}'`,
-    );
+    console.log(`[git] No standard branch found, using first available branch: '${firstBranch}'`);
     return firstBranch;
   } catch (error) {
     const err = error as Error;
@@ -291,9 +260,7 @@ export async function createWorktree(
   // Manual jobs use negative issue numbers - use different naming
   const isManual = issueNumber < 0;
   const shortId = jobId ? jobId.slice(0, 8) : Math.abs(issueNumber).toString();
-  const branch = isManual
-    ? `agent/manual-${shortId}-${slug}`
-    : `agent/issue-${issueNumber}-${slug}`;
+  const branch = isManual ? `agent/manual-${shortId}-${slug}` : `agent/issue-${issueNumber}-${slug}`;
   const worktreeName = isManual ? `manual-${shortId}` : `issue-${issueNumber}`;
   const worktreePath = resolve(join(jobsDir, worktreeName));
 
@@ -324,45 +291,21 @@ export async function createWorktree(
 
   // Check if branch already exists locally and delete it if so
   try {
-    await execGit(
-      ["-C", bareRepoPath, "branch", "-D", branch],
-      config.workdir,
-      config,
-    );
+    await execGit(["-C", bareRepoPath, "branch", "-D", branch], config.workdir, config);
   } catch {
     // Branch doesn't exist, that's fine
   }
 
   // Detect the best base branch to use
   const preferredBranch = config.baseBranch || "main";
-  const remoteRef = await detectBaseBranch(
-    config,
-    bareRepoPath,
-    preferredBranch,
-  );
+  const remoteRef = await detectBaseBranch(config, bareRepoPath, preferredBranch);
 
-  await execGit(
-    [
-      "-C",
-      bareRepoPath,
-      "worktree",
-      "add",
-      worktreePath,
-      "-b",
-      branch,
-      remoteRef,
-    ],
-    config.workdir,
-    config,
-  );
+  await execGit(["-C", bareRepoPath, "worktree", "add", worktreePath, "-b", branch, remoteRef], config.workdir, config);
 
   return { worktreePath, branch };
 }
 
-export async function removeWorktree(
-  config: GitConfig,
-  worktreePath: string,
-): Promise<void> {
+export async function removeWorktree(config: GitConfig, worktreePath: string): Promise<void> {
   const repoDir = getRepoDir(config);
   const bareRepoPath = getBareRepoPath(config);
 
@@ -389,14 +332,7 @@ export async function removeWorktree(
   // Remove the worktree
   try {
     await execGit(
-      [
-        "-C",
-        bareRepoPath,
-        "worktree",
-        "remove",
-        normalizedWorktreePath,
-        "--force",
-      ],
+      ["-C", bareRepoPath, "worktree", "remove", normalizedWorktreePath, "--force"],
       config.workdir,
       config,
     );
@@ -404,11 +340,7 @@ export async function removeWorktree(
     // If git worktree remove fails, try manual cleanup
     try {
       await rm(normalizedWorktreePath, { recursive: true, force: true });
-      await execGit(
-        ["-C", bareRepoPath, "worktree", "prune"],
-        config.workdir,
-        config,
-      );
+      await execGit(["-C", bareRepoPath, "worktree", "prune"], config.workdir, config);
     } catch {
       throw new Error(`Failed to remove worktree at ${worktreePath}`);
     }
@@ -417,20 +349,14 @@ export async function removeWorktree(
   // Delete the branch if it exists
   if (branchName?.startsWith("agent/")) {
     try {
-      await execGit(
-        ["-C", bareRepoPath, "branch", "-D", branchName],
-        config.workdir,
-        config,
-      );
+      await execGit(["-C", bareRepoPath, "branch", "-D", branchName], config.workdir, config);
     } catch {
       // Branch may not exist or already deleted
     }
   }
 }
 
-export async function listWorktrees(
-  config: GitConfig,
-): Promise<WorktreeInfo[]> {
+export async function listWorktrees(config: GitConfig): Promise<WorktreeInfo[]> {
   const bareRepoPath = getBareRepoPath(config);
 
   try {
@@ -439,11 +365,7 @@ export async function listWorktrees(
     return [];
   }
 
-  const { stdout } = await execGit(
-    ["-C", bareRepoPath, "worktree", "list", "--porcelain"],
-    config.workdir,
-    config,
-  );
+  const { stdout } = await execGit(["-C", bareRepoPath, "worktree", "list", "--porcelain"], config.workdir, config);
 
   const worktrees: WorktreeInfo[] = [];
   const lines = stdout.split("\n");
@@ -470,22 +392,12 @@ export async function listWorktrees(
   return worktrees;
 }
 
-export async function pushBranch(
-  config: GitConfig,
-  worktreePath: string,
-  branch: string,
-): Promise<void> {
+export async function pushBranch(config: GitConfig, worktreePath: string, branch: string): Promise<void> {
   const authUrl = getAuthenticatedUrl(config);
-  await execGit(
-    ["-C", worktreePath, "push", "-u", authUrl, branch],
-    config.workdir,
-    config,
-  );
+  await execGit(["-C", worktreePath, "push", "-u", authUrl, branch], config.workdir, config);
 }
 
-export async function isWorkingTreeClean(
-  worktreePath: string,
-): Promise<boolean> {
+export async function isWorkingTreeClean(worktreePath: string): Promise<boolean> {
   try {
     const { stdout } = await withTimeout(
       execFile("git", ["-C", worktreePath, "status", "--porcelain"], {
@@ -500,23 +412,12 @@ export async function isWorkingTreeClean(
   }
 }
 
-export async function hasCommits(
-  config: GitConfig,
-  worktreePath: string,
-  baseBranch: string,
-): Promise<boolean> {
+export async function hasCommits(config: GitConfig, worktreePath: string, baseBranch: string): Promise<boolean> {
   // Try to fetch, but don't fail if it doesn't work
   try {
-    await execGit(
-      ["-C", worktreePath, "fetch", "origin", baseBranch],
-      config.workdir,
-      config,
-    );
+    await execGit(["-C", worktreePath, "fetch", "origin", baseBranch], config.workdir, config);
   } catch (error) {
-    console.warn(
-      `[git] Failed to fetch origin/${baseBranch}, will use local refs:`,
-      (error as Error).message,
-    );
+    console.warn(`[git] Failed to fetch origin/${baseBranch}, will use local refs:`, (error as Error).message);
   }
 
   // Try comparing against origin/baseBranch
@@ -530,10 +431,7 @@ export async function hasCommits(
     console.log(`[git] Commits ahead of origin/${baseBranch}: ${count}`);
     if (count > 0) return true;
   } catch (error) {
-    console.warn(
-      `[git] Failed to compare with origin/${baseBranch}:`,
-      (error as Error).message,
-    );
+    console.warn(`[git] Failed to compare with origin/${baseBranch}:`, (error as Error).message);
   }
 
   // Fallback: compare against local baseBranch ref (in case origin/ refs don't exist)
@@ -547,19 +445,12 @@ export async function hasCommits(
     console.log(`[git] Commits ahead of ${baseBranch}: ${count}`);
     if (count > 0) return true;
   } catch (error) {
-    console.warn(
-      `[git] Failed to compare with ${baseBranch}:`,
-      (error as Error).message,
-    );
+    console.warn(`[git] Failed to compare with ${baseBranch}:`, (error as Error).message);
   }
 
   // Last resort: check if there are ANY commits on this branch
   try {
-    const { stdout } = await execGit(
-      ["-C", worktreePath, "rev-list", "--count", "HEAD"],
-      config.workdir,
-      config,
-    );
+    const { stdout } = await execGit(["-C", worktreePath, "rev-list", "--count", "HEAD"], config.workdir, config);
     const count = Number.parseInt(stdout.trim(), 10);
     console.log(`[git] Total commits on HEAD: ${count}`);
     // If we got here and there are commits, something is wrong with the comparison
@@ -571,11 +462,7 @@ export async function hasCommits(
   return false;
 }
 
-export async function getCommitLog(
-  config: GitConfig,
-  worktreePath: string,
-  baseBranch: string,
-): Promise<string> {
+export async function getCommitLog(config: GitConfig, worktreePath: string, baseBranch: string): Promise<string> {
   // Try origin/<baseBranch>..HEAD first, then fall back to local ref
   for (const ref of [`origin/${baseBranch}`, baseBranch]) {
     try {
@@ -625,20 +512,14 @@ export async function getChangedFiles(
 
   // Get uncommitted changes (staged and unstaged)
   try {
-    const { stdout: statusOut } = await execGit(
-      ["-C", worktreePath, "status", "--porcelain"],
-      config.workdir,
-      config,
-    );
+    const { stdout: statusOut } = await execGit(["-C", worktreePath, "status", "--porcelain"], config.workdir, config);
 
     for (const line of statusOut.split("\n").filter((l) => l.trim())) {
       const statusCode = line.slice(0, 2);
       const filePath = line.slice(3).trim();
 
       // Handle renamed files (R or C with -> separator)
-      const actualPath = filePath.includes(" -> ")
-        ? filePath.split(" -> ")[1]
-        : filePath;
+      const actualPath = filePath.includes(" -> ") ? filePath.split(" -> ")[1] : filePath;
 
       if (seenPaths.has(actualPath)) continue;
       seenPaths.add(actualPath);
@@ -668,11 +549,7 @@ export async function getChangedFiles(
 
     // Fetch the base branch into the bare repo to ensure we have up-to-date refs
     try {
-      await execGit(
-        ["-C", bareRepoPath, "fetch", "origin", baseBranch],
-        config.workdir,
-        config,
-      );
+      await execGit(["-C", bareRepoPath, "fetch", "origin", baseBranch], config.workdir, config);
     } catch {
       // Fetch may fail if offline or no remote access - continue anyway
     }
@@ -753,10 +630,7 @@ export async function getChangedFiles(
     }
   } catch (error) {
     // Log the error for debugging but continue
-    console.warn(
-      `[git] Failed to get committed changes for ${worktreePath}:`,
-      error,
-    );
+    console.warn(`[git] Failed to get committed changes for ${worktreePath}:`, error);
   }
 
   // Sort files alphabetically
@@ -770,10 +644,7 @@ export async function getChangedFiles(
  * Stage all changes and create a commit.
  * Used when agent signals READY_TO_PR but has uncommitted changes.
  */
-export async function commitAllChanges(
-  worktreePath: string,
-  message: string,
-): Promise<void> {
+export async function commitAllChanges(worktreePath: string, message: string): Promise<void> {
   // Stage all changes
   await withTimeout(
     execFile("git", ["-C", worktreePath, "add", "-A"], {
@@ -803,11 +674,7 @@ export async function getFileDiff(
 
   // Fetch the base branch into the bare repo to ensure we have up-to-date refs
   try {
-    await execGit(
-      ["-C", bareRepoPath, "fetch", "origin", baseBranch],
-      config.workdir,
-      config,
-    );
+    await execGit(["-C", bareRepoPath, "fetch", "origin", baseBranch], config.workdir, config);
   } catch {
     // Fetch may fail if offline or no remote access - continue anyway
   }
@@ -847,11 +714,7 @@ export async function getFileDiff(
       }
 
       // File has uncommitted changes - show diff against HEAD
-      const { stdout } = await execGit(
-        ["-C", worktreePath, "diff", "HEAD", "--", filePath],
-        config.workdir,
-        config,
-      );
+      const { stdout } = await execGit(["-C", worktreePath, "diff", "HEAD", "--", filePath], config.workdir, config);
 
       if (stdout.trim()) {
         return stdout;

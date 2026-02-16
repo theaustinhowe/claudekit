@@ -1,9 +1,9 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@devkit/ui/components/button";
 import { Input } from "@devkit/ui/components/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Plus, Trash2 } from "lucide-react";
 
 interface KeyValueEditorProps {
   value: Record<string, string>;

@@ -22,12 +22,8 @@ vi.mock("../ws/handler.js", () => ({
 }));
 
 vi.mock("./github.js", () => ({
-  createIssueCommentForRepo: vi.fn(() =>
-    Promise.resolve({ id: 123, url: "https://github.com/test/comment" }),
-  ),
-  getRepoConfigById: vi.fn(() =>
-    Promise.resolve({ owner: "test-owner", name: "test-repo" }),
-  ),
+  createIssueCommentForRepo: vi.fn(() => Promise.resolve({ id: 123, url: "https://github.com/test/comment" })),
+  getRepoConfigById: vi.fn(() => Promise.resolve({ owner: "test-owner", name: "test-repo" })),
 }));
 
 vi.mock("./process-manager.js", () => ({
@@ -54,9 +50,7 @@ describe("OpenAI Codex Agent", () => {
 
   describe("getCodexAvailabilityError", () => {
     it("should return null when fully configured", async () => {
-      const { getCodexAvailabilityError } = await import(
-        "./openai-codex-agent.js"
-      );
+      const { getCodexAvailabilityError } = await import("./openai-codex-agent.js");
 
       const error = getCodexAvailabilityError();
       expect(error).toBeNull();
@@ -66,9 +60,7 @@ describe("OpenAI Codex Agent", () => {
       process.env.ENABLE_OPENAI_CODEX = undefined;
 
       vi.resetModules();
-      const { getCodexAvailabilityError, CODEX_ERRORS } = await import(
-        "./openai-codex-agent.js"
-      );
+      const { getCodexAvailabilityError, CODEX_ERRORS } = await import("./openai-codex-agent.js");
 
       const error = getCodexAvailabilityError();
       expect(error).toBe(CODEX_ERRORS.NOT_ENABLED);
@@ -78,9 +70,7 @@ describe("OpenAI Codex Agent", () => {
       process.env.OPENAI_API_KEY = undefined;
 
       vi.resetModules();
-      const { getCodexAvailabilityError, CODEX_ERRORS } = await import(
-        "./openai-codex-agent.js"
-      );
+      const { getCodexAvailabilityError, CODEX_ERRORS } = await import("./openai-codex-agent.js");
 
       const error = getCodexAvailabilityError();
       expect(error).toBe(CODEX_ERRORS.NO_API_KEY);
@@ -89,9 +79,7 @@ describe("OpenAI Codex Agent", () => {
 
   describe("isRunning and getActiveRunCount", () => {
     it("should report no active runs initially", async () => {
-      const { isRunning, getActiveRunCount } = await import(
-        "./openai-codex-agent.js"
-      );
+      const { isRunning, getActiveRunCount } = await import("./openai-codex-agent.js");
 
       expect(isRunning("any-job")).toBe(false);
       expect(getActiveRunCount()).toBe(0);
@@ -110,9 +98,7 @@ describe("OpenAI Codex Agent", () => {
   describe("injectCodexMessage", () => {
     it("should store pending injection when not running", async () => {
       // Mock queryOne to return a job
-      const { queryOne, execute: executeMock } = await import(
-        "../db/helpers.js"
-      );
+      const { queryOne, execute: executeMock } = await import("../db/helpers.js");
       vi.mocked(queryOne).mockResolvedValue({
         id: "test-job",
         status: "running",
@@ -122,11 +108,7 @@ describe("OpenAI Codex Agent", () => {
 
       const { injectCodexMessage } = await import("./openai-codex-agent.js");
 
-      const result = await injectCodexMessage(
-        "test-job",
-        "Please also add tests",
-        "queued",
-      );
+      const result = await injectCodexMessage("test-job", "Please also add tests", "queued");
       expect(result.success).toBe(true);
     });
   });
@@ -146,12 +128,7 @@ describe("OpenAI Client Injection", () => {
   });
 
   it("should allow setting custom client", async () => {
-    const {
-      setOpenAIClient,
-      getOpenAIClient,
-      resetOpenAIClient,
-      MockOpenAIClient,
-    } = await import("./openai/index.js");
+    const { setOpenAIClient, getOpenAIClient, resetOpenAIClient, MockOpenAIClient } = await import("./openai/index.js");
 
     const mockClient = new MockOpenAIClient();
     mockClient.setResponses([{ content: "test response" }]);
@@ -171,9 +148,7 @@ describe("OpenAI Client Injection", () => {
   });
 
   it("should create real client by default", async () => {
-    const { getOpenAIClient, resetOpenAIClient } = await import(
-      "./openai/index.js"
-    );
+    const { getOpenAIClient, resetOpenAIClient } = await import("./openai/index.js");
 
     resetOpenAIClient();
     const client = getOpenAIClient();

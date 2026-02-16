@@ -1,14 +1,14 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
+import { Progress } from "@devkit/ui/components/progress";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { ExternalLink, Square } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { SessionBadge } from "@/components/sessions/session-badge";
 import { useSessionContext } from "@/components/sessions/session-context";
-import { Button } from "@devkit/ui/components/button";
-import { Progress } from "@devkit/ui/components/progress";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { SESSION_TYPE_LABELS } from "@/lib/constants";
 import type { SessionRow } from "@/lib/types";
 import { cn, formatElapsed } from "@/lib/utils";

@@ -1,9 +1,9 @@
 "use client";
 
-import { Activity } from "lucide-react";
-import { useSessionContext } from "@/components/sessions/session-context";
 import { Button } from "@devkit/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Activity } from "lucide-react";
+import { useSessionContext } from "@/components/sessions/session-context";
 
 export function SessionIndicator() {
   const { activeCount, setPanelOpen } = useSessionContext();

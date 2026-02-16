@@ -1,4 +1,4 @@
-import { createLogger, createServiceLogger as _createServiceLogger } from "@devkit/logger";
+import { createServiceLogger as _createServiceLogger, createLogger } from "@devkit/logger";
 
 function getOrCreateLogger() {
   const key = "__devkit_gogo_web_logger__";

@@ -103,11 +103,7 @@ export interface AgentRunner {
   /**
    * Start a new agent run
    */
-  start(
-    context: AgentJobContext,
-    config: AgentConfig,
-    callbacks: AgentCallbacks,
-  ): Promise<AgentStartResult>;
+  start(context: AgentJobContext, config: AgentConfig, callbacks: AgentCallbacks): Promise<AgentStartResult>;
 
   /**
    * Resume a paused agent run (optional - check capabilities.canResume)
@@ -123,11 +119,7 @@ export interface AgentRunner {
   /**
    * Inject a message into a running agent (optional - check capabilities.canInject)
    */
-  inject?(
-    jobId: string,
-    message: string,
-    mode: InjectMode,
-  ): Promise<AgentStartResult>;
+  inject?(jobId: string, message: string, mode: InjectMode): Promise<AgentStartResult>;
 
   /**
    * Stop a running agent

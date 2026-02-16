@@ -19,9 +19,7 @@ vi.mock("../db/helpers.js", () => ({
   buildWhere: vi.fn(),
   buildInClause: vi.fn(),
   checkpoint: vi.fn(),
-  parseJsonField: vi.fn((v: unknown, fallback: unknown) =>
-    v === null || v === undefined ? fallback : v,
-  ),
+  parseJsonField: vi.fn((v: unknown, fallback: unknown) => (v === null || v === undefined ? fallback : v)),
 }));
 
 vi.mock("../ws/handler.js", () => ({
@@ -220,9 +218,7 @@ describe("agent-executor", () => {
       const result = await startAgent("job-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain(
-        "must be in 'running' or 'planning' state",
-      );
+      expect(result.error).toContain("must be in 'running' or 'planning' state");
     });
 
     it("should return error if job not found", async () => {
@@ -302,9 +298,7 @@ describe("agent-executor", () => {
       const result = await resumeAgent("job-1", "Test", "claude-code");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain(
-        "Can only resume from paused or needs_info state",
-      );
+      expect(result.error).toContain("Can only resume from paused or needs_info state");
     });
 
     it("should reject resume if no session ID exists", async () => {

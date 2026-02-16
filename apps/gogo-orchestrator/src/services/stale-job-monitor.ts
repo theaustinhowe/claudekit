@@ -41,11 +41,7 @@ export async function checkStaleJobs(): Promise<{
   let warned = 0;
 
   const conn = getConn();
-  const runningJobs = await queryAll<DbJob>(
-    conn,
-    "SELECT * FROM jobs WHERE status = ?",
-    ["running"],
-  );
+  const runningJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ?", ["running"]);
 
   const now = Date.now();
 
@@ -83,9 +79,7 @@ export async function checkStaleJobs(): Promise<{
         [job.id, "system"],
       );
 
-      const lastSystemLogTime = recentWarning?.created_at
-        ? new Date(recentWarning.created_at).getTime()
-        : 0;
+      const lastSystemLogTime = recentWarning?.created_at ? new Date(recentWarning.created_at).getTime() : 0;
 
       if (now - lastSystemLogTime > STALE_THRESHOLD_MS) {
         const sequence = Date.now();
@@ -115,11 +109,7 @@ export async function checkStaleJobs(): Promise<{
         ["paused", reason, pauseNow, job.id],
       );
 
-      const updated = await queryOne<DbJob>(
-        conn,
-        "SELECT * FROM jobs WHERE id = ?",
-        [job.id],
-      );
+      const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [job.id]);
 
       if (updated) {
         await execute(

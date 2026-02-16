@@ -66,18 +66,8 @@ vi.mock("../utils/job-logging.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "../db/helpers.js";
-import {
-  commitAllChanges,
-  getCommitLog,
-  hasCommits,
-  isWorkingTreeClean,
-  pushBranch,
-} from "./git.js";
-import {
-  createIssueCommentForRepo,
-  createPullRequestForRepo,
-  findExistingPrForRepo,
-} from "./github/index.js";
+import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch } from "./git.js";
+import { createIssueCommentForRepo, createPullRequestForRepo, findExistingPrForRepo } from "./github/index.js";
 import { pollReadyToPrJobs, processReadyToPr } from "./pr-flow.js";
 import { applyTransitionAtomic } from "./state-machine.js";
 import { getMaxTestRetries, runTests } from "./test-runner.js";
@@ -143,9 +133,7 @@ describe("pr-flow", () => {
     });
 
     it("should return error when job has no worktree path", async () => {
-      vi.mocked(queryOne).mockResolvedValueOnce(
-        makeJob({ worktree_path: null }),
-      );
+      vi.mocked(queryOne).mockResolvedValueOnce(makeJob({ worktree_path: null }));
 
       const result = await processReadyToPr("job-1");
       expect(result.success).toBe(false);
@@ -255,9 +243,7 @@ describe("pr-flow", () => {
 
       expect(result.success).toBe(true);
       expect(result.prNumber).toBe(99);
-      expect(result.prUrl).toBe(
-        "https://github.com/testowner/testrepo/pull/99",
-      );
+      expect(result.prUrl).toBe("https://github.com/testowner/testrepo/pull/99");
       // Should transition to pr_opened with existing PR
       expect(applyTransitionAtomic).toHaveBeenCalledWith(
         "job-1",
@@ -287,9 +273,7 @@ describe("pr-flow", () => {
       vi.mocked(findExistingPrForRepo).mockResolvedValue(null);
       vi.mocked(isWorkingTreeClean).mockResolvedValue(true);
       vi.mocked(hasCommits).mockResolvedValue(true);
-      vi.mocked(getCommitLog).mockResolvedValue(
-        "abc123 Fix the bug\ndef456 Add tests",
-      );
+      vi.mocked(getCommitLog).mockResolvedValue("abc123 Fix the bug\ndef456 Add tests");
       // updateJob: queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
       vi.mocked(pushBranch).mockResolvedValue(undefined);
@@ -314,11 +298,7 @@ describe("pr-flow", () => {
           title: "Fix the bug",
         }),
       );
-      expect(createIssueCommentForRepo).toHaveBeenCalledWith(
-        "repo-1",
-        42,
-        expect.stringContaining("PR Created"),
-      );
+      expect(createIssueCommentForRepo).toHaveBeenCalledWith("repo-1", 42, expect.stringContaining("PR Created"));
     });
 
     it("should auto-commit when working tree is dirty", async () => {
@@ -354,10 +334,7 @@ describe("pr-flow", () => {
       const result = await processReadyToPr("job-1");
 
       expect(result.success).toBe(true);
-      expect(commitAllChanges).toHaveBeenCalledWith(
-        "/tmp/worktrees/issue-42",
-        expect.stringContaining("auto-commit"),
-      );
+      expect(commitAllChanges).toHaveBeenCalledWith("/tmp/worktrees/issue-42", expect.stringContaining("auto-commit"));
       // Since we auto-committed, hasCommits should NOT be called
       expect(hasCommits).not.toHaveBeenCalled();
     });
@@ -416,9 +393,7 @@ describe("pr-flow", () => {
       vi.mocked(getCommitLog).mockResolvedValue("commit");
       // updateJob: queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
-      vi.mocked(pushBranch).mockRejectedValue(
-        new Error("Authentication failed"),
-      );
+      vi.mocked(pushBranch).mockRejectedValue(new Error("Authentication failed"));
 
       const result = await processReadyToPr("job-1");
 

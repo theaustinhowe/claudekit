@@ -16,12 +16,7 @@ interface LogState {
   sequence: number;
 }
 
-async function emitLog(
-  jobId: string,
-  stream: LogStream,
-  content: string,
-  state: LogState,
-): Promise<void> {
+async function emitLog(jobId: string, stream: LogStream, content: string, state: LogState): Promise<void> {
   const sequence = state.sequence++;
   const conn = getConn();
 
@@ -36,11 +31,7 @@ async function emitLog(
 
 async function getTestCommands(): Promise<string[]> {
   const conn = getConn();
-  const setting = await queryOne<DbSetting>(
-    conn,
-    "SELECT * FROM settings WHERE key = ?",
-    ["testCommands"],
-  );
+  const setting = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["testCommands"]);
 
   if (!setting) {
     return ["npm test"];
@@ -60,11 +51,7 @@ async function getTestCommands(): Promise<string[]> {
 
 async function getMaxTestRetries(): Promise<number> {
   const conn = getConn();
-  const setting = await queryOne<DbSetting>(
-    conn,
-    "SELECT * FROM settings WHERE key = ?",
-    ["maxTestRetries"],
-  );
+  const setting = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["maxTestRetries"]);
 
   if (!setting) {
     return 3;
@@ -78,10 +65,7 @@ async function getMaxTestRetries(): Promise<number> {
   return Math.max(1, Math.floor(value));
 }
 
-function runCommand(
-  command: string,
-  cwd: string,
-): Promise<{ success: boolean; output: string; exitCode: number }> {
+function runCommand(command: string, cwd: string): Promise<{ success: boolean; output: string; exitCode: number }> {
   return new Promise((resolve) => {
     const output: string[] = [];
     const [cmd, ...args] = command.split(/\s+/);
@@ -137,12 +121,7 @@ export async function runTests(
   if (customTestCommand !== undefined) {
     // If custom command is null or empty string, skip tests
     if (!customTestCommand || customTestCommand.trim() === "") {
-      await emitLog(
-        jobId,
-        "system",
-        "⏭️ No test command configured, skipping tests...",
-        logState,
-      );
+      await emitLog(jobId, "system", "⏭️ No test command configured, skipping tests...", logState);
       return {
         success: true,
         output: "Tests skipped - no test command configured",
@@ -177,12 +156,7 @@ export async function runTests(
       const lines = result.output.split("\n");
       for (const line of lines) {
         if (line.trim()) {
-          await emitLog(
-            jobId,
-            result.success ? "stdout" : "stderr",
-            line,
-            logState,
-          );
+          await emitLog(jobId, result.success ? "stdout" : "stderr", line, logState);
         }
       }
     }
@@ -190,12 +164,7 @@ export async function runTests(
     if (result.success) {
       await emitLog(jobId, "system", `✓ ${command} passed`, logState);
     } else {
-      await emitLog(
-        jobId,
-        "stderr",
-        `✗ ${command} failed (exit code: ${result.exitCode})`,
-        logState,
-      );
+      await emitLog(jobId, "stderr", `✗ ${command} failed (exit code: ${result.exitCode})`, logState);
       overallSuccess = false;
       break; // Stop on first failure
     }

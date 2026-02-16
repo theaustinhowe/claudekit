@@ -45,9 +45,7 @@ describe("ws/handler", () => {
 
       mod.setupWebSocket(socket as never);
 
-      expect(socket.send).toHaveBeenCalledWith(
-        JSON.stringify({ type: "connection:established", payload: {} }),
-      );
+      expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: "connection:established", payload: {} }));
     });
 
     it("should register message and close listeners", async () => {
@@ -62,9 +60,7 @@ describe("ws/handler", () => {
 
     it("should handle subscribe messages", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
       mod.setupWebSocket(socket as never);
 
@@ -88,16 +84,12 @@ describe("ws/handler", () => {
       );
 
       // Should send subscribed confirmation
-      expect(socket.send).toHaveBeenCalledWith(
-        JSON.stringify({ type: "subscribed", payload: { jobId: "job-123" } }),
-      );
+      expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: "subscribed", payload: { jobId: "job-123" } }));
     });
 
     it("should handle unsubscribe messages", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
       mod.setupWebSocket(socket as never);
 
@@ -125,9 +117,7 @@ describe("ws/handler", () => {
 
     it("should handle ping messages with pong", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
       mod.setupWebSocket(socket as never);
 
@@ -138,16 +128,12 @@ describe("ws/handler", () => {
 
       socket._trigger("message", Buffer.from("{}"));
 
-      expect(socket.send).toHaveBeenCalledWith(
-        JSON.stringify({ type: "pong", payload: {} }),
-      );
+      expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: "pong", payload: {} }));
     });
 
     it("should handle subscribe_repo messages", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
       mod.setupWebSocket(socket as never);
 
@@ -168,9 +154,7 @@ describe("ws/handler", () => {
 
     it("should handle unsubscribe_repo messages", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
       mod.setupWebSocket(socket as never);
 
@@ -194,9 +178,7 @@ describe("ws/handler", () => {
 
     it("should send error for invalid message format", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
       mod.setupWebSocket(socket as never);
 
@@ -207,9 +189,7 @@ describe("ws/handler", () => {
 
       socket._trigger("message", Buffer.from("{}"));
 
-      expect(socket.send).toHaveBeenCalledWith(
-        expect.stringContaining("Invalid message format"),
-      );
+      expect(socket.send).toHaveBeenCalledWith(expect.stringContaining("Invalid message format"));
     });
 
     it("should send error for unparseable message", async () => {
@@ -256,12 +236,8 @@ describe("ws/handler", () => {
 
       mod.broadcast({ type: "job:updated", payload: { id: "job-1" } });
 
-      expect(socket1.send).toHaveBeenCalledWith(
-        JSON.stringify({ type: "job:updated", payload: { id: "job-1" } }),
-      );
-      expect(socket2.send).toHaveBeenCalledWith(
-        JSON.stringify({ type: "job:updated", payload: { id: "job-1" } }),
-      );
+      expect(socket1.send).toHaveBeenCalledWith(JSON.stringify({ type: "job:updated", payload: { id: "job-1" } }));
+      expect(socket2.send).toHaveBeenCalledWith(JSON.stringify({ type: "job:updated", payload: { id: "job-1" } }));
     });
 
     it("should skip closed sockets", async () => {
@@ -286,9 +262,7 @@ describe("ws/handler", () => {
   describe("broadcastToJob", () => {
     it("should only send to clients subscribed to the job", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
 
       const socket1 = createMockSocket();
       const socket2 = createMockSocket();
@@ -319,9 +293,7 @@ describe("ws/handler", () => {
   describe("sendLogToSubscribers", () => {
     it("should send log entries to subscribed clients", async () => {
       const mod = await freshImport();
-      const { WsClientMessageSchema: schema } = await import(
-        "../schemas/index.js"
-      );
+      const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
 
       const socket = createMockSocket();
       mod.setupWebSocket(socket as never);

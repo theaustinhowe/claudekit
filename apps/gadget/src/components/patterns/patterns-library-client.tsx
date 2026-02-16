@@ -1,5 +1,13 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent } from "@devkit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { Input } from "@devkit/ui/components/input";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   Bot,
   ChevronDown,
@@ -26,14 +34,6 @@ import { toast } from "sonner";
 import { AddSourceDialog } from "@/components/concepts/add-source-dialog";
 import { ConceptSourcesPanel } from "@/components/concepts/concept-sources-panel";
 import { InstallConceptDialog } from "@/components/concepts/install-concept-dialog";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { Input } from "@devkit/ui/components/input";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { refreshAllSources } from "@/lib/actions/concept-sources";
 import { CONCEPT_TYPE_LABELS, CONCEPT_TYPE_SINGULAR, LIBRARY_REPO_ID } from "@/lib/constants";
 import type { ConceptSourceWithStats, ConceptWithRepo, Repo } from "@/lib/types";

@@ -37,12 +37,8 @@ describe("GitHub Client", () => {
     it("throws RepositoryNotFoundError when repository not found", async () => {
       vi.mocked(queryOne).mockResolvedValue(undefined);
 
-      await expect(getOctokitForRepo("nonexistent-id")).rejects.toThrow(
-        RepositoryNotFoundError,
-      );
-      await expect(getOctokitForRepo("nonexistent-id")).rejects.toThrow(
-        "Repository not found: nonexistent-id",
-      );
+      await expect(getOctokitForRepo("nonexistent-id")).rejects.toThrow(RepositoryNotFoundError);
+      await expect(getOctokitForRepo("nonexistent-id")).rejects.toThrow("Repository not found: nonexistent-id");
     });
 
     it("throws GitHubCredentialsError when token not configured", async () => {
@@ -53,9 +49,7 @@ describe("GitHub Client", () => {
         github_token: null,
       });
 
-      await expect(getOctokitForRepo("repo-1")).rejects.toThrow(
-        GitHubCredentialsError,
-      );
+      await expect(getOctokitForRepo("repo-1")).rejects.toThrow(GitHubCredentialsError);
       await expect(getOctokitForRepo("repo-1")).rejects.toThrow(
         "GitHub token not configured for repository: testowner/testrepo",
       );

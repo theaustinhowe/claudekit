@@ -103,7 +103,6 @@ export function LogViewerClient({ app, initialLogs }: LogViewerClientProps) {
     return result;
   }, [logs, filter, levelFilter]);
 
-  const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: filteredLogs.length,
     getScrollElement: () => containerRef.current,

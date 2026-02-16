@@ -1,5 +1,24 @@
 "use client";
 
+import { useSessionStream } from "@devkit/hooks";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@devkit/ui/components/alert-dialog";
+import { Button } from "@devkit/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@devkit/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   AlertCircle,
   Camera,
@@ -26,25 +45,6 @@ import { type ScaffoldStats, type ScaffoldStatus, ScaffoldTerminal } from "@/com
 import { UpgradeBanner } from "@/components/generator/upgrade-banner";
 import { UpgradeChatView } from "@/components/generator/upgrade-chat-view";
 import { UpgradeDialog } from "@/components/generator/upgrade-dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@devkit/ui/components/alert-dialog";
-import { Button } from "@devkit/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@devkit/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { useSessionStream } from "@devkit/hooks";
 import { createDesignMessage, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import type {
   DesignMessage,

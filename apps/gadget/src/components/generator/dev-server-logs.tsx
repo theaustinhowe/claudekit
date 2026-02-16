@@ -1,12 +1,12 @@
 "use client";
 
+import { useAutoScroll } from "@devkit/hooks";
+import { Button } from "@devkit/ui/components/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { ArrowDown, Check, ClipboardCopy } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AutoFixIndicator } from "@/components/generator/auto-fix-indicator";
-import { Button } from "@devkit/ui/components/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { useAutoScroll } from "@devkit/hooks";
 
 interface DevServerLogsProps {
   projectId: string;

@@ -1,12 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  type GitConfig,
-  getBareRepoPath,
-  getJobsDir,
-  getRepoDir,
-  getRepoSlug,
-} from "./git.js";
+import { type GitConfig, getBareRepoPath, getJobsDir, getRepoDir, getRepoSlug } from "./git.js";
 
 describe("git path helpers", () => {
   const baseConfig: GitConfig = {
@@ -71,9 +65,7 @@ describe("git path helpers", () => {
 
   describe("getBareRepoPath", () => {
     it("returns .repo under repo dir", () => {
-      expect(getBareRepoPath(baseConfig)).toBe(
-        "/path/to/workdir/my-org-my-repo/.repo",
-      );
+      expect(getBareRepoPath(baseConfig)).toBe("/path/to/workdir/my-org-my-repo/.repo");
     });
 
     it("is inside repo dir", () => {
@@ -85,9 +77,7 @@ describe("git path helpers", () => {
 
   describe("getJobsDir", () => {
     it("returns jobs under repo dir", () => {
-      expect(getJobsDir(baseConfig)).toBe(
-        "/path/to/workdir/my-org-my-repo/jobs",
-      );
+      expect(getJobsDir(baseConfig)).toBe("/path/to/workdir/my-org-my-repo/jobs");
     });
 
     it("is inside repo dir", () => {

@@ -183,9 +183,7 @@ describe("shutdown", () => {
     });
 
     it("should be idempotent - second call is a no-op", async () => {
-      const { registerShutdownHandlers, isShutdownInProgress } = await import(
-        "./shutdown.js"
-      );
+      const { registerShutdownHandlers, isShutdownInProgress } = await import("./shutdown.js");
       registerShutdownHandlers();
 
       const handler = (process.listeners("SIGTERM") as SignalHandler[]).pop();

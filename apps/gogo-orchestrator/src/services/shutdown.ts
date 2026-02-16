@@ -39,50 +39,34 @@ async function handleShutdown(): Promise<void> {
     const activeCount = runner.getActiveRunCount();
     if (activeCount === 0) continue;
 
-    log.info(
-      { activeCount, agent: runner.displayName },
-      "Stopping active agent runs",
-    );
+    log.info({ activeCount, agent: runner.displayName }, "Stopping active agent runs");
 
     // Get all running jobs and stop each one
-    const allJobs = await queryAll<{ id: string }>(
-      conn,
-      "SELECT id FROM jobs WHERE status = ?",
-      ["running"],
-    );
+    const allJobs = await queryAll<{ id: string }>(conn, "SELECT id FROM jobs WHERE status = ?", ["running"]);
 
     for (const job of allJobs) {
       if (!runner.isRunning(job.id)) continue;
       try {
         await runner.stop(job.id, true); // save session
-        log.info(
-          { jobId: job.id, agent: runner.displayName },
-          "Stopped agent run",
-        );
+        log.info({ jobId: job.id, agent: runner.displayName }, "Stopped agent run");
       } catch (error) {
-        log.error(
-          { jobId: job.id, agent: runner.displayName, err: error },
-          "Error stopping agent run",
-        );
+        log.error({ jobId: job.id, agent: runner.displayName, err: error }, "Error stopping agent run");
       }
     }
   }
 
   // 3. Transition RUNNING jobs to PAUSED (prevents zombie jobs if orchestrator never restarts)
   try {
-    const runningJobs = await queryAll<{ id: string }>(
-      conn,
-      "SELECT id FROM jobs WHERE status = ?",
-      ["running"],
-    );
+    const runningJobs = await queryAll<{ id: string }>(conn, "SELECT id FROM jobs WHERE status = ?", ["running"]);
 
     if (runningJobs.length > 0) {
       const now = new Date().toISOString();
-      await execute(
-        conn,
-        "UPDATE jobs SET status = ?, pause_reason = ?, updated_at = ? WHERE status = ?",
-        ["paused", "orchestrator shutdown", now, "running"],
-      );
+      await execute(conn, "UPDATE jobs SET status = ?, pause_reason = ?, updated_at = ? WHERE status = ?", [
+        "paused",
+        "orchestrator shutdown",
+        now,
+        "running",
+      ]);
 
       for (const job of runningJobs) {
         await execute(
@@ -100,10 +84,7 @@ async function handleShutdown(): Promise<void> {
         );
       }
 
-      log.info(
-        { count: runningJobs.length },
-        "Transitioned running jobs to paused",
-      );
+      log.info({ count: runningJobs.length }, "Transitioned running jobs to paused");
     }
   } catch (error) {
     log.error({ err: error }, "Failed to transition running jobs");

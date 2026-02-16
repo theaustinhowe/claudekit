@@ -1,10 +1,10 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Card, CardContent } from "@devkit/ui/components/card";
 import { ExternalLink, Monitor } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Badge } from "@devkit/ui/components/badge";
-import { Card, CardContent } from "@devkit/ui/components/card";
 import type { GeneratorProject, GeneratorProjectStatus } from "@/lib/types";
 import { timeAgo } from "@/lib/utils";
 

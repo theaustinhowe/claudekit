@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
 import { RotateCcw, Save, Upload, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@devkit/ui/components/button";
 import { saveClaudeSettingsJson, saveDefaultClaudeSettings } from "@/lib/actions/claude-config";
 
 interface SettingsRawEditorProps {

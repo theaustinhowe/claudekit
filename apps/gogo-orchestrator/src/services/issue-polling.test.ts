@@ -124,11 +124,7 @@ describe("issue-polling", () => {
 
       await pollForLabeledIssues();
 
-      expect(removeLabelFromIssue).toHaveBeenCalledWith(
-        "repo-1",
-        42,
-        "agent:run",
-      );
+      expect(removeLabelFromIssue).toHaveBeenCalledWith("repo-1", 42, "agent:run");
     });
 
     it("should NOT remove label when removeLabelAfterCreate is false", async () => {
@@ -162,10 +158,7 @@ describe("issue-polling", () => {
         .mockResolvedValueOnce(undefined) // issue 2 has no job
         .mockResolvedValueOnce({ id: "new-job" }); // createJobFromIssue fetch
 
-      vi.mocked(getIssuesWithLabel).mockResolvedValue([
-        issue1,
-        issue2,
-      ] as never);
+      vi.mocked(getIssuesWithLabel).mockResolvedValue([issue1, issue2] as never);
       vi.mocked(execute).mockResolvedValue(undefined);
 
       const result = await pollForLabeledIssues();

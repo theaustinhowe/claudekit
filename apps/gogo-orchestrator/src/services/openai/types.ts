@@ -57,7 +57,5 @@ export interface OpenAIClientInterface {
    * Send a streaming chat completion request
    * Yields events as they arrive
    */
-  chatStream(
-    params: Omit<OpenAIChatParams, "stream">,
-  ): AsyncIterable<OpenAIStreamEvent>;
+  chatStream(params: Omit<OpenAIChatParams, "stream">): AsyncIterable<OpenAIStreamEvent>;
 }

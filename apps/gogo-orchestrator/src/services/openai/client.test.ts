@@ -17,10 +17,7 @@ describe("MockOpenAIClient", () => {
 
     it("should return responses in sequence", async () => {
       const client = new MockOpenAIClient();
-      client.setResponses([
-        { content: "First response" },
-        { content: "Second response" },
-      ]);
+      client.setResponses([{ content: "First response" }, { content: "Second response" }]);
 
       const result1 = await client.chat({
         model: "gpt-4o",
@@ -40,9 +37,7 @@ describe("MockOpenAIClient", () => {
       client.setResponses([
         {
           content: "I'll read the file",
-          toolCalls: [
-            { name: "read_file", arguments: '{"path": "package.json"}' },
-          ],
+          toolCalls: [{ name: "read_file", arguments: '{"path": "package.json"}' }],
         },
       ]);
 

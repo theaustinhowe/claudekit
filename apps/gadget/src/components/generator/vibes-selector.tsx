@@ -1,8 +1,7 @@
 "use client";
 
-import { toast } from "sonner";
-
 import { Card } from "@devkit/ui/components/card";
+import { toast } from "sonner";
 import { DESIGN_VIBES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 

@@ -1,8 +1,5 @@
 "use client";
 
-import { Bot, Link2, Puzzle, Server, Sparkles, Terminal, Zap } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Checkbox } from "@devkit/ui/components/checkbox";
@@ -15,6 +12,9 @@ import {
   DialogTitle,
 } from "@devkit/ui/components/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
+import { Bot, Link2, Puzzle, Server, Sparkles, Terminal, Zap } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { installConcept, linkConcept } from "@/lib/actions/concepts";
 import { CONCEPT_TYPE_SINGULAR, LIBRARY_REPO_ID } from "@/lib/constants";
 import type { Concept, ConceptWithRepo, Repo } from "@/lib/types";

@@ -1,10 +1,10 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@devkit/ui/components/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import {
   ANALYTICS_OPTIONS,
   AUTH_OPTIONS,

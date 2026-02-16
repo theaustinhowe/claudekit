@@ -179,9 +179,7 @@ describe("repositories API", () => {
     it("should filter by both repository and status", () => {
       const repoId = "repo-123";
       const status = "pending";
-      const filtered = mockJobs.filter(
-        (j) => j.repositoryId === repoId && j.status === status,
-      );
+      const filtered = mockJobs.filter((j) => j.repositoryId === repoId && j.status === status);
 
       expect(filtered).toHaveLength(1);
       expect(filtered[0].id).toBe("job-1");

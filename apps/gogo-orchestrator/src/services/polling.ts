@@ -47,11 +47,7 @@ interface PollIntervalSetting {
 async function getPollIntervalMs(): Promise<number> {
   try {
     const conn = getConn();
-    const row = await queryOne<DbSetting>(
-      conn,
-      "SELECT * FROM settings WHERE key = ?",
-      ["poll_interval_ms"],
-    );
+    const row = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["poll_interval_ms"]);
 
     if (row) {
       const parsed = parseJsonField<PollIntervalSetting>(row.value, { ms: 0 });
@@ -68,9 +64,7 @@ async function getPollIntervalMs(): Promise<number> {
 /**
  * Update throttle state and log transitions
  */
-function updateThrottleState(
-  rateLimitInfo: ReturnType<typeof getAllRateLimitInfo>,
-): void {
+function updateThrottleState(rateLimitInfo: ReturnType<typeof getAllRateLimitInfo>): void {
   const resetAt = rateLimitInfo.lowestRemaining?.reset;
 
   let newState: ThrottleState;
@@ -92,29 +86,21 @@ function updateThrottleState(
 
   // Log state transitions (not every poll cycle)
   const stateChanged =
-    previousThrottleState.isThrottled !== newState.isThrottled ||
-    previousThrottleState.reason !== newState.reason;
+    previousThrottleState.isThrottled !== newState.isThrottled || previousThrottleState.reason !== newState.reason;
 
   if (stateChanged) {
     if (newState.isThrottled) {
       const msg = `Rate limit ${newState.reason} - throttling active. Resets at: ${resetAt?.toISOString() ?? "unknown"}`;
-      log.warn(
-        { state: newState.reason, resetAt: resetAt?.toISOString() },
-        msg,
-      );
+      log.warn({ state: newState.reason, resetAt: resetAt?.toISOString() }, msg);
       emitHealthEvent("rate_limit_transition", msg, {
         state: newState.reason,
         resetAt: resetAt?.toISOString(),
       });
     } else if (previousThrottleState.isThrottled) {
       log.info("Rate limit recovered - throttling deactivated");
-      emitHealthEvent(
-        "rate_limit_transition",
-        "Rate limit recovered - throttling deactivated",
-        {
-          state: "normal",
-        },
-      );
+      emitHealthEvent("rate_limit_transition", "Rate limit recovered - throttling deactivated", {
+        state: "normal",
+      });
     }
     previousThrottleState = { ...currentThrottleState };
   }
@@ -136,10 +122,7 @@ async function runPollCycle(): Promise<void> {
 
   if (rateLimitInfo.hasCritical) {
     const resetTime = rateLimitInfo.lowestRemaining?.reset;
-    log.warn(
-      { resetAt: resetTime?.toISOString() },
-      "Skipping poll cycle - GitHub rate limit critical",
-    );
+    log.warn({ resetAt: resetTime?.toISOString() }, "Skipping poll cycle - GitHub rate limit critical");
     return;
   }
 
@@ -189,10 +172,7 @@ export async function getEffectivePollInterval(): Promise<number> {
   // Slow down polling when rate limit is in warning state
   if (rateLimitInfo.hasWarning && !rateLimitInfo.hasCritical) {
     const slowedInterval = baseInterval * RATE_LIMIT_SLOWDOWN_MULTIPLIER;
-    log.info(
-      { interval: slowedInterval },
-      "Rate limit warning - slowing poll interval",
-    );
+    log.info({ interval: slowedInterval }, "Rate limit warning - slowing poll interval");
     return slowedInterval;
   }
 

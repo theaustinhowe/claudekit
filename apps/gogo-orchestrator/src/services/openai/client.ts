@@ -36,19 +36,16 @@ export class OpenAIClient implements OpenAIClientInterface {
 
     const choice = response.choices[0];
     const content = choice.message.content ?? "";
-    const toolCalls: OpenAIToolCall[] | undefined =
-      choice.message.tool_calls?.map((tc) => ({
-        id: tc.id,
-        name: tc.function.name,
-        arguments: tc.function.arguments,
-      }));
+    const toolCalls: OpenAIToolCall[] | undefined = choice.message.tool_calls?.map((tc) => ({
+      id: tc.id,
+      name: tc.function.name,
+      arguments: tc.function.arguments,
+    }));
 
     return { content, toolCalls };
   }
 
-  async *chatStream(
-    params: Omit<OpenAIChatParams, "stream">,
-  ): AsyncIterable<OpenAIStreamEvent> {
+  async *chatStream(params: Omit<OpenAIChatParams, "stream">): AsyncIterable<OpenAIStreamEvent> {
     const stream = await this.client.chat.completions.create({
       model: params.model,
       messages: params.messages,
@@ -64,10 +61,7 @@ export class OpenAIClient implements OpenAIClientInterface {
     });
 
     // Track partial tool calls by index
-    const toolCallsInProgress = new Map<
-      number,
-      { id: string; name: string; arguments: string }
-    >();
+    const toolCallsInProgress = new Map<number, { id: string; name: string; arguments: string }>();
 
     try {
       for await (const chunk of stream) {
@@ -100,8 +94,7 @@ export class OpenAIClient implements OpenAIClientInterface {
               if (existing) {
                 if (tc.id) existing.id = tc.id;
                 if (tc.function?.name) existing.name = tc.function.name;
-                if (tc.function?.arguments)
-                  existing.arguments += tc.function.arguments;
+                if (tc.function?.arguments) existing.arguments += tc.function.arguments;
               }
             }
           }

@@ -1,22 +1,5 @@
 "use client";
 
-import {
-  AlertCircle,
-  ArrowRight,
-  ArrowUpCircle,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  ExternalLink,
-  Hammer,
-  Loader2,
-  RefreshCw,
-  Settings2,
-  Terminal,
-  XCircle,
-} from "lucide-react";
-import { motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
@@ -34,6 +17,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/p
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Skeleton } from "@devkit/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import {
+  AlertCircle,
+  ArrowRight,
+  ArrowUpCircle,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ExternalLink,
+  Hammer,
+  Loader2,
+  RefreshCw,
+  Settings2,
+  Terminal,
+  XCircle,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { setToolboxToolIds } from "@/lib/actions/toolbox";
 import { DEFAULT_TOOLS, TOOL_CATEGORY_LABELS, type ToolDefinition } from "@/lib/constants/tools";
 import type { ToolCategory, ToolCheckResult } from "@/lib/types";

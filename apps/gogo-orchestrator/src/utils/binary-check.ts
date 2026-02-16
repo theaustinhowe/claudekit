@@ -44,8 +44,7 @@ const BINARIES: BinaryInfo[] = [
     versionFlag: "--version",
     required: true,
     description: "Version control (required for worktrees)",
-    installHint:
-      "Install via: brew install git (macOS) | apt install git (Linux) | https://git-scm.com",
+    installHint: "Install via: brew install git (macOS) | apt install git (Linux) | https://git-scm.com",
   },
   {
     name: "node",
@@ -53,8 +52,7 @@ const BINARIES: BinaryInfo[] = [
     versionFlag: "--version",
     required: true,
     description: "JavaScript runtime",
-    installHint:
-      "Install via: https://nodejs.org or nvm (https://github.com/nvm-sh/nvm)",
+    installHint: "Install via: https://nodejs.org or nvm (https://github.com/nvm-sh/nvm)",
   },
   {
     name: "claude",
@@ -102,19 +100,13 @@ async function checkBinary(info: BinaryInfo): Promise<BinaryCheckResult> {
     }
 
     // Get version
-    const { stdout, stderr } = await execFile(
-      info.command,
-      [info.versionFlag],
-      {
-        timeout: 5000,
-      },
-    );
+    const { stdout, stderr } = await execFile(info.command, [info.versionFlag], {
+      timeout: 5000,
+    });
     const output = stdout || stderr;
     // Extract version number from output (handles various formats)
     const versionMatch = output.match(/\d+\.\d+(\.\d+)?/);
-    result.version = versionMatch
-      ? versionMatch[0]
-      : output.trim().slice(0, 50);
+    result.version = versionMatch ? versionMatch[0] : output.trim().slice(0, 50);
     result.found = true;
   } catch (error) {
     result.error = error instanceof Error ? error.message : "Unknown error";
@@ -129,12 +121,8 @@ async function checkBinary(info: BinaryInfo): Promise<BinaryCheckResult> {
 export async function checkBinaries(): Promise<ValidationResult> {
   const results = await Promise.all(BINARIES.map(checkBinary));
 
-  const missingRequired = results.filter(
-    (r, i) => !r.found && BINARIES[i].required,
-  );
-  const missingOptional = results.filter(
-    (r, i) => !r.found && !BINARIES[i].required,
-  );
+  const missingRequired = results.filter((r, i) => !r.found && BINARIES[i].required);
+  const missingOptional = results.filter((r, i) => !r.found && !BINARIES[i].required);
 
   return {
     allRequiredFound: missingRequired.length === 0,
@@ -156,9 +144,7 @@ export function formatValidationResults(validation: ValidationResult): string {
   for (let i = 0; i < validation.results.length; i++) {
     const result = validation.results[i];
     const info = BINARIES[i];
-    const status = result.found
-      ? `✓ ${result.version}`
-      : `✗ missing${info.required ? " (REQUIRED)" : " (optional)"}`;
+    const status = result.found ? `✓ ${result.version}` : `✗ missing${info.required ? " (REQUIRED)" : " (optional)"}`;
 
     lines.push(`  ${info.name.padEnd(10)} ${status}`);
     if (!result.found) {
@@ -170,9 +156,7 @@ export function formatValidationResults(validation: ValidationResult): string {
 
   if (!validation.allRequiredFound) {
     lines.push("");
-    lines.push(
-      "ERROR: Required binaries are missing. Please install them and restart.",
-    );
+    lines.push("ERROR: Required binaries are missing. Please install them and restart.");
   }
 
   return lines.join("\n");

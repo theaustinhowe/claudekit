@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, Loader2, Zap } from "lucide-react";
 import { Button } from "@devkit/ui/components/button";
 import { Progress } from "@devkit/ui/components/progress";
+import { CheckCircle2, Loader2, Zap } from "lucide-react";
 import type { UpgradeTask } from "@/lib/types";
 
 interface UpgradeBannerProps {

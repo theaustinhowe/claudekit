@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { useAutoScroll } from "@devkit/hooks";
+import { useCallback, useState } from "react";
 import type { LogEntry } from "@/lib/hooks/use-session-stream";
 
 interface SessionTerminalProps {

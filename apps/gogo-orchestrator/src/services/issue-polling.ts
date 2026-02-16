@@ -2,30 +2,20 @@ import { execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";
-import {
-  type GitHubIssue,
-  getIssuesWithLabel,
-  removeLabelFromIssue,
-} from "./github/index.js";
+import { type GitHubIssue, getIssuesWithLabel, removeLabelFromIssue } from "./github/index.js";
 
 /**
  * Get all active repositories that have auto-create enabled
  */
 async function getActiveRepositories(): Promise<DbRepository[]> {
   const conn = getConn();
-  return queryAll<DbRepository>(
-    conn,
-    "SELECT * FROM repositories WHERE is_active = true AND auto_create_jobs = true",
-  );
+  return queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true AND auto_create_jobs = true");
 }
 
 /**
  * Check if a job already exists for an issue
  */
-async function jobExistsForIssue(
-  repositoryId: string,
-  issueNumber: number,
-): Promise<boolean> {
+async function jobExistsForIssue(repositoryId: string, issueNumber: number): Promise<boolean> {
   const conn = getConn();
   const existing = await queryOne<{ id: string }>(
     conn,
@@ -39,26 +29,14 @@ async function jobExistsForIssue(
 /**
  * Create a job from a GitHub issue
  */
-async function createJobFromIssue(
-  repositoryId: string,
-  issue: GitHubIssue,
-): Promise<void> {
+async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Promise<void> {
   const conn = getConn();
   const now = new Date().toISOString();
 
   await execute(
     conn,
     "INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, status, created_at, updated_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?)",
-    [
-      repositoryId,
-      issue.number,
-      issue.title,
-      issue.html_url,
-      issue.body,
-      "queued",
-      now,
-      now,
-    ],
+    [repositoryId, issue.number, issue.title, issue.html_url, issue.body, "queued", now, now],
   );
 
   // Fetch the newly created job
@@ -74,22 +52,13 @@ async function createJobFromIssue(
   await execute(
     conn,
     "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-    [
-      newJob.id,
-      "state_change",
-      null,
-      "queued",
-      "Job auto-created from labeled issue",
-      now,
-    ],
+    [newJob.id, "state_change", null, "queued", "Job auto-created from labeled issue", now],
   );
 
   // Broadcast job created
   broadcast({ type: "job:created", payload: newJob });
 
-  console.log(
-    `[issue-polling] Created job for issue #${issue.number}: ${issue.title}`,
-  );
+  console.log(`[issue-polling] Created job for issue #${issue.number}: ${issue.title}`);
 }
 
 /**
@@ -125,9 +94,7 @@ export async function pollForLabeledIssues(): Promise<{
   }
 
   if (totalCreated > 0) {
-    console.log(
-      `[issue-polling] Created ${totalCreated} new jobs from ${totalChecked} labeled issues`,
-    );
+    console.log(`[issue-polling] Created ${totalCreated} new jobs from ${totalChecked} labeled issues`);
   }
 
   return { checked: totalChecked, created: totalCreated };

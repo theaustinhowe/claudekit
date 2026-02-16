@@ -40,15 +40,13 @@ export const readFileTool: OpenAITool = {
   type: "function",
   function: {
     name: "read_file",
-    description:
-      "Read the contents of a file. Path is relative to the working directory.",
+    description: "Read the contents of a file. Path is relative to the working directory.",
     parameters: {
       type: "object",
       properties: {
         path: {
           type: "string",
-          description:
-            "Path to the file to read (relative to working directory)",
+          description: "Path to the file to read (relative to working directory)",
         },
       },
       required: ["path"],
@@ -70,8 +68,7 @@ export const writeFileTool: OpenAITool = {
       properties: {
         path: {
           type: "string",
-          description:
-            "Path to the file to write (relative to working directory)",
+          description: "Path to the file to write (relative to working directory)",
         },
         content: {
           type: "string",
@@ -97,8 +94,7 @@ export const listDirectoryTool: OpenAITool = {
       properties: {
         path: {
           type: "string",
-          description:
-            "Path to the directory to list (relative to working directory). Use '.' for current directory.",
+          description: "Path to the directory to list (relative to working directory). Use '.' for current directory.",
         },
       },
       required: ["path"],
@@ -137,8 +133,7 @@ export const signalNeedsInfoTool: OpenAITool = {
       properties: {
         question: {
           type: "string",
-          description:
-            "The question to ask the user. Be specific about what information you need.",
+          description: "The question to ask the user. Be specific about what information you need.",
         },
       },
       required: ["question"],
@@ -150,14 +145,7 @@ export const signalNeedsInfoTool: OpenAITool = {
  * Get all tools as an array
  */
 export function getAllTools(): OpenAITool[] {
-  return [
-    shellTool,
-    readFileTool,
-    writeFileTool,
-    listDirectoryTool,
-    signalReadyToPrTool,
-    signalNeedsInfoTool,
-  ];
+  return [shellTool, readFileTool, writeFileTool, listDirectoryTool, signalReadyToPrTool, signalNeedsInfoTool];
 }
 
 /**
@@ -233,11 +221,7 @@ async function readFile(filePath: string, cwd: string): Promise<ToolResult> {
 /**
  * Write a file
  */
-async function writeFile(
-  filePath: string,
-  content: string,
-  cwd: string,
-): Promise<ToolResult> {
+async function writeFile(filePath: string, content: string, cwd: string): Promise<ToolResult> {
   try {
     const fullPath = path.resolve(cwd, filePath);
 
@@ -265,10 +249,7 @@ async function writeFile(
 /**
  * List a directory
  */
-async function listDirectory(
-  dirPath: string,
-  cwd: string,
-): Promise<ToolResult> {
+async function listDirectory(dirPath: string, cwd: string): Promise<ToolResult> {
   try {
     const fullPath = path.resolve(cwd, dirPath);
 
@@ -313,11 +294,7 @@ export async function executeTool(
       return readFile(args.path as string, context.cwd);
 
     case "write_file":
-      return writeFile(
-        args.path as string,
-        args.content as string,
-        context.cwd,
-      );
+      return writeFile(args.path as string, args.content as string, context.cwd);
 
     case "list_directory":
       return listDirectory(args.path as string, context.cwd);

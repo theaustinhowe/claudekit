@@ -1,14 +1,5 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Folder, Layers, Loader2, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
-import { DirectoryPicker } from "@/components/directory-picker";
-import { ColorSchemePicker } from "@/components/generator/color-scheme-picker";
-import { FeaturesInput } from "@/components/generator/features-input";
-import { InspirationInput } from "@/components/generator/inspiration-input";
-import { VibesSelector } from "@/components/generator/vibes-selector";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
@@ -18,6 +9,15 @@ import { Label } from "@devkit/ui/components/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
 import { Switch } from "@devkit/ui/components/switch";
 import { Textarea } from "@devkit/ui/components/textarea";
+import { ChevronDown, ChevronRight, Folder, Layers, Loader2, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { DirectoryPicker } from "@/components/directory-picker";
+import { ColorSchemePicker } from "@/components/generator/color-scheme-picker";
+import { FeaturesInput } from "@/components/generator/features-input";
+import { InspirationInput } from "@/components/generator/inspiration-input";
+import { VibesSelector } from "@/components/generator/vibes-selector";
 import { createGeneratorProject } from "@/lib/actions/generator-projects";
 import {
   ANALYTICS_OPTIONS,

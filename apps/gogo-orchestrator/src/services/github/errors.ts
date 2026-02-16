@@ -11,9 +11,7 @@ export class RepositoryNotFoundError extends Error {
 
 export class GitHubCredentialsError extends Error {
   constructor(_repositoryId: string, owner: string, name: string) {
-    super(
-      `GitHub token not configured for repository: ${owner}/${name}. Configure it in Settings > Repositories.`,
-    );
+    super(`GitHub token not configured for repository: ${owner}/${name}. Configure it in Settings > Repositories.`);
     this.name = "GitHubCredentialsError";
   }
 }

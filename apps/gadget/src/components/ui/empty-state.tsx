@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
 import type { LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { Button } from "@devkit/ui/components/button";
 
 interface EmptyStateAction {
   label: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { THEMES, useAppTheme } from "@devkit/hooks";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -7,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { THEMES, useAppTheme } from "@devkit/hooks";
 import { cn } from "@/lib/utils";
 
 interface ThemeToggleProps {

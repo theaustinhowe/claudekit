@@ -21,9 +21,7 @@ export async function createServer() {
   // DuckDB's @duckdb/node-api can return INTEGER columns as BigInt.
   // JSON.stringify cannot serialize BigInt, so convert them to Number.
   app.setReplySerializer((payload) => {
-    return JSON.stringify(payload, (_key, value) =>
-      typeof value === "bigint" ? Number(value) : value,
-    );
+    return JSON.stringify(payload, (_key, value) => (typeof value === "bigint" ? Number(value) : value));
   });
 
   // SECURITY: Restrict CORS to known local origins instead of allowing all origins.
@@ -31,12 +29,7 @@ export async function createServer() {
   // to make requests to the orchestrator API when it's running.
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",")
-    : [
-        "http://localhost:2100",
-        "http://127.0.0.1:2100",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-      ];
+    : ["http://localhost:2100", "http://127.0.0.1:2100", "http://localhost:3000", "http://127.0.0.1:3000"];
   await app.register(cors, {
     origin: allowedOrigins,
   });

@@ -41,9 +41,7 @@ vi.mock("../db/index.js", () => ({
     update: vi.fn(() => ({
       set: vi.fn(() => ({
         where: vi.fn(() => ({
-          returning: vi.fn(() =>
-            Promise.resolve([{ ...mockJob, worktreePath: null }]),
-          ),
+          returning: vi.fn(() => Promise.resolve([{ ...mockJob, worktreePath: null }])),
         })),
       })),
     })),

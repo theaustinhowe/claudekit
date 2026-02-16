@@ -47,11 +47,7 @@ vi.mock("./settings-helper.js", () => ({
 import { execute, queryOne } from "../db/helpers.js";
 import { broadcast } from "../ws/handler.js";
 import { isRunning, startJobRun, stopJobRun } from "./agent-runner.js";
-import {
-  getWorkspaceSettings,
-  toGitConfig,
-  validateWorkspaceSettings,
-} from "./settings-helper.js";
+import { getWorkspaceSettings, toGitConfig, validateWorkspaceSettings } from "./settings-helper.js";
 
 const makeJob = (overrides?: Partial<Record<string, unknown>>) => ({
   id: "job-1",
@@ -240,17 +236,15 @@ describe("agent-runner", () => {
       const claimedJob = makeJob({ id: "stop-test-job", status: "running" });
 
       vi.mocked(execute).mockResolvedValue(undefined);
-      vi.mocked(queryOne)
-        .mockResolvedValueOnce(claimedJob)
-        .mockResolvedValueOnce({
-          id: "repo-1",
-          is_active: true,
-          owner: "testowner",
-          name: "testrepo",
-          github_token: "ghp_test",
-          workdir_path: "/tmp/repos",
-          base_branch: "main",
-        });
+      vi.mocked(queryOne).mockResolvedValueOnce(claimedJob).mockResolvedValueOnce({
+        id: "repo-1",
+        is_active: true,
+        owner: "testowner",
+        name: "testrepo",
+        github_token: "ghp_test",
+        workdir_path: "/tmp/repos",
+        base_branch: "main",
+      });
 
       await startJobRun("stop-test-job");
       expect(isRunning("stop-test-job")).toBe(true);

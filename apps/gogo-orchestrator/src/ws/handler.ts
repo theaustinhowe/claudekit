@@ -1,5 +1,5 @@
-import type { WebSocket } from "@fastify/websocket";
 import type { JobLog, WsMessage } from "@devkit/gogo-shared";
+import type { WebSocket } from "@fastify/websocket";
 import { WsClientMessageSchema } from "../schemas/index.js";
 import { getRingBuffer } from "../utils/job-logging.js";
 
@@ -27,9 +27,7 @@ export function setupWebSocket(socket: WebSocket) {
       // SECURITY: Enforce message size limit to prevent memory exhaustion attacks.
       // WebSocket messages should be small control messages (subscribe/unsubscribe/ping).
       const MAX_WS_MESSAGE_SIZE = 16 * 1024; // 16KB
-      const messageBytes = Buffer.isBuffer(data)
-        ? data.length
-        : Buffer.byteLength(data.toString());
+      const messageBytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
       if (messageBytes > MAX_WS_MESSAGE_SIZE) {
         sendToClient(socket, {
           type: "error",
@@ -157,10 +155,7 @@ export function broadcastToJob(jobId: string, message: WsMessage) {
 /**
  * Send a log entry to all clients subscribed to the job
  */
-export function sendLogToSubscribers(
-  jobId: string,
-  log: Pick<JobLog, "stream" | "content" | "sequence">,
-) {
+export function sendLogToSubscribers(jobId: string, log: Pick<JobLog, "stream" | "content" | "sequence">) {
   broadcastToJob(jobId, {
     type: "job:log",
     payload: { jobId, ...log },

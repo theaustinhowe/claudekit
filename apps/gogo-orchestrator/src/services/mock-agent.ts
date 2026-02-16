@@ -64,25 +64,13 @@ const MOCK_LOGS: {
   },
 ];
 
-async function updateJobStatus(
-  jobId: string,
-  newStatus: JobStatus,
-  fromStatus: JobStatus,
-): Promise<boolean> {
+async function updateJobStatus(jobId: string, newStatus: JobStatus, fromStatus: JobStatus): Promise<boolean> {
   const conn = getConn();
   const now = new Date().toISOString();
 
-  await execute(
-    conn,
-    "UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?",
-    [newStatus, now, jobId],
-  );
+  await execute(conn, "UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?", [newStatus, now, jobId]);
 
-  const updated = await queryOne<DbJob>(
-    conn,
-    "SELECT * FROM jobs WHERE id = ?",
-    [jobId],
-  );
+  const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (!updated) return false;
 
@@ -90,14 +78,7 @@ async function updateJobStatus(
   await execute(
     conn,
     "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-    [
-      jobId,
-      "state_change",
-      fromStatus,
-      newStatus,
-      `Mock agent transitioned job to ${newStatus}`,
-      now,
-    ],
+    [jobId, "state_change", fromStatus, newStatus, `Mock agent transitioned job to ${newStatus}`, now],
   );
 
   // Broadcast job update to all clients
@@ -106,12 +87,7 @@ async function updateJobStatus(
   return true;
 }
 
-async function emitLog(
-  jobId: string,
-  stream: LogStream,
-  content: string,
-  sequence: number,
-) {
+async function emitLog(jobId: string, stream: LogStream, content: string, sequence: number) {
   const conn = getConn();
 
   // Insert log into database
@@ -141,9 +117,7 @@ export async function startMockRun(
 
   // Get current job state
   const conn = getConn();
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
   }
@@ -179,11 +153,7 @@ export async function startMockRun(
         // Check if cancelled
         if (!activeRuns.has(jobId)) return;
 
-        const currentJob = await queryOne<DbJob>(
-          conn,
-          "SELECT * FROM jobs WHERE id = ?",
-          [jobId],
-        );
+        const currentJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
         if (
           !currentJob ||
           currentJob.status === "paused" ||
@@ -211,11 +181,7 @@ export async function startMockRun(
         // Check if cancelled
         if (!activeRuns.has(jobId)) return;
 
-        const currentJob = await queryOne<DbJob>(
-          conn,
-          "SELECT * FROM jobs WHERE id = ?",
-          [jobId],
-        );
+        const currentJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
         if (
           !currentJob ||
           currentJob.status === "paused" ||

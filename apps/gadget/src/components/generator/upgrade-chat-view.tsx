@@ -1,5 +1,9 @@
 "use client";
 
+import type { SessionStreamEvent } from "@devkit/hooks";
+import { useSessionStream } from "@devkit/hooks";
+import { Button } from "@devkit/ui/components/button";
+import { Progress } from "@devkit/ui/components/progress";
 import {
   AlertCircle,
   CheckCircle2,
@@ -16,10 +20,6 @@ import { toast } from "sonner";
 import { MarkdownRenderer } from "@/components/code/markdown-renderer";
 import type { StreamEntry } from "@/components/generator/streaming-display";
 import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
-import { Button } from "@devkit/ui/components/button";
-import { Progress } from "@devkit/ui/components/progress";
-import { useSessionStream } from "@devkit/hooks";
-import type { SessionStreamEvent } from "@devkit/hooks";
 import type { UpgradeTask, UpgradeTaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 

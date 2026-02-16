@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsMobile } from "@devkit/hooks";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import {
   Activity,
@@ -27,7 +28,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJobAction, useJobLogs } from "@/hooks/use-jobs";
-import { useIsMobile } from "@devkit/hooks";
 import type { Job } from "@/types/job";
 import { JOB_STATUS_CONFIG } from "@/types/job";
 import { extractActivitySummary } from "./activity-summary";

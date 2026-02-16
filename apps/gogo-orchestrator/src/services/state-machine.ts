@@ -1,15 +1,5 @@
-import {
-  type JobActionType,
-  type JobEventType,
-  type JobStatus,
-  VALID_TRANSITIONS,
-} from "@devkit/gogo-shared";
-import {
-  buildUpdate,
-  execute,
-  queryOne,
-  withTransaction,
-} from "../db/helpers.js";
+import { type JobActionType, type JobEventType, type JobStatus, VALID_TRANSITIONS } from "@devkit/gogo-shared";
+import { buildUpdate, execute, queryOne, withTransaction } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import { type DbJob, JOB_JSON_FIELDS } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";
@@ -24,10 +14,7 @@ export function canTransition(from: JobStatus, to: JobStatus): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-export function validateTransition(
-  from: JobStatus,
-  to: JobStatus,
-): TransitionResult {
+export function validateTransition(from: JobStatus, to: JobStatus): TransitionResult {
   if (from === to) {
     return {
       valid: false,
@@ -288,9 +275,7 @@ export async function applyTransitionAtomic(
 
   const result = await withTransaction(conn, async (conn) => {
     // Get current job
-    const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-      jobId,
-    ]);
+    const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
     if (!job) {
       return { success: false, error: "Job not found" };
@@ -324,11 +309,7 @@ export async function applyTransitionAtomic(
     );
 
     // Re-read updated job
-    const updatedJob = await queryOne<DbJob>(
-      conn,
-      "SELECT * FROM jobs WHERE id = ?",
-      [jobId],
-    );
+    const updatedJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
     return { success: true, job: updatedJob };
   });
@@ -354,9 +335,7 @@ export async function applyActionAtomic(
 
   const result = await withTransaction(conn, async (conn) => {
     // Get current job
-    const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-      jobId,
-    ]);
+    const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
     if (!job) {
       return { success: false, error: "Job not found" };
@@ -401,11 +380,7 @@ export async function applyActionAtomic(
     );
 
     // Re-read updated job
-    const updatedJob = await queryOne<DbJob>(
-      conn,
-      "SELECT * FROM jobs WHERE id = ?",
-      [jobId],
-    );
+    const updatedJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
     return { success: true, job: updatedJob };
   });

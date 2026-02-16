@@ -1,8 +1,8 @@
+import { Button } from "@devkit/ui/components/button";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ProjectCard } from "@/components/generator/project-card";
-import { Button } from "@devkit/ui/components/button";
 import { getGeneratorProjects } from "@/lib/actions/generator-projects";
 import { getLatestScreenshot } from "@/lib/actions/screenshots";
 import type { GeneratorProjectStatus } from "@/lib/types";

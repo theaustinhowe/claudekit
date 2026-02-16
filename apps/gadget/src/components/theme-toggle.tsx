@@ -1,18 +1,22 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { THEMES, useAppTheme } from "@devkit/hooks";
 import { Button } from "@devkit/ui/components/button";
 import { Label } from "@devkit/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { THEMES, useAppTheme } from "@devkit/hooks";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const { theme: appTheme, setTheme: setAppTheme, mounted: themeMounted } = useAppTheme({ storageKey: "workbench-theme", legacyKeys: ["workbench-color-scheme"] });
+  const {
+    theme: appTheme,
+    setTheme: setAppTheme,
+    mounted: themeMounted,
+  } = useAppTheme({ storageKey: "workbench-theme", legacyKeys: ["workbench-color-scheme"] });
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 

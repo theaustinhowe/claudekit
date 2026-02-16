@@ -3,13 +3,7 @@ import { getConn } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { emitLog, type LogState } from "../utils/job-logging.js";
 import { broadcast } from "../ws/handler.js";
-import {
-  commitAllChanges,
-  getCommitLog,
-  hasCommits,
-  isWorkingTreeClean,
-  pushBranch,
-} from "./git.js";
+import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch } from "./git.js";
 import {
   AGENT_COMMENT_MARKER,
   createIssueCommentForRepo,
@@ -40,10 +34,7 @@ async function getNextLogSequence(jobId: string): Promise<number> {
   return lastLog ? lastLog.sequence + 1 : 0;
 }
 
-async function updateJob(
-  jobId: string,
-  updates: Record<string, unknown>,
-): Promise<void> {
+async function updateJob(jobId: string, updates: Record<string, unknown>): Promise<void> {
   const conn = getConn();
   const sets: string[] = [];
   const params: unknown[] = [];
@@ -56,32 +47,20 @@ async function updateJob(
   params.push(new Date().toISOString());
   params.push(jobId);
 
-  await execute(
-    conn,
-    `UPDATE jobs SET ${sets.join(", ")} WHERE id = ?`,
-    params,
-  );
+  await execute(conn, `UPDATE jobs SET ${sets.join(", ")} WHERE id = ?`, params);
 
-  const updated = await queryOne<DbJob>(
-    conn,
-    "SELECT * FROM jobs WHERE id = ?",
-    [jobId],
-  );
+  const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (updated) {
     broadcast({ type: "job:updated", payload: updated });
   }
 }
 
-export async function processReadyToPr(
-  jobId: string,
-): Promise<ProcessReadyToPrResult> {
+export async function processReadyToPr(jobId: string): Promise<ProcessReadyToPrResult> {
   const conn = getConn();
 
   // Get current job
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
   }
@@ -106,11 +85,7 @@ export async function processReadyToPr(
   }
 
   // Get full repository record for git config
-  const repo = await queryOne<DbRepository>(
-    conn,
-    "SELECT * FROM repositories WHERE id = ?",
-    [job.repository_id],
-  );
+  const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repository_id]);
 
   if (!repo) {
     return { success: false, error: "Repository not found" };
@@ -130,50 +105,25 @@ export async function processReadyToPr(
   const logState: LogState = { sequence: await getNextLogSequence(jobId) };
 
   try {
-    await emitLog(
-      jobId,
-      "system",
-      "🚀 Starting PR creation process...",
-      logState,
-    );
+    await emitLog(jobId, "system", "🚀 Starting PR creation process...", logState);
 
     // Step 1: Run tests (use repo-specific test command)
-    const testResult = await runTests(
-      jobId,
-      job.worktree_path,
-      logState,
-      repo.test_command,
-    );
+    const testResult = await runTests(jobId, job.worktree_path, logState, repo.test_command);
 
     if (!testResult.success) {
       // Tests failed
       const newRetryCount = (job.test_retry_count ?? 0) + 1;
 
-      await emitLog(
-        jobId,
-        "stderr",
-        `❌ Tests failed (attempt ${newRetryCount}/${maxRetries})`,
-        logState,
-      );
+      await emitLog(jobId, "stderr", `❌ Tests failed (attempt ${newRetryCount}/${maxRetries})`, logState);
 
       if (newRetryCount < maxRetries) {
         // Retry: transition back to running for agent to fix
-        await emitLog(
-          jobId,
-          "system",
-          "🔄 Transitioning back to running for test failure fix...",
-          logState,
-        );
+        await emitLog(jobId, "system", "🔄 Transitioning back to running for test failure fix...", logState);
 
-        await applyTransitionAtomic(
-          jobId,
-          "running",
-          "Test failure - agent to fix",
-          {
-            test_retry_count: newRetryCount,
-            last_test_output: testResult.output,
-          },
-        );
+        await applyTransitionAtomic(jobId, "running", "Test failure - agent to fix", {
+          test_retry_count: newRetryCount,
+          last_test_output: testResult.output,
+        });
 
         return {
           success: false,
@@ -182,23 +132,13 @@ export async function processReadyToPr(
         };
       }
       // Max retries reached - fail the job
-      await emitLog(
-        jobId,
-        "stderr",
-        `❌ Max test retries (${maxRetries}) reached. Job failed.`,
-        logState,
-      );
+      await emitLog(jobId, "stderr", `❌ Max test retries (${maxRetries}) reached. Job failed.`, logState);
 
-      await applyTransitionAtomic(
-        jobId,
-        "failed",
-        `Tests failed after ${maxRetries} attempts`,
-        {
-          test_retry_count: newRetryCount,
-          last_test_output: testResult.output,
-          failure_reason: `Tests failed after ${maxRetries} attempts`,
-        },
-      );
+      await applyTransitionAtomic(jobId, "failed", `Tests failed after ${maxRetries} attempts`, {
+        test_retry_count: newRetryCount,
+        last_test_output: testResult.output,
+        failure_reason: `Tests failed after ${maxRetries} attempts`,
+      });
 
       return {
         success: false,
@@ -208,46 +148,23 @@ export async function processReadyToPr(
 
     // Step 2: Check for existing PR FIRST (idempotency - if PR exists, just link to it)
     await emitLog(jobId, "system", "🔍 Checking for existing PR...", logState);
-    const existingPr = await findExistingPrForRepo(
-      job.repository_id,
-      job.branch,
-    );
+    const existingPr = await findExistingPrForRepo(job.repository_id, job.branch);
     if (existingPr) {
-      await emitLog(
-        jobId,
-        "stdout",
-        `✓ Found existing PR #${existingPr.number}: ${existingPr.html_url}`,
-        logState,
-      );
+      await emitLog(jobId, "stdout", `✓ Found existing PR #${existingPr.number}: ${existingPr.html_url}`, logState);
 
       // Update job with existing PR info and transition atomically
-      await applyTransitionAtomic(
-        jobId,
-        "pr_opened",
-        `Linked to existing PR #${existingPr.number}`,
-        {
-          pr_number: existingPr.number,
-          pr_url: existingPr.html_url,
-        },
-      );
+      await applyTransitionAtomic(jobId, "pr_opened", `Linked to existing PR #${existingPr.number}`, {
+        pr_number: existingPr.number,
+        pr_url: existingPr.html_url,
+      });
 
       // Also enter pr_reviewing state for existing PRs
       try {
         await enterPrReviewing(jobId);
-        await emitLog(
-          jobId,
-          "system",
-          "📋 PR review monitoring active",
-          logState,
-        );
+        await emitLog(jobId, "system", "📋 PR review monitoring active", logState);
       } catch (error) {
         const err = error as Error;
-        await emitLog(
-          jobId,
-          "stderr",
-          `Warning: Failed to enter pr_reviewing state: ${err.message}`,
-          logState,
-        );
+        await emitLog(jobId, "stderr", `Warning: Failed to enter pr_reviewing state: ${err.message}`, logState);
       }
 
       return {
@@ -256,29 +173,14 @@ export async function processReadyToPr(
         prNumber: existingPr.number,
       };
     }
-    await emitLog(
-      jobId,
-      "stdout",
-      "✓ No existing PR found, will create new",
-      logState,
-    );
+    await emitLog(jobId, "stdout", "✓ No existing PR found, will create new", logState);
 
     // Step 3: Check working tree is clean (auto-commit if needed)
-    await emitLog(
-      jobId,
-      "system",
-      "🔍 Checking working tree status...",
-      logState,
-    );
+    await emitLog(jobId, "system", "🔍 Checking working tree status...", logState);
     let didAutoCommit = false;
     const isClean = await isWorkingTreeClean(job.worktree_path);
     if (!isClean) {
-      await emitLog(
-        jobId,
-        "system",
-        "📝 Uncommitted changes detected, auto-committing...",
-        logState,
-      );
+      await emitLog(jobId, "system", "📝 Uncommitted changes detected, auto-committing...", logState);
 
       try {
         const commitMsg =
@@ -287,20 +189,10 @@ export async function processReadyToPr(
             : `chore: auto-commit remaining changes for issue #${job.issue_number}`;
         await commitAllChanges(job.worktree_path, commitMsg);
         didAutoCommit = true;
-        await emitLog(
-          jobId,
-          "stdout",
-          "✓ Auto-committed uncommitted changes",
-          logState,
-        );
+        await emitLog(jobId, "stdout", "✓ Auto-committed uncommitted changes", logState);
       } catch (error) {
         const err = error as Error;
-        await emitLog(
-          jobId,
-          "stderr",
-          `❌ Failed to auto-commit: ${err.message}`,
-          logState,
-        );
+        await emitLog(jobId, "stderr", `❌ Failed to auto-commit: ${err.message}`, logState);
         return {
           success: false,
           error: `Failed to auto-commit uncommitted changes: ${err.message}`,
@@ -312,19 +204,10 @@ export async function processReadyToPr(
 
     // Step 3: Check for commits (skip if we just auto-committed - we know there's at least 1)
     if (didAutoCommit) {
-      await emitLog(
-        jobId,
-        "stdout",
-        "✓ Commits confirmed (auto-commit created)",
-        logState,
-      );
+      await emitLog(jobId, "stdout", "✓ Commits confirmed (auto-commit created)", logState);
     } else {
       await emitLog(jobId, "system", "🔍 Checking for commits...", logState);
-      const hasNewCommits = await hasCommits(
-        gitConfig,
-        job.worktree_path,
-        baseBranch,
-      );
+      const hasNewCommits = await hasCommits(gitConfig, job.worktree_path, baseBranch);
       if (!hasNewCommits) {
         await emitLog(
           jobId,
@@ -334,20 +217,14 @@ export async function processReadyToPr(
         );
 
         // Transition to failed - agent signaled ready but has no work to show
-        await applyTransitionAtomic(
-          jobId,
-          "failed",
-          "No commits found - agent signaled ready but made no changes",
-          {
-            failure_reason:
-              "Agent signaled READY_TO_PR but no commits were made. The branch is identical to the base branch.",
-          },
-        );
+        await applyTransitionAtomic(jobId, "failed", "No commits found - agent signaled ready but made no changes", {
+          failure_reason:
+            "Agent signaled READY_TO_PR but no commits were made. The branch is identical to the base branch.",
+        });
 
         return {
           success: false,
-          error:
-            "No commits found. Job failed - agent signaled ready but made no changes.",
+          error: "No commits found. Job failed - agent signaled ready but made no changes.",
         };
       }
       await emitLog(jobId, "stdout", "✓ Commits found", logState);
@@ -355,39 +232,20 @@ export async function processReadyToPr(
 
     // Step 4: Get commit log for change summary
     await emitLog(jobId, "system", "📝 Generating change summary...", logState);
-    const commitLog = await getCommitLog(
-      gitConfig,
-      job.worktree_path,
-      baseBranch,
-    );
+    const commitLog = await getCommitLog(gitConfig, job.worktree_path, baseBranch);
     const changeSummary = commitLog;
 
     await updateJob(jobId, { change_summary: changeSummary });
-    await emitLog(
-      jobId,
-      "stdout",
-      `Change summary:\n${changeSummary}`,
-      logState,
-    );
+    await emitLog(jobId, "stdout", `Change summary:\n${changeSummary}`, logState);
 
     // Step 5: Push branch
-    await emitLog(
-      jobId,
-      "system",
-      `📤 Pushing branch ${job.branch} to origin...`,
-      logState,
-    );
+    await emitLog(jobId, "system", `📤 Pushing branch ${job.branch} to origin...`, logState);
     try {
       await pushBranch(gitConfig, job.worktree_path, job.branch);
       await emitLog(jobId, "stdout", "✓ Branch pushed successfully", logState);
     } catch (error) {
       const err = error as Error;
-      await emitLog(
-        jobId,
-        "stderr",
-        `❌ Failed to push branch: ${err.message}`,
-        logState,
-      );
+      await emitLog(jobId, "stderr", `❌ Failed to push branch: ${err.message}`, logState);
       return {
         success: false,
         error: `Failed to push branch: ${err.message}`,
@@ -413,12 +271,7 @@ ${testCommands.map((cmd) => `- \`${cmd}\` ✓`).join("\n")}${isManual ? "" : `\n
         body: prBody,
       });
 
-      await emitLog(
-        jobId,
-        "stdout",
-        `✓ Pull request created: ${pr.html_url}`,
-        logState,
-      );
+      await emitLog(jobId, "stdout", `✓ Pull request created: ${pr.html_url}`, logState);
 
       // Step 8: Create issue comment (skip for manual jobs)
       if (!isManual) {
@@ -432,49 +285,25 @@ ${changeSummary}
 ### Tests Run
 ${testCommands.map((cmd) => `- \`${cmd}\` ✓`).join("\n")}`;
 
-        await createIssueCommentForRepo(
-          job.repository_id,
-          job.issue_number,
-          commentBody,
-        );
+        await createIssueCommentForRepo(job.repository_id, job.issue_number, commentBody);
         await emitLog(jobId, "stdout", "✓ Issue comment created", logState);
       }
 
       // Step 9: Transition to pr_opened atomically
-      await applyTransitionAtomic(
-        jobId,
-        "pr_opened",
-        `PR #${pr.number} created`,
-        {
-          pr_number: pr.number,
-          pr_url: pr.html_url,
-        },
-      );
+      await applyTransitionAtomic(jobId, "pr_opened", `PR #${pr.number} created`, {
+        pr_number: pr.number,
+        pr_url: pr.html_url,
+      });
 
-      await emitLog(
-        jobId,
-        "system",
-        "🎉 PR created! Now monitoring for review feedback...",
-        logState,
-      );
+      await emitLog(jobId, "system", "🎉 PR created! Now monitoring for review feedback...", logState);
 
       // Step 10: Automatically enter pr_reviewing state to monitor for feedback
       try {
         await enterPrReviewing(jobId);
-        await emitLog(
-          jobId,
-          "system",
-          "📋 PR review monitoring active",
-          logState,
-        );
+        await emitLog(jobId, "system", "📋 PR review monitoring active", logState);
       } catch (error) {
         const err = error as Error;
-        await emitLog(
-          jobId,
-          "stderr",
-          `Warning: Failed to enter pr_reviewing state: ${err.message}`,
-          logState,
-        );
+        await emitLog(jobId, "stderr", `Warning: Failed to enter pr_reviewing state: ${err.message}`, logState);
         // Continue - PR was created successfully even if we can't monitor
       }
 
@@ -485,12 +314,7 @@ ${testCommands.map((cmd) => `- \`${cmd}\` ✓`).join("\n")}`;
       };
     } catch (error) {
       const err = error as Error;
-      await emitLog(
-        jobId,
-        "stderr",
-        `❌ Failed to create pull request: ${err.message}`,
-        logState,
-      );
+      await emitLog(jobId, "stderr", `❌ Failed to create pull request: ${err.message}`, logState);
       return {
         success: false,
         error: `Failed to create pull request: ${err.message}`,
@@ -498,12 +322,7 @@ ${testCommands.map((cmd) => `- \`${cmd}\` ✓`).join("\n")}`;
     }
   } catch (error) {
     const err = error as Error;
-    await emitLog(
-      jobId,
-      "stderr",
-      `❌ Unexpected error: ${err.message}`,
-      logState,
-    );
+    await emitLog(jobId, "stderr", `❌ Unexpected error: ${err.message}`, logState);
     return {
       success: false,
       error: `Unexpected error: ${err.message}`,
@@ -534,44 +353,30 @@ export async function pollReadyToPrJobs(): Promise<void> {
   const repoIds = autoCreatePrRepos.map((r) => r.id);
 
   // Query all jobs in ready_to_pr state that don't already have a PR
-  const readyJobs = await queryAll<DbJob>(
-    conn,
-    "SELECT * FROM jobs WHERE status = ? AND pr_number IS NULL",
-    ["ready_to_pr"],
-  );
+  const readyJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ? AND pr_number IS NULL", [
+    "ready_to_pr",
+  ]);
 
   // Filter to only jobs in repos with autoCreatePr enabled
-  const eligibleJobs = readyJobs.filter(
-    (job) => job.repository_id && repoIds.includes(job.repository_id),
-  );
+  const eligibleJobs = readyJobs.filter((job) => job.repository_id && repoIds.includes(job.repository_id));
 
   if (eligibleJobs.length === 0) {
     return;
   }
 
-  console.log(
-    `[pr-flow] Processing ${eligibleJobs.length} jobs ready for PR creation...`,
-  );
+  console.log(`[pr-flow] Processing ${eligibleJobs.length} jobs ready for PR creation...`);
 
   for (const job of eligibleJobs) {
     try {
-      console.log(
-        `[pr-flow] Processing job ${job.id} (issue #${job.issue_number})...`,
-      );
+      console.log(`[pr-flow] Processing job ${job.id} (issue #${job.issue_number})...`);
       const result = await processReadyToPr(job.id);
 
       if (result.success) {
-        console.log(
-          `[pr-flow] Job ${job.id} PR created successfully: ${result.prUrl}`,
-        );
+        console.log(`[pr-flow] Job ${job.id} PR created successfully: ${result.prUrl}`);
       } else if (result.retriedToRunning) {
-        console.log(
-          `[pr-flow] Job ${job.id} returned to running for test fixes`,
-        );
+        console.log(`[pr-flow] Job ${job.id} returned to running for test fixes`);
       } else {
-        console.error(
-          `[pr-flow] Job ${job.id} PR creation failed: ${result.error}`,
-        );
+        console.error(`[pr-flow] Job ${job.id} PR creation failed: ${result.error}`);
       }
     } catch (error) {
       console.error(`[pr-flow] Error processing job ${job.id}:`, error);

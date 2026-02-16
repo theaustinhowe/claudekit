@@ -1,14 +1,14 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Check, Code2, Copy, ExternalLink, Eye, FileWarning, ImageIcon, Info } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MarkdownRenderer } from "@/components/code/markdown-renderer";
 import { SyntaxHighlighter } from "@/components/code/syntax-highlighter";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { IMAGE_EXTENSIONS } from "@/lib/constants";
 import type { CodeFileContent } from "@/lib/types";
 import { cn, formatBytes } from "@/lib/utils";

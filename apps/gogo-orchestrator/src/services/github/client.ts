@@ -39,10 +39,7 @@ function hashToken(token: string): string {
 /**
  * Update rate limit info from Octokit response headers
  */
-export function updateRateLimitFromResponse(
-  token: string,
-  headers: Record<string, unknown>,
-): void {
+export function updateRateLimitFromResponse(token: string, headers: Record<string, unknown>): void {
   const limit = headers["x-ratelimit-limit"];
   const remaining = headers["x-ratelimit-remaining"];
   const reset = headers["x-ratelimit-reset"];
@@ -53,8 +50,7 @@ export function updateRateLimitFromResponse(
       limit: Number(limit),
       remaining: Number(remaining),
       reset: new Date(Number(reset) * 1000),
-      used:
-        used !== undefined ? Number(used) : Number(limit) - Number(remaining),
+      used: used !== undefined ? Number(used) : Number(limit) - Number(remaining),
     };
 
     const key = hashToken(token);
@@ -71,8 +67,7 @@ export function updateRateLimitFromResponse(
       );
     } else if (
       percentRemaining <= RATE_LIMIT_WARNING_THRESHOLD &&
-      (!previous ||
-        previous.remaining / previous.limit > RATE_LIMIT_WARNING_THRESHOLD)
+      (!previous || previous.remaining / previous.limit > RATE_LIMIT_WARNING_THRESHOLD)
     ) {
       console.warn(
         `[github] Warning: Rate limit low. ${info.remaining}/${info.limit} remaining. ` +
@@ -188,19 +183,13 @@ function createOctokitWithRateLimitTracking(token: string): Octokit {
 /**
  * Get Octokit instance for a specific repository
  */
-export async function getOctokitForRepo(
-  repositoryId: string,
-): Promise<Octokit> {
+export async function getOctokitForRepo(repositoryId: string): Promise<Octokit> {
   // Check cache
   const cached = octokitCache.get(repositoryId);
 
   // Get repository config
   const conn = getConn();
-  const repo = await queryOne<DbRepository>(
-    conn,
-    "SELECT * FROM repositories WHERE id = ?",
-    [repositoryId],
-  );
+  const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
   if (!repo) {
     throw new RepositoryNotFoundError(repositoryId);

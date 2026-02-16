@@ -2,39 +2,14 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
-import type {
-  DbJob,
-  DbResearchSession,
-  DbResearchSuggestion,
-  DbSetting,
-} from "../db/schema.js";
-import {
-  mapJob,
-  mapResearchSession,
-  mapResearchSuggestion,
-  mapSetting,
-} from "../db/schema.js";
-import {
-  cancelResearchSession,
-  getSessionSuggestions,
-  startResearchSession,
-} from "../services/research.js";
+import type { DbJob, DbResearchSession, DbResearchSuggestion, DbSetting } from "../db/schema.js";
+import { mapJob, mapResearchSession, mapResearchSuggestion, mapSetting } from "../db/schema.js";
+import { cancelResearchSession, getSessionSuggestions, startResearchSession } from "../services/research.js";
 
 const StartResearchSchema = z.object({
   repositoryId: z.string().uuid(),
   focusAreas: z
-    .array(
-      z.enum([
-        "ui",
-        "ux",
-        "security",
-        "durability",
-        "performance",
-        "testing",
-        "accessibility",
-        "documentation",
-      ]),
-    )
+    .array(z.enum(["ui", "ux", "security", "durability", "performance", "testing", "accessibility", "documentation"]))
     .min(1),
 });
 
@@ -46,10 +21,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
   // GET / — list all sessions with suggestion counts
   fastify.get("/sessions", async () => {
     const conn = getConn();
-    const rows = await queryAll<DbResearchSession>(
-      conn,
-      "SELECT * FROM research_sessions ORDER BY created_at DESC",
-    );
+    const rows = await queryAll<DbResearchSession>(conn, "SELECT * FROM research_sessions ORDER BY created_at DESC");
 
     const sessions = await Promise.all(
       rows.map(async (row) => {
@@ -71,11 +43,9 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
   // GET /:id — get session with suggestions
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
     const conn = getConn();
-    const row = await queryOne<DbResearchSession>(
-      conn,
-      "SELECT * FROM research_sessions WHERE id = ?",
-      [request.params.id],
-    );
+    const row = await queryOne<DbResearchSession>(conn, "SELECT * FROM research_sessions WHERE id = ?", [
+      request.params.id,
+    ]);
 
     if (!row) {
       return reply.status(404).send({ error: "Session not found" });
@@ -102,10 +72,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const session = await startResearchSession(
-        parsed.data.repositoryId,
-        parsed.data.focusAreas,
-      );
+      const session = await startResearchSession(parsed.data.repositoryId, parsed.data.focusAreas);
       return { data: mapResearchSession(session) };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -186,11 +153,9 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
 
     if (convertTo === "manual_job") {
       // Get session to find repository
-      const session = await queryOne<DbResearchSession>(
-        conn,
-        "SELECT * FROM research_sessions WHERE id = ?",
-        [request.params.id],
-      );
+      const session = await queryOne<DbResearchSession>(conn, "SELECT * FROM research_sessions WHERE id = ?", [
+        request.params.id,
+      ]);
       if (!session) {
         return reply.status(404).send({ error: "Session not found" });
       }
@@ -198,29 +163,25 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
       try {
         // Generate synthetic negative issue number using atomic counter
         const counterKey = "manual_job_counter";
-        const existing = await queryOne<DbSetting>(
-          conn,
-          "SELECT * FROM settings WHERE key = ?",
-          [counterKey],
-        );
+        const existing = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", [counterKey]);
 
         const now = new Date().toISOString();
         let nextNumber: number;
         if (existing) {
           const mapped = mapSetting(existing);
           nextNumber = (mapped.value as number) - 1;
-          await execute(
-            conn,
-            "UPDATE settings SET value = ?, updated_at = ? WHERE key = ?",
-            [JSON.stringify(nextNumber), now, counterKey],
-          );
+          await execute(conn, "UPDATE settings SET value = ?, updated_at = ? WHERE key = ?", [
+            JSON.stringify(nextNumber),
+            now,
+            counterKey,
+          ]);
         } else {
           nextNumber = -1;
-          await execute(
-            conn,
-            "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)",
-            [counterKey, JSON.stringify(nextNumber), now],
-          );
+          await execute(conn, "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)", [
+            counterKey,
+            JSON.stringify(nextNumber),
+            now,
+          ]);
         }
 
         const newJob = await queryOne<DbJob>(
@@ -228,16 +189,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
           `INSERT INTO jobs (repository_id, issue_number, issue_title, issue_url, issue_body, source, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
            RETURNING *`,
-          [
-            session.repository_id,
-            nextNumber,
-            suggestion.title,
-            "",
-            suggestion.description,
-            "manual",
-            now,
-            now,
-          ],
+          [session.repository_id, nextNumber, suggestion.title, "", suggestion.description, "manual", now, now],
         );
 
         if (!newJob) {
@@ -245,11 +197,11 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
         }
 
         // Mark suggestion as converted
-        await execute(
-          conn,
-          "UPDATE research_suggestions SET converted_to = ?, converted_id = ? WHERE id = ?",
-          [convertTo, newJob.id, request.params.suggestionId],
-        );
+        await execute(conn, "UPDATE research_suggestions SET converted_to = ?, converted_id = ? WHERE id = ?", [
+          convertTo,
+          newJob.id,
+          request.params.suggestionId,
+        ]);
 
         return {
           data: {
@@ -260,22 +212,16 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
-        console.error(
-          "[research] Failed to convert suggestion to job:",
-          message,
-        );
-        return reply
-          .status(500)
-          .send({ error: `Failed to create job: ${message}` });
+        console.error("[research] Failed to convert suggestion to job:", message);
+        return reply.status(500).send({ error: `Failed to create job: ${message}` });
       }
     }
 
     // For github_issue, just mark it — the frontend can handle the actual creation
-    await execute(
-      conn,
-      "UPDATE research_suggestions SET converted_to = ? WHERE id = ?",
-      [convertTo, request.params.suggestionId],
-    );
+    await execute(conn, "UPDATE research_suggestions SET converted_to = ? WHERE id = ?", [
+      convertTo,
+      request.params.suggestionId,
+    ]);
 
     return {
       data: {

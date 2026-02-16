@@ -5,8 +5,7 @@ import { execute } from "./helpers.js";
 import { runMigrations } from "./migrate.js";
 
 // Database path - use environment variable or default to local file
-const dbPath =
-  process.env.DATABASE_PATH || path.join(process.cwd(), "data", "gogo.duckdb");
+const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "gogo.duckdb");
 
 // Singleton instance and connection
 let duckdbInstance: DuckDBInstance | null = null;
@@ -45,9 +44,7 @@ export async function initializeDatabase(): Promise<void> {
  */
 export function getConn(): DuckDBConnection {
   if (!duckdbConnection) {
-    throw new Error(
-      "Database not initialized. Call initializeDatabase() first.",
-    );
+    throw new Error("Database not initialized. Call initializeDatabase() first.");
   }
   return duckdbConnection;
 }

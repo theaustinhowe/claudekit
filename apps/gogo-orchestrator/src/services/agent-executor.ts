@@ -8,18 +8,8 @@ import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState } from "../utils/job-logging.js";
 import { broadcast } from "../ws/handler.js";
 import { agentRegistry } from "./agents/index.js";
-import type {
-  AgentCallbacks,
-  AgentConfig,
-  AgentJobContext,
-  AgentSignal,
-  AgentStartResult,
-} from "./agents/types.js";
-import {
-  AGENT_COMMENT_MARKER,
-  createIssueCommentForRepo,
-  getRepoConfigById,
-} from "./github/index.js";
+import type { AgentCallbacks, AgentConfig, AgentJobContext, AgentSignal, AgentStartResult } from "./agents/types.js";
+import { AGENT_COMMENT_MARKER, createIssueCommentForRepo, getRepoConfigById } from "./github/index.js";
 import { emitHealthEvent } from "./health-events.js";
 import { getClaudeSettings, getCodexSettings } from "./settings-helper.js";
 import { applyAction, applyTransitionAtomic } from "./state-machine.js";
@@ -35,10 +25,7 @@ const executorTimeouts = new Map<string, NodeJS.Timeout>();
  * Set up an executor-level timeout for a job.
  * If the job is still RUNNING after maxRuntimeMs, transition to PAUSED.
  */
-async function setupExecutorTimeout(
-  jobId: string,
-  agentType: string,
-): Promise<void> {
+async function setupExecutorTimeout(jobId: string, agentType: string): Promise<void> {
   // Clear any existing timeout
   clearExecutorTimeout(jobId);
 
@@ -60,23 +47,14 @@ async function setupExecutorTimeout(
 
     // Check if job is still running (agent's own timeout may have handled it)
     const conn = getConn();
-    const job = await queryOne<{ status: string }>(
-      conn,
-      "SELECT status FROM jobs WHERE id = ?",
-      [jobId],
-    );
+    const job = await queryOne<{ status: string }>(conn, "SELECT status FROM jobs WHERE id = ?", [jobId]);
     if (!job || job.status !== "running") return;
 
-    console.log(
-      `[agent-executor] Executor timeout reached for job ${jobId} after ${executorTimeoutMs}ms`,
-    );
+    console.log(`[agent-executor] Executor timeout reached for job ${jobId} after ${executorTimeoutMs}ms`);
 
-    const result = await applyTransitionAtomic(
-      jobId,
-      "paused",
-      "Agent timed out (executor safety net)",
-      { pause_reason: "Agent timed out - session preserved for resume" },
-    );
+    const result = await applyTransitionAtomic(jobId, "paused", "Agent timed out (executor safety net)", {
+      pause_reason: "Agent timed out - session preserved for resume",
+    });
 
     if (result.success) {
       emitHealthEvent("agent_stopped", `Agent timed out for job ${jobId}`, {
@@ -112,10 +90,7 @@ interface SessionValidationResult {
  * Validate a Claude Code session exists and is usable
  * Claude stores sessions in ~/.claude/projects/<encoded-path>/<session-id>.jsonl
  */
-function validateClaudeSession(
-  sessionId: string,
-  worktreePath: string,
-): SessionValidationResult {
+function validateClaudeSession(sessionId: string, worktreePath: string): SessionValidationResult {
   try {
     // Claude encodes the path by replacing / with - and prefixing with -
     const encodedPath = worktreePath.replace(/\//g, "-");
@@ -144,9 +119,7 @@ function validateClaudeSession(
 /**
  * Validate an OpenAI Codex session exists in the database
  */
-function validateCodexSession(
-  agentSessionData: unknown,
-): SessionValidationResult {
+function validateCodexSession(agentSessionData: unknown): SessionValidationResult {
   if (!agentSessionData) {
     return {
       valid: false,
@@ -232,34 +205,16 @@ function createAgentCallbacks(
 
       switch (signal.type) {
         case "ready_to_pr":
-          await emitLog(
+          await emitLog(jobId, "system", "Agent signaled READY_TO_PR", logState);
+          await applyTransitionAtomic(jobId, "ready_to_pr", "Agent completed work");
+          emitHealthEvent("agent_stopped", `Agent completed work for job ${jobId}`, {
             jobId,
-            "system",
-            "Agent signaled READY_TO_PR",
-            logState,
-          );
-          await applyTransitionAtomic(
-            jobId,
-            "ready_to_pr",
-            "Agent completed work",
-          );
-          emitHealthEvent(
-            "agent_stopped",
-            `Agent completed work for job ${jobId}`,
-            {
-              jobId,
-              reason: "ready_to_pr",
-            },
-          );
+            reason: "ready_to_pr",
+          });
           break;
 
         case "needs_info":
-          await emitLog(
-            jobId,
-            "system",
-            `Agent needs info: ${signal.question}`,
-            logState,
-          );
+          await emitLog(jobId, "system", `Agent needs info: ${signal.question}`, logState);
           // For manual jobs (negative issue number), skip GitHub comment
           if (issueNumber < 0) {
             await applyTransitionAtomic(jobId, "needs_info", signal.question, {
@@ -268,60 +223,32 @@ function createAgentCallbacks(
           } else {
             try {
               const commentBody = `${AGENT_COMMENT_MARKER}\n**Agent Question:**\n\n${signal.question}`;
-              const { id: commentId } = await createIssueCommentForRepo(
-                repositoryId,
-                issueNumber,
-                commentBody,
-              );
-              await applyTransitionAtomic(
-                jobId,
-                "needs_info",
-                signal.question,
-                {
-                  needs_info_question: signal.question,
-                  needs_info_comment_id: commentId,
-                  last_checked_comment_id: commentId,
-                },
-              );
+              const { id: commentId } = await createIssueCommentForRepo(repositoryId, issueNumber, commentBody);
+              await applyTransitionAtomic(jobId, "needs_info", signal.question, {
+                needs_info_question: signal.question,
+                needs_info_comment_id: commentId,
+                last_checked_comment_id: commentId,
+              });
             } catch (error) {
               const err = error as Error;
-              await emitLog(
-                jobId,
-                "stderr",
-                `Failed to post question to GitHub: ${err.message}`,
-                logState,
-              );
+              await emitLog(jobId, "stderr", `Failed to post question to GitHub: ${err.message}`, logState);
             }
           }
           break;
 
         case "error":
-          await emitLog(
-            jobId,
-            "stderr",
-            `Agent error: ${signal.message}`,
-            logState,
-          );
+          await emitLog(jobId, "stderr", `Agent error: ${signal.message}`, logState);
           await applyTransitionAtomic(jobId, "failed", signal.message, {
             failure_reason: signal.message,
           });
-          emitHealthEvent(
-            "agent_stopped",
-            `Agent error for job ${jobId}: ${signal.message}`,
-            {
-              jobId,
-              reason: "error",
-            },
-          );
+          emitHealthEvent("agent_stopped", `Agent error for job ${jobId}: ${signal.message}`, {
+            jobId,
+            reason: "error",
+          });
           break;
 
         case "completed":
-          await emitLog(
-            jobId,
-            "system",
-            signal.summary || "Agent completed",
-            logState,
-          );
+          await emitLog(jobId, "system", signal.summary || "Agent completed", logState);
           emitHealthEvent("agent_stopped", `Agent completed for job ${jobId}`, {
             jobId,
             reason: "completed",
@@ -332,28 +259,25 @@ function createAgentCallbacks(
 
     onSessionCreated: async (sessionId: string) => {
       const conn = getConn();
-      await execute(
-        conn,
-        "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?",
-        [sessionId, new Date().toISOString(), jobId],
-      );
+      await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
+        sessionId,
+        new Date().toISOString(),
+        jobId,
+      ]);
       await emitLog(jobId, "system", `Session ID: ${sessionId}`, logState);
     },
 
     onPhaseChange: async (phase: string, progress?: number) => {
       const conn = getConn();
-      await execute(
-        conn,
-        "UPDATE jobs SET phase = ?, progress = ?, updated_at = ? WHERE id = ?",
-        [phase, progress ?? null, new Date().toISOString(), jobId],
-      );
+      await execute(conn, "UPDATE jobs SET phase = ?, progress = ?, updated_at = ? WHERE id = ?", [
+        phase,
+        progress ?? null,
+        new Date().toISOString(),
+        jobId,
+      ]);
 
       // Broadcast updated job
-      const updated = await queryOne<DbJob>(
-        conn,
-        "SELECT * FROM jobs WHERE id = ?",
-        [jobId],
-      );
+      const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
       if (updated) {
         broadcast({ type: "job:updated", payload: updated });
       }
@@ -364,16 +288,11 @@ function createAgentCallbacks(
 /**
  * Start an agent for a job
  */
-export async function startAgent(
-  jobId: string,
-  agentType?: string,
-): Promise<AgentStartResult> {
+export async function startAgent(jobId: string, agentType?: string): Promise<AgentStartResult> {
   const conn = getConn();
 
   // Get the job
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
   }
@@ -403,16 +322,12 @@ export async function startAgent(
   const repoConfig = await getRepoConfigById(job.repository_id);
 
   // Get the agent runner
-  const runner = agentType
-    ? agentRegistry.get(agentType)
-    : agentRegistry.getAll()[0]; // Use first registered agent as default
+  const runner = agentType ? agentRegistry.get(agentType) : agentRegistry.getAll()[0]; // Use first registered agent as default
 
   if (!runner) {
     return {
       success: false,
-      error: agentType
-        ? `Unknown agent type: ${agentType}`
-        : "No agents configured",
+      error: agentType ? `Unknown agent type: ${agentType}` : "No agents configured",
     };
   }
 
@@ -433,34 +348,20 @@ export async function startAgent(
 
   // Create callbacks
   const logState: LogState = { sequence: 0 };
-  const callbacks = createAgentCallbacks(
-    job.id,
-    job.repository_id,
-    job.issue_number,
-    logState,
-  );
+  const callbacks = createAgentCallbacks(job.id, job.repository_id, job.issue_number, logState);
 
   // Start the agent
-  await emitLog(
-    job.id,
-    "system",
-    `Starting ${runner.displayName} agent...`,
-    logState,
-  );
+  await emitLog(job.id, "system", `Starting ${runner.displayName} agent...`, logState);
 
   const effectiveAgentType = agentType || runner.type;
   const result = await runner.start(context, config, callbacks);
 
   if (result.success) {
     await setupExecutorTimeout(jobId, effectiveAgentType);
-    emitHealthEvent(
-      "agent_started",
-      `Started ${runner.displayName} for job ${jobId}`,
-      {
-        jobId,
-        agentType: effectiveAgentType,
-      },
-    );
+    emitHealthEvent("agent_started", `Started ${runner.displayName} for job ${jobId}`, {
+      jobId,
+      agentType: effectiveAgentType,
+    });
   }
 
   return result;
@@ -473,11 +374,7 @@ export async function startAgent(
  * and starts the agent. It is idempotent - if the agent is already running, it returns
  * success without spawning a duplicate.
  */
-export async function resumeAgent(
-  jobId: string,
-  message?: string,
-  agentType?: string,
-): Promise<AgentStartResult> {
+export async function resumeAgent(jobId: string, message?: string, agentType?: string): Promise<AgentStartResult> {
   // Determine agent type from parameter or job's agent type, or default
   const type = agentType || "claude-code";
   const runner = agentRegistry.get(type);
@@ -494,9 +391,7 @@ export async function resumeAgent(
   const conn = getConn();
 
   // Get the job and validate state
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
   }
@@ -511,8 +406,7 @@ export async function resumeAgent(
   }
 
   // Determine the actual session ID based on agent type
-  const sessionId =
-    type === "openai-codex" ? job.codex_session_id : job.claude_session_id;
+  const sessionId = type === "openai-codex" ? job.codex_session_id : job.claude_session_id;
 
   if (!sessionId) {
     return { success: false, error: "No session ID to resume from" };
@@ -544,40 +438,24 @@ export async function resumeAgent(
       })()
     : null;
 
-  const sessionValidation = validateSession(
-    type,
-    sessionId,
-    job.worktree_path,
-    agentSessionData,
-  );
+  const sessionValidation = validateSession(type, sessionId, job.worktree_path, agentSessionData);
 
   if (!sessionValidation.valid) {
     const errorMessage = sessionValidation.error || "Session validation failed";
 
     if (sessionValidation.canStartFresh) {
       // Session is stale but we can start fresh - clear session and continue
-      console.log(
-        `[agent-executor] Session validation failed for job ${jobId}: ${errorMessage}. Will start fresh.`,
-      );
+      console.log(`[agent-executor] Session validation failed for job ${jobId}: ${errorMessage}. Will start fresh.`);
 
       // Clear the stale session ID
       const clearNow = new Date().toISOString();
-      const clearClaudeSession =
-        type === "claude-code" ? null : job.claude_session_id;
-      const clearCodexSession =
-        type === "openai-codex" ? null : job.codex_session_id;
-      const clearSessionData =
-        type === "openai-codex" ? null : job.agent_session_data;
+      const clearClaudeSession = type === "claude-code" ? null : job.claude_session_id;
+      const clearCodexSession = type === "openai-codex" ? null : job.codex_session_id;
+      const clearSessionData = type === "openai-codex" ? null : job.agent_session_data;
       await execute(
         conn,
         "UPDATE jobs SET claude_session_id = ?, codex_session_id = ?, agent_session_data = ?, updated_at = ? WHERE id = ?",
-        [
-          clearClaudeSession,
-          clearCodexSession,
-          clearSessionData,
-          clearNow,
-          jobId,
-        ],
+        [clearClaudeSession, clearCodexSession, clearSessionData, clearNow, jobId],
       );
 
       // Return error with explanation - caller can decide to start fresh
@@ -605,11 +483,7 @@ export async function resumeAgent(
   // Perform the state transition atomically in a transaction
   const transitionResult = await withTransaction(conn, async (conn) => {
     // Re-check job state within transaction (optimistic locking pattern)
-    const currentJob = await queryOne<DbJob>(
-      conn,
-      "SELECT * FROM jobs WHERE id = ?",
-      [jobId],
-    );
+    const currentJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
     if (!currentJob) {
       return { success: false, error: "Job not found" };
     }
@@ -640,22 +514,10 @@ export async function resumeAgent(
     await execute(
       conn,
       "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
-      [
-        jobId,
-        "user_action",
-        currentStatus,
-        "running",
-        message || "Resume requested by user",
-        eventMetadata,
-        transNow,
-      ],
+      [jobId, "user_action", currentStatus, "running", message || "Resume requested by user", eventMetadata, transNow],
     );
 
-    const updated = await queryOne<DbJob>(
-      conn,
-      "SELECT * FROM jobs WHERE id = ?",
-      [jobId],
-    );
+    const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
     return { success: true, job: updated };
   });
@@ -688,12 +550,7 @@ export async function resumeAgent(
 
   const config: AgentConfig = {};
   const logState: LogState = { sequence: 0 };
-  const callbacks = createAgentCallbacks(
-    job.id,
-    job.repository_id,
-    job.issue_number,
-    logState,
-  );
+  const callbacks = createAgentCallbacks(job.id, job.repository_id, job.issue_number, logState);
 
   await emitLog(
     job.id,
@@ -704,34 +561,19 @@ export async function resumeAgent(
     logState,
   );
 
-  const startResult = await runner.resume(
-    context,
-    session,
-    config,
-    callbacks,
-    message,
-  );
+  const startResult = await runner.resume(context, session, config, callbacks, message);
 
   if (startResult.success) {
     await setupExecutorTimeout(jobId, type);
-    emitHealthEvent(
-      "agent_started",
-      `Resumed ${runner.displayName} for job ${jobId}`,
-      {
-        jobId,
-        agentType: type,
-        resumed: true,
-      },
-    );
+    emitHealthEvent("agent_started", `Resumed ${runner.displayName} for job ${jobId}`, {
+      jobId,
+      agentType: type,
+      resumed: true,
+    });
   } else {
     // If agent start failed, log the error
     // Leave in running state - the user can retry or pause manually
-    await emitLog(
-      job.id,
-      "stderr",
-      `Failed to start agent: ${startResult.error}`,
-      logState,
-    );
+    await emitLog(job.id, "stderr", `Failed to start agent: ${startResult.error}`, logState);
   }
 
   return startResult;

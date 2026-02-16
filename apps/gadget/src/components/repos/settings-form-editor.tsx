@@ -1,5 +1,13 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Input } from "@devkit/ui/components/input";
+import { Label } from "@devkit/ui/components/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
+import { Switch } from "@devkit/ui/components/switch";
+import { Textarea } from "@devkit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import type { LucideIcon } from "lucide-react";
 import {
   Box,
@@ -21,14 +29,6 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
-import { Switch } from "@devkit/ui/components/switch";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { saveClaudeSettingsJson, saveDefaultClaudeSettings } from "@/lib/actions/claude-config";
 import {
   type FieldDef,

@@ -63,11 +63,7 @@ export class TimeoutError extends Error {
  * }
  * ```
  */
-export async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  operationName: string,
-): Promise<T> {
+export async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   const timeoutPromise = new Promise<never>((_, reject) => {

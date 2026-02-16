@@ -1,9 +1,5 @@
 "use client";
 
-import { Check, ExternalLink, Eye, EyeOff, HelpCircle, Key, Loader2, Save } from "lucide-react";
-import Link from "next/link";
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
@@ -17,6 +13,10 @@ import {
 } from "@devkit/ui/components/dialog";
 import { Input } from "@devkit/ui/components/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Check, ExternalLink, Eye, EyeOff, HelpCircle, Key, Loader2, Save } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { writeEnvKey } from "@/lib/actions/env-keys";
 
 const KEY_HELP: Record<string, { title: string; steps: string[]; url: string; urlLabel: string }> = {

@@ -1,9 +1,5 @@
 "use client";
 
-import { Github, List, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
@@ -15,6 +11,10 @@ import {
 } from "@devkit/ui/components/dialog";
 import { Input } from "@devkit/ui/components/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { Github, List, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { createGitHubSource, createMcpListSource, scanConceptSource } from "@/lib/actions/concept-sources";
 
 interface AddSourceDialogProps {

@@ -1,7 +1,5 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@devkit/ui/components/button";
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
@@ -10,6 +8,8 @@ import { Label } from "@devkit/ui/components/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
 import { Textarea } from "@devkit/ui/components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import type { CustomRule, CustomRuleType, FindingCategory, Policy, Severity } from "@/lib/types";
 
 interface RuleFormProps {

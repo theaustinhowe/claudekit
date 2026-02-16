@@ -4,11 +4,7 @@ import { getConn } from "../db/index.js";
 import { agentRegistry } from "../services/agents/index.js";
 import { getAllRateLimitInfo } from "../services/github/index.js";
 import { getRecentHealthEvents } from "../services/health-events.js";
-import {
-  getEffectivePollInterval,
-  getThrottleState,
-  isPollingActive,
-} from "../services/polling.js";
+import { getEffectivePollInterval, getThrottleState, isPollingActive } from "../services/polling.js";
 import { isShutdownInProgress } from "../services/shutdown.js";
 import { getClientCount } from "../ws/handler.js";
 

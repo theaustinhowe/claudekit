@@ -12,15 +12,9 @@ async function getApiToken(): Promise<string | null> {
 
   try {
     const conn = getConn();
-    const row = await queryOne<DbSetting>(
-      conn,
-      "SELECT * FROM settings WHERE key = ?",
-      ["api_token"],
-    );
+    const row = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["api_token"]);
 
-    cachedToken = row
-      ? String(parseJsonField(row.value, null))
-      : process.env.API_TOKEN || null;
+    cachedToken = row ? String(parseJsonField(row.value, null)) : process.env.API_TOKEN || null;
   } catch {
     // DB might not be initialized yet during startup
     cachedToken = process.env.API_TOKEN || null;
@@ -37,10 +31,7 @@ function isPublicRoute(url: string): boolean {
   return PUBLIC_ROUTES.some((route) => url.startsWith(route));
 }
 
-export async function authHook(
-  request: FastifyRequest,
-  reply: FastifyReply,
-): Promise<void> {
+export async function authHook(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   // Skip auth for WebSocket upgrades (handled separately)
   if (request.headers.upgrade === "websocket") return;
 

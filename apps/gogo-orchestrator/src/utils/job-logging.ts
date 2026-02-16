@@ -42,12 +42,7 @@ function getOrCreateBuffer(jobId: string): JobLogBuffer {
  * Logs are buffered in memory and batch-inserted to DB every 2 seconds.
  * WebSocket broadcast happens immediately (no latency for live viewers).
  */
-export async function emitLog(
-  jobId: string,
-  stream: LogStream,
-  content: string,
-  state: LogState,
-): Promise<void> {
+export async function emitLog(jobId: string, stream: LogStream, content: string, state: LogState): Promise<void> {
   const sequence = state.sequence++;
   const entry: LogEntry = {
     jobId,
@@ -108,20 +103,11 @@ export async function flushAllPending(): Promise<void> {
       await execute(
         conn,
         "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
-        [
-          entry.jobId,
-          entry.stream,
-          entry.content,
-          entry.sequence,
-          entry.createdAt.toISOString(),
-        ],
+        [entry.jobId, entry.stream, entry.content, entry.sequence, entry.createdAt.toISOString()],
       );
     }
   } catch (error) {
-    console.error(
-      `[job-logging] Failed to batch-insert ${allPending.length} log entries:`,
-      error,
-    );
+    console.error(`[job-logging] Failed to batch-insert ${allPending.length} log entries:`, error);
   }
 }
 
@@ -129,10 +115,7 @@ export async function flushAllPending(): Promise<void> {
  * Get the ring buffer entries for a job (for reconnection replay).
  * Returns entries with sequence > lastSequence if provided.
  */
-export function getRingBuffer(
-  jobId: string,
-  lastSequence?: number,
-): LogEntry[] {
+export function getRingBuffer(jobId: string, lastSequence?: number): LogEntry[] {
   const buffer = jobBuffers.get(jobId);
   if (!buffer) return [];
 
@@ -180,17 +163,9 @@ export async function updateJobStatus(
   }
 
   params.push(jobId);
-  await execute(
-    conn,
-    `UPDATE jobs SET ${sets.join(", ")} WHERE id = ?`,
-    params,
-  );
+  await execute(conn, `UPDATE jobs SET ${sets.join(", ")} WHERE id = ?`, params);
 
-  const updated = await queryOne<DbJob>(
-    conn,
-    "SELECT * FROM jobs WHERE id = ?",
-    [jobId],
-  );
+  const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (!updated) return false;
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@devkit/ui/components/button";
+import { AlertCircle, RotateCcw } from "lucide-react";
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (

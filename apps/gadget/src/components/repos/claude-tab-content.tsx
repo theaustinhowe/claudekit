@@ -1,9 +1,5 @@
 "use client";
 
-import { Code, Download, FileCode, FileText, FormInput, Info, Plus, RotateCcw, Save } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +15,10 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { Code, Download, FileCode, FileText, FormInput, Info, Plus, RotateCcw, Save } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { saveClaudeMd, saveClaudeSettingsJson } from "@/lib/actions/claude-config";
 import { getDefaultSettings, serializeFormToJson } from "@/lib/services/claude-settings-schema";
 import { SettingsFormEditor } from "./settings-form-editor";

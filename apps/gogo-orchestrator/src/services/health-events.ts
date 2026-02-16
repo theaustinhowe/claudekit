@@ -49,12 +49,7 @@ function persistEvent(event: HealthEvent): void {
   execute(
     conn,
     "INSERT INTO health_events (id, type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?)",
-    [
-      event.type,
-      event.message,
-      event.metadata ? JSON.stringify(event.metadata) : null,
-      event.timestamp,
-    ],
+    [event.type, event.message, event.metadata ? JSON.stringify(event.metadata) : null, event.timestamp],
   )
     .then(() => {})
     .catch((error) => {
@@ -67,11 +62,7 @@ function persistEvent(event: HealthEvent): void {
  * Stores in the ring buffer, persists to DB (fire-and-forget),
  * and broadcasts to WebSocket clients.
  */
-export function emitHealthEvent(
-  type: HealthEventType,
-  message: string,
-  metadata?: Record<string, unknown>,
-): void {
+export function emitHealthEvent(type: HealthEventType, message: string, metadata?: Record<string, unknown>): void {
   const event: HealthEvent = {
     type,
     timestamp: new Date().toISOString(),
@@ -96,9 +87,7 @@ export function emitHealthEvent(
  *
  * @param limit Max number of events to return (default: 50)
  */
-export async function getRecentHealthEvents(
-  limit = 50,
-): Promise<HealthEvent[]> {
+export async function getRecentHealthEvents(limit = 50): Promise<HealthEvent[]> {
   if (eventBuffer.length > 0) {
     return eventBuffer.slice(-limit);
   }
@@ -106,11 +95,9 @@ export async function getRecentHealthEvents(
   // Buffer is empty — fall back to DB (e.g. after restart)
   try {
     const conn = getConn();
-    const rows = await queryAll<DbHealthEvent>(
-      conn,
-      "SELECT * FROM health_events ORDER BY created_at DESC LIMIT ?",
-      [limit],
-    );
+    const rows = await queryAll<DbHealthEvent>(conn, "SELECT * FROM health_events ORDER BY created_at DESC LIMIT ?", [
+      limit,
+    ]);
 
     // Convert DB rows to HealthEvent shape (oldest first)
     return rows.reverse().map((row) => ({
@@ -120,10 +107,7 @@ export async function getRecentHealthEvents(
       metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
     }));
   } catch (error) {
-    console.error(
-      "[health-events] Failed to load events from database:",
-      error,
-    );
+    console.error("[health-events] Failed to load events from database:", error);
     return [];
   }
 }

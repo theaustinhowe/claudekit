@@ -10,10 +10,7 @@ import { execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";
-import {
-  getIssueByNumber,
-  getOpenPullRequestsForRepo,
-} from "./github/index.js";
+import { getIssueByNumber, getOpenPullRequestsForRepo } from "./github/index.js";
 import { enterPrReviewing } from "./pr-reviewing.js";
 
 /**
@@ -41,10 +38,7 @@ function extractIssueNumberFromBranch(branch: string): number | null {
 /**
  * Check if a job already exists for an issue in a repository
  */
-async function jobExistsForIssue(
-  repositoryId: string,
-  issueNumber: number,
-): Promise<boolean> {
+async function jobExistsForIssue(repositoryId: string, issueNumber: number): Promise<boolean> {
   const conn = getConn();
   const existing = await queryOne<{ id: string }>(
     conn,
@@ -82,10 +76,7 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
   const conn = getConn();
 
   // Get all active repositories
-  const repos = await queryAll<DbRepository>(
-    conn,
-    "SELECT * FROM repositories WHERE is_active = true",
-  );
+  const repos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
 
   result.repositoriesChecked = repos.length;
 
@@ -113,9 +104,7 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
         // Fetch issue details from GitHub
         const issue = await getIssueByNumber(repo.id, issueNumber);
         if (!issue) {
-          result.errors.push(
-            `PR #${pr.number}: Could not fetch issue #${issueNumber} for ${repo.owner}/${repo.name}`,
-          );
+          result.errors.push(`PR #${pr.number}: Could not fetch issue #${issueNumber} for ${repo.owner}/${repo.name}`);
           continue;
         }
 
@@ -147,9 +136,7 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
         );
 
         if (!newJob) {
-          result.errors.push(
-            `PR #${pr.number}: Failed to create job record for issue #${issueNumber}`,
-          );
+          result.errors.push(`PR #${pr.number}: Failed to create job record for issue #${issueNumber}`);
           continue;
         }
 
@@ -189,9 +176,7 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
       }
     } catch (error) {
       const err = error as Error;
-      result.errors.push(
-        `Repository ${repo.owner}/${repo.name}: ${err.message}`,
-      );
+      result.errors.push(`Repository ${repo.owner}/${repo.name}: ${err.message}`);
     }
   }
 

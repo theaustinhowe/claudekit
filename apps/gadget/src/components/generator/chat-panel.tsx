@@ -1,10 +1,7 @@
 "use client";
 
-import { Bot, Clock, Loader2, Send, Square, User } from "lucide-react";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { MarkdownRenderer } from "@/components/code/markdown-renderer";
-import type { StreamEntry } from "@/components/generator/streaming-display";
-import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
+import type { SessionStreamEvent } from "@devkit/hooks";
+import { useSessionStream } from "@devkit/hooks";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,8 +15,11 @@ import {
 import { Button } from "@devkit/ui/components/button";
 import { Textarea } from "@devkit/ui/components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { useSessionStream } from "@devkit/hooks";
-import type { SessionStreamEvent } from "@devkit/hooks";
+import { Bot, Clock, Loader2, Send, Square, User } from "lucide-react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { MarkdownRenderer } from "@/components/code/markdown-renderer";
+import type { StreamEntry } from "@/components/generator/streaming-display";
+import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
 import type { DesignMessage } from "@/lib/types";
 
 interface ChatPanelProps {

@@ -1,12 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  type GitConfig,
-  getBareRepoPath,
-  getJobsDir,
-  getRepoDir,
-  getRepoSlug,
-} from "./git.js";
+import { type GitConfig, getBareRepoPath, getJobsDir, getRepoDir, getRepoSlug } from "./git.js";
 
 /**
  * Path safety tests for multi-repository workspace isolation.
@@ -20,11 +14,7 @@ import {
 describe("path safety", () => {
   const sharedWorkdir = "/shared/workdir";
 
-  const createConfig = (
-    owner: string,
-    name: string,
-    workdir = sharedWorkdir,
-  ): GitConfig => ({
+  const createConfig = (owner: string, name: string, workdir = sharedWorkdir): GitConfig => ({
     workdir,
     owner,
     name,
@@ -192,10 +182,7 @@ describe("path safety", () => {
      * Simulates the validation logic used in cleanup endpoints.
      * Returns true if the worktree path is valid for the given config.
      */
-    const isValidWorktreePath = (
-      config: GitConfig,
-      worktreePath: string,
-    ): boolean => {
+    const isValidWorktreePath = (config: GitConfig, worktreePath: string): boolean => {
       const repoDir = getRepoDir(config);
       const normalizedRepoDir = resolve(repoDir);
       const normalizedWorktreePath = resolve(worktreePath);

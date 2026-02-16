@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
 import { GitCommit, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { CodeCommitDetail } from "@/components/code/code-commit-detail";
-import { Button } from "@devkit/ui/components/button";
 import { getCommitLog } from "@/lib/actions/code-browser";
 import type { CodeCommitInfo } from "@/lib/types";
 import { timeAgo } from "@/lib/utils";

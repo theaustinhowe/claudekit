@@ -1,5 +1,8 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import {
   Activity,
   ArrowRight,
@@ -23,9 +26,6 @@ import {
 import { motion } from "motion/react";
 import Link from "next/link";
 import { SessionBadge } from "@/components/sessions/session-badge";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { SESSION_TYPE_LABELS } from "@/lib/constants";
 import type { AttentionRepo, DashboardStats, OnboardingState, SessionRow } from "@/lib/types";
 import { formatNumber, timeAgo } from "@/lib/utils";

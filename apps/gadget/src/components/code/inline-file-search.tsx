@@ -1,8 +1,8 @@
 "use client";
 
+import { Input } from "@devkit/ui/components/input";
 import { File, Folder, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Input } from "@devkit/ui/components/input";
 import { getFileTree } from "@/lib/actions/code-browser";
 import { fuzzyMatch } from "@/lib/fuzzy-match";
 import type { CodeTreeEntry } from "@/lib/types";

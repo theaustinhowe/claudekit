@@ -36,10 +36,7 @@ describe("OpenAI Tools", () => {
 
     beforeEach(async () => {
       // Create a temporary test directory
-      testDir = path.join(
-        "/tmp",
-        `openai-tools-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      );
+      testDir = path.join("/tmp", `openai-tools-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
       await fs.mkdir(testDir, { recursive: true });
     });
 
@@ -54,11 +51,7 @@ describe("OpenAI Tools", () => {
 
     describe("shell tool", () => {
       it("should execute shell commands", async () => {
-        const result = await executeTool(
-          "shell",
-          { command: "echo hello" },
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("shell", { command: "echo hello" }, { cwd: testDir, jobId: "test-job" });
 
         expect(result.result).toContain("hello");
         expect(result.signal).toBeUndefined();
@@ -71,22 +64,14 @@ describe("OpenAI Tools", () => {
           { cwd: testDir, jobId: "test-job" },
         );
 
-        expect(result.result.toLowerCase()).toMatch(
-          /no such file|not found|cannot access/,
-        );
+        expect(result.result.toLowerCase()).toMatch(/no such file|not found|cannot access/);
       });
 
       it("should run commands in the specified directory", async () => {
-        const result = await executeTool(
-          "shell",
-          { command: "pwd" },
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("shell", { command: "pwd" }, { cwd: testDir, jobId: "test-job" });
 
         // On macOS, /tmp is a symlink to /private/tmp
-        expect(result.result.trim()).toMatch(
-          new RegExp(`(${testDir}|/private${testDir})$`),
-        );
+        expect(result.result.trim()).toMatch(new RegExp(`(${testDir}|/private${testDir})$`));
       });
     });
 
@@ -95,21 +80,13 @@ describe("OpenAI Tools", () => {
         const testFile = path.join(testDir, "test.txt");
         await fs.writeFile(testFile, "test content");
 
-        const result = await executeTool(
-          "read_file",
-          { path: "test.txt" },
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("read_file", { path: "test.txt" }, { cwd: testDir, jobId: "test-job" });
 
         expect(result.result).toBe("test content");
       });
 
       it("should return error for non-existent file", async () => {
-        const result = await executeTool(
-          "read_file",
-          { path: "nonexistent.txt" },
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("read_file", { path: "nonexistent.txt" }, { cwd: testDir, jobId: "test-job" });
 
         expect(result.result).toContain("Error: File not found");
       });
@@ -135,10 +112,7 @@ describe("OpenAI Tools", () => {
 
         expect(result.result).toContain("Successfully wrote");
 
-        const content = await fs.readFile(
-          path.join(testDir, "output.txt"),
-          "utf-8",
-        );
+        const content = await fs.readFile(path.join(testDir, "output.txt"), "utf-8");
         expect(content).toBe("new content");
       });
 
@@ -151,10 +125,7 @@ describe("OpenAI Tools", () => {
 
         expect(result.result).toContain("Successfully wrote");
 
-        const content = await fs.readFile(
-          path.join(testDir, "nested/dir/file.txt"),
-          "utf-8",
-        );
+        const content = await fs.readFile(path.join(testDir, "nested/dir/file.txt"), "utf-8");
         expect(content).toBe("deep content");
       });
 
@@ -175,11 +146,7 @@ describe("OpenAI Tools", () => {
         await fs.writeFile(path.join(testDir, "file2.txt"), "");
         await fs.mkdir(path.join(testDir, "subdir"));
 
-        const result = await executeTool(
-          "list_directory",
-          { path: "." },
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("list_directory", { path: "." }, { cwd: testDir, jobId: "test-job" });
 
         expect(result.result).toContain("file1.txt");
         expect(result.result).toContain("file2.txt");
@@ -197,11 +164,7 @@ describe("OpenAI Tools", () => {
       });
 
       it("should prevent path traversal", async () => {
-        const result = await executeTool(
-          "list_directory",
-          { path: "../../../" },
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("list_directory", { path: "../../../" }, { cwd: testDir, jobId: "test-job" });
 
         expect(result.result).toContain("Cannot list directories outside");
       });
@@ -209,11 +172,7 @@ describe("OpenAI Tools", () => {
 
     describe("signal_ready_to_pr tool", () => {
       it("should return ready_to_pr signal", async () => {
-        const result = await executeTool(
-          "signal_ready_to_pr",
-          {},
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("signal_ready_to_pr", {}, { cwd: testDir, jobId: "test-job" });
 
         expect(result.result).toBe("OK");
         expect(result.signal).toEqual({ type: "ready_to_pr" });
@@ -238,11 +197,7 @@ describe("OpenAI Tools", () => {
 
     describe("unknown tool", () => {
       it("should return error for unknown tools", async () => {
-        const result = await executeTool(
-          "unknown_tool",
-          {},
-          { cwd: testDir, jobId: "test-job" },
-        );
+        const result = await executeTool("unknown_tool", {}, { cwd: testDir, jobId: "test-job" });
 
         expect(result.result).toContain("Unknown tool: unknown_tool");
       });

@@ -89,16 +89,7 @@ export type EventsQuery = z.infer<typeof EventsQuerySchema>;
 export const LogsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(1000).default(200),
   afterSequence: z.coerce.number().int().min(0).default(0),
-  stream: z
-    .enum([
-      "stdout",
-      "stdout:tool",
-      "stdout:thinking",
-      "stdout:content",
-      "stderr",
-      "system",
-    ])
-    .optional(),
+  stream: z.enum(["stdout", "stdout:tool", "stdout:thinking", "stdout:content", "stderr", "system"]).optional(),
 });
 
 export type LogsQuery = z.infer<typeof LogsQuerySchema>;

@@ -18,10 +18,7 @@ import {
   type GitHubIssue,
   getIssueByNumber,
 } from "../services/github/index.js";
-import {
-  syncCommentsForIssue,
-  syncIssuesForRepo,
-} from "../services/issue-sync.js";
+import { syncCommentsForIssue, syncIssuesForRepo } from "../services/issue-sync.js";
 import { broadcast } from "../ws/handler.js";
 
 // Validation schemas
@@ -62,10 +59,7 @@ async function jobExistsForIssue(
 /**
  * Create a job from a GitHub issue (reused from issue-polling.ts logic)
  */
-async function createJobFromIssue(
-  repositoryId: string,
-  issue: GitHubIssue,
-): Promise<{ id: string }> {
+async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Promise<{ id: string }> {
   const conn = getConn();
   const now = new Date().toISOString();
 
@@ -74,16 +68,7 @@ async function createJobFromIssue(
     `INSERT INTO jobs (repository_id, issue_number, issue_title, issue_url, issue_body, status, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING *`,
-    [
-      repositoryId,
-      issue.number,
-      issue.title,
-      issue.html_url,
-      issue.body,
-      "queued",
-      now,
-      now,
-    ],
+    [repositoryId, issue.number, issue.title, issue.html_url, issue.body, "queued", now, now],
   );
 
   if (!newJob) {
@@ -97,22 +82,13 @@ async function createJobFromIssue(
     conn,
     `INSERT INTO job_events (job_id, event_type, from_status, to_status, message, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      mapped.id,
-      "state_change",
-      null,
-      "queued",
-      "Job manually created from issue",
-      now,
-    ],
+    [mapped.id, "state_change", null, "queued", "Job manually created from issue", now],
   );
 
   // Broadcast job created
   broadcast({ type: "job:created", payload: mapped });
 
-  console.log(
-    `[issues-api] Created job for issue #${issue.number}: ${issue.title}`,
-  );
+  console.log(`[issues-api] Created job for issue #${issue.number}: ${issue.title}`);
 
   return { id: mapped.id };
 }
@@ -134,10 +110,8 @@ function mapLocalIssueToResponse(row: DbIssue) {
       color: string;
       description: string | null;
     }[],
-    created_at:
-      mapped.githubCreatedAt?.toISOString() ?? mapped.createdAt.toISOString(),
-    updated_at:
-      mapped.githubUpdatedAt?.toISOString() ?? mapped.updatedAt.toISOString(),
+    created_at: mapped.githubCreatedAt?.toISOString() ?? mapped.createdAt.toISOString(),
+    updated_at: mapped.githubUpdatedAt?.toISOString() ?? mapped.updatedAt.toISOString(),
     user: mapped.authorLogin
       ? {
           login: mapped.authorLogin,
@@ -164,10 +138,8 @@ function mapLocalCommentToResponse(row: DbIssueComment) {
           avatar_url: mapped.authorAvatarUrl ?? "",
         }
       : null,
-    created_at:
-      mapped.githubCreatedAt?.toISOString() ?? mapped.createdAt.toISOString(),
-    updated_at:
-      mapped.githubUpdatedAt?.toISOString() ?? mapped.updatedAt.toISOString(),
+    created_at: mapped.githubCreatedAt?.toISOString() ?? mapped.createdAt.toISOString(),
+    updated_at: mapped.githubUpdatedAt?.toISOString() ?? mapped.updatedAt.toISOString(),
   };
 }
 
@@ -181,11 +153,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       const conn = getConn();
 
       // Check repository exists
-      const repoRow = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [repositoryId],
-      );
+      const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
       if (!repoRow) {
         return reply.status(404).send({ error: "Repository not found" });
@@ -208,10 +176,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         try {
           await syncIssuesForRepo(repositoryId);
         } catch (error) {
-          console.error(
-            "[issues-api] Initial sync failed, returning empty:",
-            error,
-          );
+          console.error("[issues-api] Initial sync failed, returning empty:", error);
         }
       }
 
@@ -238,9 +203,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         filteredIssues = localIssues.filter((issue) => {
           const mapped = mapIssue(issue);
           const issueLabels = (mapped.labels ?? []) as { name: string }[];
-          return labelNames.some((ln) =>
-            issueLabels.some((il) => il.name.toLowerCase() === ln),
-          );
+          return labelNames.some((ln) => issueLabels.some((il) => il.name.toLowerCase() === ln));
         });
       }
 
@@ -248,10 +211,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       const issuesWithJobInfo = await Promise.all(
         filteredIssues.map(async (issue) => {
           const mapped = mapIssue(issue);
-          const { exists, jobId } = await jobExistsForIssue(
-            repositoryId,
-            mapped.number,
-          );
+          const { exists, jobId } = await jobExistsForIssue(repositoryId, mapped.number);
           return {
             ...mapLocalIssueToResponse(issue),
             hasJob: exists,
@@ -272,69 +232,62 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
 
   // Create a new issue (write-through: GitHub first, then local DB)
   // POST /api/repositories/:id/issues
-  fastify.post<{ Params: { id: string }; Body: unknown }>(
-    "/:id/issues",
-    async (request, reply) => {
-      const repositoryId = request.params.id;
-      const conn = getConn();
+  fastify.post<{ Params: { id: string }; Body: unknown }>("/:id/issues", async (request, reply) => {
+    const repositoryId = request.params.id;
+    const conn = getConn();
 
-      // Check repository exists
-      const repoRow = await queryOne<DbRepository>(
+    // Check repository exists
+    const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
+
+    if (!repoRow) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
+
+    const parsed = CreateIssueBodySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: "Invalid request body",
+        details: parsed.error.format(),
+      });
+    }
+
+    try {
+      // Create on GitHub first
+      const ghIssue = await createIssueForRepo(repositoryId, parsed.data);
+
+      // Write-through: insert into local DB immediately
+      const now = new Date().toISOString();
+      await execute(
         conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [repositoryId],
+        `INSERT INTO issues (repository_id, number, title, body, state, html_url, author_login, author_avatar_url, author_html_url, labels, github_created_at, github_updated_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          repositoryId,
+          ghIssue.number,
+          ghIssue.title,
+          ghIssue.body,
+          ghIssue.state,
+          ghIssue.html_url,
+          ghIssue.user?.login ?? null,
+          ghIssue.user?.avatar_url ?? null,
+          ghIssue.user?.html_url ?? null,
+          JSON.stringify(ghIssue.labels),
+          new Date(ghIssue.created_at).toISOString(),
+          new Date(ghIssue.updated_at).toISOString(),
+          now,
+          now,
+        ],
       );
 
-      if (!repoRow) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
-
-      const parsed = CreateIssueBodySchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          error: "Invalid request body",
-          details: parsed.error.format(),
-        });
-      }
-
-      try {
-        // Create on GitHub first
-        const ghIssue = await createIssueForRepo(repositoryId, parsed.data);
-
-        // Write-through: insert into local DB immediately
-        const now = new Date().toISOString();
-        await execute(
-          conn,
-          `INSERT INTO issues (repository_id, number, title, body, state, html_url, author_login, author_avatar_url, author_html_url, labels, github_created_at, github_updated_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            repositoryId,
-            ghIssue.number,
-            ghIssue.title,
-            ghIssue.body,
-            ghIssue.state,
-            ghIssue.html_url,
-            ghIssue.user?.login ?? null,
-            ghIssue.user?.avatar_url ?? null,
-            ghIssue.user?.html_url ?? null,
-            JSON.stringify(ghIssue.labels),
-            new Date(ghIssue.created_at).toISOString(),
-            new Date(ghIssue.updated_at).toISOString(),
-            now,
-            now,
-          ],
-        );
-
-        return { data: ghIssue };
-      } catch (error) {
-        console.error("[issues-api] Failed to create issue:", error);
-        return reply.status(500).send({
-          error: "Failed to create issue on GitHub",
-          message: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    },
-  );
+      return { data: ghIssue };
+    } catch (error) {
+      console.error("[issues-api] Failed to create issue:", error);
+      return reply.status(500).send({
+        error: "Failed to create issue on GitHub",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
 
   // Create job from an issue
   // POST /api/repositories/:id/issues/:issueNumber/job
@@ -351,21 +304,14 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       const conn = getConn();
 
       // Check repository exists
-      const repoRow = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [repositoryId],
-      );
+      const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
       if (!repoRow) {
         return reply.status(404).send({ error: "Repository not found" });
       }
 
       // Check if job already exists
-      const { exists, jobId } = await jobExistsForIssue(
-        repositoryId,
-        issueNumber,
-      );
+      const { exists, jobId } = await jobExistsForIssue(repositoryId, issueNumber);
       if (exists) {
         return reply.status(409).send({
           error: "Job already exists for this issue",
@@ -391,12 +337,8 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
           html_url: mapped.htmlUrl,
           state: mapped.state,
           labels: (mapped.labels ?? []) as GitHubIssue["labels"],
-          created_at:
-            mapped.githubCreatedAt?.toISOString() ??
-            mapped.createdAt.toISOString(),
-          updated_at:
-            mapped.githubUpdatedAt?.toISOString() ??
-            mapped.updatedAt.toISOString(),
+          created_at: mapped.githubCreatedAt?.toISOString() ?? mapped.createdAt.toISOString(),
+          updated_at: mapped.githubUpdatedAt?.toISOString() ?? mapped.updatedAt.toISOString(),
           closed_at: mapped.closedAt?.toISOString() ?? null,
           user: mapped.authorLogin
             ? {
@@ -443,11 +385,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       const conn = getConn();
 
       // Check repository exists
-      const repoRow = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [repositoryId],
-      );
+      const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
       if (!repoRow) {
         return reply.status(404).send({ error: "Repository not found" });
@@ -497,11 +435,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       const conn = getConn();
 
       // Check repository exists
-      const repoRow = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [repositoryId],
-      );
+      const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
       if (!repoRow) {
         return reply.status(404).send({ error: "Repository not found" });
@@ -517,11 +451,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
 
       try {
         // Create on GitHub first
-        const ghComment = await createIssueCommentForRepo(
-          repositoryId,
-          issueNumber,
-          parsed.data.body,
-        );
+        const ghComment = await createIssueCommentForRepo(repositoryId, issueNumber, parsed.data.body);
 
         // Write-through: insert into local DB immediately
         const now = new Date().toISOString();
@@ -529,17 +459,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
           conn,
           `INSERT INTO issue_comments (repository_id, issue_number, github_comment_id, body, html_url, github_created_at, github_updated_at, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            repositoryId,
-            issueNumber,
-            ghComment.id,
-            parsed.data.body,
-            ghComment.html_url,
-            now,
-            now,
-            now,
-            now,
-          ],
+          [repositoryId, issueNumber, ghComment.id, parsed.data.body, ghComment.html_url, now, now, now, now],
         );
 
         return { data: ghComment };
@@ -555,48 +475,41 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
 
   // Manual sync trigger for a repository's issues
   // POST /api/repositories/:id/issues/sync
-  fastify.post<{ Params: { id: string } }>(
-    "/:id/issues/sync",
-    async (request, reply) => {
-      const repositoryId = request.params.id;
-      const conn = getConn();
+  fastify.post<{ Params: { id: string } }>("/:id/issues/sync", async (request, reply) => {
+    const repositoryId = request.params.id;
+    const conn = getConn();
 
-      // Check repository exists
-      const repoRow = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [repositoryId],
-      );
+    // Check repository exists
+    const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
-      if (!repoRow) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+    if (!repoRow) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
 
-      try {
-        const { synced, comments } = await syncIssuesForRepo(repositoryId);
+    try {
+      const { synced, comments } = await syncIssuesForRepo(repositoryId);
 
-        broadcast({
-          type: "issue:synced",
-          payload: {
-            repositoryId,
-            issues: synced,
-            comments,
-          },
-        });
-
-        return {
-          success: true,
-          synced,
+      broadcast({
+        type: "issue:synced",
+        payload: {
+          repositoryId,
+          issues: synced,
           comments,
-          message: `Synced ${synced} issues and ${comments} comments`,
-        };
-      } catch (error) {
-        console.error("[issues-api] Manual sync failed:", error);
-        return reply.status(500).send({
-          error: "Failed to sync issues from GitHub",
-          message: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    },
-  );
+        },
+      });
+
+      return {
+        success: true,
+        synced,
+        comments,
+        message: `Synced ${synced} issues and ${comments} comments`,
+      };
+    } catch (error) {
+      console.error("[issues-api] Manual sync failed:", error);
+      return reply.status(500).send({
+        error: "Failed to sync issues from GitHub",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
 };

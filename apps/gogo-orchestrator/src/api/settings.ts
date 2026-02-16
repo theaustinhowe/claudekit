@@ -5,12 +5,11 @@ import { type DbSetting, mapSetting } from "../db/schema.js";
 
 // Global settings only - per-repo settings are in the repositories table
 // Mapping: stored key -> { path to extract value, frontend key }
-const storedToFrontend: Record<string, { path: string; frontendKey: string }> =
-  {
-    github_token: { path: "token", frontendKey: "personalAccessToken" },
-    workdir: { path: "path", frontendKey: "workDirectory" },
-    max_parallel_jobs: { path: "count", frontendKey: "maxParallelJobs" },
-  };
+const storedToFrontend: Record<string, { path: string; frontendKey: string }> = {
+  github_token: { path: "token", frontendKey: "personalAccessToken" },
+  workdir: { path: "path", frontendKey: "workDirectory" },
+  max_parallel_jobs: { path: "count", frontendKey: "maxParallelJobs" },
+};
 
 // Mapping: frontend key -> { stored key, path to set value }
 const frontendToStored: Record<string, { storedKey: string; path: string }> = {
@@ -20,15 +19,11 @@ const frontendToStored: Record<string, { storedKey: string; path: string }> = {
 };
 
 // Transform stored DB format to frontend format
-function transformStoredToFrontend(
-  stored: Record<string, unknown>,
-): Record<string, unknown> {
+function transformStoredToFrontend(stored: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [storedKey, mapping] of Object.entries(storedToFrontend)) {
-    const storedValue = stored[storedKey] as
-      | Record<string, unknown>
-      | undefined;
+    const storedValue = stored[storedKey] as Record<string, unknown> | undefined;
     if (storedValue !== undefined) {
       result[mapping.frontendKey] = storedValue[mapping.path];
     }
@@ -52,9 +47,7 @@ function transformFrontendToStored(
 
     // Initialize with existing value if available, or empty object
     if (!result[storedKey]) {
-      const existing = existingStored[storedKey] as
-        | Record<string, unknown>
-        | undefined;
+      const existing = existingStored[storedKey] as Record<string, unknown> | undefined;
       result[storedKey] = existing ? { ...existing } : {};
     }
 
@@ -68,10 +61,7 @@ export const settingsRouter: FastifyPluginAsync = async (fastify) => {
   // Get all settings - returns frontend format
   fastify.get("/", async () => {
     const conn = getConn();
-    const allSettings = await queryAll<DbSetting>(
-      conn,
-      "SELECT * FROM settings",
-    );
+    const allSettings = await queryAll<DbSetting>(conn, "SELECT * FROM settings");
     const stored: Record<string, unknown> = {};
     for (const s of allSettings) {
       const mapped = mapSetting(s);
@@ -86,10 +76,7 @@ export const settingsRouter: FastifyPluginAsync = async (fastify) => {
     const conn = getConn();
 
     // Fetch existing settings to merge with
-    const allSettings = await queryAll<DbSetting>(
-      conn,
-      "SELECT * FROM settings",
-    );
+    const allSettings = await queryAll<DbSetting>(conn, "SELECT * FROM settings");
     const existingStored: Record<string, unknown> = {};
     for (const s of allSettings) {
       const mapped = mapSetting(s);

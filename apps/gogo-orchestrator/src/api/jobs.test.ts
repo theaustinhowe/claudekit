@@ -67,13 +67,7 @@ vi.mock("../services/state-machine.js", () => ({
   applyActionAtomic: vi.fn(),
 }));
 
-import {
-  buildInClause,
-  buildUpdate,
-  execute,
-  queryAll,
-  queryOne,
-} from "../db/helpers.js";
+import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "../db/helpers.js";
 import { mapJob } from "../db/schema.js";
 import { startAgent } from "../services/agent-executor.js";
 import { startJobRun } from "../services/agent-runner.js";
@@ -99,11 +93,7 @@ function createMockFastify(): {
   const routes: RouteHandler[] = [];
 
   const createRouteRegistrar =
-    (method: string) =>
-    (
-      path: string,
-      handler: (req: unknown, rep: unknown) => Promise<unknown>,
-    ) => {
+    (method: string) => (path: string, handler: (req: unknown, rep: unknown) => Promise<unknown>) => {
       routes.push({ method, path, handler });
     };
 
@@ -135,17 +125,13 @@ function createMockReply() {
 
 describe("jobs API", () => {
   let routes: RouteHandler[];
-  let getHandler: (
-    path: string,
-  ) => (req: unknown, rep: unknown) => Promise<unknown>;
+  let getHandler: (path: string) => (req: unknown, rep: unknown) => Promise<unknown>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     // mapJob passes through by default
-    vi.mocked(mapJob).mockImplementation(
-      (row: unknown) => row as ReturnType<typeof mapJob>,
-    );
+    vi.mocked(mapJob).mockImplementation((row: unknown) => row as ReturnType<typeof mapJob>);
 
     const { jobsRouter } = await import("./jobs.js");
     const mock = createMockFastify();
@@ -172,10 +158,7 @@ describe("jobs API", () => {
       vi.mocked(queryAll).mockResolvedValueOnce(mockJobs);
 
       const handler = getHandler("/");
-      const result = await handler(
-        { query: { limit: "50", offset: "0" } },
-        createMockReply(),
-      );
+      const result = await handler({ query: { limit: "50", offset: "0" } }, createMockReply());
 
       expect(result).toEqual({
         data: mockJobs,
@@ -199,10 +182,7 @@ describe("jobs API", () => {
       vi.mocked(queryOne).mockResolvedValue(job);
 
       const handler = getHandler("/:id");
-      const result = await handler(
-        { params: { id: "job-1" } },
-        createMockReply(),
-      );
+      const result = await handler({ params: { id: "job-1" } }, createMockReply());
 
       expect(result).toEqual({ data: job });
     });
@@ -227,9 +207,7 @@ describe("jobs API", () => {
       // execute for event insertion
       vi.mocked(execute).mockResolvedValue(undefined);
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/")?.handler;
       const result = await handler?.(
         {
           body: {
@@ -249,9 +227,7 @@ describe("jobs API", () => {
     });
 
     it("should return 400 for invalid body", async () => {
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/")?.handler;
       const reply = createMockReply();
 
       await handler?.({ body: {} }, reply);
@@ -272,13 +248,8 @@ describe("jobs API", () => {
         job: pausedJob,
       } as never);
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/actions",
-      )?.handler;
-      const result = await handler?.(
-        { params: { id: "job-1" }, body: { type: "pause" } },
-        createMockReply(),
-      );
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/actions")?.handler;
+      const result = await handler?.({ params: { id: "job-1" }, body: { type: "pause" } }, createMockReply());
 
       expect(result).toEqual({ data: pausedJob });
     });
@@ -286,28 +257,18 @@ describe("jobs API", () => {
     it("should return 404 when job not found for action", async () => {
       vi.mocked(queryOne).mockResolvedValue(undefined);
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/actions",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/actions")?.handler;
       const reply = createMockReply();
-      await handler?.(
-        { params: { id: "nonexistent" }, body: { type: "resume" } },
-        reply,
-      );
+      await handler?.({ params: { id: "nonexistent" }, body: { type: "resume" } }, reply);
 
       expect(reply._statusCode).toBe(404);
     });
 
     it("should return 400 for invalid action", async () => {
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/actions",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/actions")?.handler;
       const reply = createMockReply();
 
-      await handler?.(
-        { params: { id: "job-1" }, body: { type: "invalid_action" } },
-        reply,
-      );
+      await handler?.({ params: { id: "job-1" }, body: { type: "invalid_action" } }, reply);
 
       expect(reply._statusCode).toBe(400);
     });
@@ -324,9 +285,7 @@ describe("jobs API", () => {
 
       vi.mocked(enterNeedsInfo).mockResolvedValue(undefined);
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/actions",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/actions")?.handler;
       const result = await handler?.(
         {
           params: { id: "job-1" },
@@ -338,10 +297,7 @@ describe("jobs API", () => {
         createMockReply(),
       );
 
-      expect(enterNeedsInfo).toHaveBeenCalledWith(
-        "job-1",
-        "What is the API key?",
-      );
+      expect(enterNeedsInfo).toHaveBeenCalledWith("job-1", "What is the API key?");
       expect(result).toEqual({ data: updatedJob });
     });
 
@@ -350,9 +306,7 @@ describe("jobs API", () => {
 
       vi.mocked(queryOne).mockResolvedValue(job);
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/actions",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/actions")?.handler;
       const reply = createMockReply();
 
       await handler?.(
@@ -374,13 +328,8 @@ describe("jobs API", () => {
     it("should start a job run", async () => {
       vi.mocked(startJobRun).mockResolvedValue({ success: true });
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/start",
-      )?.handler;
-      const result = await handler?.(
-        { params: { id: "job-1" } },
-        createMockReply(),
-      );
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/start")?.handler;
+      const result = await handler?.({ params: { id: "job-1" } }, createMockReply());
 
       expect(result).toEqual({ success: true, message: "Job run started" });
     });
@@ -391,9 +340,7 @@ describe("jobs API", () => {
         error: "Job not queued",
       });
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/start",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/start")?.handler;
       const reply = createMockReply();
       await handler?.({ params: { id: "job-1" } }, reply);
 
@@ -405,13 +352,8 @@ describe("jobs API", () => {
     it("should start a Claude run", async () => {
       vi.mocked(startClaudeRun).mockResolvedValue({ success: true } as never);
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/start-claude",
-      )?.handler;
-      const result = await handler?.(
-        { params: { id: "job-1" } },
-        createMockReply(),
-      );
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/start-claude")?.handler;
+      const result = await handler?.({ params: { id: "job-1" } }, createMockReply());
 
       expect(result).toEqual({
         success: true,
@@ -424,9 +366,7 @@ describe("jobs API", () => {
     it("should start an agent with optional type", async () => {
       vi.mocked(startAgent).mockResolvedValue({ success: true } as never);
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/start-agent",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/start-agent")?.handler;
       const result = await handler?.(
         { params: { id: "job-1" }, body: { agentType: "claude-code" } },
         createMockReply(),
@@ -445,13 +385,8 @@ describe("jobs API", () => {
         prNumber: 1,
       });
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/create-pr",
-      )?.handler;
-      const result = await handler?.(
-        { params: { id: "job-1" } },
-        createMockReply(),
-      );
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/create-pr")?.handler;
+      const result = await handler?.({ params: { id: "job-1" } }, createMockReply());
 
       expect(result).toEqual({
         success: true,
@@ -467,13 +402,8 @@ describe("jobs API", () => {
         retriedToRunning: true,
       });
 
-      const handler = routes.find(
-        (r) => r.method === "POST" && r.path === "/:id/create-pr",
-      )?.handler;
-      const result = await handler?.(
-        { params: { id: "job-1" } },
-        createMockReply(),
-      );
+      const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/create-pr")?.handler;
+      const result = await handler?.({ params: { id: "job-1" } }, createMockReply());
 
       expect(result).toEqual({
         success: false,
@@ -493,9 +423,7 @@ describe("jobs API", () => {
       });
       vi.mocked(queryAll).mockResolvedValue([staleJob]);
 
-      const handler = routes.find(
-        (r) => r.method === "GET" && r.path === "/stale",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "GET" && r.path === "/stale")?.handler;
       const result = await handler?.({ query: {} }, createMockReply());
 
       expect(result).toEqual({
@@ -516,13 +444,8 @@ describe("jobs API", () => {
       });
       vi.mocked(queryOne).mockResolvedValue(updatedJob);
 
-      const handler = routes.find(
-        (r) => r.method === "PATCH" && r.path === "/:id",
-      )?.handler;
-      const result = await handler?.(
-        { params: { id: "job-1" }, body: { status: "paused" } },
-        createMockReply(),
-      );
+      const handler = routes.find((r) => r.method === "PATCH" && r.path === "/:id")?.handler;
+      const result = await handler?.({ params: { id: "job-1" }, body: { status: "paused" } }, createMockReply());
 
       expect(result).toEqual({ data: updatedJob });
       expect(broadcast).toHaveBeenCalledWith({
@@ -538,14 +461,9 @@ describe("jobs API", () => {
       });
       vi.mocked(queryOne).mockResolvedValue(undefined);
 
-      const handler = routes.find(
-        (r) => r.method === "PATCH" && r.path === "/:id",
-      )?.handler;
+      const handler = routes.find((r) => r.method === "PATCH" && r.path === "/:id")?.handler;
       const reply = createMockReply();
-      await handler?.(
-        { params: { id: "nonexistent" }, body: { status: "paused" } },
-        reply,
-      );
+      await handler?.({ params: { id: "nonexistent" }, body: { status: "paused" } }, reply);
 
       expect(reply._statusCode).toBe(404);
     });

@@ -48,11 +48,7 @@ export const openaiCodexRunner: AgentRunner = {
     supportsStreaming: true,
   } as AgentCapabilities,
 
-  async start(
-    context: AgentJobContext,
-    config: AgentConfig,
-    callbacks: AgentCallbacks,
-  ): Promise<AgentStartResult> {
+  async start(context: AgentJobContext, config: AgentConfig, callbacks: AgentCallbacks): Promise<AgentStartResult> {
     // Check availability first
     const availabilityError = getCodexAvailabilityError();
     if (availabilityError) {
@@ -79,11 +75,7 @@ export const openaiCodexRunner: AgentRunner = {
     return resumeCodexRun(context, config, callbacks, message);
   },
 
-  async inject(
-    jobId: string,
-    message: string,
-    mode: InjectMode,
-  ): Promise<AgentStartResult> {
+  async inject(jobId: string, message: string, mode: InjectMode): Promise<AgentStartResult> {
     // Check availability first
     const availabilityError = getCodexAvailabilityError();
     if (availabilityError) {

@@ -1,10 +1,10 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
-import { useRef, useState } from "react";
 import { Button } from "@devkit/ui/components/button";
 import { Input } from "@devkit/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { Plus, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { PERMISSION_SUGGESTIONS } from "@/lib/constants/permission-suggestions";
 
 interface PermissionRulesEditorProps {

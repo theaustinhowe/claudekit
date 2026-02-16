@@ -23,17 +23,15 @@ function processExists(pid: number): boolean {
 /**
  * Store PID in database when spawning a process
  */
-export async function registerProcess(
-  jobId: string,
-  pid: number,
-): Promise<void> {
+export async function registerProcess(jobId: string, pid: number): Promise<void> {
   const conn = getConn();
   const now = new Date().toISOString();
-  await execute(
-    conn,
-    "UPDATE jobs SET process_pid = ?, process_started_at = ?, updated_at = ? WHERE id = ?",
-    [pid, now, now, jobId],
-  );
+  await execute(conn, "UPDATE jobs SET process_pid = ?, process_started_at = ?, updated_at = ? WHERE id = ?", [
+    pid,
+    now,
+    now,
+    jobId,
+  ]);
 }
 
 /**
@@ -42,11 +40,10 @@ export async function registerProcess(
 export async function unregisterProcess(jobId: string): Promise<void> {
   const conn = getConn();
   const now = new Date().toISOString();
-  await execute(
-    conn,
-    "UPDATE jobs SET process_pid = NULL, process_started_at = NULL, updated_at = ? WHERE id = ?",
-    [now, jobId],
-  );
+  await execute(conn, "UPDATE jobs SET process_pid = NULL, process_started_at = NULL, updated_at = ? WHERE id = ?", [
+    now,
+    jobId,
+  ]);
 }
 
 /**
@@ -59,10 +56,7 @@ export async function findOrphanedProcesses(): Promise<ProcessInfo[]> {
     id: string;
     process_pid: number | null;
     process_started_at: string | null;
-  }>(
-    conn,
-    "SELECT id, process_pid, process_started_at FROM jobs WHERE process_pid IS NOT NULL",
-  );
+  }>(conn, "SELECT id, process_pid, process_started_at FROM jobs WHERE process_pid IS NOT NULL");
 
   const orphaned: ProcessInfo[] = [];
 
@@ -132,20 +126,14 @@ export async function cleanupOrphanedProcesses(): Promise<{
   let failed = 0;
 
   for (const proc of orphaned) {
-    console.log(
-      `[process-manager] Found orphaned process: jobId=${proc.jobId}, pid=${proc.pid}`,
-    );
+    console.log(`[process-manager] Found orphaned process: jobId=${proc.jobId}, pid=${proc.pid}`);
 
     const success = await safeTerminate(proc.pid);
     if (success) {
-      console.log(
-        `[process-manager] Terminated orphaned process: pid=${proc.pid}`,
-      );
+      console.log(`[process-manager] Terminated orphaned process: pid=${proc.pid}`);
       terminated++;
     } else {
-      console.log(
-        `[process-manager] Failed to terminate or already dead: pid=${proc.pid}`,
-      );
+      console.log(`[process-manager] Failed to terminate or already dead: pid=${proc.pid}`);
       failed++;
     }
 
@@ -175,9 +163,7 @@ export async function clearStalePidReferences(): Promise<number> {
 
   for (const job of jobsWithPids) {
     if (job.process_pid !== null && !processExists(job.process_pid)) {
-      console.log(
-        `[process-manager] Clearing stale PID reference: jobId=${job.id}, pid=${job.process_pid}`,
-      );
+      console.log(`[process-manager] Clearing stale PID reference: jobId=${job.id}, pid=${job.process_pid}`);
       await unregisterProcess(job.id);
       cleared++;
     }

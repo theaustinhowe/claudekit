@@ -28,12 +28,7 @@ vi.mock("../ws/handler.js", () => ({
   broadcast: vi.fn(),
 }));
 
-import {
-  buildUpdate,
-  execute,
-  queryOne,
-  withTransaction,
-} from "../db/helpers.js";
+import { buildUpdate, execute, queryOne, withTransaction } from "../db/helpers.js";
 import { broadcast } from "../ws/handler.js";
 
 describe("state-machine", () => {
@@ -93,9 +88,7 @@ describe("state-machine", () => {
       for (const status of statuses) {
         const result = applyAction(status, "force_stop");
         expect(result.newStatus).toBeNull();
-        expect(result.error).toBe(
-          "Can only force stop a running or planning job",
-        );
+        expect(result.error).toBe("Can only force stop a running or planning job");
       }
     });
 
@@ -185,33 +178,25 @@ describe("state-machine", () => {
     it("should reject resume_with_agent on running job", () => {
       const result = applyAction("running", "resume_with_agent");
       expect(result.newStatus).toBeNull();
-      expect(result.error).toContain(
-        "Can only resume with agent from paused or needs_info state",
-      );
+      expect(result.error).toContain("Can only resume with agent from paused or needs_info state");
     });
 
     it("should reject resume_with_agent on queued job", () => {
       const result = applyAction("queued", "resume_with_agent");
       expect(result.newStatus).toBeNull();
-      expect(result.error).toContain(
-        "Can only resume with agent from paused or needs_info state",
-      );
+      expect(result.error).toContain("Can only resume with agent from paused or needs_info state");
     });
 
     it("should reject resume_with_agent on done job", () => {
       const result = applyAction("done", "resume_with_agent");
       expect(result.newStatus).toBeNull();
-      expect(result.error).toContain(
-        "Can only resume with agent from paused or needs_info state",
-      );
+      expect(result.error).toContain("Can only resume with agent from paused or needs_info state");
     });
 
     it("should reject resume_with_agent on failed job", () => {
       const result = applyAction("failed", "resume_with_agent");
       expect(result.newStatus).toBeNull();
-      expect(result.error).toContain(
-        "Can only resume with agent from paused or needs_info state",
-      );
+      expect(result.error).toContain("Can only resume with agent from paused or needs_info state");
     });
   });
 
@@ -230,9 +215,7 @@ describe("state-machine", () => {
       });
 
       // queryOne: first for current job, second for re-read after update
-      vi.mocked(queryOne)
-        .mockResolvedValueOnce(mockJob)
-        .mockResolvedValueOnce(mockUpdatedJob);
+      vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
 
       vi.mocked(execute).mockResolvedValue(undefined);
       vi.mocked(buildUpdate).mockReturnValue({
@@ -240,11 +223,7 @@ describe("state-machine", () => {
         params: ["paused", "job-1"],
       });
 
-      const result = await applyTransitionAtomic(
-        "job-1",
-        "paused",
-        "Test transition",
-      );
+      const result = await applyTransitionAtomic("job-1", "paused", "Test transition");
 
       expect(result.success).toBe(true);
       expect(result.job).toEqual(mockUpdatedJob);
@@ -261,11 +240,7 @@ describe("state-machine", () => {
 
       vi.mocked(queryOne).mockResolvedValueOnce(undefined);
 
-      const result = await applyTransitionAtomic(
-        "nonexistent",
-        "paused",
-        "Test",
-      );
+      const result = await applyTransitionAtomic("nonexistent", "paused", "Test");
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Job not found");
@@ -280,11 +255,7 @@ describe("state-machine", () => {
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob);
 
-      const result = await applyTransitionAtomic(
-        "job-1",
-        "running",
-        "Invalid transition",
-      );
+      const result = await applyTransitionAtomic("job-1", "running", "Invalid transition");
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Cannot transition from done to running");
@@ -302,9 +273,7 @@ describe("state-machine", () => {
         return fn({} as never);
       });
 
-      vi.mocked(queryOne)
-        .mockResolvedValueOnce(mockJob)
-        .mockResolvedValueOnce(mockUpdatedJob);
+      vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
 
       vi.mocked(execute).mockResolvedValue(undefined);
       vi.mocked(buildUpdate).mockReturnValue({
@@ -342,9 +311,7 @@ describe("state-machine", () => {
         return fn({} as never);
       });
 
-      vi.mocked(queryOne)
-        .mockResolvedValueOnce(mockJob)
-        .mockResolvedValueOnce(mockUpdatedJob);
+      vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
 
       vi.mocked(execute).mockResolvedValue(undefined);
       vi.mocked(buildUpdate).mockReturnValue({
@@ -387,15 +354,11 @@ describe("state-machine", () => {
         return fn({} as never);
       });
 
-      vi.mocked(queryOne)
-        .mockResolvedValueOnce(mockJob)
-        .mockResolvedValueOnce(mockUpdatedJob);
+      vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
 
       vi.mocked(execute).mockResolvedValue(undefined);
       // buildUpdate may return null for empty updates (no status change, no other fields)
-      vi.mocked(buildUpdate).mockReturnValue(
-        null as unknown as ReturnType<typeof buildUpdate>,
-      );
+      vi.mocked(buildUpdate).mockReturnValue(null as unknown as ReturnType<typeof buildUpdate>);
 
       const result = await applyActionAtomic("job-1", "inject", {
         message: "Additional instructions",
@@ -412,9 +375,7 @@ describe("state-machine", () => {
         return fn({} as never);
       });
 
-      vi.mocked(queryOne)
-        .mockResolvedValueOnce(mockJob)
-        .mockResolvedValueOnce(mockUpdatedJob);
+      vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
 
       vi.mocked(execute).mockResolvedValue(undefined);
       vi.mocked(buildUpdate).mockReturnValue({
@@ -422,12 +383,7 @@ describe("state-machine", () => {
         params: ["paused", "Test pause", "job-1"],
       });
 
-      await applyActionAtomic(
-        "job-1",
-        "pause",
-        { reason: "Test pause" },
-        { customKey: "customValue" },
-      );
+      await applyActionAtomic("job-1", "pause", { reason: "Test pause" }, { customKey: "customValue" });
 
       // The second execute call is the event INSERT
       // execute is called for: buildUpdate (if not null), then INSERT event
@@ -439,9 +395,7 @@ describe("state-machine", () => {
       expect(eventInsertCall).toBeDefined();
       // The metadata parameter should be the JSON-stringified metadata
       const params = eventInsertCall?.[2] as unknown[];
-      const metadataParam = params.find(
-        (p) => typeof p === "string" && p.includes("customKey"),
-      );
+      const metadataParam = params.find((p) => typeof p === "string" && p.includes("customKey"));
       expect(metadataParam).toBeDefined();
     });
   });

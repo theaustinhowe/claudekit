@@ -1,4 +1,4 @@
-import { createLogger, createServiceLogger as _createServiceLogger } from "@devkit/logger";
+import { createServiceLogger as _createServiceLogger, createLogger } from "@devkit/logger";
 
 export const logger = createLogger({ app: "gogo-orchestrator" });
 

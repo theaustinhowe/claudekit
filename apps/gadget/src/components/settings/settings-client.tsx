@@ -1,5 +1,12 @@
 "use client";
 
+import { THEMES, useAppTheme } from "@devkit/hooks";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Input } from "@devkit/ui/components/input";
+import { Label } from "@devkit/ui/components/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   FolderOpen,
   Info,
@@ -19,13 +26,6 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DirectoryPicker } from "@/components/directory-picker";
 import { ApiKeysTab, type ServerKeyGroup } from "@/components/settings/api-keys-tab";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { THEMES, useAppTheme } from "@devkit/hooks";
 import { useTabNavigation } from "@/hooks/use-tab-navigation";
 import { createScanRoot, deleteScanRoot } from "@/lib/actions/scans";
 import { setCleanupFiles } from "@/lib/actions/settings";
@@ -56,7 +56,11 @@ export function SettingsClient({
   );
 
   const { theme, setTheme } = useTheme();
-  const { theme: appTheme, setTheme: setAppTheme, mounted: themeMounted } = useAppTheme({ storageKey: "workbench-theme", legacyKeys: ["workbench-color-scheme"] });
+  const {
+    theme: appTheme,
+    setTheme: setAppTheme,
+    mounted: themeMounted,
+  } = useAppTheme({ storageKey: "workbench-theme", legacyKeys: ["workbench-color-scheme"] });
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [roots, setRoots] = useState<ScanRoot[]>(initialScanRoots.length > 0 ? initialScanRoots : []);

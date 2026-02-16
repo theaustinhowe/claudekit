@@ -24,12 +24,8 @@ describe("polling", () => {
       lowestRemaining: null,
     });
 
-    mockPollForLabeledIssues = vi
-      .fn()
-      .mockResolvedValue({ checked: 0, created: 0 });
-    mockPollQueuedJobs = vi
-      .fn()
-      .mockResolvedValue({ started: 0, skipped: 0, errors: [] });
+    mockPollForLabeledIssues = vi.fn().mockResolvedValue({ checked: 0, created: 0 });
+    mockPollQueuedJobs = vi.fn().mockResolvedValue({ started: 0, skipped: 0, errors: [] });
     mockPollReadyToPrJobs = vi.fn().mockResolvedValue(undefined);
     mockPollPrReviewingJobs = vi.fn().mockResolvedValue(undefined);
     mockPollNeedsInfoJobs = vi.fn().mockResolvedValue(undefined);
@@ -47,9 +43,7 @@ describe("polling", () => {
       buildWhere: vi.fn(),
       buildInClause: vi.fn(),
       checkpoint: vi.fn(),
-      parseJsonField: vi.fn((v: unknown, fallback: unknown) =>
-        v === null || v === undefined ? fallback : v,
-      ),
+      parseJsonField: vi.fn((v: unknown, fallback: unknown) => (v === null || v === undefined ? fallback : v)),
     }));
     vi.doMock("./health-events.js", () => ({
       emitHealthEvent: vi.fn(),
@@ -139,9 +133,7 @@ describe("polling", () => {
 
   describe("startPolling / stopPolling", () => {
     it("should start and stop polling", async () => {
-      const { startPolling, stopPolling, isPollingActive } = await import(
-        "./polling.js"
-      );
+      const { startPolling, stopPolling, isPollingActive } = await import("./polling.js");
 
       expect(isPollingActive()).toBe(false);
 
@@ -215,13 +207,9 @@ describe("polling", () => {
 
   describe("poll cycle error handling", () => {
     it("should not crash if a sub-poller throws", async () => {
-      mockPollForLabeledIssues.mockRejectedValue(
-        new Error("GitHub API failure"),
-      );
+      mockPollForLabeledIssues.mockRejectedValue(new Error("GitHub API failure"));
 
-      const { startPolling, stopPolling, isPollingActive } = await import(
-        "./polling.js"
-      );
+      const { startPolling, stopPolling, isPollingActive } = await import("./polling.js");
 
       await startPolling();
       await vi.advanceTimersByTimeAsync(0);

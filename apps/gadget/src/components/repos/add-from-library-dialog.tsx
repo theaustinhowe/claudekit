@@ -1,8 +1,5 @@
 "use client";
 
-import { Bot, Link2, Loader2, Puzzle, Search, Server, Sparkles, Star, Terminal, Zap } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
@@ -10,6 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@devkit/ui/components/input";
 import { Tabs, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Bot, Link2, Loader2, Puzzle, Search, Server, Sparkles, Star, Terminal, Zap } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { getAllConcepts, installConcept } from "@/lib/actions/concepts";
 import { CONCEPT_TYPE_LABELS, CONCEPT_TYPE_SINGULAR, LIBRARY_REPO_ID } from "@/lib/constants";
 import type { ConceptWithRepo } from "@/lib/types";

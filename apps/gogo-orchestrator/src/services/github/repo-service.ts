@@ -23,15 +23,9 @@ import type {
 /**
  * Get repository config by ID
  */
-export async function getRepoConfigById(
-  repositoryId: string,
-): Promise<RepoConfig> {
+export async function getRepoConfigById(repositoryId: string): Promise<RepoConfig> {
   const conn = getConn();
-  const repo = await queryOne<DbRepository>(
-    conn,
-    "SELECT * FROM repositories WHERE id = ?",
-    [repositoryId],
-  );
+  const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
   if (!repo) {
     throw new RepositoryNotFoundError(repositoryId);
@@ -51,10 +45,7 @@ export async function getRepoConfigById(
  * the two-line fetch pattern throughout the file.
  */
 async function getRepoContext(repositoryId: string) {
-  const [octokit, config] = await Promise.all([
-    getOctokitForRepo(repositoryId),
-    getRepoConfigById(repositoryId),
-  ]);
+  const [octokit, config] = await Promise.all([getOctokitForRepo(repositoryId), getRepoConfigById(repositoryId)]);
   return { octokit, config };
 }
 
@@ -82,19 +73,12 @@ function mapGitHubIssue(issue: any): GitHubIssue {
           description: string | null;
         } => typeof l === "object" && l !== null && "id" in (l as object),
       )
-      .map(
-        (l: {
-          id: number;
-          name: string;
-          color: string;
-          description: string | null;
-        }) => ({
-          id: l.id,
-          name: l.name,
-          color: l.color,
-          description: l.description ?? null,
-        }),
-      ),
+      .map((l: { id: number; name: string; color: string; description: string | null }) => ({
+        id: l.id,
+        name: l.name,
+        color: l.color,
+        description: l.description ?? null,
+      })),
     created_at: issue.created_at,
     updated_at: issue.updated_at,
     closed_at: issue.closed_at ?? null,
@@ -111,10 +95,7 @@ function mapGitHubIssue(issue: any): GitHubIssue {
 /**
  * Get issues with a specific label for a repository
  */
-export async function getIssuesWithLabel(
-  repositoryId: string,
-  label: string,
-): Promise<GitHubIssue[]> {
+export async function getIssuesWithLabel(repositoryId: string, label: string): Promise<GitHubIssue[]> {
   const { octokit, config } = await getRepoContext(repositoryId);
 
   try {
@@ -132,10 +113,7 @@ export async function getIssuesWithLabel(
 
     return response.data.map(mapGitHubIssue);
   } catch (error) {
-    console.error(
-      `[github] Failed to fetch issues for ${config.owner}/${config.name}:`,
-      error,
-    );
+    console.error(`[github] Failed to fetch issues for ${config.owner}/${config.name}:`, error);
     return [];
   }
 }
@@ -213,11 +191,7 @@ export async function createIssueCommentForRepo(
 /**
  * Remove a label from an issue
  */
-export async function removeLabelFromIssue(
-  repositoryId: string,
-  issueNumber: number,
-  label: string,
-): Promise<void> {
+export async function removeLabelFromIssue(repositoryId: string, issueNumber: number, label: string): Promise<void> {
   const { octokit, config } = await getRepoContext(repositoryId);
 
   try {
@@ -231,14 +205,9 @@ export async function removeLabelFromIssue(
       TIMEOUTS.GITHUB_API,
       "removeLabelFromIssue",
     );
-    console.log(
-      `[github] Removed label '${label}' from issue #${issueNumber} in ${config.owner}/${config.name}`,
-    );
+    console.log(`[github] Removed label '${label}' from issue #${issueNumber} in ${config.owner}/${config.name}`);
   } catch (error) {
-    console.error(
-      `[github] Failed to remove label '${label}' from issue #${issueNumber}:`,
-      error,
-    );
+    console.error(`[github] Failed to remove label '${label}' from issue #${issueNumber}:`, error);
   }
 }
 
@@ -315,9 +284,7 @@ export async function findExistingPrForRepo(
 
     const matchingPr = allPrs.find((pr) => pr.head.ref === branch);
     if (matchingPr) {
-      console.log(
-        `[github] Found PR #${matchingPr.number} via fallback search (head: ${matchingPr.head.label})`,
-      );
+      console.log(`[github] Found PR #${matchingPr.number} via fallback search (head: ${matchingPr.head.label})`);
       return {
         number: matchingPr.number,
         html_url: matchingPr.html_url,
@@ -348,10 +315,7 @@ export function hasAgentMarker(body: string): boolean {
  * Check if a comment author is human (not a bot or agent-posted).
  * Shared logic for both issue comments and PR review comments.
  */
-function isHumanAuthored(
-  user: { login: string; type: string } | null,
-  body: string,
-): boolean {
+function isHumanAuthored(user: { login: string; type: string } | null, body: string): boolean {
   if (!user) return false;
   if (user.type === "Bot") return false;
   if (user.login.endsWith("[bot]")) return false;
@@ -369,9 +333,7 @@ export function isHumanComment(comment: GitHubComment): boolean {
 /**
  * Check if a PR review comment is from a human (not a bot or agent-posted)
  */
-export function isHumanReviewComment(
-  comment: PullRequestReviewComment,
-): boolean {
+export function isHumanReviewComment(comment: PullRequestReviewComment): boolean {
   return isHumanAuthored(comment.user, comment.body);
 }
 
@@ -389,10 +351,7 @@ export interface GetIssuesOptions {
 /**
  * Get all issues for a repository (not just labeled)
  */
-export async function getIssuesForRepo(
-  repositoryId: string,
-  options: GetIssuesOptions = {},
-): Promise<GitHubIssue[]> {
+export async function getIssuesForRepo(repositoryId: string, options: GetIssuesOptions = {}): Promise<GitHubIssue[]> {
   const { octokit, config } = await getRepoContext(repositoryId);
 
   const { state = "open", labels, per_page = 30, page = 1, since } = options;
@@ -413,14 +372,9 @@ export async function getIssuesForRepo(
     );
 
     // Filter out pull requests (GitHub API returns them in issues endpoint)
-    return response.data
-      .filter((issue) => !issue.pull_request)
-      .map(mapGitHubIssue);
+    return response.data.filter((issue) => !issue.pull_request).map(mapGitHubIssue);
   } catch (error) {
-    console.error(
-      `[github] Failed to fetch issues for ${config.owner}/${config.name}:`,
-      error,
-    );
+    console.error(`[github] Failed to fetch issues for ${config.owner}/${config.name}:`, error);
     return [];
   }
 }
@@ -437,10 +391,7 @@ export interface CreateIssueOptions {
 /**
  * Create a new issue in a repository
  */
-export async function createIssueForRepo(
-  repositoryId: string,
-  options: CreateIssueOptions,
-): Promise<GitHubIssue> {
+export async function createIssueForRepo(repositoryId: string, options: CreateIssueOptions): Promise<GitHubIssue> {
   const { octokit, config } = await getRepoContext(repositoryId);
 
   const response = await withTimeout(
@@ -461,10 +412,7 @@ export async function createIssueForRepo(
 /**
  * Get a single issue by number
  */
-export async function getIssueByNumber(
-  repositoryId: string,
-  issueNumber: number,
-): Promise<GitHubIssue | null> {
+export async function getIssueByNumber(repositoryId: string, issueNumber: number): Promise<GitHubIssue | null> {
   const { octokit, config } = await getRepoContext(repositoryId);
 
   try {
@@ -493,10 +441,7 @@ export async function getIssueByNumber(
 /**
  * Get pull request info by number
  */
-export async function getPullRequestByNumber(
-  repositoryId: string,
-  prNumber: number,
-): Promise<PullRequestInfo | null> {
+export async function getPullRequestByNumber(repositoryId: string, prNumber: number): Promise<PullRequestInfo | null> {
   const { octokit, config } = await getRepoContext(repositoryId);
 
   try {
@@ -526,10 +471,7 @@ export async function getPullRequestByNumber(
       },
     };
   } catch (error) {
-    console.error(
-      `[github] Failed to fetch PR #${prNumber} for repo ${repositoryId}:`,
-      error,
-    );
+    console.error(`[github] Failed to fetch PR #${prNumber} for repo ${repositoryId}:`, error);
     return null;
   }
 }
@@ -572,10 +514,7 @@ export async function getPullRequestReviewComments(
 
     return comments;
   } catch (error) {
-    console.error(
-      `[github] Failed to fetch review comments for PR #${prNumber}:`,
-      error,
-    );
+    console.error(`[github] Failed to fetch review comments for PR #${prNumber}:`, error);
     return [];
   }
 }
@@ -605,9 +544,7 @@ export interface OpenPullRequest {
 /**
  * Get all open pull requests for a repository
  */
-export async function getOpenPullRequestsForRepo(
-  repositoryId: string,
-): Promise<OpenPullRequest[]> {
+export async function getOpenPullRequestsForRepo(repositoryId: string): Promise<OpenPullRequest[]> {
   const { octokit, config } = await getRepoContext(repositoryId);
 
   try {
@@ -629,10 +566,7 @@ export async function getOpenPullRequestsForRepo(
       state: "open" as const,
     }));
   } catch (error) {
-    console.error(
-      `[github] Failed to fetch open PRs for ${config.owner}/${config.name}:`,
-      error,
-    );
+    console.error(`[github] Failed to fetch open PRs for ${config.owner}/${config.name}:`, error);
     return [];
   }
 }

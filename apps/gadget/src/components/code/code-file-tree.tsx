@@ -1,8 +1,8 @@
 "use client";
 
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import { ChevronDown, ChevronRight, File, Folder, FolderOpen } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import { getDirectoryContents } from "@/lib/actions/code-browser";
 import type { CodeTreeEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";

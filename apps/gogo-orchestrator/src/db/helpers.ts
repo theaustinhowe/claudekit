@@ -23,10 +23,7 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
  * Convert `?` placeholders to DuckDB positional `$1, $2, ...` params.
  * Also converts an array of values into a named param object `{ "1": v, "2": v, ... }`.
  */
-function convertParams(
-  sql: string,
-  params?: unknown[],
-): { sql: string; values: Record<string, unknown> } {
+function convertParams(sql: string, params?: unknown[]): { sql: string; values: Record<string, unknown> } {
   if (!params || params.length === 0) {
     return { sql, values: {} };
   }
@@ -46,10 +43,7 @@ function convertParams(
   return { sql: converted, values };
 }
 
-function bindParams(
-  prepared: DuckDBPreparedStatement,
-  values: Record<string, unknown>,
-): void {
+function bindParams(prepared: DuckDBPreparedStatement, values: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(values)) {
     const idx = Number(key);
     if (value === null) {
@@ -75,8 +69,7 @@ function bindParams(
 function convertValue(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (value instanceof DuckDBUUIDValue) return value.toString();
-  if (value instanceof DuckDBTimestampTZValue)
-    return new Date(Number(value.micros / 1000n)).toISOString();
+  if (value instanceof DuckDBTimestampTZValue) return new Date(Number(value.micros / 1000n)).toISOString();
   if (typeof value === "bigint") return Number(value);
   if (
     typeof value === "object" &&
@@ -97,11 +90,7 @@ function convertRow<T>(row: Record<string, unknown>): T {
   return converted as T;
 }
 
-async function _queryAll<T>(
-  conn: DuckDBConnection,
-  sql: string,
-  params?: unknown[],
-): Promise<T[]> {
+async function _queryAll<T>(conn: DuckDBConnection, sql: string, params?: unknown[]): Promise<T[]> {
   const { sql: converted, values } = convertParams(sql, params);
   const prepared = await conn.prepare(converted);
 
@@ -114,28 +103,16 @@ async function _queryAll<T>(
   return rows.map((row) => convertRow<T>(row as Record<string, unknown>));
 }
 
-export function queryAll<T>(
-  conn: DuckDBConnection,
-  sql: string,
-  params?: unknown[],
-): Promise<T[]> {
+export function queryAll<T>(conn: DuckDBConnection, sql: string, params?: unknown[]): Promise<T[]> {
   return withLock(() => _queryAll<T>(conn, sql, params));
 }
 
-export async function queryOne<T>(
-  conn: DuckDBConnection,
-  sql: string,
-  params?: unknown[],
-): Promise<T | undefined> {
+export async function queryOne<T>(conn: DuckDBConnection, sql: string, params?: unknown[]): Promise<T | undefined> {
   const rows = await queryAll<T>(conn, sql, params);
   return rows[0];
 }
 
-async function _execute(
-  conn: DuckDBConnection,
-  sql: string,
-  params?: unknown[],
-): Promise<void> {
+async function _execute(conn: DuckDBConnection, sql: string, params?: unknown[]): Promise<void> {
   const { sql: converted, values } = convertParams(sql, params);
   const prepared = await conn.prepare(converted);
 
@@ -146,11 +123,7 @@ async function _execute(
   await prepared.run();
 }
 
-export function execute(
-  conn: DuckDBConnection,
-  sql: string,
-  params?: unknown[],
-): Promise<void> {
+export function execute(conn: DuckDBConnection, sql: string, params?: unknown[]): Promise<void> {
   return withLock(() => _execute(conn, sql, params));
 }
 
@@ -236,10 +209,7 @@ export function buildUpdate(
  * Build an IN clause with the right number of placeholders.
  * Returns { clause: "col IN (?, ?, ?)", params: [...values] }
  */
-export function buildInClause(
-  column: string,
-  values: unknown[],
-): { clause: string; params: unknown[] } {
+export function buildInClause(column: string, values: unknown[]): { clause: string; params: unknown[] } {
   assertSafeIdentifier(column, "column");
   if (values.length === 0) {
     return { clause: "1=0", params: [] };

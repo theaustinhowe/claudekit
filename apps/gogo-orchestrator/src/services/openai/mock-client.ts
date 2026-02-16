@@ -3,12 +3,7 @@
  * Allows tests to define expected responses without calling the real API
  */
 
-import type {
-  OpenAIChatParams,
-  OpenAIChatResponse,
-  OpenAIClientInterface,
-  OpenAIStreamEvent,
-} from "./types.js";
+import type { OpenAIChatParams, OpenAIChatResponse, OpenAIClientInterface, OpenAIStreamEvent } from "./types.js";
 
 interface MockResponse {
   content: string;
@@ -74,9 +69,7 @@ export class MockOpenAIClient implements OpenAIClientInterface {
     };
   }
 
-  async *chatStream(
-    params: Omit<OpenAIChatParams, "stream">,
-  ): AsyncIterable<OpenAIStreamEvent> {
+  async *chatStream(params: Omit<OpenAIChatParams, "stream">): AsyncIterable<OpenAIStreamEvent> {
     this.callLog.push({ ...params, stream: true });
 
     if (this.responseIndex >= this.responses.length) {

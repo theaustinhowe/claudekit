@@ -1,10 +1,10 @@
 "use client";
 
+import { useAppTheme } from "@devkit/hooks";
 import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useAppTheme } from "@devkit/hooks";
 
 export function ThemeToggle() {
   const { theme: mode, setTheme: setMode } = useTheme();

@@ -12,7 +12,9 @@
   },
   "typesVersions": {
     "*": {
-      "components/*": ["src/components/*.tsx"]
+      "components/*": [
+        "src/components/*.tsx"
+      ]
     }
   },
   "scripts": {

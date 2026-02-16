@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { AlertCircle, FolderGit2, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,8 +12,6 @@ import { CodeFileTree } from "@/components/code/code-file-tree";
 import { CodeFileViewer } from "@/components/code/code-file-viewer";
 import { CodeToolbar } from "@/components/code/code-toolbar";
 import { MarkdownRenderer } from "@/components/code/markdown-renderer";
-import { Button } from "@devkit/ui/components/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   getCodeFileContent,
   getCommitLog,

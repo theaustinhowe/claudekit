@@ -4,16 +4,10 @@ import { createServer } from "./server.js";
 import { runDataPruning } from "./services/data-pruning.js";
 import { startPolling } from "./services/polling.js";
 import { recoverOrphanedPrs } from "./services/pr-recovery.js";
-import {
-  cleanupOrphanedProcesses,
-  clearStalePidReferences,
-} from "./services/process-manager.js";
+import { cleanupOrphanedProcesses, clearStalePidReferences } from "./services/process-manager.js";
 import { validateStartupSettings } from "./services/settings-helper.js";
 import { registerShutdownHandlers } from "./services/shutdown.js";
-import {
-  checkBinaries,
-  formatValidationResults,
-} from "./utils/binary-check.js";
+import { checkBinaries, formatValidationResults } from "./utils/binary-check.js";
 import { createServiceLogger } from "./utils/logger.js";
 
 const log = createServiceLogger("startup");
@@ -42,10 +36,7 @@ async function main() {
   // 3. Cleanup orphaned processes from previous crashed runs
   const cleanup = await cleanupOrphanedProcesses();
   if (cleanup.found > 0) {
-    log.info(
-      { terminated: cleanup.terminated, found: cleanup.found },
-      "Cleaned up orphaned processes",
-    );
+    log.info({ terminated: cleanup.terminated, found: cleanup.found }, "Cleaned up orphaned processes");
   }
 
   // 4. Per AGENTS.md: On restart, set RUNNING and PLANNING jobs to PAUSED
@@ -72,20 +63,22 @@ async function main() {
 
     // Update running jobs to PAUSED
     if (runningJobs.length > 0) {
-      await execute(
-        conn,
-        "UPDATE jobs SET status = ?, pause_reason = ?, updated_at = ? WHERE status = ?",
-        ["paused", "orchestrator restarted", now, "running"],
-      );
+      await execute(conn, "UPDATE jobs SET status = ?, pause_reason = ?, updated_at = ? WHERE status = ?", [
+        "paused",
+        "orchestrator restarted",
+        now,
+        "running",
+      ]);
     }
 
     // Update planning jobs to PAUSED
     if (planningJobs.length > 0) {
-      await execute(
-        conn,
-        "UPDATE jobs SET status = ?, pause_reason = ?, updated_at = ? WHERE status = ?",
-        ["paused", "orchestrator restarted", now, "planning"],
-      );
+      await execute(conn, "UPDATE jobs SET status = ?, pause_reason = ?, updated_at = ? WHERE status = ?", [
+        "paused",
+        "orchestrator restarted",
+        now,
+        "planning",
+      ]);
     }
 
     // Create audit trail events for each paused job
@@ -153,17 +146,13 @@ async function main() {
   }
 
   if (!validation.ready) {
-    log.error(
-      "Critical configuration errors found. Please fix the issues above and restart.",
-    );
+    log.error("Critical configuration errors found. Please fix the issues above and restart.");
     process.exit(1);
   }
 
   // Log configuration status
   if (validation.hasActiveRepositories) {
-    log.info(
-      "Active repositories configured - polling will create jobs automatically",
-    );
+    log.info("Active repositories configured - polling will create jobs automatically");
   } else if (validation.hasLegacySettings) {
     log.info("Using legacy workspace settings");
   } else {

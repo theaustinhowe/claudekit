@@ -1,12 +1,12 @@
 "use client";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
 import { FileCode, Film, Monitor, Terminal, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { AppPreview } from "@/components/generator/app-preview";
 import { DevServerLogs } from "@/components/generator/dev-server-logs";
 import { ScreenshotTimelapse } from "@/components/generator/screenshot-timelapse";
 import { SpecFilesTab } from "@/components/generator/spec-files-tab";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
 
 interface PreviewPanelProps {
   projectId: string;

@@ -1,7 +1,5 @@
 "use client";
 
-import { Loader2, Rocket } from "lucide-react";
-import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -12,6 +10,8 @@ import {
   AlertDialogTitle,
 } from "@devkit/ui/components/alert-dialog";
 import { Button } from "@devkit/ui/components/button";
+import { Loader2, Rocket } from "lucide-react";
+import { useState } from "react";
 import type { GeneratorProject } from "@/lib/types";
 
 interface UpgradeDialogProps {

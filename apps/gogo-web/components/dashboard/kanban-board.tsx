@@ -1,9 +1,9 @@
 "use client";
 
+import { useIsMobile } from "@devkit/hooks";
 import { useMemo } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIsMobile } from "@devkit/hooks";
 import { COLUMN_GROUPS, type ColumnGroup, JOB_STATUS_CONFIG, type Job, type JobStatus } from "@/types/job";
 import { ATTENTION_STATES, type FilterType } from "./job-filters";
 import { KanbanColumn } from "./kanban-column";

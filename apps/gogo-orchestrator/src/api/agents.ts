@@ -50,9 +50,7 @@ export const agentsRouter: FastifyPluginAsync = async (fastify) => {
           status = {
             available: isRegistered,
             configured: isRegistered,
-            message: isRegistered
-              ? "Agent is available"
-              : "Agent not configured",
+            message: isRegistered ? "Agent is available" : "Agent not configured",
           };
         }
 
@@ -68,42 +66,36 @@ export const agentsRouter: FastifyPluginAsync = async (fastify) => {
   });
 
   // Get agent info by type
-  fastify.get<{ Params: { type: string } }>(
-    "/:type",
-    async (request, reply) => {
-      const agent = agentRegistry.get(request.params.type);
-      if (!agent) {
-        return reply.status(404).send({ error: "Agent type not found" });
-      }
-      return {
-        data: {
-          type: agent.type,
-          displayName: agent.displayName,
-          capabilities: agent.capabilities,
-          activeRunCount: agent.getActiveRunCount(),
-        },
-      };
-    },
-  );
+  fastify.get<{ Params: { type: string } }>("/:type", async (request, reply) => {
+    const agent = agentRegistry.get(request.params.type);
+    if (!agent) {
+      return reply.status(404).send({ error: "Agent type not found" });
+    }
+    return {
+      data: {
+        type: agent.type,
+        displayName: agent.displayName,
+        capabilities: agent.capabilities,
+        activeRunCount: agent.getActiveRunCount(),
+      },
+    };
+  });
 
   // Get agent configuration status
-  fastify.get<{ Params: { type: string } }>(
-    "/:type/status",
-    async (request, reply) => {
-      const { type } = request.params;
+  fastify.get<{ Params: { type: string } }>("/:type/status", async (request, reply) => {
+    const { type } = request.params;
 
-      // Handle OpenAI Codex status check
-      if (type === "openai-codex") {
-        return { data: getCodexRunnerStatus() };
-      }
+    // Handle OpenAI Codex status check
+    if (type === "openai-codex") {
+      return { data: getCodexRunnerStatus() };
+    }
 
-      // Handle Claude Code status check
-      if (type === "claude-code") {
-        return { data: await getClaudeRunnerStatus() };
-      }
+    // Handle Claude Code status check
+    if (type === "claude-code") {
+      return { data: await getClaudeRunnerStatus() };
+    }
 
-      // Unknown agent type
-      return reply.status(404).send({ error: `Unknown agent type: ${type}` });
-    },
-  );
+    // Unknown agent type
+    return reply.status(404).send({ error: `Unknown agent type: ${type}` });
+  });
 };

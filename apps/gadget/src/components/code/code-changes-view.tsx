@@ -1,5 +1,9 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Checkbox } from "@devkit/ui/components/checkbox";
+import { Textarea } from "@devkit/ui/components/textarea";
 import {
   ChevronDown,
   ChevronRight,
@@ -15,10 +19,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { DiffViewer } from "@/components/code/diff-viewer";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Textarea } from "@devkit/ui/components/textarea";
 import { commitChanges, getGitStatus, getWorkingDiff, stageFiles, unstageFiles } from "@/lib/actions/code-browser";
 import type { GitFileStatus, GitStatusFile, GitStatusResult } from "@/lib/types";
 import { cn } from "@/lib/utils";

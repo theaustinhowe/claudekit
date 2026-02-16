@@ -1,9 +1,5 @@
 "use client";
 
-import { Book, Globe, Layers, Plus, Server, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +17,10 @@ import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Textarea } from "@devkit/ui/components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Book, Globe, Layers, Plus, Server, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { createPolicyTemplate, deletePolicyTemplate } from "@/lib/actions/policy-templates";
 import type { Policy, PolicyTemplate } from "@/lib/types";
 

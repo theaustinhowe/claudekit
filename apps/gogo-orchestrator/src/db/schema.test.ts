@@ -14,9 +14,7 @@ vi.mock("./helpers.js", () => ({
   buildWhere: vi.fn(),
   buildInClause: vi.fn(),
   checkpoint: vi.fn(),
-  parseJsonField: vi.fn((v: unknown, fallback: unknown) =>
-    v === null || v === undefined ? fallback : v,
-  ),
+  parseJsonField: vi.fn((v: unknown, fallback: unknown) => (v === null || v === undefined ? fallback : v)),
 }));
 
 import { queryOne } from "./helpers.js";
@@ -167,11 +165,7 @@ describe("Schema validation", () => {
 
     it("should have per-repo config columns defined", () => {
       // These fields exist on DbRepository
-      const keys: (keyof DbRepository)[] = [
-        "poll_interval_ms",
-        "test_command",
-        "agent_provider",
-      ];
+      const keys: (keyof DbRepository)[] = ["poll_interval_ms", "test_command", "agent_provider"];
       for (const key of keys) {
         expect(REPOSITORY_FIELDS).toContain(key);
       }
@@ -281,22 +275,12 @@ describe("Schema validation", () => {
           issue_number: 42,
         });
 
-      const job1 = await queryOne(
-        {} as unknown as Parameters<typeof queryOne>[0],
-        "INSERT INTO jobs ...",
-        [],
-      );
-      const job2 = await queryOne(
-        {} as unknown as Parameters<typeof queryOne>[0],
-        "INSERT INTO jobs ...",
-        [],
-      );
+      const job1 = await queryOne({} as unknown as Parameters<typeof queryOne>[0], "INSERT INTO jobs ...", []);
+      const job2 = await queryOne({} as unknown as Parameters<typeof queryOne>[0], "INSERT INTO jobs ...", []);
 
       expect((job1 as Record<string, unknown>).issue_number).toBe(42);
       expect((job2 as Record<string, unknown>).issue_number).toBe(42);
-      expect((job1 as Record<string, unknown>).repository_id).not.toBe(
-        (job2 as Record<string, unknown>).repository_id,
-      );
+      expect((job1 as Record<string, unknown>).repository_id).not.toBe((job2 as Record<string, unknown>).repository_id);
     });
 
     it("should document that duplicate issueNumber in same repo will fail", async () => {

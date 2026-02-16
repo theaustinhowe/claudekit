@@ -1,7 +1,5 @@
 "use client";
 
-import { Loader2, Plus, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Checkbox } from "@devkit/ui/components/checkbox";
@@ -13,6 +11,8 @@ import { Separator } from "@devkit/ui/components/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@devkit/ui/components/table";
 import { Textarea } from "@devkit/ui/components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
 import type { PackageManager, Policy, RepoType } from "@/lib/types";
 
 const ALL_PACKAGE_MANAGERS: PackageManager[] = ["npm", "pnpm", "bun", "yarn"];

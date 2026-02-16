@@ -1,10 +1,10 @@
 "use client";
 
-import { BarChart3, Bot, ChevronDown, DollarSign, Gauge, Layers, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Badge } from "@devkit/ui/components/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
+import { BarChart3, Bot, ChevronDown, DollarSign, Gauge, Layers, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { ClaudeRateLimits, ClaudeUsageStats, RateLimitWindow } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 

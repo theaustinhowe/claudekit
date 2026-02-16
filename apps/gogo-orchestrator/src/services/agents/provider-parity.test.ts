@@ -27,12 +27,8 @@ vi.mock("../../ws/handler.js", () => ({
 }));
 
 vi.mock("../github/index.js", () => ({
-  createIssueCommentForRepo: vi.fn(() =>
-    Promise.resolve({ id: 123, url: "https://github.com/test/comment" }),
-  ),
-  getRepoConfigById: vi.fn(() =>
-    Promise.resolve({ owner: "test-owner", name: "test-repo" }),
-  ),
+  createIssueCommentForRepo: vi.fn(() => Promise.resolve({ id: 123, url: "https://github.com/test/comment" })),
+  getRepoConfigById: vi.fn(() => Promise.resolve({ owner: "test-owner", name: "test-repo" })),
 }));
 
 vi.mock("../process-manager.js", () => ({
@@ -48,14 +44,10 @@ vi.mock("../settings-helper.js", () => ({
       max_runtime_ms: 600000,
     }),
   ),
-  getWorkspaceSettings: vi.fn(() =>
-    Promise.resolve({ owner: "test", name: "repo" }),
-  ),
+  getWorkspaceSettings: vi.fn(() => Promise.resolve({ owner: "test", name: "repo" })),
   isCodexEnabled: vi.fn(() => process.env.ENABLE_OPENAI_CODEX === "true"),
   hasOpenAIApiKey: vi.fn(() => !!process.env.OPENAI_API_KEY),
-  getCodexSettings: vi.fn(() =>
-    Promise.resolve({ max_parallel_jobs: 1, max_runtime_ms: 600000 }),
-  ),
+  getCodexSettings: vi.fn(() => Promise.resolve({ max_parallel_jobs: 1, max_runtime_ms: 600000 })),
 }));
 
 // Track environment
@@ -93,9 +85,7 @@ describe("Provider Parity", () => {
         test_command: "npm test",
       });
 
-      const { getClaudeAvailabilityError, CLAUDE_ERRORS } = await import(
-        "../claude-code-agent.js"
-      );
+      const { getClaudeAvailabilityError, CLAUDE_ERRORS } = await import("../claude-code-agent.js");
 
       const error = await getClaudeAvailabilityError();
       expect(error).toBe(CLAUDE_ERRORS.DISABLED);
@@ -221,12 +211,8 @@ describe("Provider Parity", () => {
       process.env.ENABLE_OPENAI_CODEX = "true";
       process.env.OPENAI_API_KEY = "sk-test";
 
-      const { getClaudeAvailabilityError } = await import(
-        "../claude-code-agent.js"
-      );
-      const { getCodexAvailabilityError } = await import(
-        "../openai-codex-agent.js"
-      );
+      const { getClaudeAvailabilityError } = await import("../claude-code-agent.js");
+      const { getCodexAvailabilityError } = await import("../openai-codex-agent.js");
 
       // Both should be functions
       expect(typeof getClaudeAvailabilityError).toBe("function");
@@ -236,12 +222,8 @@ describe("Provider Parity", () => {
       const claudeResult = await getClaudeAvailabilityError();
       const codexResult = getCodexAvailabilityError();
 
-      expect(claudeResult === null || typeof claudeResult === "string").toBe(
-        true,
-      );
-      expect(codexResult === null || typeof codexResult === "string").toBe(
-        true,
-      );
+      expect(claudeResult === null || typeof claudeResult === "string").toBe(true);
+      expect(codexResult === null || typeof codexResult === "string").toBe(true);
     });
 
     it("should have matching pause function patterns", async () => {

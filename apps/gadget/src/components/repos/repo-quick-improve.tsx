@@ -1,10 +1,6 @@
 "use client";
 
-import { Brush, ChevronDown, Code2, Eraser, Shield, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
-import { SessionTerminal } from "@/components/sessions/session-terminal";
+import { useSessionStream } from "@devkit/hooks";
 import { Button } from "@devkit/ui/components/button";
 import {
   DropdownMenu,
@@ -13,7 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@devkit/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { useSessionStream } from "@devkit/hooks";
+import { Brush, ChevronDown, Code2, Eraser, Shield, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { SessionTerminal } from "@/components/sessions/session-terminal";
 import type { QuickImprovePersona } from "@/lib/services/quick-improve-prompts";
 import { PERSONA_CONFIGS } from "@/lib/services/quick-improve-prompts";
 import type { Repo } from "@/lib/types";

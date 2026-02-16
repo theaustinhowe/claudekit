@@ -2,12 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { buildUpdate, execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
-import {
-  type DbJob,
-  type DbRepository,
-  mapJob,
-  mapRepositoryFull,
-} from "../db/schema.js";
+import { type DbJob, type DbRepository, mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getOctokitForRepo } from "../services/github/index.js";
 import { TIMEOUTS, withTimeout } from "../utils/timeout.js";
 
@@ -70,9 +65,7 @@ const DeleteRepoQuerySchema = z.object({
 });
 
 /** Map camelCase field names from Zod schemas to snake_case DB column names */
-function toSnakeCaseFields(
-  data: Record<string, unknown>,
-): Record<string, unknown> {
+function toSnakeCaseFields(data: Record<string, unknown>): Record<string, unknown> {
   const mapping: Record<string, string> = {
     displayName: "display_name",
     githubToken: "github_token",
@@ -104,10 +97,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
   // List all repositories
   fastify.get("/", async () => {
     const conn = getConn();
-    const repos = await queryAll<DbRepository>(
-      conn,
-      "SELECT * FROM repositories ORDER BY updated_at",
-    );
+    const repos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories ORDER BY updated_at");
 
     // Mask tokens in response
     const maskedRepos = repos.map((row) => {
@@ -124,11 +114,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
   // Get single repository
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
     const conn = getConn();
-    const row = await queryOne<DbRepository>(
-      conn,
-      "SELECT * FROM repositories WHERE id = ?",
-      [request.params.id],
-    );
+    const row = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
     if (!row) {
       return reply.status(404).send({ error: "Repository not found" });
@@ -194,56 +180,45 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
   });
 
   // Update repository
-  fastify.patch<{ Params: { id: string }; Body: unknown }>(
-    "/:id",
-    async (request, reply) => {
-      const parsed = UpdateRepositorySchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          error: "Invalid request body",
-          details: parsed.error.format(),
-        });
-      }
+  fastify.patch<{ Params: { id: string }; Body: unknown }>("/:id", async (request, reply) => {
+    const parsed = UpdateRepositorySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: "Invalid request body",
+        details: parsed.error.format(),
+      });
+    }
 
-      const conn = getConn();
+    const conn = getConn();
 
-      // Check repository exists
-      const existing = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [request.params.id],
-      );
+    // Check repository exists
+    const existing = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
-      if (!existing) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+    if (!existing) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
 
-      const snakeData = toSnakeCaseFields(parsed.data);
-      const update = buildUpdate("repositories", request.params.id, snakeData);
+    const snakeData = toSnakeCaseFields(parsed.data);
+    const update = buildUpdate("repositories", request.params.id, snakeData);
 
-      if (!update) {
-        return reply.status(400).send({ error: "No valid fields to update" });
-      }
+    if (!update) {
+      return reply.status(400).send({ error: "No valid fields to update" });
+    }
 
-      const updated = await queryOne<DbRepository>(
-        conn,
-        `${update.sql} RETURNING *`,
-        update.params,
-      );
+    const updated = await queryOne<DbRepository>(conn, `${update.sql} RETURNING *`, update.params);
 
-      if (!updated) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+    if (!updated) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
 
-      const mapped = mapRepositoryFull(updated);
-      return {
-        data: {
-          ...mapped,
-          githubToken: "***",
-        },
-      };
-    },
-  );
+    const mapped = mapRepositoryFull(updated);
+    return {
+      data: {
+        ...mapped,
+        githubToken: "***",
+      },
+    };
+  });
 
   // Delete repository
   fastify.delete<{
@@ -263,11 +238,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     const conn = getConn();
 
     // Check repository exists
-    const existing = await queryOne<DbRepository>(
-      conn,
-      "SELECT * FROM repositories WHERE id = ?",
-      [request.params.id],
-    );
+    const existing = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
     if (!existing) {
       return reply.status(404).send({ error: "Repository not found" });
@@ -308,8 +279,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
         warning: {
           totalJobs,
           jobsByStatus,
-          message:
-            "Add ?confirm=true to delete anyway. Jobs will be orphaned (repositoryId set to null).",
+          message: "Add ?confirm=true to delete anyway. Jobs will be orphaned (repositoryId set to null).",
         },
       });
     }
@@ -317,18 +287,12 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     // Orphan associated jobs if any exist
     let orphanedJobs = 0;
     if (totalJobs > 0) {
-      await execute(
-        conn,
-        "UPDATE jobs SET repository_id = NULL WHERE repository_id = ?",
-        [request.params.id],
-      );
+      await execute(conn, "UPDATE jobs SET repository_id = NULL WHERE repository_id = ?", [request.params.id]);
       orphanedJobs = totalJobs;
     }
 
     // Delete the repository
-    await execute(conn, "DELETE FROM repositories WHERE id = ?", [
-      request.params.id,
-    ]);
+    await execute(conn, "DELETE FROM repositories WHERE id = ?", [request.params.id]);
 
     return { success: true, orphanedJobs };
   });
@@ -336,10 +300,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
   // Get active repositories (for polling)
   fastify.get("/active", async () => {
     const conn = getConn();
-    const repos = await queryAll<DbRepository>(
-      conn,
-      "SELECT * FROM repositories WHERE is_active = true",
-    );
+    const repos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
 
     // Mask tokens
     const maskedRepos = repos.map((row) => {
@@ -354,222 +315,187 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
   });
 
   // Get jobs for a specific repository
-  fastify.get<{ Params: { id: string }; Querystring: Record<string, string> }>(
-    "/:id/jobs",
-    async (request, reply) => {
-      const conn = getConn();
+  fastify.get<{ Params: { id: string }; Querystring: Record<string, string> }>("/:id/jobs", async (request, reply) => {
+    const conn = getConn();
 
-      // Check repository exists
-      const repo = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [request.params.id],
-      );
+    // Check repository exists
+    const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
-      if (!repo) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+    if (!repo) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
 
-      const parsed = RepoJobsQuerySchema.safeParse(request.query);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          error: "Invalid query parameters",
-          details: parsed.error.format(),
-        });
-      }
+    const parsed = RepoJobsQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: "Invalid query parameters",
+        details: parsed.error.format(),
+      });
+    }
 
-      const { status, limit, offset } = parsed.data;
+    const { status, limit, offset } = parsed.data;
 
-      // Build where conditions
-      const whereParts: string[] = ["repository_id = ?"];
-      const whereParams: unknown[] = [request.params.id];
-      if (status) {
-        whereParts.push("status = ?");
-        whereParams.push(status);
-      }
-      const whereClause = whereParts.join(" AND ");
+    // Build where conditions
+    const whereParts: string[] = ["repository_id = ?"];
+    const whereParams: unknown[] = [request.params.id];
+    if (status) {
+      whereParts.push("status = ?");
+      whereParams.push(status);
+    }
+    const whereClause = whereParts.join(" AND ");
 
-      // Get total count
-      const countRow = await queryOne<{ total: bigint }>(
-        conn,
-        `SELECT COUNT(*) as total FROM jobs WHERE ${whereClause}`,
-        whereParams,
-      );
+    // Get total count
+    const countRow = await queryOne<{ total: bigint }>(
+      conn,
+      `SELECT COUNT(*) as total FROM jobs WHERE ${whereClause}`,
+      whereParams,
+    );
 
-      // Get paginated results
-      const rows = await queryAll<DbJob>(
-        conn,
-        `SELECT * FROM jobs WHERE ${whereClause} ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
-        [...whereParams, limit, offset],
-      );
+    // Get paginated results
+    const rows = await queryAll<DbJob>(
+      conn,
+      `SELECT * FROM jobs WHERE ${whereClause} ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+      [...whereParams, limit, offset],
+    );
 
-      return {
-        data: rows.map(mapJob),
-        pagination: {
-          total: Number(countRow?.total ?? 0),
-          limit,
-          offset,
-        },
-      };
-    },
-  );
+    return {
+      data: rows.map(mapJob),
+      pagination: {
+        total: Number(countRow?.total ?? 0),
+        limit,
+        offset,
+      },
+    };
+  });
 
   // Get per-repo settings
-  fastify.get<{ Params: { id: string } }>(
-    "/:id/settings",
-    async (request, reply) => {
-      const conn = getConn();
-      const row = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [request.params.id],
-      );
+  fastify.get<{ Params: { id: string } }>("/:id/settings", async (request, reply) => {
+    const conn = getConn();
+    const row = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
-      if (!row) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+    if (!row) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
 
-      const full = mapRepositoryFull(row);
-      return {
-        data: {
-          pollIntervalMs: full.pollIntervalMs,
-          testCommand: full.testCommand,
-          agentProvider: full.agentProvider,
-          triggerLabel: full.triggerLabel,
-          branchPattern: full.branchPattern,
-          baseBranch: full.baseBranch,
-          autoCleanup: full.autoCleanup,
-          autoStartJobs: full.autoStartJobs,
-          autoCreatePr: full.autoCreatePr,
-        },
-      };
-    },
-  );
+    const full = mapRepositoryFull(row);
+    return {
+      data: {
+        pollIntervalMs: full.pollIntervalMs,
+        testCommand: full.testCommand,
+        agentProvider: full.agentProvider,
+        triggerLabel: full.triggerLabel,
+        branchPattern: full.branchPattern,
+        baseBranch: full.baseBranch,
+        autoCleanup: full.autoCleanup,
+        autoStartJobs: full.autoStartJobs,
+        autoCreatePr: full.autoCreatePr,
+      },
+    };
+  });
 
   // Update per-repo settings
-  fastify.patch<{ Params: { id: string }; Body: unknown }>(
-    "/:id/settings",
-    async (request, reply) => {
-      const parsed = RepoSettingsSchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          error: "Invalid request body",
-          details: parsed.error.format(),
-        });
-      }
+  fastify.patch<{ Params: { id: string }; Body: unknown }>("/:id/settings", async (request, reply) => {
+    const parsed = RepoSettingsSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: "Invalid request body",
+        details: parsed.error.format(),
+      });
+    }
 
-      const conn = getConn();
+    const conn = getConn();
 
-      // Check repository exists
-      const existing = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [request.params.id],
-      );
+    // Check repository exists
+    const existing = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
-      if (!existing) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+    if (!existing) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
 
-      const snakeData = toSnakeCaseFields(parsed.data);
-      const update = buildUpdate("repositories", request.params.id, snakeData);
+    const snakeData = toSnakeCaseFields(parsed.data);
+    const update = buildUpdate("repositories", request.params.id, snakeData);
 
-      if (!update) {
-        return reply.status(400).send({ error: "No valid fields to update" });
-      }
+    if (!update) {
+      return reply.status(400).send({ error: "No valid fields to update" });
+    }
 
-      const updated = await queryOne<DbRepository>(
-        conn,
-        `${update.sql} RETURNING *`,
-        update.params,
-      );
+    const updated = await queryOne<DbRepository>(conn, `${update.sql} RETURNING *`, update.params);
 
-      if (!updated) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+    if (!updated) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
 
-      const full = mapRepositoryFull(updated);
-      return {
-        data: {
-          pollIntervalMs: full.pollIntervalMs,
-          testCommand: full.testCommand,
-          agentProvider: full.agentProvider,
-          triggerLabel: full.triggerLabel,
-          branchPattern: full.branchPattern,
-          baseBranch: full.baseBranch,
-          autoCleanup: full.autoCleanup,
-          autoStartJobs: full.autoStartJobs,
-          autoCreatePr: full.autoCreatePr,
-        },
-      };
-    },
-  );
+    const full = mapRepositoryFull(updated);
+    return {
+      data: {
+        pollIntervalMs: full.pollIntervalMs,
+        testCommand: full.testCommand,
+        agentProvider: full.agentProvider,
+        triggerLabel: full.triggerLabel,
+        branchPattern: full.branchPattern,
+        baseBranch: full.baseBranch,
+        autoCleanup: full.autoCleanup,
+        autoStartJobs: full.autoStartJobs,
+        autoCreatePr: full.autoCreatePr,
+      },
+    };
+  });
 
   // Get branches for a repository from GitHub
-  fastify.get<{ Params: { id: string } }>(
-    "/:id/branches",
-    async (request, reply) => {
-      const conn = getConn();
-      const row = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE id = ?",
-        [request.params.id],
+  fastify.get<{ Params: { id: string } }>("/:id/branches", async (request, reply) => {
+    const conn = getConn();
+    const row = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
+
+    if (!row) {
+      return reply.status(404).send({ error: "Repository not found" });
+    }
+
+    const repo = mapRepositoryFull(row);
+
+    try {
+      const octokit = await getOctokitForRepo(request.params.id);
+
+      const response = await withTimeout(
+        octokit.rest.repos.listBranches({
+          owner: repo.owner,
+          repo: repo.name,
+          per_page: 100,
+        }),
+        TIMEOUTS.GITHUB_API,
+        "listBranches",
       );
 
-      if (!row) {
-        return reply.status(404).send({ error: "Repository not found" });
-      }
+      // Get the default branch info
+      const repoInfoResponse = await withTimeout(
+        octokit.rest.repos.get({
+          owner: repo.owner,
+          repo: repo.name,
+        }),
+        TIMEOUTS.GITHUB_API,
+        "getRepo",
+      );
 
-      const repo = mapRepositoryFull(row);
+      const defaultBranch = repoInfoResponse.data.default_branch;
 
-      try {
-        const octokit = await getOctokitForRepo(request.params.id);
+      const branches = response.data.map((branch) => ({
+        name: branch.name,
+        isDefault: branch.name === defaultBranch,
+        protected: branch.protected,
+      }));
 
-        const response = await withTimeout(
-          octokit.rest.repos.listBranches({
-            owner: repo.owner,
-            repo: repo.name,
-            per_page: 100,
-          }),
-          TIMEOUTS.GITHUB_API,
-          "listBranches",
-        );
+      // Sort to put default branch first
+      branches.sort((a, b) => {
+        if (a.isDefault) return -1;
+        if (b.isDefault) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
-        // Get the default branch info
-        const repoInfoResponse = await withTimeout(
-          octokit.rest.repos.get({
-            owner: repo.owner,
-            repo: repo.name,
-          }),
-          TIMEOUTS.GITHUB_API,
-          "getRepo",
-        );
-
-        const defaultBranch = repoInfoResponse.data.default_branch;
-
-        const branches = response.data.map((branch) => ({
-          name: branch.name,
-          isDefault: branch.name === defaultBranch,
-          protected: branch.protected,
-        }));
-
-        // Sort to put default branch first
-        branches.sort((a, b) => {
-          if (a.isDefault) return -1;
-          if (b.isDefault) return 1;
-          return a.name.localeCompare(b.name);
-        });
-
-        return { data: branches, defaultBranch };
-      } catch (error) {
-        console.error(
-          `[repositories] Failed to fetch branches for ${repo.owner}/${repo.name}:`,
-          error,
-        );
-        return reply.status(500).send({
-          error: "Failed to fetch branches from GitHub",
-        });
-      }
-    },
-  );
+      return { data: branches, defaultBranch };
+    } catch (error) {
+      console.error(`[repositories] Failed to fetch branches for ${repo.owner}/${repo.name}:`, error);
+      return reply.status(500).send({
+        error: "Failed to fetch branches from GitHub",
+      });
+    }
+  });
 };

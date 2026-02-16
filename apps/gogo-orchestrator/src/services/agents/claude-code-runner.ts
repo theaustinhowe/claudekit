@@ -37,11 +37,7 @@ export const claudeCodeRunner: AgentRunner = {
     supportsStreaming: true,
   } as AgentCapabilities,
 
-  async start(
-    context: AgentJobContext,
-    _config: AgentConfig,
-    _callbacks: AgentCallbacks,
-  ): Promise<AgentStartResult> {
+  async start(context: AgentJobContext, _config: AgentConfig, _callbacks: AgentCallbacks): Promise<AgentStartResult> {
     // Check availability first
     const availabilityError = await getClaudeAvailabilityError();
     if (availabilityError) {
@@ -71,11 +67,7 @@ export const claudeCodeRunner: AgentRunner = {
     return resumeClaudeRun(context.jobId, message);
   },
 
-  async inject(
-    jobId: string,
-    message: string,
-    mode: InjectMode,
-  ): Promise<AgentStartResult> {
+  async inject(jobId: string, message: string, mode: InjectMode): Promise<AgentStartResult> {
     // Check availability first
     const availabilityError = await getClaudeAvailabilityError();
     if (availabilityError) {

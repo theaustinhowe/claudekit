@@ -18,8 +18,7 @@ vi.mock("../../db/helpers.js", () => ({
 
 // Mock the timeout utility - pass through the promise
 vi.mock("../../utils/timeout.js", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../../utils/timeout.js")>();
+  const actual = await importOriginal<typeof import("../../utils/timeout.js")>();
   return {
     ...actual,
     withTimeout: vi.fn(async <T>(promise: Promise<T>) => promise),
@@ -65,9 +64,7 @@ describe("Repo Service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Reset withTimeout to pass through
-    vi.mocked(withTimeout).mockImplementation(
-      async <T>(promise: Promise<T>) => promise,
-    );
+    vi.mocked(withTimeout).mockImplementation(async <T>(promise: Promise<T>) => promise);
   });
 
   describe("getRepoConfigById", () => {
@@ -85,9 +82,7 @@ describe("Repo Service", () => {
     it("throws RepositoryNotFoundError for invalid ID", async () => {
       mockDbForRepo(null);
 
-      await expect(getRepoConfigById("nonexistent")).rejects.toThrow(
-        RepositoryNotFoundError,
-      );
+      await expect(getRepoConfigById("nonexistent")).rejects.toThrow(RepositoryNotFoundError);
     });
   });
 
@@ -147,8 +142,7 @@ describe("Repo Service", () => {
             createComment: vi.fn().mockResolvedValue({
               data: {
                 id: 12345,
-                html_url:
-                  "https://github.com/test/repo/issues/1#issuecomment-12345",
+                html_url: "https://github.com/test/repo/issues/1#issuecomment-12345",
               },
             }),
           },
@@ -158,11 +152,7 @@ describe("Repo Service", () => {
       vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
       mockDbForRepo(mockRepoData);
 
-      const result = await createIssueCommentForRepo(
-        "repo-1",
-        1,
-        "Test comment",
-      );
+      const result = await createIssueCommentForRepo("repo-1", 1, "Test comment");
 
       expect(result.id).toBe(12345);
       expect(result.html_url).toContain("issuecomment-12345");
@@ -179,8 +169,7 @@ describe("Repo Service", () => {
                 {
                   id: 100,
                   body: "Comment 1",
-                  html_url:
-                    "https://github.com/test/repo/issues/1#issuecomment-100",
+                  html_url: "https://github.com/test/repo/issues/1#issuecomment-100",
                   user: {
                     login: "user1",
                     type: "User",
@@ -191,8 +180,7 @@ describe("Repo Service", () => {
                 {
                   id: 101,
                   body: "Comment 2",
-                  html_url:
-                    "https://github.com/test/repo/issues/1#issuecomment-101",
+                  html_url: "https://github.com/test/repo/issues/1#issuecomment-101",
                   user: {
                     login: "user2",
                     type: "User",
@@ -285,9 +273,7 @@ describe("Repo Service", () => {
     });
 
     it("handles missing label gracefully", async () => {
-      const removeLabel = vi
-        .fn()
-        .mockRejectedValue(new Error("Label not found"));
+      const removeLabel = vi.fn().mockRejectedValue(new Error("Label not found"));
       const mockOctokit = {
         rest: {
           issues: {

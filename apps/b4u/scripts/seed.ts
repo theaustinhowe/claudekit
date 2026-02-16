@@ -1,19 +1,19 @@
 import { DuckDBInstance } from "@duckdb/node-api";
-import { SCHEMA_SQL } from "../src/lib/schema";
 import {
-  PROJECT_SUMMARY,
-  FILE_TREE,
-  ROUTES,
-  USER_FLOWS,
-  MOCK_DATA_ENTITIES,
   AUTH_OVERRIDES,
-  ENV_ITEMS,
-  FLOW_SCRIPTS,
-  VOICEOVER_SCRIPTS,
-  VOICE_OPTIONS,
-  TIMELINE_MARKERS,
   CHAPTER_MARKERS,
+  ENV_ITEMS,
+  FILE_TREE,
+  FLOW_SCRIPTS,
+  MOCK_DATA_ENTITIES,
+  PROJECT_SUMMARY,
+  ROUTES,
+  TIMELINE_MARKERS,
+  USER_FLOWS,
+  VOICE_OPTIONS,
+  VOICEOVER_SCRIPTS,
 } from "../src/lib/mock-data";
+import { SCHEMA_SQL } from "../src/lib/schema";
 
 const DB_PATH = process.env.DUCKDB_PATH || "data/b4u.duckdb";
 

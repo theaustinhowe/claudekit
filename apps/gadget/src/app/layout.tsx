@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@devkit/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
 import { LayoutShell } from "@/components/layout/layout-shell";
-import { Toaster } from "@devkit/ui/components/sonner";
 import { APP_NAME } from "@/lib/constants";
 
 const inter = Inter({

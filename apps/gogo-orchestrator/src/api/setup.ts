@@ -51,9 +51,7 @@ interface DiscoveredRepo {
 }
 
 // Parse GitHub remote URL to extract owner and name
-function parseGitHubRemoteUrl(
-  url: string,
-): { owner: string; name: string } | null {
+function parseGitHubRemoteUrl(url: string): { owner: string; name: string } | null {
   // Handle SSH format: git@github.com:owner/name.git
   const sshMatch = url.match(/git@github\.com:([^/]+)\/([^/]+?)(?:\.git)?$/);
   if (sshMatch) {
@@ -61,9 +59,7 @@ function parseGitHubRemoteUrl(
   }
 
   // Handle HTTPS format: https://github.com/owner/name.git
-  const httpsMatch = url.match(
-    /https?:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/,
-  );
+  const httpsMatch = url.match(/https?:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/);
   if (httpsMatch) {
     return { owner: httpsMatch[1], name: httpsMatch[2] };
   }
@@ -78,9 +74,7 @@ function getGitRemoteUrl(gitDir: string): string | null {
     const configContent = fs.readFileSync(configPath, "utf-8");
 
     // Look for [remote "origin"] section and extract url
-    const remoteOriginMatch = configContent.match(
-      /\[remote "origin"\][^[]*url\s*=\s*(.+)/,
-    );
+    const remoteOriginMatch = configContent.match(/\[remote "origin"\][^[]*url\s*=\s*(.+)/);
     if (remoteOriginMatch) {
       return remoteOriginMatch[1].trim();
     }
@@ -111,11 +105,7 @@ function getCurrentBranch(gitDir: string): string {
 }
 
 // Recursively find git repositories
-function findGitRepos(
-  dir: string,
-  maxDepth: number,
-  currentDepth = 0,
-): DiscoveredRepo[] {
+function findGitRepos(dir: string, maxDepth: number, currentDepth = 0): DiscoveredRepo[] {
   const repos: DiscoveredRepo[] = [];
 
   if (currentDepth > maxDepth) {
@@ -163,10 +153,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
   // Check if setup is needed (no active repositories configured)
   fastify.get("/status", async () => {
     const conn = getConn();
-    const activeRepos = await queryAll<DbRepository>(
-      conn,
-      "SELECT * FROM repositories WHERE is_active = true",
-    );
+    const activeRepos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
 
     return {
       needsSetup: activeRepos.length === 0,
@@ -233,15 +220,13 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
         },
       };
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to verify token";
+      const message = error instanceof Error ? error.message : "Failed to verify token";
 
       // Check for specific error types
       if (message.includes("Bad credentials")) {
         return reply.status(401).send({
           success: false,
-          error:
-            "Invalid token. Please check your GitHub Personal Access Token.",
+          error: "Invalid token. Please check your GitHub Personal Access Token.",
         });
       }
 
@@ -253,254 +238,232 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
   });
 
   // Verify repository access
-  fastify.post<{ Body: unknown }>(
-    "/verify-repository",
-    async (request, reply) => {
-      const parsed = VerifyRepositorySchema.safeParse(request.body);
-      if (!parsed.success) {
+  fastify.post<{ Body: unknown }>("/verify-repository", async (request, reply) => {
+    const parsed = VerifyRepositorySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: "Invalid request",
+        details: parsed.error.format(),
+      });
+    }
+
+    const { token, reuseTokenFromRepoId, owner, name } = parsed.data;
+
+    // Resolve the token
+    let resolvedToken = token;
+    if (!resolvedToken && reuseTokenFromRepoId) {
+      const conn = getConn();
+      const existingRepo = await queryOne<{ github_token: string }>(
+        conn,
+        "SELECT github_token FROM repositories WHERE id = ?",
+        [reuseTokenFromRepoId],
+      );
+
+      if (!existingRepo) {
         return reply.status(400).send({
           success: false,
-          error: "Invalid request",
-          details: parsed.error.format(),
+          error: "Referenced repository not found for token reuse",
         });
       }
+      resolvedToken = existingRepo.github_token;
+    }
 
-      const { token, reuseTokenFromRepoId, owner, name } = parsed.data;
+    if (!resolvedToken) {
+      return reply.status(400).send({
+        success: false,
+        error: "Either token or reuseTokenFromRepoId must be provided",
+      });
+    }
 
-      // Resolve the token
-      let resolvedToken = token;
-      if (!resolvedToken && reuseTokenFromRepoId) {
-        const conn = getConn();
-        const existingRepo = await queryOne<{ github_token: string }>(
-          conn,
-          "SELECT github_token FROM repositories WHERE id = ?",
-          [reuseTokenFromRepoId],
-        );
+    try {
+      const octokit = new Octokit({ auth: resolvedToken });
 
-        if (!existingRepo) {
-          return reply.status(400).send({
-            success: false,
-            error: "Referenced repository not found for token reuse",
-          });
-        }
-        resolvedToken = existingRepo.github_token;
-      }
+      // Get repository info
+      const { data: repo } = await octokit.rest.repos.get({
+        owner,
+        repo: name,
+      });
 
-      if (!resolvedToken) {
-        return reply.status(400).send({
+      // Check if we have push access
+      const canPush = repo.permissions?.push ?? false;
+
+      return {
+        success: true,
+        data: {
+          fullName: repo.full_name,
+          visibility: repo.private ? "private" : "public",
+          defaultBranch: repo.default_branch,
+          openIssuesCount: repo.open_issues_count,
+          canPush,
+          description: repo.description,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to verify repository";
+
+      if (message.includes("Not Found")) {
+        return reply.status(404).send({
           success: false,
-          error: "Either token or reuseTokenFromRepoId must be provided",
+          error: `Repository not found: ${owner}/${name}. Check that it exists and you have access.`,
         });
       }
 
-      try {
-        const octokit = new Octokit({ auth: resolvedToken });
-
-        // Get repository info
-        const { data: repo } = await octokit.rest.repos.get({
-          owner,
-          repo: name,
-        });
-
-        // Check if we have push access
-        const canPush = repo.permissions?.push ?? false;
-
-        return {
-          success: true,
-          data: {
-            fullName: repo.full_name,
-            visibility: repo.private ? "private" : "public",
-            defaultBranch: repo.default_branch,
-            openIssuesCount: repo.open_issues_count,
-            canPush,
-            description: repo.description,
-          },
-        };
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to verify repository";
-
-        if (message.includes("Not Found")) {
-          return reply.status(404).send({
-            success: false,
-            error: `Repository not found: ${owner}/${name}. Check that it exists and you have access.`,
-          });
-        }
-
-        return reply.status(500).send({
-          success: false,
-          error: message,
-        });
-      }
-    },
-  );
+      return reply.status(500).send({
+        success: false,
+        error: message,
+      });
+    }
+  });
 
   // Verify workspace directory
-  fastify.post<{ Body: unknown }>(
-    "/verify-workspace",
-    async (request, reply) => {
-      const parsed = VerifyWorkspaceSchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.format(),
-        });
-      }
+  fastify.post<{ Body: unknown }>("/verify-workspace", async (request, reply) => {
+    const parsed = VerifyWorkspaceSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: "Invalid request",
+        details: parsed.error.format(),
+      });
+    }
 
-      const { path: workspacePath } = parsed.data;
+    const { path: workspacePath } = parsed.data;
+
+    try {
+      // Normalize and resolve path
+      const resolvedPath = path.resolve(workspacePath);
+
+      // Check if directory exists
+      let exists = false;
+      let writable = false;
 
       try {
-        // Normalize and resolve path
-        const resolvedPath = path.resolve(workspacePath);
+        const stats = fs.statSync(resolvedPath);
+        exists = stats.isDirectory();
 
-        // Check if directory exists
-        let exists = false;
-        let writable = false;
+        if (exists) {
+          // Test write access by trying to create a temp file
+          const testFile = path.join(resolvedPath, `.agent-write-test-${Date.now()}`);
+          try {
+            fs.writeFileSync(testFile, "test");
+            fs.unlinkSync(testFile);
+            writable = true;
+          } catch {
+            writable = false;
+          }
+        }
+      } catch {
+        exists = false;
+      }
 
+      // If directory doesn't exist, check if parent is writable (can create it)
+      let canCreate = false;
+      if (!exists) {
+        const parentDir = path.dirname(resolvedPath);
         try {
-          const stats = fs.statSync(resolvedPath);
-          exists = stats.isDirectory();
-
-          if (exists) {
-            // Test write access by trying to create a temp file
-            const testFile = path.join(
-              resolvedPath,
-              `.agent-write-test-${Date.now()}`,
-            );
+          const parentStats = fs.statSync(parentDir);
+          if (parentStats.isDirectory()) {
+            const testFile = path.join(parentDir, `.agent-write-test-${Date.now()}`);
             try {
               fs.writeFileSync(testFile, "test");
               fs.unlinkSync(testFile);
-              writable = true;
+              canCreate = true;
             } catch {
-              writable = false;
+              canCreate = false;
             }
           }
         } catch {
-          exists = false;
+          canCreate = false;
         }
-
-        // If directory doesn't exist, check if parent is writable (can create it)
-        let canCreate = false;
-        if (!exists) {
-          const parentDir = path.dirname(resolvedPath);
-          try {
-            const parentStats = fs.statSync(parentDir);
-            if (parentStats.isDirectory()) {
-              const testFile = path.join(
-                parentDir,
-                `.agent-write-test-${Date.now()}`,
-              );
-              try {
-                fs.writeFileSync(testFile, "test");
-                fs.unlinkSync(testFile);
-                canCreate = true;
-              } catch {
-                canCreate = false;
-              }
-            }
-          } catch {
-            canCreate = false;
-          }
-        }
-
-        return {
-          success: true,
-          data: {
-            path: resolvedPath,
-            exists,
-            writable: exists ? writable : canCreate,
-            canCreate,
-          },
-        };
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to verify workspace";
-
-        return reply.status(500).send({
-          success: false,
-          error: message,
-        });
       }
-    },
-  );
+
+      return {
+        success: true,
+        data: {
+          path: resolvedPath,
+          exists,
+          writable: exists ? writable : canCreate,
+          canCreate,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to verify workspace";
+
+      return reply.status(500).send({
+        success: false,
+        error: message,
+      });
+    }
+  });
 
   // Browse directory - list subdirectories for directory picker
-  fastify.post<{ Body: unknown }>(
-    "/browse-directory",
-    async (request, reply) => {
-      const parsed = BrowseDirectorySchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.format(),
-        });
+  fastify.post<{ Body: unknown }>("/browse-directory", async (request, reply) => {
+    const parsed = BrowseDirectorySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: "Invalid request",
+        details: parsed.error.format(),
+      });
+    }
+
+    const { path: browsePath } = parsed.data;
+
+    try {
+      // Normalize and resolve path (handle ~ for home directory)
+      let resolvedPath = browsePath;
+      if (browsePath.startsWith("~")) {
+        const homeDir = process.env.HOME || process.env.USERPROFILE || "";
+        resolvedPath = path.join(homeDir, browsePath.slice(1));
       }
+      resolvedPath = path.resolve(resolvedPath);
 
-      const { path: browsePath } = parsed.data;
-
+      // Check if directory exists
       try {
-        // Normalize and resolve path (handle ~ for home directory)
-        let resolvedPath = browsePath;
-        if (browsePath.startsWith("~")) {
-          const homeDir = process.env.HOME || process.env.USERPROFILE || "";
-          resolvedPath = path.join(homeDir, browsePath.slice(1));
-        }
-        resolvedPath = path.resolve(resolvedPath);
-
-        // Check if directory exists
-        try {
-          const stats = fs.statSync(resolvedPath);
-          if (!stats.isDirectory()) {
-            return reply.status(400).send({
-              success: false,
-              error: "Path is not a directory",
-            });
-          }
-        } catch {
-          return reply.status(404).send({
+        const stats = fs.statSync(resolvedPath);
+        if (!stats.isDirectory()) {
+          return reply.status(400).send({
             success: false,
-            error: "Directory not found",
+            error: "Path is not a directory",
           });
         }
-
-        // List subdirectories
-        const entries = fs.readdirSync(resolvedPath, { withFileTypes: true });
-        const directories: string[] = [];
-
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          // Skip hidden directories
-          if (entry.name.startsWith(".")) continue;
-          directories.push(entry.name);
-        }
-
-        directories.sort((a, b) =>
-          a.localeCompare(b, undefined, { sensitivity: "base" }),
-        );
-
-        return {
-          success: true,
-          data: {
-            path: resolvedPath,
-            parent: path.dirname(resolvedPath),
-            directories,
-          },
-        };
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to browse directory";
-
-        return reply.status(500).send({
+      } catch {
+        return reply.status(404).send({
           success: false,
-          error: message,
+          error: "Directory not found",
         });
       }
-    },
-  );
+
+      // List subdirectories
+      const entries = fs.readdirSync(resolvedPath, { withFileTypes: true });
+      const directories: string[] = [];
+
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        // Skip hidden directories
+        if (entry.name.startsWith(".")) continue;
+        directories.push(entry.name);
+      }
+
+      directories.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+      return {
+        success: true,
+        data: {
+          path: resolvedPath,
+          parent: path.dirname(resolvedPath),
+          directories,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to browse directory";
+
+      return reply.status(500).send({
+        success: false,
+        error: message,
+      });
+    }
+  });
 
   // Discover git repositories in a directory
   fastify.post<{ Body: unknown }>("/discover-repos", async (request, reply) => {
@@ -551,10 +514,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
         },
       };
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to discover repositories";
+      const message = error instanceof Error ? error.message : "Failed to discover repositories";
 
       return reply.status(500).send({
         success: false,
@@ -574,15 +534,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const {
-      githubToken,
-      reuseTokenFromRepoId,
-      owner,
-      name,
-      triggerLabel,
-      baseBranch,
-      workdirPath,
-    } = parsed.data;
+    const { githubToken, reuseTokenFromRepoId, owner, name, triggerLabel, baseBranch, workdirPath } = parsed.data;
 
     const conn = getConn();
 
@@ -621,11 +573,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       }
 
       // Check if repository already exists
-      const existing = await queryOne<DbRepository>(
-        conn,
-        "SELECT * FROM repositories WHERE owner = ?",
-        [owner],
-      );
+      const existing = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE owner = ?", [owner]);
 
       if (existing) {
         const existingMapped = mapRepositoryFull(existing);
@@ -637,14 +585,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
             `UPDATE repositories SET github_token = ?, trigger_label = ?, base_branch = ?, workdir_path = ?, is_active = true, updated_at = ?
              WHERE id = ?
              RETURNING *`,
-            [
-              finalToken,
-              triggerLabel,
-              baseBranch,
-              resolvedPath,
-              now,
-              existingMapped.id,
-            ],
+            [finalToken, triggerLabel, baseBranch, resolvedPath, now, existingMapped.id],
           );
 
           if (!updated) {
@@ -674,17 +615,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
         `INSERT INTO repositories (owner, name, display_name, github_token, base_branch, trigger_label, workdir_path, is_active, auto_create_jobs, remove_label_after_create, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, true, true, false, ?, ?)
          RETURNING *`,
-        [
-          owner,
-          name,
-          `${owner}/${name}`,
-          finalToken,
-          baseBranch,
-          triggerLabel,
-          resolvedPath,
-          now,
-          now,
-        ],
+        [owner, name, `${owner}/${name}`, finalToken, baseBranch, triggerLabel, resolvedPath, now, now],
       );
 
       if (!newRepo) {
@@ -705,8 +636,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
         },
       };
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to complete setup";
+      const message = error instanceof Error ? error.message : "Failed to complete setup";
 
       return reply.status(500).send({
         success: false,

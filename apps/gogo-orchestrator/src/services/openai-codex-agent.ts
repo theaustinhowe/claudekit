@@ -14,39 +14,20 @@ import type { InjectMode } from "@devkit/gogo-shared";
 import { execute, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
-import {
-  emitLog,
-  type LogState,
-  updateJobStatus,
-} from "../utils/job-logging.js";
-import type {
-  AgentCallbacks,
-  AgentConfig,
-  AgentJobContext,
-  AgentSignal,
-} from "./agents/types.js";
-import {
-  AGENT_COMMENT_MARKER,
-  createIssueCommentForRepo,
-} from "./github/index.js";
+import { emitLog, type LogState, updateJobStatus } from "../utils/job-logging.js";
+import type { AgentCallbacks, AgentConfig, AgentJobContext, AgentSignal } from "./agents/types.js";
+import { AGENT_COMMENT_MARKER, createIssueCommentForRepo } from "./github/index.js";
 import { getOpenAIClient, type OpenAIMessage } from "./openai/index.js";
 import { executeTool, getAllTools } from "./openai/tools.js";
 import { registerProcess, unregisterProcess } from "./process-manager.js";
-import {
-  DEFAULT_MAX_RUNTIME_MS,
-  getCodexSettings,
-  hasOpenAIApiKey,
-  isCodexEnabled,
-} from "./settings-helper.js";
+import { DEFAULT_MAX_RUNTIME_MS, getCodexSettings, hasOpenAIApiKey, isCodexEnabled } from "./settings-helper.js";
 
 /**
  * Error messages for configuration issues
  */
 export const CODEX_ERRORS = {
-  NOT_ENABLED:
-    "OpenAI Codex runner not enabled. Set ENABLE_OPENAI_CODEX=true to enable.",
-  NO_API_KEY:
-    "OPENAI_API_KEY environment variable is not set. Export your OpenAI API key to use Codex.",
+  NOT_ENABLED: "OpenAI Codex runner not enabled. Set ENABLE_OPENAI_CODEX=true to enable.",
+  NO_API_KEY: "OPENAI_API_KEY environment variable is not set. Export your OpenAI API key to use Codex.",
 } as const;
 
 /**
@@ -68,22 +49,14 @@ const activeRuns = new Map<string, ActiveRun>();
 /**
  * Save conversation for potential resume
  */
-async function saveSession(
-  jobId: string,
-  sessionId: string,
-  conversationHistory: OpenAIMessage[],
-): Promise<void> {
+async function saveSession(jobId: string, sessionId: string, conversationHistory: OpenAIMessage[]): Promise<void> {
   const conn = getConn();
-  await execute(
-    conn,
-    "UPDATE jobs SET codex_session_id = ?, agent_session_data = ?, updated_at = ? WHERE id = ?",
-    [
-      sessionId,
-      JSON.stringify({ conversationHistory }),
-      new Date().toISOString(),
-      jobId,
-    ],
-  );
+  await execute(conn, "UPDATE jobs SET codex_session_id = ?, agent_session_data = ?, updated_at = ? WHERE id = ?", [
+    sessionId,
+    JSON.stringify({ conversationHistory }),
+    new Date().toISOString(),
+    jobId,
+  ]);
 }
 
 /**
@@ -102,10 +75,7 @@ export function getCodexAvailabilityError(): string | null {
 /**
  * Build the system prompt for the agent
  */
-function buildSystemPrompt(
-  context: AgentJobContext,
-  testCommand: string,
-): string {
+function buildSystemPrompt(context: AgentJobContext, testCommand: string): string {
   return `You are a coding agent working on GitHub issue #${context.issueNumber}.
 
 Repository: ${context.repositoryOwner}/${context.repositoryName}
@@ -149,9 +119,7 @@ export async function startCodexRun(
 
   // Get job
   const conn = getConn();
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    context.jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [context.jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
   }
@@ -173,12 +141,8 @@ export async function startCodexRun(
   const codexSettings = await getCodexSettings();
   const model = process.env.OPENAI_MODEL ?? codexSettings.model ?? "gpt-4o";
   // Ensure we always have a valid timeout - never run indefinitely
-  const maxRuntimeMs =
-    config.maxRuntimeMs ??
-    codexSettings.max_runtime_ms ??
-    DEFAULT_MAX_RUNTIME_MS;
-  const testCommand =
-    config.testCommand ?? codexSettings.test_command ?? "npm test";
+  const maxRuntimeMs = config.maxRuntimeMs ?? codexSettings.max_runtime_ms ?? DEFAULT_MAX_RUNTIME_MS;
+  const testCommand = config.testCommand ?? codexSettings.test_command ?? "npm test";
 
   // Check parallel job limit
   if (activeRuns.size >= codexSettings.max_parallel_jobs) {
@@ -194,9 +158,7 @@ export async function startCodexRun(
   // Create the run
   const run: ActiveRun = {
     jobId: context.jobId,
-    conversationHistory: [
-      { role: "system", content: buildSystemPrompt(context, testCommand) },
-    ],
+    conversationHistory: [{ role: "system", content: buildSystemPrompt(context, testCommand) }],
     abortController: new AbortController(),
     logState,
     startTime: Date.now(),
@@ -210,32 +172,22 @@ export async function startCodexRun(
 
   // Set timeout
   run.timeoutId = setTimeout(async () => {
-    console.log(
-      `[codex] Job ${context.jobId} timed out after ${maxRuntimeMs}ms`,
-    );
+    console.log(`[codex] Job ${context.jobId} timed out after ${maxRuntimeMs}ms`);
     await stopCodexRun(context.jobId, true);
-    await callbacks.onLog(
-      "stderr",
-      `Codex run timed out after ${maxRuntimeMs / 1000}s`,
-    );
+    await callbacks.onLog("stderr", `Codex run timed out after ${maxRuntimeMs / 1000}s`);
     await callbacks.onSignal({ type: "error", message: "Execution timeout" });
   }, maxRuntimeMs);
 
   // Register for process tracking (no PID for API-based agent, but needed for orchestrator restart handling)
   await registerProcess(context.jobId, process.pid);
 
-  await callbacks.onLog(
-    "system",
-    `Starting OpenAI Codex run with model ${model}...`,
-  );
+  await callbacks.onLog("system", `Starting OpenAI Codex run with model ${model}...`);
 
   // Run the agent loop in background
-  runAgentLoop(run, model, context, callbacks, sessionId).catch(
-    async (error) => {
-      await callbacks.onLog("stderr", `Agent loop error: ${error}`);
-      await callbacks.onSignal({ type: "error", message: String(error) });
-    },
-  );
+  runAgentLoop(run, model, context, callbacks, sessionId).catch(async (error) => {
+    await callbacks.onLog("stderr", `Agent loop error: ${error}`);
+    await callbacks.onSignal({ type: "error", message: String(error) });
+  });
 
   return { success: true };
 }
@@ -263,8 +215,7 @@ async function runAgentLoop(
       });
 
       let assistantContent = "";
-      const toolCalls: Array<{ id: string; name: string; arguments: string }> =
-        [];
+      const toolCalls: Array<{ id: string; name: string; arguments: string }> = [];
 
       for await (const event of stream) {
         if (run.abortController.signal.aborted) break;
@@ -307,10 +258,7 @@ async function runAgentLoop(
 
       // No tool calls means agent is done thinking
       if (toolCalls.length === 0) {
-        await callbacks.onLog(
-          "system",
-          "Agent completed without signaling - saving session",
-        );
+        await callbacks.onLog("system", "Agent completed without signaling - saving session");
         await saveSession(context.jobId, sessionId, run.conversationHistory);
         return;
       }
@@ -333,22 +281,14 @@ async function runAgentLoop(
 
         // Log tool result (truncated for readability)
         const truncatedResult =
-          result.result.length > 500
-            ? `${result.result.slice(0, 500)}\n... (truncated)`
-            : result.result;
-        await callbacks.onLog(
-          "system",
-          `Tool ${call.name} result:\n${truncatedResult}`,
-        );
+          result.result.length > 500 ? `${result.result.slice(0, 500)}\n... (truncated)` : result.result;
+        await callbacks.onLog("system", `Tool ${call.name} result:\n${truncatedResult}`);
 
         // Check for signals
         if (result.signal) {
           await handleSignal(result.signal, run, context, callbacks, sessionId);
 
-          if (
-            result.signal.type === "ready_to_pr" ||
-            result.signal.type === "needs_info"
-          ) {
+          if (result.signal.type === "ready_to_pr" || result.signal.type === "needs_info") {
             return; // Agent is done or blocked
           }
         }
@@ -384,13 +324,9 @@ async function handleSignal(
     case "ready_to_pr":
       await callbacks.onLog("system", "Agent signaled READY_TO_PR");
       await saveSession(context.jobId, sessionId, run.conversationHistory);
-      await updateJobStatus(
-        context.jobId,
-        "ready_to_pr",
-        "running",
-        "Agent completed work",
-        { codex_session_id: sessionId },
-      );
+      await updateJobStatus(context.jobId, "ready_to_pr", "running", "Agent completed work", {
+        codex_session_id: sessionId,
+      });
       run.abortController.abort();
       break;
 
@@ -398,46 +334,27 @@ async function handleSignal(
       await callbacks.onLog("system", `Agent needs info: ${signal.question}`);
       try {
         const commentBody = `${AGENT_COMMENT_MARKER}\n**Agent Question:**\n\n${signal.question}`;
-        const { id: commentId } = await createIssueCommentForRepo(
-          run.repositoryId,
-          context.issueNumber,
-          commentBody,
-        );
+        const { id: commentId } = await createIssueCommentForRepo(run.repositoryId, context.issueNumber, commentBody);
         await saveSession(context.jobId, sessionId, run.conversationHistory);
-        await updateJobStatus(
-          context.jobId,
-          "needs_info",
-          "running",
-          signal.question,
-          {
-            codex_session_id: sessionId,
-            needs_info_question: signal.question,
-            needs_info_comment_id: commentId,
-            last_checked_comment_id: commentId,
-          },
-        );
+        await updateJobStatus(context.jobId, "needs_info", "running", signal.question, {
+          codex_session_id: sessionId,
+          needs_info_question: signal.question,
+          needs_info_comment_id: commentId,
+          last_checked_comment_id: commentId,
+        });
         run.abortController.abort();
       } catch (error) {
         const err = error as Error;
-        await callbacks.onLog(
-          "stderr",
-          `Failed to post question to GitHub: ${err.message}`,
-        );
+        await callbacks.onLog("stderr", `Failed to post question to GitHub: ${err.message}`);
       }
       break;
 
     case "error":
       await callbacks.onLog("stderr", `Agent error: ${signal.message}`);
-      await updateJobStatus(
-        context.jobId,
-        "failed",
-        "running",
-        signal.message,
-        {
-          failure_reason: signal.message,
-          codex_session_id: sessionId,
-        },
-      );
+      await updateJobStatus(context.jobId, "failed", "running", signal.message, {
+        failure_reason: signal.message,
+        codex_session_id: sessionId,
+      });
       run.abortController.abort();
       break;
   }
@@ -450,10 +367,7 @@ async function handleSignal(
  * Stop a running Codex process
  * @param saveSessionFlag - Default true to preserve conversation history for resume
  */
-export async function stopCodexRun(
-  jobId: string,
-  saveSessionFlag = true,
-): Promise<boolean> {
+export async function stopCodexRun(jobId: string, saveSessionFlag = true): Promise<boolean> {
   const run = activeRuns.get(jobId);
   if (!run) return false;
 
@@ -502,17 +416,13 @@ export async function resumeCodexRun(
 ): Promise<{ success: boolean; error?: string }> {
   // Get job to restore conversation history
   const conn = getConn();
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    context.jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [context.jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
   }
 
   // Restore conversation history
-  const sessionData = (
-    job.agent_session_data ? JSON.parse(job.agent_session_data) : null
-  ) as {
+  const sessionData = (job.agent_session_data ? JSON.parse(job.agent_session_data) : null) as {
     conversationHistory?: OpenAIMessage[];
   } | null;
   const conversationHistory = sessionData?.conversationHistory;
@@ -540,14 +450,10 @@ export async function resumeCodexRun(
   const codexSettings = await getCodexSettings();
   const model = process.env.OPENAI_MODEL ?? codexSettings.model ?? "gpt-4o";
   // Ensure we always have a valid timeout - never run indefinitely
-  const maxRuntimeMs =
-    config.maxRuntimeMs ??
-    codexSettings.max_runtime_ms ??
-    DEFAULT_MAX_RUNTIME_MS;
+  const maxRuntimeMs = config.maxRuntimeMs ?? codexSettings.max_runtime_ms ?? DEFAULT_MAX_RUNTIME_MS;
 
   const logState: LogState = { sequence: 0 };
-  const sessionId =
-    job.codex_session_id ?? `codex-${context.jobId}-${Date.now()}`;
+  const sessionId = job.codex_session_id ?? `codex-${context.jobId}-${Date.now()}`;
 
   // Create the run with restored history
   const run: ActiveRun = {
@@ -570,31 +476,21 @@ export async function resumeCodexRun(
 
   // Set timeout
   run.timeoutId = setTimeout(async () => {
-    console.log(
-      `[codex] Job ${context.jobId} timed out after ${maxRuntimeMs}ms`,
-    );
+    console.log(`[codex] Job ${context.jobId} timed out after ${maxRuntimeMs}ms`);
     await stopCodexRun(context.jobId, true);
-    await callbacks.onLog(
-      "stderr",
-      `Codex run timed out after ${maxRuntimeMs / 1000}s`,
-    );
+    await callbacks.onLog("stderr", `Codex run timed out after ${maxRuntimeMs / 1000}s`);
     await callbacks.onSignal({ type: "error", message: "Execution timeout" });
   }, maxRuntimeMs);
 
   await registerProcess(context.jobId, process.pid);
 
-  await callbacks.onLog(
-    "system",
-    `Resuming Codex run with message: ${resumeMessage}`,
-  );
+  await callbacks.onLog("system", `Resuming Codex run with message: ${resumeMessage}`);
 
   // Run the agent loop in background
-  runAgentLoop(run, model, context, callbacks, sessionId).catch(
-    async (error) => {
-      await callbacks.onLog("stderr", `Agent loop error: ${error}`);
-      await callbacks.onSignal({ type: "error", message: String(error) });
-    },
-  );
+  runAgentLoop(run, model, context, callbacks, sessionId).catch(async (error) => {
+    await callbacks.onLog("stderr", `Agent loop error: ${error}`);
+    await callbacks.onSignal({ type: "error", message: String(error) });
+  });
 
   return { success: true };
 }
@@ -608,9 +504,7 @@ export async function injectCodexMessage(
   mode: InjectMode,
 ): Promise<{ success: boolean; error?: string }> {
   const conn = getConn();
-  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [
-    jobId,
-  ]);
+  const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
   }
@@ -620,31 +514,26 @@ export async function injectCodexMessage(
     const run = activeRuns.get(jobId);
     if (run) {
       run.conversationHistory.push({ role: "user", content: message });
-      await emitLog(
-        jobId,
-        "system",
-        `Injected message: ${message}`,
-        run.logState,
-      );
+      await emitLog(jobId, "system", `Injected message: ${message}`, run.logState);
       return { success: true };
     }
 
     // Not running - store as pending
-    await execute(
-      conn,
-      "UPDATE jobs SET pending_injection = ?, updated_at = ? WHERE id = ?",
-      [message, new Date().toISOString(), jobId],
-    );
+    await execute(conn, "UPDATE jobs SET pending_injection = ?, updated_at = ? WHERE id = ?", [
+      message,
+      new Date().toISOString(),
+      jobId,
+    ]);
 
     return { success: true };
   }
 
   // Queued mode - store for next break
-  await execute(
-    conn,
-    "UPDATE jobs SET pending_injection = ?, updated_at = ? WHERE id = ?",
-    [message, new Date().toISOString(), jobId],
-  );
+  await execute(conn, "UPDATE jobs SET pending_injection = ?, updated_at = ? WHERE id = ?", [
+    message,
+    new Date().toISOString(),
+    jobId,
+  ]);
 
   return { success: true };
 }

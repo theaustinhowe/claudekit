@@ -1,8 +1,8 @@
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { basename } from "node:path";
 import { getLogFilePath, listLogFiles } from "@devkit/logger";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { basename } from "node:path";
 import { z } from "zod";
 
 const server = new McpServer({
@@ -32,13 +32,20 @@ function pinoLevelToName(level: number): string {
 
 function nameToLevel(name: string): number {
   switch (name) {
-    case "trace": return 10;
-    case "debug": return 20;
-    case "info": return 30;
-    case "warn": return 40;
-    case "error": return 50;
-    case "fatal": return 60;
-    default: return 0;
+    case "trace":
+      return 10;
+    case "debug":
+      return 20;
+    case "info":
+      return 30;
+    case "warn":
+      return 40;
+    case "error":
+      return 50;
+    case "fatal":
+      return 60;
+    default:
+      return 0;
   }
 }
 
@@ -49,11 +56,16 @@ function parseSince(since: string): number {
   const unit = match[2];
   const now = Date.now();
   switch (unit) {
-    case "s": return now - value * 1000;
-    case "m": return now - value * 60 * 1000;
-    case "h": return now - value * 60 * 60 * 1000;
-    case "d": return now - value * 24 * 60 * 60 * 1000;
-    default: return 0;
+    case "s":
+      return now - value * 1000;
+    case "m":
+      return now - value * 60 * 1000;
+    case "h":
+      return now - value * 60 * 60 * 1000;
+    case "d":
+      return now - value * 24 * 60 * 60 * 1000;
+    default:
+      return 0;
   }
 }
 

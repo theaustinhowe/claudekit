@@ -9,9 +9,7 @@ agentRegistry.register(claudeCodeRunner);
 // Conditionally register Codex runner based on feature flag
 if (isCodexEnabled()) {
   agentRegistry.register(openaiCodexRunner);
-  console.log(
-    "[agents] OpenAI Codex runner registered (ENABLE_OPENAI_CODEX=true)",
-  );
+  console.log("[agents] OpenAI Codex runner registered (ENABLE_OPENAI_CODEX=true)");
 }
 
 export { claudeCodeRunner } from "./claude-code-runner.js";

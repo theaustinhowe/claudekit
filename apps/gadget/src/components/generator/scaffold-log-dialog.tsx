@@ -1,8 +1,8 @@
 "use client";
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import { useMemo } from "react";
 import { parseStreamLog, type StreamEntry, StreamingDisplay } from "@/components/generator/streaming-display";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 
 interface ScaffoldLogDialogProps {
   open: boolean;

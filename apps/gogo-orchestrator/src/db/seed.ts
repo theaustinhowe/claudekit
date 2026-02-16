@@ -58,27 +58,23 @@ async function seed() {
         conn,
         `INSERT INTO job_events (job_id, event_type, from_status, to_status, message)
          VALUES (?, ?, ?, ?, ?)`,
-        [
-          job.id,
-          "state_change",
-          null,
-          "queued",
-          "Job created from GitHub issue",
-        ],
+        [job.id, "state_change", null, "queued", "Job created from GitHub issue"],
       );
       console.log("Inserted sample event");
 
       // Insert sample logs
-      await execute(
-        conn,
-        `INSERT INTO job_logs (job_id, stream, content, sequence) VALUES (?, ?, ?, ?)`,
-        [job.id, "system", "Job initialized", 1],
-      );
-      await execute(
-        conn,
-        `INSERT INTO job_logs (job_id, stream, content, sequence) VALUES (?, ?, ?, ?)`,
-        [job.id, "stdout", "Cloning repository...", 2],
-      );
+      await execute(conn, `INSERT INTO job_logs (job_id, stream, content, sequence) VALUES (?, ?, ?, ?)`, [
+        job.id,
+        "system",
+        "Job initialized",
+        1,
+      ]);
+      await execute(conn, `INSERT INTO job_logs (job_id, stream, content, sequence) VALUES (?, ?, ?, ?)`, [
+        job.id,
+        "stdout",
+        "Cloning repository...",
+        2,
+      ]);
       console.log("Inserted sample logs");
     }
   } else {

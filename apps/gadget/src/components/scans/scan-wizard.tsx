@@ -1,10 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, FolderOpen, Loader2, Play, Plus, X, XCircle } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import { DirectoryPicker } from "@/components/directory-picker";
+import { useSessionStream } from "@devkit/hooks";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
@@ -14,7 +10,11 @@ import { Label } from "@devkit/ui/components/label";
 import { Progress } from "@devkit/ui/components/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { useSessionStream } from "@devkit/hooks";
+import { Check, ChevronLeft, ChevronRight, FolderOpen, Loader2, Play, Plus, X, XCircle } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
+import { DirectoryPicker } from "@/components/directory-picker";
 import { matchPolicy } from "@/lib/services/policy-matcher";
 import type { Policy, RepoType, RepoWithCounts, ScanRoot } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";

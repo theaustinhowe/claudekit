@@ -71,9 +71,7 @@ describe("Codex Error Handling", () => {
     it("should return NOT_ENABLED error when feature flag is false", async () => {
       process.env.ENABLE_OPENAI_CODEX = undefined;
 
-      const { getCodexAvailabilityError, CODEX_ERRORS } = await import(
-        "../openai-codex-agent.js"
-      );
+      const { getCodexAvailabilityError, CODEX_ERRORS } = await import("../openai-codex-agent.js");
 
       const error = getCodexAvailabilityError();
       expect(error).toBe(CODEX_ERRORS.NOT_ENABLED);
@@ -84,9 +82,7 @@ describe("Codex Error Handling", () => {
       process.env.OPENAI_API_KEY = undefined;
 
       vi.resetModules();
-      const { getCodexAvailabilityError, CODEX_ERRORS } = await import(
-        "../openai-codex-agent.js"
-      );
+      const { getCodexAvailabilityError, CODEX_ERRORS } = await import("../openai-codex-agent.js");
 
       const error = getCodexAvailabilityError();
       expect(error).toBe(CODEX_ERRORS.NO_API_KEY);
@@ -97,9 +93,7 @@ describe("Codex Error Handling", () => {
       process.env.OPENAI_API_KEY = "sk-test-key";
 
       vi.resetModules();
-      const { getCodexAvailabilityError } = await import(
-        "../openai-codex-agent.js"
-      );
+      const { getCodexAvailabilityError } = await import("../openai-codex-agent.js");
 
       const error = getCodexAvailabilityError();
       expect(error).toBeNull();
@@ -133,11 +127,7 @@ describe("Codex Error Handling", () => {
       };
 
       // Should not throw
-      const result = await openaiCodexRunner.start(
-        mockContext,
-        mockConfig,
-        mockCallbacks,
-      );
+      const result = await openaiCodexRunner.start(mockContext, mockConfig, mockCallbacks);
 
       // Should return structured error
       expect(result.success).toBe(false);
@@ -239,9 +229,7 @@ describe("Settings Helper", () => {
 
       process.env.ENABLE_OPENAI_CODEX = "1";
       vi.resetModules();
-      const { isCodexEnabled: isCodexEnabled2 } = await import(
-        "../settings-helper.js"
-      );
+      const { isCodexEnabled: isCodexEnabled2 } = await import("../settings-helper.js");
       expect(isCodexEnabled2()).toBe(false);
     });
   });

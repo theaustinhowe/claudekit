@@ -31,20 +31,14 @@ function cutoffFromDays(days: number): Date {
 /**
  * Prune old job logs for completed/failed jobs older than N days.
  */
-export async function pruneOldLogs(
-  retentionDays = DEFAULT_LOG_RETENTION_DAYS,
-): Promise<number> {
+export async function pruneOldLogs(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> {
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
   const conn = getConn();
   let totalDeleted = 0;
   for (const jobId of jobIds) {
-    const before = await queryAll<{ id: string }>(
-      conn,
-      "SELECT id FROM job_logs WHERE job_id = ?",
-      [jobId],
-    );
+    const before = await queryAll<{ id: string }>(conn, "SELECT id FROM job_logs WHERE job_id = ?", [jobId]);
     await execute(conn, "DELETE FROM job_logs WHERE job_id = ?", [jobId]);
     totalDeleted += before.length;
   }
@@ -60,20 +54,14 @@ export async function pruneOldLogs(
 /**
  * Prune old job events for completed/failed jobs older than N days.
  */
-export async function pruneOldEvents(
-  retentionDays = DEFAULT_LOG_RETENTION_DAYS,
-): Promise<number> {
+export async function pruneOldEvents(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> {
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
   const conn = getConn();
   let totalDeleted = 0;
   for (const jobId of jobIds) {
-    const before = await queryAll<{ id: string }>(
-      conn,
-      "SELECT id FROM job_events WHERE job_id = ?",
-      [jobId],
-    );
+    const before = await queryAll<{ id: string }>(conn, "SELECT id FROM job_events WHERE job_id = ?", [jobId]);
     await execute(conn, "DELETE FROM job_events WHERE job_id = ?", [jobId]);
     totalDeleted += before.length;
   }
@@ -90,9 +78,7 @@ export async function pruneOldEvents(
  * Prune archived jobs (done/failed) older than N days.
  * Deletes associated logs and events first, then removes the job records.
  */
-export async function pruneArchivedJobs(
-  retentionDays = DEFAULT_JOB_RETENTION_DAYS,
-): Promise<number> {
+export async function pruneArchivedJobs(retentionDays = DEFAULT_JOB_RETENTION_DAYS): Promise<number> {
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
@@ -103,9 +89,7 @@ export async function pruneArchivedJobs(
     await execute(conn, "DELETE FROM jobs WHERE id = ?", [jobId]);
   }
 
-  console.log(
-    `[data-pruning] Pruned ${jobIds.length} archived jobs older than ${retentionDays} days`,
-  );
+  console.log(`[data-pruning] Pruned ${jobIds.length} archived jobs older than ${retentionDays} days`);
   return jobIds.length;
 }
 
@@ -121,9 +105,7 @@ export async function runDataPruning(): Promise<void> {
     const archivedJobs = await pruneArchivedJobs();
 
     if (logs > 0 || events > 0 || archivedJobs > 0) {
-      console.log(
-        `[data-pruning] Complete: ${logs} logs, ${events} events, ${archivedJobs} jobs pruned`,
-      );
+      console.log(`[data-pruning] Complete: ${logs} logs, ${events} events, ${archivedJobs} jobs pruned`);
     } else {
       console.log("[data-pruning] No old data to prune");
     }

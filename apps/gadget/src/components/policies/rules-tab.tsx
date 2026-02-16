@@ -1,9 +1,5 @@
 "use client";
 
-import { Edit, Plus, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +15,10 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Switch } from "@devkit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Edit, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { createCustomRule, deleteCustomRule, toggleCustomRule, updateCustomRule } from "@/lib/actions/custom-rules";
 import type { CustomRule, Policy } from "@/lib/types";
 import { RuleForm, type RuleFormData } from "./rule-form";

@@ -84,9 +84,7 @@ describe("job-auto-start", () => {
     vi.clearAllMocks();
 
     // Re-set mocks that must survive clearing
-    const { getClaudeSettings, getCodexSettings } = await import(
-      "./settings-helper.js"
-    );
+    const { getClaudeSettings, getCodexSettings } = await import("./settings-helper.js");
     vi.mocked(getClaudeSettings).mockResolvedValue({
       enabled: true,
       max_runtime_ms: 7200000,
@@ -102,9 +100,7 @@ describe("job-auto-start", () => {
       approval_mode: "full-auto",
     });
 
-    const { getClaudeAvailabilityError } = await import(
-      "./claude-code-agent.js"
-    );
+    const { getClaudeAvailabilityError } = await import("./claude-code-agent.js");
     vi.mocked(getClaudeAvailabilityError).mockResolvedValue(null);
 
     const { startJobRun: sjr } = await import("./agent-runner.js");

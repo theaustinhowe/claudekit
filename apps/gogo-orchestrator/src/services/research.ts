@@ -6,20 +6,11 @@ import { promisify } from "node:util";
 import type { ResearchCategory } from "@devkit/gogo-shared";
 import { execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
-import type {
-  DbRepository,
-  DbResearchSession,
-  DbResearchSuggestion,
-} from "../db/schema.js";
+import type { DbRepository, DbResearchSession, DbResearchSuggestion } from "../db/schema.js";
 import { mapResearchSuggestion } from "../db/schema.js";
 import { logger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
-import {
-  ensureBaseClone,
-  getBareRepoPath,
-  getRepoDir,
-  removeWorktree,
-} from "./git.js";
+import { ensureBaseClone, getBareRepoPath, getRepoDir, removeWorktree } from "./git.js";
 import { toGitConfigFromRepo } from "./settings-helper.js";
 
 const log = logger.child({ service: "research" });
@@ -49,11 +40,7 @@ export async function startResearchSession(
   }
 
   // Get repository workdir
-  const repo = await queryOne<DbRepository>(
-    conn,
-    "SELECT * FROM repositories WHERE id = ?",
-    [repositoryId],
-  );
+  const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
   if (!repo) {
     throw new Error("Repository not found");
   }
@@ -77,15 +64,7 @@ export async function startResearchSession(
 
   const execFileAsync = promisify(execFile);
   const baseBranch = gitConfig.baseBranch || "main";
-  await execFileAsync("git", [
-    "-C",
-    bareRepoPath,
-    "worktree",
-    "add",
-    worktreePath,
-    baseBranch,
-    "--detach",
-  ]);
+  await execFileAsync("git", ["-C", bareRepoPath, "worktree", "add", worktreePath, baseBranch, "--detach"]);
 
   // Generate session ID upfront
   const claudeSessionId = randomUUID();
@@ -168,11 +147,11 @@ export async function startResearchSession(
   }
 
   // Store PID
-  await execute(
-    conn,
-    "UPDATE research_sessions SET process_pid = ?, updated_at = ? WHERE id = ?",
-    [claudeProcess.pid ?? null, new Date().toISOString(), session.id],
-  );
+  await execute(conn, "UPDATE research_sessions SET process_pid = ?, updated_at = ? WHERE id = ?", [
+    claudeProcess.pid ?? null,
+    new Date().toISOString(),
+    session.id,
+  ]);
 
   // Broadcast session start
   broadcast({
@@ -237,17 +216,13 @@ export async function startResearchSession(
       await removeWorktree(gitConfig, worktreePath);
     } catch {}
 
-    log.error(
-      { sessionId: session.id, error: err.message },
-      "Research process spawn error",
-    );
+    log.error({ sessionId: session.id, error: err.message }, "Research process spawn error");
 
     const conn = getConn();
-    await execute(
-      conn,
-      "UPDATE research_sessions SET status = 'failed', updated_at = ? WHERE id = ?",
-      [new Date().toISOString(), session.id],
-    );
+    await execute(conn, "UPDATE research_sessions SET status = 'failed', updated_at = ? WHERE id = ?", [
+      new Date().toISOString(),
+      session.id,
+    ]);
 
     broadcast({
       type: "research:updated",
@@ -256,10 +231,7 @@ export async function startResearchSession(
   });
 
   claudeProcess.on("close", async (code) => {
-    appendLog(
-      "CLOSE",
-      `exitCode=${code} accumulatorLen=${textAccumulator.length}`,
-    );
+    appendLog("CLOSE", `exitCode=${code} accumulatorLen=${textAccumulator.length}`);
     activeProcess = null;
     activeSessionId = null;
 
@@ -267,16 +239,10 @@ export async function startResearchSession(
     try {
       await removeWorktree(gitConfig, worktreePath);
     } catch (err) {
-      log.warn(
-        { worktreePath, error: String(err) },
-        "Failed to clean up research worktree",
-      );
+      log.warn({ worktreePath, error: String(err) }, "Failed to clean up research worktree");
     }
 
-    log.info(
-      { sessionId: session.id, exitCode: code },
-      "Research process closed",
-    );
+    log.info({ sessionId: session.id, exitCode: code }, "Research process closed");
 
     try {
       const conn = getConn();
@@ -297,19 +263,17 @@ export async function startResearchSession(
 
       const status = code === 0 || code === null ? "completed" : "failed";
 
-      await execute(
-        conn,
-        "UPDATE research_sessions SET status = ?, output = ?, updated_at = ? WHERE id = ?",
-        [status, textAccumulator || null, new Date().toISOString(), session.id],
-      );
+      await execute(conn, "UPDATE research_sessions SET status = ?, output = ?, updated_at = ? WHERE id = ?", [
+        status,
+        textAccumulator || null,
+        new Date().toISOString(),
+        session.id,
+      ]);
 
       if (status === "completed") {
         log.info({ sessionId: session.id }, "Research session completed");
       } else {
-        log.error(
-          { sessionId: session.id, exitCode: code },
-          "Research session failed",
-        );
+        log.error({ sessionId: session.id, exitCode: code }, "Research session failed");
       }
 
       broadcast({
@@ -317,18 +281,14 @@ export async function startResearchSession(
         payload: { sessionId: session.id, status },
       });
     } catch (err) {
-      log.error(
-        { sessionId: session.id, error: String(err) },
-        "Error in research close handler",
-      );
+      log.error({ sessionId: session.id, error: String(err) }, "Error in research close handler");
 
       try {
         const conn = getConn();
-        await execute(
-          conn,
-          "UPDATE research_sessions SET status = 'failed', updated_at = ? WHERE id = ?",
-          [new Date().toISOString(), session.id],
-        );
+        await execute(conn, "UPDATE research_sessions SET status = 'failed', updated_at = ? WHERE id = ?", [
+          new Date().toISOString(),
+          session.id,
+        ]);
         broadcast({
           type: "research:updated",
           payload: { sessionId: session.id, status: "failed" },
@@ -348,11 +308,7 @@ export async function startResearchSession(
 export async function cancelResearchSession(sessionId: string): Promise<void> {
   const conn = getConn();
 
-  const session = await queryOne<DbResearchSession>(
-    conn,
-    "SELECT * FROM research_sessions WHERE id = ?",
-    [sessionId],
-  );
+  const session = await queryOne<DbResearchSession>(conn, "SELECT * FROM research_sessions WHERE id = ?", [sessionId]);
   if (!session) {
     throw new Error("Session not found");
   }
@@ -373,11 +329,10 @@ export async function cancelResearchSession(sessionId: string): Promise<void> {
     }
   }
 
-  await execute(
-    conn,
-    "UPDATE research_sessions SET status = 'cancelled', updated_at = ? WHERE id = ?",
-    [new Date().toISOString(), sessionId],
-  );
+  await execute(conn, "UPDATE research_sessions SET status = 'cancelled', updated_at = ? WHERE id = ?", [
+    new Date().toISOString(),
+    sessionId,
+  ]);
 
   broadcast({
     type: "research:updated",
@@ -418,10 +373,7 @@ function extractText(line: string): string | null {
     }
 
     // Full message content blocks
-    if (
-      (msg.type === "message" || msg.type === "assistant") &&
-      msg.message?.content
-    ) {
+    if ((msg.type === "message" || msg.type === "assistant") && msg.message?.content) {
       const texts: string[] = [];
       for (const block of msg.message.content) {
         if (block.type === "text" && block.text) {
@@ -520,12 +472,8 @@ function parseSuggestionBlock(block: string): ParsedSuggestion | null {
   }
 
   return {
-    category: VALID_CATEGORIES.includes(fields.category)
-      ? fields.category
-      : "documentation",
-    severity: VALID_SEVERITIES.includes(fields.severity ?? "")
-      ? (fields.severity as string)
-      : "medium",
+    category: VALID_CATEGORIES.includes(fields.category) ? fields.category : "documentation",
+    severity: VALID_SEVERITIES.includes(fields.severity ?? "") ? (fields.severity as string) : "medium",
     title: fields.title,
     description: fields.description,
     filePaths: fields.files
@@ -541,10 +489,7 @@ function parseSuggestionBlock(block: string): ParsedSuggestion | null {
 // DB helpers
 // ---------------------------------------------------------------------------
 
-async function storeSuggestion(
-  sessionId: string,
-  suggestion: ParsedSuggestion,
-): Promise<void> {
+async function storeSuggestion(sessionId: string, suggestion: ParsedSuggestion): Promise<void> {
   const conn = getConn();
 
   await execute(
@@ -566,10 +511,7 @@ async function storeSuggestion(
     payload: { sessionId, suggestion },
   });
 
-  log.info(
-    { sessionId, title: suggestion.title, category: suggestion.category },
-    "Research suggestion found",
-  );
+  log.info({ sessionId, title: suggestion.title, category: suggestion.category }, "Research suggestion found");
 }
 
 // ---------------------------------------------------------------------------
@@ -580,22 +522,15 @@ function buildResearchPrompt(focusAreas: ResearchCategory[]): string {
   const areaDescriptions: Record<ResearchCategory, string> = {
     ui: "UI: Visual improvements, component design, responsive issues, layout problems",
     ux: "UX: User flow, interaction patterns, navigation, feedback mechanisms",
-    security:
-      "Security: Vulnerabilities, input validation, auth issues, data exposure",
-    durability:
-      "Durability: Error handling, edge cases, data integrity, graceful degradation",
-    performance:
-      "Performance: Bottlenecks, unnecessary re-renders, query optimization, bundle size",
+    security: "Security: Vulnerabilities, input validation, auth issues, data exposure",
+    durability: "Durability: Error handling, edge cases, data integrity, graceful degradation",
+    performance: "Performance: Bottlenecks, unnecessary re-renders, query optimization, bundle size",
     testing: "Testing: Missing test coverage, test quality, edge case testing",
-    accessibility:
-      "Accessibility: WCAG compliance, screen reader support, keyboard navigation",
-    documentation:
-      "Documentation: Missing or outdated docs, code comments, API documentation",
+    accessibility: "Accessibility: WCAG compliance, screen reader support, keyboard navigation",
+    documentation: "Documentation: Missing or outdated docs, code comments, API documentation",
   };
 
-  const selectedDescriptions = focusAreas
-    .map((area) => areaDescriptions[area])
-    .join("\n- ");
+  const selectedDescriptions = focusAreas.map((area) => areaDescriptions[area]).join("\n- ");
 
   return `Analyze this codebase and suggest improvements. Focus on these areas:
 

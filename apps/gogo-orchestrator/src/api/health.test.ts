@@ -19,9 +19,7 @@ vi.mock("../db/helpers.js", () => ({
 vi.mock("../services/agents/index.js", () => ({
   agentRegistry: {
     getTotalActiveRunCount: vi.fn().mockReturnValue(2),
-    listInfo: vi
-      .fn()
-      .mockReturnValue([{ type: "claude-code", displayName: "Claude Code" }]),
+    listInfo: vi.fn().mockReturnValue([{ type: "claude-code", displayName: "Claude Code" }]),
   },
 }));
 
@@ -66,10 +64,8 @@ function createMockFastify() {
   return {
     routes,
     instance: {
-      get: (
-        path: string,
-        handler: (req: unknown, rep: unknown) => Promise<unknown>,
-      ) => routes.push({ method: "GET", path, handler }),
+      get: (path: string, handler: (req: unknown, rep: unknown) => Promise<unknown>) =>
+        routes.push({ method: "GET", path, handler }),
     },
   };
 }

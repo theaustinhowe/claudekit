@@ -54,9 +54,7 @@ class AgentRegistry {
    */
   setDefault(type: string): void {
     if (!this.runners.has(type)) {
-      throw new Error(
-        `Cannot set default: agent type '${type}' is not registered`,
-      );
+      throw new Error(`Cannot set default: agent type '${type}' is not registered`);
     }
     this.defaultType = type;
   }

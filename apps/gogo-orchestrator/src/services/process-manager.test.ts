@@ -118,19 +118,17 @@ describe("process-manager", () => {
 
     it("should send SIGTERM and return true when process exits gracefully", async () => {
       let callCount = 0;
-      const killSpy = vi
-        .spyOn(process, "kill")
-        .mockImplementation((_pid, signal) => {
-          callCount++;
-          if (signal === 0 && callCount <= 1) {
-            return true; // Process exists on first check
-          }
-          if (signal === "SIGTERM") {
-            return true; // SIGTERM sent successfully
-          }
-          // After SIGTERM, process is gone
-          throw new Error("ESRCH");
-        });
+      const killSpy = vi.spyOn(process, "kill").mockImplementation((_pid, signal) => {
+        callCount++;
+        if (signal === 0 && callCount <= 1) {
+          return true; // Process exists on first check
+        }
+        if (signal === "SIGTERM") {
+          return true; // SIGTERM sent successfully
+        }
+        // After SIGTERM, process is gone
+        throw new Error("ESRCH");
+      });
 
       const result = await safeTerminate(1234);
 
@@ -140,18 +138,16 @@ describe("process-manager", () => {
 
     it("should return false if SIGTERM fails", async () => {
       let callCount = 0;
-      const killSpy = vi
-        .spyOn(process, "kill")
-        .mockImplementation((_pid, signal) => {
-          callCount++;
-          if (signal === 0 && callCount === 1) {
-            return true; // Process exists
-          }
-          if (signal === "SIGTERM") {
-            throw new Error("EPERM"); // Can't kill
-          }
-          throw new Error("ESRCH");
-        });
+      const killSpy = vi.spyOn(process, "kill").mockImplementation((_pid, signal) => {
+        callCount++;
+        if (signal === 0 && callCount === 1) {
+          return true; // Process exists
+        }
+        if (signal === "SIGTERM") {
+          throw new Error("EPERM"); // Can't kill
+        }
+        throw new Error("ESRCH");
+      });
 
       const result = await safeTerminate(1234);
 
@@ -165,9 +161,7 @@ describe("process-manager", () => {
       const startedAt = new Date().toISOString();
 
       // findOrphanedProcesses
-      vi.mocked(queryAll).mockResolvedValue([
-        { id: "job-1", process_pid: 1234, process_started_at: startedAt },
-      ]);
+      vi.mocked(queryAll).mockResolvedValue([{ id: "job-1", process_pid: 1234, process_started_at: startedAt }]);
 
       // unregisterProcess
       vi.mocked(execute).mockResolvedValue(undefined);
@@ -199,9 +193,7 @@ describe("process-manager", () => {
 
   describe("clearStalePidReferences", () => {
     it("should clear PIDs for processes that no longer exist", async () => {
-      vi.mocked(queryAll).mockResolvedValue([
-        { id: "job-1", process_pid: 99999 },
-      ]);
+      vi.mocked(queryAll).mockResolvedValue([{ id: "job-1", process_pid: 99999 }]);
 
       vi.mocked(execute).mockResolvedValue(undefined);
 
@@ -219,9 +211,7 @@ describe("process-manager", () => {
     });
 
     it("should not clear PIDs for processes that still exist", async () => {
-      vi.mocked(queryAll).mockResolvedValue([
-        { id: "job-1", process_pid: 1234 },
-      ]);
+      vi.mocked(queryAll).mockResolvedValue([{ id: "job-1", process_pid: 1234 }]);
 
       // Process exists
       const killSpy = vi.spyOn(process, "kill").mockImplementation(() => true);

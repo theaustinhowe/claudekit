@@ -53,11 +53,7 @@ export interface ValidationResult {
 
 async function getSetting<T>(key: string): Promise<T | null> {
   const conn = getConn();
-  const row = await queryOne<DbSetting>(
-    conn,
-    "SELECT * FROM settings WHERE key = ?",
-    [key],
-  );
+  const row = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", [key]);
   return row ? parseJsonField<T>(row.value, null as T) : null;
 }
 
@@ -169,10 +165,8 @@ export async function getClaudeSettings(): Promise<ClaudeCodeSettings> {
 
   return {
     enabled: saved.enabled ?? DEFAULT_CLAUDE_SETTINGS.enabled,
-    max_runtime_ms:
-      saved.max_runtime_ms ?? DEFAULT_CLAUDE_SETTINGS.max_runtime_ms,
-    max_parallel_jobs:
-      saved.max_parallel_jobs ?? DEFAULT_CLAUDE_SETTINGS.max_parallel_jobs,
+    max_runtime_ms: saved.max_runtime_ms ?? DEFAULT_CLAUDE_SETTINGS.max_runtime_ms,
+    max_parallel_jobs: saved.max_parallel_jobs ?? DEFAULT_CLAUDE_SETTINGS.max_parallel_jobs,
     test_command: saved.test_command ?? DEFAULT_CLAUDE_SETTINGS.test_command,
   };
 }
@@ -186,10 +180,8 @@ export async function getCodexSettings(): Promise<OpenAICodexSettings> {
 
   return {
     enabled: saved.enabled ?? DEFAULT_CODEX_SETTINGS.enabled,
-    max_runtime_ms:
-      saved.max_runtime_ms ?? DEFAULT_CODEX_SETTINGS.max_runtime_ms,
-    max_parallel_jobs:
-      saved.max_parallel_jobs ?? DEFAULT_CODEX_SETTINGS.max_parallel_jobs,
+    max_runtime_ms: saved.max_runtime_ms ?? DEFAULT_CODEX_SETTINGS.max_runtime_ms,
+    max_parallel_jobs: saved.max_parallel_jobs ?? DEFAULT_CODEX_SETTINGS.max_parallel_jobs,
     model: saved.model ?? DEFAULT_CODEX_SETTINGS.model,
     approval_mode: saved.approval_mode ?? DEFAULT_CODEX_SETTINGS.approval_mode,
     test_command: saved.test_command ?? DEFAULT_CODEX_SETTINGS.test_command,
@@ -246,22 +238,14 @@ export async function validateStartupSettings(): Promise<StartupValidationResult
 
   // Check for repositories with missing critical fields
   for (const repo of activeRepos) {
-    const fullRepo = await queryOne<DbRepository>(
-      conn,
-      "SELECT * FROM repositories WHERE id = ?",
-      [repo.id],
-    );
+    const fullRepo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repo.id]);
 
     if (fullRepo) {
       if (!fullRepo.github_token) {
-        errors.push(
-          `Repository ${repo.owner}/${repo.name}: missing GitHub token`,
-        );
+        errors.push(`Repository ${repo.owner}/${repo.name}: missing GitHub token`);
       }
       if (!fullRepo.workdir_path) {
-        errors.push(
-          `Repository ${repo.owner}/${repo.name}: missing workspace directory`,
-        );
+        errors.push(`Repository ${repo.owner}/${repo.name}: missing workspace directory`);
       }
     }
   }
@@ -275,9 +259,7 @@ export async function validateStartupSettings(): Promise<StartupValidationResult
   }
 
   if (hasLegacySettings && !hasActiveRepositories) {
-    warnings.push(
-      "Using legacy workspace settings. Consider migrating to the repositories system.",
-    );
+    warnings.push("Using legacy workspace settings. Consider migrating to the repositories system.");
   }
 
   // The orchestrator can still start even without repositories (user might add them later)

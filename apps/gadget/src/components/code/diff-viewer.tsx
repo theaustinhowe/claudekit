@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@devkit/ui/components/button";
+import { useState } from "react";
 
 interface DiffViewerProps {
   patch: string;

@@ -1,5 +1,5 @@
-import { getLogFilePath } from "@devkit/logger";
 import { existsSync, readFileSync } from "node:fs";
+import { getLogFilePath } from "@devkit/logger";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ app: string }> }) {
@@ -19,13 +19,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const content = readFileSync(logFile, "utf-8");
   const lines = content.trim().split("\n").filter(Boolean);
 
-  let entries = lines.map((line) => {
-    try {
-      return JSON.parse(line);
-    } catch {
-      return null;
-    }
-  }).filter(Boolean);
+  let entries = lines
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
 
   if (level) {
     const levels = level.split(",");
@@ -70,10 +72,15 @@ function parseSince(since: string): number {
   const unit = match[2];
   const now = Date.now();
   switch (unit) {
-    case "s": return now - value * 1000;
-    case "m": return now - value * 60 * 1000;
-    case "h": return now - value * 60 * 60 * 1000;
-    case "d": return now - value * 24 * 60 * 60 * 1000;
-    default: return 0;
+    case "s":
+      return now - value * 1000;
+    case "m":
+      return now - value * 60 * 1000;
+    case "h":
+      return now - value * 60 * 60 * 1000;
+    case "d":
+      return now - value * 24 * 60 * 60 * 1000;
+    default:
+      return 0;
   }
 }

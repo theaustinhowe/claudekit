@@ -11,18 +11,12 @@ const MIGRATIONS_DIR = path.join(__dirname, "migrations");
  * Execute a single SQL statement on the connection, ignoring "already exists" errors
  * for idempotent DDL statements.
  */
-async function execStatement(
-  connection: DuckDBConnection,
-  statement: string,
-): Promise<void> {
+async function execStatement(connection: DuckDBConnection, statement: string): Promise<void> {
   try {
     await connection.run(`${statement};`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (
-      !message.includes("already exists") &&
-      !message.includes("Catalog Error")
-    ) {
+    if (!message.includes("already exists") && !message.includes("Catalog Error")) {
       throw error;
     }
   }
@@ -32,10 +26,7 @@ async function execStatement(
  * Execute a SQL file by splitting it into individual statements and running each one.
  * Comments (lines starting with --) are stripped before execution.
  */
-async function execSqlFile(
-  connection: DuckDBConnection,
-  filePath: string,
-): Promise<void> {
+async function execSqlFile(connection: DuckDBConnection, filePath: string): Promise<void> {
   const sql = await fs.promises.readFile(filePath, "utf-8");
 
   const sqlWithoutComments = sql
@@ -56,9 +47,7 @@ async function execSqlFile(
 /**
  * Ensure the _migrations tracking table exists.
  */
-async function ensureMigrationsTable(
-  connection: DuckDBConnection,
-): Promise<void> {
+async function ensureMigrationsTable(connection: DuckDBConnection): Promise<void> {
   await connection.run(`
     CREATE TABLE IF NOT EXISTS _migrations (
       id INTEGER PRIMARY KEY,
@@ -71,9 +60,7 @@ async function ensureMigrationsTable(
 /**
  * Get the set of migration names that have already been applied.
  */
-async function getAppliedMigrations(
-  connection: DuckDBConnection,
-): Promise<Set<string>> {
+async function getAppliedMigrations(connection: DuckDBConnection): Promise<Set<string>> {
   const result = await connection.run("SELECT name FROM _migrations;");
   const rows = await result.getRows();
   const names = new Set<string>();
@@ -87,9 +74,7 @@ async function getAppliedMigrations(
 /**
  * Get all migration SQL files from the migrations directory, sorted by filename.
  */
-async function getMigrationFiles(): Promise<
-  { name: string; path: string; id: number }[]
-> {
+async function getMigrationFiles(): Promise<{ name: string; path: string; id: number }[]> {
   const files = await fs.promises.readdir(MIGRATIONS_DIR);
   return files
     .filter((f) => f.endsWith(".sql"))
@@ -110,9 +95,7 @@ async function getMigrationFiles(): Promise<
  *
  * Can be called programmatically or run standalone via `tsx src/db/migrate.ts`.
  */
-export async function runMigrations(
-  connection: DuckDBConnection,
-): Promise<void> {
+export async function runMigrations(connection: DuckDBConnection): Promise<void> {
   await ensureMigrationsTable(connection);
 
   const applied = await getAppliedMigrations(connection);
@@ -128,9 +111,7 @@ export async function runMigrations(
     console.log(`[migrate] Applying migration: ${migration.name}`);
     await execSqlFile(connection, migration.path);
 
-    await connection.run(
-      `INSERT INTO _migrations (id, name) VALUES (${migration.id}, '${migration.name}');`,
-    );
+    await connection.run(`INSERT INTO _migrations (id, name) VALUES (${migration.id}, '${migration.name}');`);
 
     appliedCount++;
     console.log(`[migrate] Applied: ${migration.name}`);
@@ -147,9 +128,7 @@ export async function runMigrations(
  * Standalone entry point: connects to the database and runs all pending migrations.
  */
 async function main(): Promise<void> {
-  const dbPath =
-    process.env.DATABASE_PATH ||
-    path.join(process.cwd(), "data", "gogo.duckdb");
+  const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "gogo.duckdb");
 
   // Ensure the data directory exists
   const dataDir = path.dirname(dbPath);
@@ -169,9 +148,7 @@ async function main(): Promise<void> {
 
 // Run standalone when executed directly
 const isMainModule =
-  process.argv[1] &&
-  (process.argv[1].endsWith("migrate.ts") ||
-    process.argv[1].endsWith("migrate.js"));
+  process.argv[1] && (process.argv[1].endsWith("migrate.ts") || process.argv[1].endsWith("migrate.js"));
 
 if (isMainModule) {
   main().catch((error) => {
