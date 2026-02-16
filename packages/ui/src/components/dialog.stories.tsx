@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Button } from "./button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -118,37 +119,40 @@ export const ScrollableContent: Story = {
       <DialogTrigger asChild>
         <Button variant="outline">Terms of Service</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Terms of Service</DialogTitle>
           <DialogDescription>Please read and accept the terms of service.</DialogDescription>
         </DialogHeader>
-        <div className="overflow-y-auto max-h-[50vh] space-y-4 text-sm text-muted-foreground pr-2">
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
-            dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
-          </p>
-          <p>
-            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident.
-          </p>
-          <p>
-            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem
-            aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-          </p>
-          <p>
-            Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni
-            dolores eos qui ratione voluptatem sequi nesciunt.
-          </p>
-          <p>
-            Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non
-            numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
-          </p>
-          <p>
-            At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti
-            atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
-          </p>
-        </div>
+        <DialogBody>
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
+              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+            </p>
+            <p>
+              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+              Excepteur sint occaecat cupidatat non proident.
+            </p>
+            <p>
+              Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam
+              rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt
+              explicabo.
+            </p>
+            <p>
+              Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni
+              dolores eos qui ratione voluptatem sequi nesciunt.
+            </p>
+            <p>
+              Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non
+              numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
+            </p>
+            <p>
+              At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti
+              atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
+            </p>
+          </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline">Decline</Button>
           <Button>Accept</Button>

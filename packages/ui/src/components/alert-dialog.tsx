@@ -58,7 +58,7 @@ const AlertDialogContent = React.forwardRef<HTMLDivElement, AlertDialogContentPr
           ref={ref}
           style={durationStyle}
           className={cn(
-            "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg data-[open]:duration-[var(--dlg-open-dur,200ms)] data-[closed]:duration-[var(--dlg-close-dur,150ms)] data-[open]:ease-out data-[closed]:ease-in data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[open]:slide-in-from-left-1/2 data-[open]:slide-in-from-top-[48%] sm:rounded-lg",
+            "fixed left-[50%] top-[50%] z-50 flex flex-col w-full max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden translate-x-[-50%] translate-y-[-50%] border bg-background p-6 shadow-lg data-[open]:duration-[var(--dlg-open-dur,200ms)] data-[closed]:duration-[var(--dlg-close-dur,150ms)] data-[open]:ease-out data-[closed]:ease-in data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[open]:slide-in-from-left-1/2 data-[open]:slide-in-from-top-[48%] sm:rounded-lg",
             className,
           )}
           {...props}
@@ -70,15 +70,23 @@ const AlertDialogContent = React.forwardRef<HTMLDivElement, AlertDialogContentPr
 AlertDialogContent.displayName = "AlertDialogContent";
 
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
+  <div
+    className={cn("flex flex-col space-y-2 text-center sm:text-left shrink-0 -mx-6 -mt-6 px-6 pt-4 pb-3", className)}
+    {...props}
+  />
 );
 AlertDialogHeader.displayName = "AlertDialogHeader";
+
+const AlertDialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex-1 min-h-0 overflow-y-auto -mx-6 px-6", className)} {...props} />
+);
+AlertDialogBody.displayName = "AlertDialogBody";
 
 const AlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      "sticky bottom-0 -mx-6 -mb-6 px-6 pb-6 pt-4 bg-background border-t border-border",
+      "shrink-0 -mx-6 -mb-6 px-6 pt-3 pb-3 border-t border-border",
       className,
     )}
     {...props}
@@ -123,6 +131,7 @@ export {
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
+  AlertDialogBody,
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
