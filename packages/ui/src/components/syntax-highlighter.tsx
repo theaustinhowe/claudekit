@@ -77,7 +77,7 @@ export function SyntaxHighlighter({ code, language, showLineNumbers = true }: Sy
         const hl = h as typeof cachedHighlighter;
         if (!hl) return;
 
-        const theme = resolvedTheme === "dark" ? "github-dark-dimmed" : "github-light";
+        const theme = (resolvedTheme ?? "light") === "dark" ? "github-dark-dimmed" : "github-light";
         try {
           const result = hl.codeToHtml(code, { lang: language, theme });
           if (!cancelled) setHtml(result);

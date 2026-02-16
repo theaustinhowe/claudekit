@@ -19,6 +19,7 @@ const meta: Meta<typeof FileViewer> = {
   component: FileViewer,
   tags: ["autodocs"],
   decorators: [FileViewerDecorator],
+  parameters: { layout: "padded" },
 };
 export default meta;
 

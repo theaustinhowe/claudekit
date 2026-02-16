@@ -29,7 +29,7 @@ Components use **Base UI** (`@base-ui/react`) primitives, lucide-react icons, an
 Base UI uses simplified data attributes compared to Radix:
 - `data-[open]` / `data-[closed]` (not `data-[state=open]`)
 - `data-[checked]` / `data-[unchecked]` (not `data-[state=checked]`)
-- `data-[selected]` (not `data-[state=active]`)
+- `data-[active]` (not `data-[state=active]`) — used by Tabs for the selected tab
 - `data-[highlighted]` (not `focus:` for menu items)
 - `data-[hidden]` (for hidden tab panels)
 

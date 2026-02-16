@@ -22,7 +22,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(({ className, onVal
     onValueChange={onValueChange ? (value: readonly number[]) => onValueChange([...value]) : undefined}
     {...props}
   >
-    <SliderPrimitive.Control>
+    <SliderPrimitive.Control className="relative flex w-full items-center">
       <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
         <SliderPrimitive.Indicator className="absolute h-full bg-primary" />
       </SliderPrimitive.Track>
