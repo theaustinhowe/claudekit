@@ -13,7 +13,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { SuggestionCard } from "@/components/research/suggestion-card";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +52,7 @@ const SEVERITY_ORDER: Record<string, number> = {
   low: 3,
 };
 
-export default function ResearchPage() {
+function ResearchPageContent() {
   const { selectedRepoId, repositories } = useRepositoryContext();
   const { data: sessionsData } = useResearchSessions();
   const { mutate: startResearchMutation, isPending: isStarting } = useStartResearch();
@@ -472,5 +472,13 @@ export default function ResearchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResearchPage() {
+  return (
+    <Suspense>
+      <ResearchPageContent />
+    </Suspense>
   );
 }
