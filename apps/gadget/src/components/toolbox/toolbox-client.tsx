@@ -233,7 +233,7 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex h-full flex-col">
+      <div className="flex flex-col">
         <PageBanner
           title="Toolbox"
           actions={
@@ -253,7 +253,7 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
             </>
           }
         />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1">
           <div className="p-4 sm:p-6 max-w-4xl mx-auto">
             {/* Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
@@ -467,13 +467,13 @@ function ToolRow({
 
   if (!result && checking) {
     return (
-      <div className="flex items-center gap-4 px-4 sm:px-6 py-3">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3">
+        <Skeleton className="w-4 h-4 rounded" />
         <Skeleton className="w-5 h-5 rounded" />
-        <div className="flex-1 min-w-0">
-          <Skeleton className="h-4 w-24" />
-        </div>
+        <Skeleton className="h-4 w-24" />
+        <div className="flex-1" />
         <Skeleton className="h-5 w-16 rounded-full" />
-        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-20 hidden sm:block" />
       </div>
     );
   }
@@ -485,10 +485,10 @@ function ToolRow({
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <div className="flex items-center flex-wrap gap-4 px-4 sm:px-6 py-3">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3">
         {/* Expand chevron */}
         <CollapsibleTrigger asChild>
-          <button type="button" className="shrink-0 -mr-2 p-0.5 rounded hover:bg-muted transition-colors">
+          <button type="button" className="shrink-0 p-0.5 rounded hover:bg-muted transition-colors">
             <ChevronDown
               className={cn("w-4 h-4 text-muted-foreground transition-transform", expanded && "rotate-180")}
             />
@@ -521,7 +521,48 @@ function ToolRow({
           </div>
         </CollapsibleTrigger>
 
-        {/* Badge */}
+        {/* Action (upgrade/install) */}
+        <div className="shrink-0">
+          {result && isInstalled && result.updateAvailable && updateCommand && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRunCommand(tool, "update");
+              }}
+            >
+              <ArrowUpCircle className="w-3.5 h-3.5 mr-1" />
+              Upgrade
+            </Button>
+          )}
+          {result &&
+            !isInstalled &&
+            (tool.installCommand ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRunCommand(tool, "install");
+                }}
+              >
+                <Terminal className="w-3.5 h-3.5 mr-1" />
+                Install
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                <a href={tool.installUrl} target="_blank" rel="noopener noreferrer">
+                  Install
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </a>
+              </Button>
+            ))}
+        </div>
+
+        {/* Status badge */}
         <div className="shrink-0">
           {!result ? (
             <Badge variant="outline" className="text-muted-foreground">
@@ -578,87 +619,15 @@ function ToolRow({
         </div>
 
         {/* Version */}
-        <div className="shrink-0 w-32 text-right hidden sm:block">
+        <div className="shrink-0 w-28 text-right hidden sm:block">
           {result?.currentVersion ? (
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="text-sm font-mono text-muted-foreground">{result.currentVersion}</span>
-              {result.updateAvailable && result.latestVersion && (
-                <span className="text-xs font-mono text-yellow-600 dark:text-yellow-400">{result.latestVersion}</span>
-              )}
-            </div>
+            <span className="text-sm font-mono text-muted-foreground">{result.currentVersion}</span>
           ) : null}
         </div>
-
-        {/* Action */}
-        <div className="shrink-0">
-          {result && isInstalled && result.updateAvailable && updateCommand && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRunCommand(tool, "update");
-              }}
-            >
-              <ArrowUpCircle className="w-3.5 h-3.5 mr-1" />
-              Update
-            </Button>
-          )}
-          {result &&
-            !isInstalled &&
-            (tool.installCommand ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRunCommand(tool, "install");
-                }}
-              >
-                <Terminal className="w-3.5 h-3.5 mr-1" />
-                Install
-              </Button>
-            ) : (
-              <Button variant="ghost" size="sm" asChild>
-                <a href={tool.installUrl} target="_blank" rel="noopener noreferrer">
-                  Install
-                  <ExternalLink className="w-3 h-3 ml-1" />
-                </a>
-              </Button>
-            ))}
-        </div>
-
-        {/* Metadata badges (e.g. Claude Code details) */}
-        {result?.metadata && Object.keys(result.metadata).length > 0 && (
-          <div className="basis-full flex flex-wrap items-center gap-2 pl-11 -mt-1 pb-1">
-            {result.metadata.installMethod && (
-              <Badge variant="outline" className="text-[10px]">
-                {result.metadata.installMethod}
-              </Badge>
-            )}
-            {result.metadata.authMethod && (
-              <Badge variant="outline" className="text-[10px]">
-                {result.metadata.authMethod === "oauth"
-                  ? "OAuth"
-                  : result.metadata.authMethod === "api-key"
-                    ? "API Key"
-                    : result.metadata.authMethod}
-              </Badge>
-            )}
-            {result.metadata.planType && (
-              <Badge variant="outline" className="text-[10px]">
-                {result.metadata.planType}
-              </Badge>
-            )}
-            {result.metadata.binaryPath && (
-              <span className="text-[10px] font-mono text-muted-foreground">{result.metadata.binaryPath}</span>
-            )}
-          </div>
-        )}
       </div>
 
       <CollapsibleContent>
-        <div className="px-4 sm:px-6 pb-3 pl-14 sm:pl-16">
+        <div className="px-4 sm:px-6 pb-3 pl-14 sm:pl-16 space-y-2">
           {expandCommand ? (
             <div className="flex items-center gap-2">
               <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-md font-mono text-muted-foreground">
@@ -677,6 +646,32 @@ function ToolRow({
             </a>
           ) : (
             <p className="text-xs text-muted-foreground">No install command available</p>
+          )}
+          {result?.metadata && Object.keys(result.metadata).length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {result.metadata.installMethod && (
+                <Badge variant="outline" className="text-[10px]">
+                  {result.metadata.installMethod}
+                </Badge>
+              )}
+              {result.metadata.authMethod && (
+                <Badge variant="outline" className="text-[10px]">
+                  {result.metadata.authMethod === "oauth"
+                    ? "OAuth"
+                    : result.metadata.authMethod === "api-key"
+                      ? "API Key"
+                      : result.metadata.authMethod}
+                </Badge>
+              )}
+              {result.metadata.planType && (
+                <Badge variant="outline" className="text-[10px]">
+                  {result.metadata.planType}
+                </Badge>
+              )}
+              {result.metadata.binaryPath && (
+                <span className="text-[10px] font-mono text-muted-foreground">{result.metadata.binaryPath}</span>
+              )}
+            </div>
           )}
         </div>
       </CollapsibleContent>

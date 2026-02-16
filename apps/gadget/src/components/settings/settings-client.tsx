@@ -122,7 +122,7 @@ export function SettingsClient({
   }, []);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       <PageTabs
         tabs={[
           { id: "general", label: "General" },
@@ -131,7 +131,7 @@ export function SettingsClient({
         value={activeTab}
         onValueChange={setActiveTab}
       />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="p-4 sm:p-6 max-w-3xl mx-auto">
           {activeTab === "general" && (
             <div className="space-y-6">

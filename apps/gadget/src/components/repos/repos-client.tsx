@@ -179,7 +179,7 @@ export function ReposClient({ repos }: ReposClientProps) {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       <PageBanner
         title="Repositories"
         count={repos.length}
@@ -190,7 +190,7 @@ export function ReposClient({ repos }: ReposClientProps) {
           </Button>
         }
       />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           {/* Search and filters */}
           <div className="flex items-center gap-2 sm:gap-4 mb-6">

@@ -245,9 +245,9 @@ export function PatternsLibraryClient({
 
   if (totalCount === 0 && sources.length === 0) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex flex-col">
         <PageBanner title="AI Integrations" />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1">
           <div className="p-4 sm:p-6 max-w-7xl mx-auto">
             <Card>
               <CardContent className="py-16 text-center">
@@ -283,7 +283,7 @@ export function PatternsLibraryClient({
   });
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       <PageTabs
         tabs={conceptTabs}
         value={activeType}
@@ -309,7 +309,7 @@ export function PatternsLibraryClient({
           </>
         }
       />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           {/* Sources panel (collapsible) */}
           {showSources && (

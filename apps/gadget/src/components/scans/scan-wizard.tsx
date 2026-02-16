@@ -571,7 +571,7 @@ export function ScanWizard({ policies, repos: _repos, savedScanRoots }: ScanWiza
   };
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1">
       <div className="p-4 sm:p-6 max-w-4xl mx-auto">
         {step !== "running" && step !== "complete" && (
           <nav aria-label="Scan progress" className="flex justify-center items-center gap-2 mb-8">

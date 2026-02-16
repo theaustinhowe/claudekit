@@ -206,7 +206,7 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       <PageTabs
         tabs={[
           { id: "templates", label: "Templates", count: templates.length },
@@ -216,7 +216,7 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
         value={activeTab}
         onValueChange={setActiveTab}
       />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           {/* Templates Tab */}
           {activeTab === "templates" && (
