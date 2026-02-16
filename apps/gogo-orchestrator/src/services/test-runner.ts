@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
+import { execute, parseJsonField, queryOne } from "@devkit/duckdb";
 import type { LogStream } from "@devkit/gogo-shared";
-import { execute, parseJsonField, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbSetting } from "../db/schema.js";
 import { sendLogToSubscribers } from "../ws/handler.js";

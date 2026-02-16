@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { queryOne } from "@/lib/db/helpers";
+import { getDb, queryOne } from "@/lib/db";
 import { applyFixes } from "@/lib/services/apply-engine";
 import type { Repo } from "@/lib/types";
 

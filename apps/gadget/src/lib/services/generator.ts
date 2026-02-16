@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getDb } from "@/lib/db";
-import { execute, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, queryOne } from "@/lib/db";
 import type { ProjectTemplate } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 

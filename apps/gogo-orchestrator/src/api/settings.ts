@@ -1,5 +1,5 @@
+import { execute, queryAll } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
-import { execute, queryAll } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import { type DbSetting, mapSetting } from "../db/schema.js";
 

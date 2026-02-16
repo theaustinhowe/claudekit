@@ -2,8 +2,7 @@ import fs from "node:fs/promises";
 import nodePath from "node:path";
 import { type NextRequest, NextResponse } from "next/server";
 import { IMAGE_MIME_TYPES } from "@/lib/constants";
-import { getDb } from "@/lib/db";
-import { queryOne } from "@/lib/db/helpers";
+import { getDb, queryOne } from "@/lib/db";
 import { expandTilde } from "@/lib/utils";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ repoId: string }> }) {

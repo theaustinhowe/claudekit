@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn(() => ({})),
-}));
-vi.mock("@/lib/db/helpers", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -12,7 +10,7 @@ vi.mock("@/lib/utils", () => ({
   generateId: vi.fn(() => "mock-id"),
 }));
 
-import { execute, queryAll } from "@/lib/db/helpers";
+import { execute, queryAll } from "@/lib/db";
 import { exportJSON, exportMarkdown, exportPRDescription, saveReport } from "./reporter";
 
 const mockQueryAll = vi.mocked(queryAll);

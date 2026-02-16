@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getConn: vi.fn(() => ({})),
 }));
 
-vi.mock("../db/helpers.js", () => ({
+vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock("../db/helpers.js", () => ({
   checkpoint: vi.fn(),
 }));
 
-import { execute, queryAll } from "../db/helpers.js";
+import { execute, queryAll } from "@devkit/duckdb";
 import { runDataPruning } from "./data-pruning.js";
 
 describe("data-pruning", () => {

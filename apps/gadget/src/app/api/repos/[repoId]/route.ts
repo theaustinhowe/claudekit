@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { deleteRepos } from "@/lib/actions/repos";
-import { getDb } from "@/lib/db";
-import { queryOne } from "@/lib/db/helpers";
+import { getDb, queryOne } from "@/lib/db";
 import { expandTilde, removeDirectory } from "@/lib/utils";
 
 interface RouteContext {

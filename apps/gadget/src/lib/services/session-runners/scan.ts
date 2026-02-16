@@ -1,5 +1,4 @@
-import { getDb } from "@/lib/db";
-import { checkpoint, execute, queryAll, queryOne } from "@/lib/db/helpers";
+import { checkpoint, execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { runAudit } from "@/lib/services/auditors";
 import { planFixes, storePlannedFixes } from "@/lib/services/fix-planner";
 import { matchPolicy } from "@/lib/services/policy-matcher";

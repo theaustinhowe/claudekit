@@ -1,3 +1,4 @@
+import { checkpoint, execute } from "@devkit/duckdb";
 import type { DuckDBConnection } from "@duckdb/node-api";
 import {
   CLAUDE_CONFIG_SOURCE_ID,
@@ -10,7 +11,6 @@ import {
 import { discoverClaudeConfigConcepts } from "@/lib/services/claude-config-scanner";
 import { getCuratedMcpServers, mcpListEntriesToConcepts } from "@/lib/services/mcp-list-scanner";
 import { generateId, nowTimestamp } from "@/lib/utils";
-import { checkpoint, execute } from "./helpers";
 
 export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
   await execute(conn, "BEGIN TRANSACTION");

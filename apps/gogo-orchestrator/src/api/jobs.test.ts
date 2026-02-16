@@ -5,7 +5,7 @@ vi.mock("../db/index.js", () => ({
   getConn: vi.fn(() => ({})),
 }));
 
-vi.mock("../db/helpers.js", () => ({
+vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -67,7 +67,7 @@ vi.mock("../services/state-machine.js", () => ({
   applyActionAtomic: vi.fn(),
 }));
 
-import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "../db/helpers.js";
+import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
 import { mapJob } from "../db/schema.js";
 import { startAgent } from "../services/agent-executor.js";
 import { startJobRun } from "../services/agent-runner.js";

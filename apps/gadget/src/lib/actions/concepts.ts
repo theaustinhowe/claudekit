@@ -3,8 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { LIBRARY_REPO_ID } from "@/lib/constants";
-import { getDb } from "@/lib/db";
-import { execute, parseJsonField, queryAll, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, parseJsonField, queryAll, queryOne } from "@/lib/db";
 import type { Concept, ConceptLinkWithConcept, ConceptWithRepo } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 

@@ -1,4 +1,4 @@
-import { execute, queryAll } from "../db/helpers.js";
+import { execute, queryAll } from "@devkit/duckdb";
 import { getConn } from "../db/index.js";
 
 const DEFAULT_LOG_RETENTION_DAYS = 14;

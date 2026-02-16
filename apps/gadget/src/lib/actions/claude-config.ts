@@ -1,8 +1,7 @@
 "use server";
 
 import { getSetting, setSetting } from "@/lib/actions/settings";
-import { getDb } from "@/lib/db";
-import { queryOne } from "@/lib/db/helpers";
+import { getDb, queryOne } from "@/lib/db";
 import { readClaudeMd, readSettingsJson, writeClaudeMd, writeSettingsJson } from "@/lib/services/claude-config";
 import { expandTilde } from "@/lib/utils";
 

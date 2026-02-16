@@ -3,6 +3,7 @@
  * Migration SQL in ./migrations/ is the source of truth for table definitions.
  */
 
+import { parseJsonField } from "@devkit/duckdb";
 import type {
   Issue,
   IssueComment,
@@ -14,7 +15,6 @@ import type {
   ResearchSuggestion,
   SettingsEntry,
 } from "@devkit/gogo-shared";
-import { parseJsonField } from "./helpers.js";
 
 // ---------------------------------------------------------------------------
 // Raw DB row types (snake_case, matching SQL column names)

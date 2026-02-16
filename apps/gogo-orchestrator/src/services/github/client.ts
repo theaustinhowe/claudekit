@@ -4,8 +4,8 @@
  * Handles Octokit instance creation, caching, and rate limit tracking.
  */
 
+import { queryOne } from "@devkit/duckdb";
 import { Octokit } from "octokit";
-import { queryOne } from "../../db/helpers.js";
 import { getConn } from "../../db/index.js";
 import type { DbRepository } from "../../db/schema.js";
 import { GitHubCredentialsError, RepositoryNotFoundError } from "./errors.js";

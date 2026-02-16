@@ -1,7 +1,6 @@
 "use server";
 
-import { getDb } from "@/lib/db";
-import { buildUpdate, execute, parseJsonField, queryAll, queryOne } from "@/lib/db/helpers";
+import { buildUpdate, execute, getDb, parseJsonField, queryAll, queryOne } from "@/lib/db";
 import type { ManualFinding } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 

@@ -1,5 +1,5 @@
+import { parseJsonField, queryOne } from "@devkit/duckdb";
 import { setLastPollTime } from "../api/health.js";
-import { parseJsonField, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbSetting } from "../db/schema.js";
 import { createServiceLogger } from "../utils/logger.js";

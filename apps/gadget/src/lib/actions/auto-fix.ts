@@ -1,8 +1,7 @@
 "use server";
 
 import { getSetting, setSetting } from "@/lib/actions/settings";
-import { getDb } from "@/lib/db";
-import { execute, queryAll } from "@/lib/db/helpers";
+import { execute, getDb, queryAll } from "@/lib/db";
 import type { AutoFixRun } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 

@@ -3,8 +3,7 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { getDb } from "@/lib/db";
-import { execute, queryAll, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import type { AttentionRepo, RepoWithCounts } from "@/lib/types";
 import { expandTilde } from "@/lib/utils";
 

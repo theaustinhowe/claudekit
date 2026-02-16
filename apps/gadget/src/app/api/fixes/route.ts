@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { queryAll } from "@/lib/db/helpers";
+import { getDb, queryAll } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

@@ -5,7 +5,7 @@ vi.mock("./index.js", () => ({
   getConn: vi.fn(() => ({})),
 }));
 
-vi.mock("./helpers.js", () => ({
+vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock("./helpers.js", () => ({
   parseJsonField: vi.fn((v: unknown, fallback: unknown) => (v === null || v === undefined ? fallback : v)),
 }));
 
-import { queryOne } from "./helpers.js";
+import { queryOne } from "@devkit/duckdb";
 import { type DbRepository, mapRepository } from "./schema.js";
 
 // Define expected DB row fields (snake_case) for repositories

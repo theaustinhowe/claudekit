@@ -1,7 +1,6 @@
 "use server";
 
-import { getDb } from "@/lib/db";
-import { execute, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, queryOne } from "@/lib/db";
 
 export async function restoreApplyRun(runId: string): Promise<{ success: boolean; error?: string }> {
   const db = await getDb();

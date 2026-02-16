@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { execute, queryOne, withTransaction } from "@devkit/duckdb";
 import type { JobStatus, LogStream } from "@devkit/gogo-shared";
-import { execute, queryOne, withTransaction } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState } from "../utils/job-logging.js";

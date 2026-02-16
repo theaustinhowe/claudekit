@@ -2,8 +2,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getDb } from "@/lib/db";
-import { queryOne } from "@/lib/db/helpers";
+import { getDb, queryOne } from "@/lib/db";
 
 const ENV_PATH = join(process.cwd(), ".env.local");
 

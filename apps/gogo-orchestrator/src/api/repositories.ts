@@ -1,6 +1,6 @@
+import { buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { buildUpdate, execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import { type DbJob, type DbRepository, mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getOctokitForRepo } from "../services/github/index.js";

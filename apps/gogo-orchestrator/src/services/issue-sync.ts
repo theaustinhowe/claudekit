@@ -5,7 +5,7 @@
  * Uses incremental sync via GitHub's `since` parameter to minimize API calls.
  */
 
-import { execute, queryAll, queryOne } from "../db/helpers.js";
+import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import { getConn } from "../db/index.js";
 import type { DbRepository } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";

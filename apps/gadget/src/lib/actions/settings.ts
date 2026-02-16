@@ -1,8 +1,7 @@
 "use server";
 
 import { DEFAULT_CLEANUP_FILES } from "@/lib/constants";
-import { getDb } from "@/lib/db";
-import { execute, queryAll, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import type { DashboardStats, OnboardingState } from "@/lib/types";
 import { nowTimestamp } from "@/lib/utils";
 

@@ -2,8 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getDb } from "@/lib/db";
-import { execute, queryAll, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import type { FixAction } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 

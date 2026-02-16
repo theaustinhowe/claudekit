@@ -7,7 +7,7 @@
 
 import { rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { execute, queryAll, queryOne } from "../db/helpers.js";
+import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import { getConn } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";

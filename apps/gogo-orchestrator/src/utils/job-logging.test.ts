@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getConn: vi.fn(() => ({})),
 }));
 
-vi.mock("../db/helpers.js", () => ({
+vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock("../ws/handler.js", () => ({
   sendLogToSubscribers: vi.fn(),
 }));
 
-import { execute, queryOne } from "../db/helpers.js";
+import { execute, queryOne } from "@devkit/duckdb";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";
 import { emitLog, getRingBuffer, type LogState, shutdownLogBuffers, updateJobStatus } from "./job-logging.js";
 

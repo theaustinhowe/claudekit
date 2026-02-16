@@ -1,6 +1,5 @@
 import { getEnabledRulesForPolicy } from "@/lib/actions/custom-rules";
-import { getDb } from "@/lib/db";
-import { execute } from "@/lib/db/helpers";
+import { execute, getDb } from "@/lib/db";
 import { discoverConcepts, storeConcepts } from "@/lib/services/concept-scanner";
 import type { Policy } from "@/lib/types";
 import { generateId } from "@/lib/utils";

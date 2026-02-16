@@ -1,7 +1,6 @@
 "use server";
 
-import { getDb } from "@/lib/db";
-import { execute, parseJsonField, queryAll, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, parseJsonField, queryAll, queryOne } from "@/lib/db";
 import type { PolicyTemplate } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 

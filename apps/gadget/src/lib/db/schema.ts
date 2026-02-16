@@ -1,5 +1,5 @@
+import { execute, queryOne } from "@devkit/duckdb";
 import type { DuckDBConnection } from "@duckdb/node-api";
-import { execute, queryOne } from "./helpers";
 
 export async function initSchema(conn: DuckDBConnection): Promise<void> {
   await execute(

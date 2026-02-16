@@ -5,7 +5,7 @@ vi.mock("../db/index.js", () => ({
   getConn: vi.fn(() => ({})),
 }));
 
-vi.mock("../db/helpers.js", () => ({
+vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -65,7 +65,7 @@ vi.mock("../utils/job-logging.js", () => ({
   emitLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { execute, queryAll, queryOne } from "../db/helpers.js";
+import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch } from "./git.js";
 import { createIssueCommentForRepo, createPullRequestForRepo, findExistingPrForRepo } from "./github/index.js";
 import { pollReadyToPrJobs, processReadyToPr } from "./pr-flow.js";

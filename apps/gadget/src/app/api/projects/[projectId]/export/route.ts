@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getGeneratorProject, getMockData, getUiSpec, updateGeneratorProject } from "@/lib/actions/generator-projects";
-import { getDb } from "@/lib/db";
-import { execute } from "@/lib/db/helpers";
+import { execute, getDb } from "@/lib/db";
 import { generateExportFiles, writeExportToDisk } from "@/lib/services/spec-exporter";
 import { generateId, nowTimestamp } from "@/lib/utils";
 

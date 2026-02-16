@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { deleteRepos } from "@/lib/actions/repos";
-import { getDb } from "@/lib/db";
-import { execute, queryAll } from "@/lib/db/helpers";
+import { execute, getDb, queryAll } from "@/lib/db";
 import { generateId } from "@/lib/utils";
 
 export async function GET() {

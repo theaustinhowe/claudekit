@@ -1,5 +1,5 @@
+import { execute, queryOne } from "@devkit/duckdb";
 import type { JobStatus } from "@devkit/gogo-shared";
-import { execute, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { emitLog, type LogState, updateJobStatus } from "../utils/job-logging.js";

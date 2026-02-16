@@ -1,7 +1,6 @@
 "use server";
 
-import { getDb } from "@/lib/db";
-import { execute, queryAll, queryOne } from "@/lib/db/helpers";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import type { ProjectScreenshot } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 

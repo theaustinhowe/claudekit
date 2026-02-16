@@ -1,7 +1,6 @@
 "use server";
 
-import { getDb } from "@/lib/db";
-import { buildUpdate, execute, queryAll, queryOne } from "@/lib/db/helpers";
+import { buildUpdate, execute, getDb, queryAll, queryOne } from "@/lib/db";
 import type { Policy } from "@/lib/types";
 import { generateId, parsePolicy } from "@/lib/utils";
 

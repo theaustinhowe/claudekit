@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getConn: vi.fn(() => ({})),
 }));
 
-vi.mock("../db/helpers.js", () => ({
+vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock("../db/helpers.js", () => ({
   }),
 }));
 
-import { queryOne } from "../db/helpers.js";
+import { queryOne } from "@devkit/duckdb";
 
 describe("auth middleware", () => {
   let authHook: typeof import("./auth.js").authHook;

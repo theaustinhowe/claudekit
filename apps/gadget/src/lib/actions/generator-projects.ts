@@ -1,7 +1,6 @@
 "use server";
 
-import { getDb } from "@/lib/db";
-import { buildUpdate, execute, parseJsonField, queryAll, queryOne } from "@/lib/db/helpers";
+import { buildUpdate, execute, getDb, parseJsonField, queryAll, queryOne } from "@/lib/db";
 import { buildImplementationPrompt } from "@/lib/services/scaffold-prompt";
 import { deleteScreenshotFiles } from "@/lib/services/screenshot-service";
 import type { DesignMessage, GeneratorProject, MockEntity, SpecDiff, UiSpec } from "@/lib/types";

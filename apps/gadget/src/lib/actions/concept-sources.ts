@@ -2,8 +2,7 @@
 
 import { getEncryptionKey } from "@/lib/actions/settings";
 import { CLAUDE_CONFIG_SOURCE_ID, CURATED_SOURCE_ID, LIBRARY_REPO_ID } from "@/lib/constants";
-import { getDb } from "@/lib/db";
-import { execute, queryAll, queryOne, withTransaction } from "@/lib/db/helpers";
+import { execute, getDb, queryAll, queryOne, withTransaction } from "@/lib/db";
 import type { DiscoveredConcept } from "@/lib/services/concept-scanner";
 import { decrypt } from "@/lib/services/encryption";
 import { scanGitHubRepoForConcepts } from "@/lib/services/github-concept-scanner";

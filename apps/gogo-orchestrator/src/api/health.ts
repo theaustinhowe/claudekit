@@ -1,5 +1,5 @@
+import { queryAll } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
-import { queryAll } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import { agentRegistry } from "../services/agents/index.js";
 import { getAllRateLimitInfo } from "../services/github/index.js";

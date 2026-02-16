@@ -1,4 +1,4 @@
-import { execute, queryAll } from "../db/helpers.js";
+import { execute, queryAll } from "@devkit/duckdb";
 import { closeDatabase, getConn } from "../db/index.js";
 import { shutdownLogBuffers } from "../utils/job-logging.js";
 import { createServiceLogger } from "../utils/logger.js";

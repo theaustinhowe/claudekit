@@ -1,7 +1,7 @@
 "use client";
 
-import type { ClaudeRateLimits, ClaudeUsageStats } from "@devkit/claude-usage";
 import { ClaudeUsageDialog, HeaderUsageWidget } from "@devkit/claude-usage/components/usage-shared";
+import { useClaudeUsageRefresh } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
@@ -12,7 +12,7 @@ import { Heart, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useWebSocketContext } from "@/contexts/websocket-context";
 import { useHealth } from "@/hooks/use-jobs";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
@@ -120,10 +120,10 @@ function ConnectionBadge() {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [claudeUsage, setClaudeUsage] = useState<ClaudeUsageStats | null>(null);
-  const [rateLimits, setRateLimits] = useState<ClaudeRateLimits | null>(null);
-  const [usageDialogOpen, setUsageDialogOpen] = useState(false);
-  const [, startTransition] = useTransition();
+  const { claudeUsage, rateLimits, usageDialogOpen, setUsageDialogOpen } = useClaudeUsageRefresh({
+    getUsageStats: getClaudeUsageStatsAction,
+    getRateLimits: getClaudeRateLimitsAction,
+  });
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -131,39 +131,6 @@ export function AppShell({ children }: AppShellProps) {
       setMobileMenuOpen(false);
     }
   }, [pathname]);
-
-  const refreshUsage = useCallback(() => {
-    startTransition(async () => {
-      const [stats, limits] = await Promise.all([getClaudeUsageStatsAction(), getClaudeRateLimitsAction()]);
-      setClaudeUsage(stats);
-      setRateLimits(limits);
-    });
-  }, []);
-
-  // Initial fetch
-  useEffect(() => {
-    refreshUsage();
-  }, [refreshUsage]);
-
-  // Auto-refresh when the soonest rate-limit window resets
-  useEffect(() => {
-    if (!rateLimits) return;
-
-    const resetTimes: number[] = [];
-    if (rateLimits.fiveHour.resetsAt) resetTimes.push(new Date(rateLimits.fiveHour.resetsAt).getTime());
-    if (rateLimits.sevenDay.resetsAt) resetTimes.push(new Date(rateLimits.sevenDay.resetsAt).getTime());
-    for (const w of Object.values(rateLimits.modelLimits)) {
-      if (w.resetsAt) resetTimes.push(new Date(w.resetsAt).getTime());
-    }
-
-    const now = Date.now();
-    const futureResets = resetTimes.filter((t) => t > now);
-    if (futureResets.length === 0) return;
-
-    const delayMs = Math.min(...futureResets) - now + 2000; // 2s after reset
-    const id = setTimeout(refreshUsage, delayMs);
-    return () => clearTimeout(id);
-  }, [rateLimits, refreshUsage]);
 
   // Check if this page should use the app shell
   const shouldUseShell = !excludedPaths.some((path) => pathname.startsWith(path));

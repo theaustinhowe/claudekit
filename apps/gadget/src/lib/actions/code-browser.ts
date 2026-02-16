@@ -5,8 +5,7 @@ import fs from "node:fs/promises";
 import nodePath from "node:path";
 import { promisify } from "node:util";
 import { getEncryptionKey } from "@/lib/actions/settings";
-import { getDb } from "@/lib/db";
-import { queryOne } from "@/lib/db/helpers";
+import { getDb, queryOne } from "@/lib/db";
 import {
   getCommitDetail as ghGetCommitDetail,
   getFileContent as ghGetFileContent,

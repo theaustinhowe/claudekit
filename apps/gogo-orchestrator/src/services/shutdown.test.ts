@@ -27,7 +27,7 @@ describe("shutdown", () => {
       getConn: vi.fn(() => ({})),
       closeDatabase: mockCloseDatabase,
     }));
-    vi.doMock("../db/helpers.js", () => ({
+    vi.doMock("@devkit/duckdb", () => ({
       queryAll: mockQueryAll,
       queryOne: vi.fn(),
       execute: mockExecute,

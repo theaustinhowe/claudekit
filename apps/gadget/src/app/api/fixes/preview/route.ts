@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { queryOne } from "@/lib/db/helpers";
+import { getDb, queryOne } from "@/lib/db";
 import type { FixAction } from "@/lib/types";
 
 export async function GET(request: NextRequest) {

@@ -1,6 +1,6 @@
+import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import type { DbJob, DbResearchSession, DbResearchSuggestion, DbSetting } from "../db/schema.js";
 import { mapJob, mapResearchSession, mapResearchSuggestion, mapSetting } from "../db/schema.js";

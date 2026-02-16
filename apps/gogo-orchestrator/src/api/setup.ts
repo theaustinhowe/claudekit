@@ -1,9 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { Octokit } from "octokit";
 import { z } from "zod";
-import { queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import { type DbRepository, mapRepositoryFull } from "../db/schema.js";
 

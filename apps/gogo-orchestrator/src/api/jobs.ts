@@ -1,6 +1,6 @@
+import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import {
   type DbJob,

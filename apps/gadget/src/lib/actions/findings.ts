@@ -1,7 +1,6 @@
 "use server";
 
-import { getDb } from "@/lib/db";
-import { execute, parseJsonField, queryAll, queryOne, withTransaction } from "@/lib/db/helpers";
+import { execute, getDb, parseJsonField, queryAll, queryOne, withTransaction } from "@/lib/db";
 import { scanAIFiles } from "@/lib/services/auditors/ai-files";
 import type { AIFile, Finding } from "@/lib/types";
 import { expandTilde, generateId } from "@/lib/utils";

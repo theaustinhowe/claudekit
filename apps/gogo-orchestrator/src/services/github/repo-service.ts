@@ -4,7 +4,7 @@
  * All repository-scoped operations for the multi-repo architecture.
  */
 
-import { queryOne } from "../../db/helpers.js";
+import { queryOne } from "@devkit/duckdb";
 import { getConn } from "../../db/index.js";
 import type { DbRepository } from "../../db/schema.js";
 import { TIMEOUTS, withTimeout } from "../../utils/timeout.js";

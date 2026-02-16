@@ -1,8 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import fs from "node:fs";
 import { runClaude } from "@devkit/claude-runner";
-import { getDb } from "@/lib/db";
-import { queryAll, queryOne } from "@/lib/db/helpers";
+import { getDb, queryAll, queryOne } from "@/lib/db";
 import { classifyFinding } from "@/lib/services/finding-classifier";
 import { buildFindingsFixPrompt } from "@/lib/services/finding-prompt-builder";
 import type { SessionRunner } from "@/lib/services/session-manager";

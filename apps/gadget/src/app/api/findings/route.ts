@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { queryAll } from "@/lib/db/helpers";
+import { getDb, queryAll } from "@/lib/db";
 import type { Finding } from "@/lib/types";
 
 type FindingRow = Omit<Finding, "suggested_actions"> & { suggested_actions: string };

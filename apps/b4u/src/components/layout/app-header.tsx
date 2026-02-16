@@ -1,10 +1,9 @@
 "use client";
 
-import type { ClaudeRateLimits, ClaudeUsageStats } from "@devkit/claude-usage";
 import { ClaudeUsageDialog, HeaderUsageWidget } from "@devkit/claude-usage/components/usage-shared";
+import { useClaudeUsageRefresh } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
 import { ThemeToggle } from "@devkit/ui/components/theme-toggle";
-import { useCallback, useEffect, useState, useTransition } from "react";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 import { useApp } from "@/lib/store";
 import { PHASE_LABELS, type Phase } from "@/lib/types";
@@ -12,43 +11,10 @@ import { PHASE_LABELS, type Phase } from "@/lib/types";
 export function AppHeader() {
   const { state, dispatch } = useApp();
   const phases = [1, 2, 3, 4, 5, 6, 7] as Phase[];
-  const [claudeUsage, setClaudeUsage] = useState<ClaudeUsageStats | null>(null);
-  const [rateLimits, setRateLimits] = useState<ClaudeRateLimits | null>(null);
-  const [usageDialogOpen, setUsageDialogOpen] = useState(false);
-  const [, startTransition] = useTransition();
-
-  const refreshUsage = useCallback(() => {
-    startTransition(async () => {
-      const [stats, limits] = await Promise.all([getClaudeUsageStatsAction(), getClaudeRateLimitsAction()]);
-      setClaudeUsage(stats);
-      setRateLimits(limits);
-    });
-  }, []);
-
-  // Initial fetch
-  useEffect(() => {
-    refreshUsage();
-  }, [refreshUsage]);
-
-  // Auto-refresh when the soonest rate-limit window resets
-  useEffect(() => {
-    if (!rateLimits) return;
-
-    const resetTimes: number[] = [];
-    if (rateLimits.fiveHour.resetsAt) resetTimes.push(new Date(rateLimits.fiveHour.resetsAt).getTime());
-    if (rateLimits.sevenDay.resetsAt) resetTimes.push(new Date(rateLimits.sevenDay.resetsAt).getTime());
-    for (const w of Object.values(rateLimits.modelLimits)) {
-      if (w.resetsAt) resetTimes.push(new Date(w.resetsAt).getTime());
-    }
-
-    const now = Date.now();
-    const futureResets = resetTimes.filter((t) => t > now);
-    if (futureResets.length === 0) return;
-
-    const delayMs = Math.min(...futureResets) - now + 2000; // 2s after reset
-    const id = setTimeout(refreshUsage, delayMs);
-    return () => clearTimeout(id);
-  }, [rateLimits, refreshUsage]);
+  const { claudeUsage, rateLimits, usageDialogOpen, setUsageDialogOpen } = useClaudeUsageRefresh({
+    getUsageStats: getClaudeUsageStatsAction,
+    getRateLimits: getClaudeRateLimitsAction,
+  });
 
   const handlePhaseClick = (phase: Phase) => {
     const status = state.phaseStatuses[phase];

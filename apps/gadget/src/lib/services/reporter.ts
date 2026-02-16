@@ -1,5 +1,4 @@
-import { getDb } from "@/lib/db";
-import { execute, queryAll } from "@/lib/db/helpers";
+import { execute, getDb, queryAll } from "@/lib/db";
 import type { Finding, FixAction, Repo } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 

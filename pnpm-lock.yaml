@@ -114,6 +114,9 @@ importers:
       '@devkit/claude-usage':
         specifier: workspace:*
         version: link:../../packages/claude-usage
+      '@devkit/duckdb':
+        specifier: workspace:*
+        version: link:../../packages/duckdb
       '@devkit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
