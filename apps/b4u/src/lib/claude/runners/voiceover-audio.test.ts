@@ -62,7 +62,7 @@ describe("createVoiceoverAudioRunner", () => {
       return { filePath: "/audio/f1.mp3", durationEstimate: 5 };
     });
 
-    const runner = createVoiceoverAudioRunner("voice-1");
+    const _runner = createVoiceoverAudioRunner("voice-1");
     // With a single flow, the abort check happens at the top of the loop for the next iteration,
     // but since there's only one flow, the loop ends. Let's use two flows.
     vi.mocked(queryAll).mockResolvedValue([

@@ -34,6 +34,7 @@ vi.mock("@devkit/ui/components/input", () => ({
 }));
 
 vi.mock("@devkit/ui/components/label", () => ({
+  // biome-ignore lint/a11y/noLabelWithoutControl: test mock
   Label: ({ children, ...props }: { children: ReactNode }) => <label {...props}>{children}</label>,
 }));
 

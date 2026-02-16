@@ -100,8 +100,9 @@ export function filterLogEntries(entries: LogEntry[], filters: LogFilter): LogEn
     result = result.filter((e) => levels.includes(pinoLevelToName(e.level)));
   }
 
-  if (filters.minLevel) {
-    result = result.filter((e) => e.level >= filters.minLevel!);
+  if (filters.minLevel != null) {
+    const minLevel = filters.minLevel;
+    result = result.filter((e) => e.level >= minLevel);
   }
 
   if (filters.query) {

@@ -34,7 +34,7 @@ vi.mock("@devkit/ui/components/badge", () => ({
 }));
 
 vi.mock("@/components/dashboard/inject-modal", () => ({
-  InjectModal: () => <button>Guide Agent</button>,
+  InjectModal: () => <button type="button">Guide Agent</button>,
 }));
 
 import { PausedJobPanel } from "@/components/dashboard/paused-job-panel";

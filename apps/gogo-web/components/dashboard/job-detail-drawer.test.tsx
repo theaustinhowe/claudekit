@@ -43,7 +43,7 @@ vi.mock("sonner", () => ({
 vi.mock("@devkit/ui/components/alert-dialog", () => ({
   AlertDialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   AlertDialogAction: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
-  AlertDialogCancel: ({ children }: { children: ReactNode }) => <button>{children}</button>,
+  AlertDialogCancel: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
   AlertDialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   AlertDialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   AlertDialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -86,7 +86,9 @@ vi.mock("@devkit/ui/components/tabs", () => ({
   ),
   TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TabsTrigger: ({ children, value }: { children: ReactNode; value: string }) => (
-    <button data-testid={`tab-trigger-${value}`}>{children}</button>
+    <button type="button" data-testid={`tab-trigger-${value}`}>
+      {children}
+    </button>
   ),
 }));
 
@@ -108,7 +110,9 @@ vi.mock("@/components/dashboard/failed-job-panel", () => ({
 
 vi.mock("@/components/dashboard/inject-modal", () => ({
   InjectModal: ({ variant }: { variant?: string }) => (
-    <button data-testid="inject-modal">{variant === "prominent" ? "Guide Agent" : "Inject"}</button>
+    <button type="button" data-testid="inject-modal">
+      {variant === "prominent" ? "Guide Agent" : "Inject"}
+    </button>
   ),
 }));
 

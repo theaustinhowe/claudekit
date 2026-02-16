@@ -61,7 +61,7 @@ vi.stubGlobal("localStorage", {
 });
 
 // Import after mocks
-import { type ConnectionState, useWebSocket } from "@/lib/ws";
+import { useWebSocket } from "@/lib/ws";
 
 describe("getWsUrl (via useWebSocket connection)", () => {
   beforeEach(() => {
@@ -99,7 +99,7 @@ describe("getWsUrl (via useWebSocket connection)", () => {
   });
 
   it("appends auth token from localStorage", () => {
-    localStorageMock["gogo_api_token"] = "my-secret-token";
+    localStorageMock.gogo_api_token = "my-secret-token";
     const onMessage = vi.fn();
     const { unmount } = renderHook(() => useWebSocket(onMessage));
 

@@ -205,7 +205,7 @@ describe("getClaudeRateLimits", () => {
       });
 
       const result = await getClaudeRateLimits();
-      expect(result!.modelLimits).toEqual({
+      expect(result?.modelLimits).toEqual({
         opus: { utilization: 80, resetsAt: "2026-02-23T00:00:00Z" },
         sonnet: { utilization: 30, resetsAt: "2026-02-23T00:00:00Z" },
       });
@@ -221,11 +221,11 @@ describe("getClaudeRateLimits", () => {
       });
 
       const result = await getClaudeRateLimits();
-      expect(result!.modelLimits).toEqual({
+      expect(result?.modelLimits).toEqual({
         opus: { utilization: 10, resetsAt: "" },
       });
-      expect(result!.modelLimits).not.toHaveProperty("oauth_apps");
-      expect(result!.modelLimits).not.toHaveProperty("cowork");
+      expect(result?.modelLimits).not.toHaveProperty("oauth_apps");
+      expect(result?.modelLimits).not.toHaveProperty("cowork");
     });
 
     it("parses extra_usage when enabled", async () => {
@@ -236,7 +236,7 @@ describe("getClaudeRateLimits", () => {
       });
 
       const result = await getClaudeRateLimits();
-      expect(result!.extraUsage).toEqual({
+      expect(result?.extraUsage).toEqual({
         isEnabled: true,
         utilization: 25,
         usedCredits: 5,
@@ -251,15 +251,15 @@ describe("getClaudeRateLimits", () => {
       });
 
       const result = await getClaudeRateLimits();
-      expect(result!.extraUsage).toBeNull();
+      expect(result?.extraUsage).toBeNull();
     });
 
     it("defaults to zero utilization when windows are missing", async () => {
       setupFetchResponse({});
 
       const result = await getClaudeRateLimits();
-      expect(result!.fiveHour).toEqual({ utilization: 0, resetsAt: "" });
-      expect(result!.sevenDay).toEqual({ utilization: 0, resetsAt: "" });
+      expect(result?.fiveHour).toEqual({ utilization: 0, resetsAt: "" });
+      expect(result?.sevenDay).toEqual({ utilization: 0, resetsAt: "" });
     });
   });
 
@@ -303,7 +303,7 @@ describe("getClaudeRateLimits", () => {
 
       const result = await getClaudeRateLimits();
       expect(mockFetch).toHaveBeenCalledTimes(2);
-      expect(result!.fiveHour.utilization).toBe(50);
+      expect(result?.fiveHour.utilization).toBe(50);
     });
   });
 });

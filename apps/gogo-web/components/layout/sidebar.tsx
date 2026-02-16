@@ -80,7 +80,7 @@ export function MobileMenuButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-60 p-0">

@@ -7,8 +7,6 @@ vi.mock("node:fs/promises", () => ({
   readFile: vi.fn(),
 }));
 
-import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
 import { stopDevServer } from "./app-launcher";
 
 beforeEach(() => {

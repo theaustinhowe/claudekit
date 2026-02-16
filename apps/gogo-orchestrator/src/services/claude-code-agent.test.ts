@@ -52,7 +52,7 @@ vi.mock("./settings-helper.js", () => ({
 }));
 
 import { execSync } from "node:child_process";
-import { execute, queryOne } from "@devkit/duckdb";
+import { queryOne } from "@devkit/duckdb";
 import type { DbJob } from "../db/schema.js";
 import {
   buildPrompt,

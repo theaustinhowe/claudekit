@@ -23,6 +23,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next/image", () => ({
+  // biome-ignore lint/performance/noImgElement: test mock
   default: (props: { alt: string; src: string }) => <img alt={props.alt} src={props.src} />,
 }));
 

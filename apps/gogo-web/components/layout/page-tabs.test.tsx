@@ -37,7 +37,9 @@ describe("PageTabs", () => {
   });
 
   it("renders actions when provided", () => {
-    render(<PageTabs tabs={tabs} value="all" onValueChange={vi.fn()} actions={<button>Filter</button>} />);
+    render(
+      <PageTabs tabs={tabs} value="all" onValueChange={vi.fn()} actions={<button type="button">Filter</button>} />,
+    );
     expect(screen.getByText("Filter")).toBeInTheDocument();
   });
 });

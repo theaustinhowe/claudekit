@@ -33,11 +33,11 @@ vi.mock("@devkit/ui/components/tabs", () => ({
   Tabs: ({
     children,
     value,
-    onValueChange,
+    _onValueChange,
   }: {
     children: ReactNode;
     value: string;
-    onValueChange: (v: string) => void;
+    _onValueChange: (v: string) => void;
   }) => (
     <div data-testid="tabs" data-value={value}>
       {children}

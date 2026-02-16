@@ -39,7 +39,7 @@ import { execute, queryAll, queryOne } from "@/lib/db";
 import { createGitHubSource, createMcpListSource, deleteConceptSource, getConceptSources } from "./concept-sources";
 
 const mockQueryAll = vi.mocked(queryAll);
-const mockQueryOne = vi.mocked(queryOne);
+const _mockQueryOne = vi.mocked(queryOne);
 const mockExecute = vi.mocked(execute);
 
 beforeEach(() => {

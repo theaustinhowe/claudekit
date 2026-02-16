@@ -14,7 +14,7 @@ vi.mock("@/lib/claude/prompts/edit-content", () => ({
 }));
 
 import { runClaude } from "@devkit/claude-runner";
-import { execute, queryAll, queryOne } from "@/lib/db";
+import { queryAll, queryOne } from "@/lib/db";
 import { createEditContentRunner } from "./edit-content";
 
 beforeEach(() => {

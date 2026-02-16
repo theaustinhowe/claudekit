@@ -57,7 +57,7 @@ describe("spec-exporter", () => {
       const pkgFile = files.find((f) => f.path === "package.json");
 
       expect(pkgFile).toBeDefined();
-      const pkg = JSON.parse(pkgFile!.content);
+      const pkg = JSON.parse(pkgFile?.content);
       expect(pkg.dependencies.next).toBeDefined();
       expect(pkg.dependencies.react).toBeDefined();
       expect(pkg.devDependencies.tailwindcss).toBeDefined();
@@ -69,7 +69,7 @@ describe("spec-exporter", () => {
       const tsconfig = files.find((f) => f.path === "tsconfig.json");
 
       expect(tsconfig).toBeDefined();
-      const config = JSON.parse(tsconfig!.content);
+      const config = JSON.parse(tsconfig?.content);
       expect(config.compilerOptions.jsx).toBe("preserve");
     });
 
@@ -112,9 +112,9 @@ describe("spec-exporter", () => {
       const mockFile = files.find((f) => f.path === "src/lib/mock-data.ts");
 
       expect(typesFile).toBeDefined();
-      expect(typesFile!.content).toContain("interface User");
+      expect(typesFile?.content).toContain("interface User");
       expect(mockFile).toBeDefined();
-      expect(mockFile!.content).toContain("userData");
+      expect(mockFile?.content).toContain("userData");
     });
 
     it("generates CLAUDE.md and README.md", () => {
@@ -123,16 +123,16 @@ describe("spec-exporter", () => {
       const readme = files.find((f) => f.path === "README.md");
 
       expect(claude).toBeDefined();
-      expect(claude!.content).toContain("test-app");
+      expect(claude?.content).toContain("test-app");
       expect(readme).toBeDefined();
-      expect(readme!.content).toContain("test-app");
+      expect(readme?.content).toContain("test-app");
     });
 
     it("includes service deps", () => {
       const project = makeProject({ services: ["stripe", "resend"] });
       const files = generateExportFiles(project, makeSpec(), []);
       const pkgFile = files.find((f) => f.path === "package.json");
-      const pkg = JSON.parse(pkgFile!.content);
+      const pkg = JSON.parse(pkgFile?.content);
 
       expect(pkg.dependencies.stripe).toBeDefined();
       expect(pkg.dependencies.resend).toBeDefined();

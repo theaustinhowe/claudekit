@@ -52,12 +52,10 @@ vi.mock("./state-machine.js", () => ({
   applyTransitionAtomic: vi.fn(),
 }));
 
-import { rm } from "node:fs/promises";
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import { getDb } from "../db/index.js";
 import { broadcast } from "../ws/handler.js";
 import { resumeAgent } from "./agent-executor.js";
-import { getRepoDir, removeWorktree } from "./git.js";
 import { getPullRequestByNumber, getPullRequestIssueComments, getPullRequestReviewComments } from "./github/index.js";
 import { enterPrReviewing, pollPrReviewingJobs } from "./pr-reviewing";
 import { applyTransitionAtomic } from "./state-machine.js";

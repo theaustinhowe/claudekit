@@ -33,7 +33,7 @@ vi.mock("./session-runners/auto-fix", () => ({
 }));
 
 import { createHash } from "node:crypto";
-import { saveAutoFixRun, updateAutoFixRun } from "@/lib/actions/auto-fix";
+import { saveAutoFixRun } from "@/lib/actions/auto-fix";
 import { cancelCurrentFix, disable, enable, getState, manualTrigger } from "./auto-fix-engine";
 import { getLogs, onLog } from "./dev-server-manager";
 import { createSession, startSession } from "./session-manager";
@@ -147,7 +147,7 @@ describe("auto-fix-engine", () => {
       expect(logHandler).not.toBeNull();
 
       // Emit an error line
-      logHandler!("error TS2345: Argument of type 'string' is not assignable");
+      logHandler?.("error TS2345: Argument of type 'string' is not assignable");
 
       expect(getState("test-project").status).toBe("detecting");
     });
@@ -160,7 +160,7 @@ describe("auto-fix-engine", () => {
       });
 
       enable("test-project", "/tmp/project");
-      logHandler!("SyntaxError: Unexpected token");
+      logHandler?.("SyntaxError: Unexpected token");
       expect(getState("test-project").status).toBe("detecting");
     });
 
@@ -172,7 +172,7 @@ describe("auto-fix-engine", () => {
       });
 
       enable("test-project", "/tmp/project");
-      logHandler!("Module not found: Error: Can't resolve 'foo'");
+      logHandler?.("Module not found: Error: Can't resolve 'foo'");
       expect(getState("test-project").status).toBe("detecting");
     });
 
@@ -184,7 +184,7 @@ describe("auto-fix-engine", () => {
       });
 
       enable("test-project", "/tmp/project");
-      logHandler!("INFO: Server started on port 3000");
+      logHandler?.("INFO: Server started on port 3000");
       expect(getState("test-project").status).toBe("idle");
     });
 
@@ -197,7 +197,7 @@ describe("auto-fix-engine", () => {
 
       enable("test-project", "/tmp/project");
       disable("test-project");
-      logHandler!("error TS2345: Type error");
+      logHandler?.("error TS2345: Type error");
       expect(getState("test-project").status).toBe("idle");
     });
 
@@ -213,7 +213,7 @@ describe("auto-fix-engine", () => {
       } as never);
 
       enable("test-project", "/tmp/project");
-      logHandler!("error TS2345: Type error in foo.ts");
+      logHandler?.("error TS2345: Type error in foo.ts");
 
       // Advance past debounce (2s)
       await vi.advanceTimersByTimeAsync(2100);
@@ -261,7 +261,7 @@ describe("auto-fix-engine", () => {
       } as never);
 
       enable("test-project", "/tmp/project");
-      logHandler!("error TS2345: Type error");
+      logHandler?.("error TS2345: Type error");
 
       // Trigger the debounce
       await vi.advanceTimersByTimeAsync(2100);
@@ -274,7 +274,7 @@ describe("auto-fix-engine", () => {
       expect(saveAutoFixRun).toHaveBeenCalledTimes(1); // Only the first trigger
 
       // Cleanup
-      resolveCompletion!();
+      resolveCompletion?.();
       await vi.advanceTimersByTimeAsync(0);
     });
 

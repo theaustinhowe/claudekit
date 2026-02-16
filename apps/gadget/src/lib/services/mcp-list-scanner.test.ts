@@ -117,7 +117,8 @@ describe("mcp-list-scanner", () => {
       ];
 
       const concepts = mcpListEntriesToConcepts(entries);
-      const config = JSON.parse(concepts[0].content!);
+      const content = concepts[0].content ?? "";
+      const config = JSON.parse(content);
 
       expect(config["with-env"]).toHaveProperty("env");
       expect(config["with-env"]).toHaveProperty("url");

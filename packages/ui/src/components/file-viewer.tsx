@@ -94,6 +94,7 @@ export function FileViewer({ file, imageUrl, truncated, onShowFull, onOpenInFind
         </div>
         {resolvedImageUrl ? (
           <div className="flex items-center justify-center p-6 bg-[repeating-conic-gradient(var(--color-muted)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]">
+            {/* biome-ignore lint/performance/noImgElement: shared package, not a Next.js page */}
             <img
               src={resolvedImageUrl}
               alt={file.path.split("/").pop() || "Image"}

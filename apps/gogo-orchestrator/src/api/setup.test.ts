@@ -32,7 +32,7 @@ vi.mock("octokit", () => ({
   Octokit: vi.fn(),
 }));
 
-import { queryAll, queryOne } from "@devkit/duckdb";
+import { queryAll } from "@devkit/duckdb";
 
 interface RouteHandler {
   method: string;

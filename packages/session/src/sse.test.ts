@@ -4,7 +4,7 @@ import type { SessionEvent, SessionManager } from "./types";
 
 /** Consume a ReadableStream and return decoded SSE text events */
 async function collectSSEEvents(response: Response): Promise<string[]> {
-  const reader = response.body!.getReader();
+  const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   const events: string[] = [];
   let buffer = "";
@@ -98,9 +98,9 @@ describe("createSessionSSEResponse", () => {
 
   describe("live subscription path", () => {
     it("forwards events from live session", async () => {
-      let subscriberCallback: ((event: SessionEvent) => void) | null = null;
+      let _subscriberCallback: ((event: SessionEvent) => void) | null = null;
       const manager = createMockManager(true, (cb) => {
-        subscriberCallback = cb;
+        _subscriberCallback = cb;
         // Send events after subscribing
         queueMicrotask(() => {
           cb({ type: "log", log: "hello", logType: "stdout" } as SessionEvent);
@@ -418,7 +418,7 @@ describe("createSessionSSEResponse", () => {
     it("cleans up on client abort", async () => {
       const controller = new AbortController();
       const unsubscribe = vi.fn();
-      const manager = createMockManager(true, (cb) => {
+      const manager = createMockManager(true, (_cb) => {
         // Don't send terminal events — let abort do the work
         return unsubscribe;
       });
@@ -433,7 +433,7 @@ describe("createSessionSSEResponse", () => {
       });
 
       // Start reading
-      const reader = response.body!.getReader();
+      const _reader = response.body?.getReader();
 
       // Abort the request
       controller.abort();
@@ -460,7 +460,7 @@ describe("createSessionSSEResponse", () => {
       });
 
       // Cancel the body stream
-      await response.body!.cancel();
+      await response.body?.cancel();
 
       expect(unsubscribe).toHaveBeenCalled();
     });

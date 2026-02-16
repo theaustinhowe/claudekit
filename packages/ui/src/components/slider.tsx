@@ -36,6 +36,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
           </SliderPrimitive.Track>
           {Array.from({ length: thumbCount }, (_, i) => (
             <SliderPrimitive.Thumb
+              // biome-ignore lint/suspicious/noArrayIndexKey: slider thumbs are fixed-count, stable order
               key={i}
               className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             />

@@ -68,7 +68,7 @@ describe("getTodayUsageWithCost", () => {
     vi.mocked(readdir).mockRejectedValue(new Error("ENOENT"));
     const result = await getTodayUsageWithCost();
     expect(result).toBeDefined();
-    expect(result!.totalCostUSD).toBe(0);
+    expect(result?.totalCostUSD).toBe(0);
   });
 
   it("discovers .jsonl files recursively", async () => {
@@ -89,7 +89,7 @@ describe("getTodayUsageWithCost", () => {
 
     const result = await getTodayUsageWithCost();
     expect(result).toBeDefined();
-    expect(result!.modelBreakdown).toHaveProperty("claude-sonnet-4-5");
+    expect(result?.modelBreakdown).toHaveProperty("claude-sonnet-4-5");
   });
 
   it("deduplicates messages by id (last write wins)", async () => {
@@ -105,7 +105,7 @@ describe("getTodayUsageWithCost", () => {
     );
 
     const result = await getTodayUsageWithCost();
-    const sonnet = result!.modelBreakdown["claude-sonnet-4-5"];
+    const sonnet = result?.modelBreakdown["claude-sonnet-4-5"];
     expect(sonnet.inputTokens).toBe(200);
     expect(sonnet.outputTokens).toBe(100);
   });
@@ -124,9 +124,9 @@ describe("getTodayUsageWithCost", () => {
     );
 
     const result = await getTodayUsageWithCost();
-    expect(result!.modelBreakdown["claude-sonnet-4-5"].inputTokens).toBe(300);
-    expect(result!.modelBreakdown["claude-sonnet-4-5"].outputTokens).toBe(150);
-    expect(result!.modelBreakdown["claude-opus-4-5"].inputTokens).toBe(50);
+    expect(result?.modelBreakdown["claude-sonnet-4-5"].inputTokens).toBe(300);
+    expect(result?.modelBreakdown["claude-sonnet-4-5"].outputTokens).toBe(150);
+    expect(result?.modelBreakdown["claude-opus-4-5"].inputTokens).toBe(50);
   });
 
   it("calculates cost via calculateModelCost", async () => {
@@ -144,7 +144,7 @@ describe("getTodayUsageWithCost", () => {
 
     const result = await getTodayUsageWithCost();
     expect(calculateModelCost).toHaveBeenCalled();
-    expect(result!.totalCostUSD).toBe(0.05);
+    expect(result?.totalCostUSD).toBe(0.05);
   });
 
   it("skips malformed JSON lines", async () => {
@@ -161,7 +161,7 @@ describe("getTodayUsageWithCost", () => {
     );
 
     const result = await getTodayUsageWithCost();
-    expect(result!.modelBreakdown["claude-sonnet-4-5"].inputTokens).toBe(100);
+    expect(result?.modelBreakdown["claude-sonnet-4-5"].inputTokens).toBe(100);
   });
 
   it("skips entries missing required fields", async () => {
@@ -183,7 +183,7 @@ describe("getTodayUsageWithCost", () => {
     );
 
     const result = await getTodayUsageWithCost();
-    expect(Object.keys(result!.modelBreakdown)).toHaveLength(0);
+    expect(Object.keys(result?.modelBreakdown)).toHaveLength(0);
   });
 
   it("defaults missing token fields to 0", async () => {
@@ -196,7 +196,7 @@ describe("getTodayUsageWithCost", () => {
     );
 
     const result = await getTodayUsageWithCost();
-    const sonnet = result!.modelBreakdown["claude-sonnet-4-5"];
+    const sonnet = result?.modelBreakdown["claude-sonnet-4-5"];
     expect(sonnet.inputTokens).toBe(0);
     expect(sonnet.outputTokens).toBe(0);
     expect(sonnet.cacheReadInputTokens).toBe(0);
@@ -242,8 +242,8 @@ describe("getTodayUsageWithCost", () => {
     vi.mocked(createReadStream).mockReturnValue(createReadableFromLines([]) as never);
 
     const result = await getTodayUsageWithCost();
-    expect(Object.keys(result!.modelBreakdown)).toHaveLength(0);
-    expect(result!.totalCostUSD).toBe(0);
+    expect(Object.keys(result?.modelBreakdown)).toHaveLength(0);
+    expect(result?.totalCostUSD).toBe(0);
   });
 });
 

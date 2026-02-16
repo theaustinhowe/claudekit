@@ -30,7 +30,7 @@ const withTheme: Decorator = (Story, context) => {
     return () => {
       html.classList.remove("dark", ...THEME_IDS.map((t) => `theme-${t}`));
     };
-  }, [mode, theme]);
+  }, [modeClass, themeClass]);
 
   return (
     <div className={className}>

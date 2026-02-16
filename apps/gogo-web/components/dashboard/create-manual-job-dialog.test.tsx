@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -51,6 +51,7 @@ vi.mock("@devkit/ui/components/input", () => ({
 }));
 
 vi.mock("@devkit/ui/components/label", () => ({
+  // biome-ignore lint/a11y/noLabelWithoutControl: test mock
   Label: ({ children, ...props }: { children: ReactNode }) => <label {...props}>{children}</label>,
 }));
 
@@ -58,11 +59,11 @@ vi.mock("@devkit/ui/components/select", () => ({
   Select: ({
     children,
     value,
-    onValueChange,
+    _onValueChange,
   }: {
     children: ReactNode;
     value: string;
-    onValueChange: (v: string) => void;
+    _onValueChange: (v: string) => void;
   }) => (
     <div data-testid="select" data-value={value}>
       {children}

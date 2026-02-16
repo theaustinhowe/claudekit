@@ -23,6 +23,7 @@ vi.mock("@devkit/ui/components/tooltip", () => ({
 }));
 
 vi.mock("next/image", () => ({
+  // biome-ignore lint/performance/noImgElement: test mock
   default: ({ alt }: { alt: string }) => <img alt={alt} />,
 }));
 

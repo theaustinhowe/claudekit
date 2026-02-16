@@ -189,6 +189,7 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                       )}
                     >
                       {/* Upper zone — click to open app (disabled for web since you're already here) */}
+                      {/* biome-ignore lint/a11y/noStaticElementInteractions: conditional role/tabIndex/onKeyDown correctly implemented */}
                       <div
                         role={app.id !== "web" && app.status === "running" ? "link" : undefined}
                         tabIndex={app.id !== "web" && app.status === "running" ? 0 : -1}

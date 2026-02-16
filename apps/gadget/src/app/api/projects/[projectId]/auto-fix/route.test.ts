@@ -13,7 +13,7 @@ vi.mock("@/lib/services/auto-fix-engine", () => ({
   cancelCurrentFix: vi.fn(),
 }));
 
-import { getAutoFixEnabled, getAutoFixHistory, setAutoFixEnabled } from "@/lib/actions/auto-fix";
+import { getAutoFixEnabled, getAutoFixHistory } from "@/lib/actions/auto-fix";
 import * as autoFix from "@/lib/services/auto-fix-engine";
 import { DELETE, GET, POST } from "./route";
 
