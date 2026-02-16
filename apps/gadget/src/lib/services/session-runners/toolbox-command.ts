@@ -6,11 +6,18 @@ export function createToolboxCommandRunner(metadata: Record<string, unknown>): S
   const toolId = metadata.toolId as string;
   const action = metadata.action as "install" | "update";
 
+  const installMethod = metadata.installMethod as string | undefined;
+
   return async ({ onProgress, signal }) => {
     const tool = getToolById(toolId);
     if (!tool) throw new Error("Tool not found");
 
-    const command = action === "update" ? (tool.updateCommand ?? tool.installCommand) : tool.installCommand;
+    let command: string | undefined;
+    if (installMethod === "homebrew") {
+      command = action === "update" ? `brew upgrade ${tool.binary}` : `brew install ${tool.binary}`;
+    } else {
+      command = action === "update" ? (tool.updateCommand ?? tool.installCommand) : tool.installCommand;
+    }
     if (!command) throw new Error("No command available for this tool");
 
     onProgress({

@@ -107,7 +107,7 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
   }, [cmdOutput.length]);
 
   const handleRunCommand = useCallback(
-    async (tool: ToolDefinition, action: "install" | "update") => {
+    async (tool: ToolDefinition, action: "install" | "update", installMethod?: string | null) => {
       setCmdOutput([]);
       setCmdExitCode(null);
       setCmdRunning(true);
@@ -124,7 +124,7 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
           body: JSON.stringify({
             type: "toolbox_command",
             label: `${action === "install" ? "Install" : "Update"} ${tool.name}`,
-            metadata: { toolId: tool.id, action },
+            metadata: { toolId: tool.id, action, installMethod },
           }),
         });
 
@@ -460,7 +460,7 @@ function ToolRow({
   tool: ToolDefinition;
   result: ToolCheckResult | undefined;
   checking: boolean;
-  onRunCommand: (tool: ToolDefinition, action: "install" | "update") => void;
+  onRunCommand: (tool: ToolDefinition, action: "install" | "update", installMethod?: string | null) => void;
 }) {
   const [hoverOpen, setHoverOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -480,7 +480,8 @@ function ToolRow({
 
   const isInstalled = result?.installed ?? false;
   const hasError = !!result?.error;
-  const updateCommand = tool.updateCommand ?? tool.installCommand;
+  const isHomebrew = result?.metadata?.installMethod === "homebrew";
+  const updateCommand = isHomebrew ? `brew upgrade ${tool.binary}` : (tool.updateCommand ?? tool.installCommand);
   const expandCommand = updateCommand ?? tool.installCommand ?? null;
 
   return (
@@ -530,7 +531,7 @@ function ToolRow({
               className="h-7 px-2 text-xs"
               onClick={(e) => {
                 e.stopPropagation();
-                onRunCommand(tool, "update");
+                onRunCommand(tool, "update", result?.metadata?.installMethod);
               }}
             >
               <ArrowUpCircle className="w-3.5 h-3.5 mr-1" />
@@ -546,7 +547,7 @@ function ToolRow({
                 className="h-7 px-2 text-xs"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onRunCommand(tool, "install");
+                  onRunCommand(tool, "install", result?.metadata?.installMethod);
                 }}
               >
                 <Terminal className="w-3.5 h-3.5 mr-1" />
