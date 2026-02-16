@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@devkit/ui";
-import { ChevronLeft, ChevronRight, Clock, Plus, Trash2 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { CollapsibleSidebar, SidebarLogo } from "@devkit/ui/components/collapsible-sidebar";
+import { Clock, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 interface RunEntry {
@@ -205,27 +205,9 @@ function RunCard({
   );
 }
 
-const STORAGE_KEY = "b4u-sidebar-collapsed";
-
 export function AppSidebar({ onSelectRun, onDeleteRun, onNewThread }: AppSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const [runs, setRuns] = useState<RunEntry[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Restore collapsed state
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "true") setCollapsed(true);
-  }, []);
-
-  const toggleCollapsed = useCallback(() => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
-  }, []);
 
   // Fetch history
   const fetchHistory = useCallback(async () => {
@@ -259,125 +241,98 @@ export function AppSidebar({ onSelectRun, onDeleteRun, onNewThread }: AppSidebar
   );
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 64 : 260 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="h-full bg-sidebar border-r border-sidebar-border flex flex-col relative z-40 hidden md:flex shrink-0"
+    <CollapsibleSidebar
+      expandedWidth={260}
+      storageKey="b4u-sidebar-collapsed"
+      toggleClassName="bg-primary text-primary-foreground hover:bg-primary/80"
+      className="h-full shrink-0"
     >
-      {/* Collapse toggle */}
-      <AnimatePresence>
-        {hovered && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
-            onClick={toggleCollapsed}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-6 rounded-full border bg-primary shadow-sm flex items-center justify-center hover:bg-primary/80 text-primary-foreground transition-colors"
-          >
-            {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {({ collapsed }) => (
+        <>
+          {/* Logo + New Thread */}
+          <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border overflow-hidden shrink-0">
+            <SidebarLogo
+              collapsed={collapsed}
+              icon={
+                <div className="w-10 h-10 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary">
+                  B4U
+                </div>
+              }
+              wordmark={
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary">
+                    B4U
+                  </div>
+                  <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">B4U</span>
+                </div>
+              }
+            />
 
-      {/* Logo + New Thread */}
-      <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border overflow-hidden shrink-0">
-        <AnimatePresence mode="wait" initial={false}>
-          {collapsed ? (
-            <motion.div
-              key="icon"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="w-10 h-10 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary"
-            >
-              B4U
-            </motion.div>
-          ) : (
-            <motion.div
-              key="wordmark"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="flex items-center gap-2.5"
-            >
-              <div className="w-8 h-8 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary">
-                B4U
-              </div>
-              <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">B4U</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {!collapsed && onNewThread && (
-          <button
-            type="button"
-            onClick={onNewThread}
-            className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground border border-sidebar-border rounded-md hover:text-primary hover:border-primary/50 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New
-          </button>
-        )}
-      </div>
-
-      {/* Session list */}
-      <div className="flex-1 overflow-y-auto p-2 min-h-0 scrollbar-none">
-        {!collapsed && (
-          <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2 block">
-            History
-          </span>
-        )}
-
-        {loading ? (
-          <div className="flex items-center justify-center py-8 gap-2">
-            <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse" />
-            {!collapsed && <span className="text-xs text-muted-foreground">Loading...</span>}
-          </div>
-        ) : runs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 pt-16">
-            <Clock className="w-6 h-6 text-muted-foreground/40" />
-            {!collapsed && (
-              <>
-                <span className="text-xs text-muted-foreground">No sessions yet</span>
-                <span className="text-2xs text-muted-foreground/70">Select a project to get started</span>
-              </>
+            {!collapsed && onNewThread && (
+              <button
+                type="button"
+                onClick={onNewThread}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground border border-sidebar-border rounded-md hover:text-primary hover:border-primary/50 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                New
+              </button>
             )}
           </div>
-        ) : (
-          <div className={cn("flex flex-col gap-1.5", collapsed && "items-center")}>
-            {runs.map((run, idx) => (
-              <RunCard
-                key={run.runId ?? `legacy-${idx}`}
-                run={run}
-                collapsed={collapsed}
-                onSelect={onSelectRun}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* Collapsed new thread button */}
-      {collapsed && onNewThread && (
-        <div className="p-2 border-t border-sidebar-border">
-          <button
-            type="button"
-            onClick={onNewThread}
-            className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
-            title="New thread"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
+          {/* Session list */}
+          <div className="flex-1 overflow-y-auto p-2 min-h-0 scrollbar-none">
+            {!collapsed && (
+              <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2 block">
+                History
+              </span>
+            )}
+
+            {loading ? (
+              <div className="flex items-center justify-center py-8 gap-2">
+                <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse" />
+                {!collapsed && <span className="text-xs text-muted-foreground">Loading...</span>}
+              </div>
+            ) : runs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 pt-16">
+                <Clock className="w-6 h-6 text-muted-foreground/40" />
+                {!collapsed && (
+                  <>
+                    <span className="text-xs text-muted-foreground">No sessions yet</span>
+                    <span className="text-2xs text-muted-foreground/70">Select a project to get started</span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className={cn("flex flex-col gap-1.5", collapsed && "items-center")}>
+                {runs.map((run, idx) => (
+                  <RunCard
+                    key={run.runId ?? `legacy-${idx}`}
+                    run={run}
+                    collapsed={collapsed}
+                    onSelect={onSelectRun}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Collapsed new thread button */}
+          {collapsed && onNewThread && (
+            <div className="p-2 border-t border-sidebar-border">
+              <button
+                type="button"
+                onClick={onNewThread}
+                className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+                title="New thread"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </>
       )}
-    </motion.aside>
+    </CollapsibleSidebar>
   );
 }

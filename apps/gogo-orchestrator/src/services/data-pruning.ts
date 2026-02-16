@@ -1,5 +1,8 @@
 import { execute, queryAll } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
+import { createServiceLogger } from "../utils/logger.js";
+
+const log = createServiceLogger("data-pruning");
 
 const DEFAULT_LOG_RETENTION_DAYS = 14;
 const DEFAULT_JOB_RETENTION_DAYS = 90;
@@ -9,7 +12,7 @@ const TERMINAL_STATUSES = ["done", "failed"];
  * Get IDs of completed/failed jobs older than the given cutoff date.
  */
 async function getOldTerminalJobIds(cutoff: Date): Promise<string[]> {
-  const conn = getConn();
+  const conn = await getDb();
   const cutoffStr = cutoff.toISOString();
 
   const oldJobs = await queryAll<{ id: string }>(
@@ -35,7 +38,7 @@ async function pruneOldLogs(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
-  const conn = getConn();
+  const conn = await getDb();
   let totalDeleted = 0;
   for (const jobId of jobIds) {
     const before = await queryAll<{ id: string }>(conn, "SELECT id FROM job_logs WHERE job_id = ?", [jobId]);
@@ -44,9 +47,7 @@ async function pruneOldLogs(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise
   }
 
   if (totalDeleted > 0) {
-    console.log(
-      `[data-pruning] Pruned ${totalDeleted} log entries from ${jobIds.length} jobs older than ${retentionDays} days`,
-    );
+    log.info({ totalDeleted, jobCount: jobIds.length, retentionDays }, "Pruned log entries");
   }
   return totalDeleted;
 }
@@ -58,7 +59,7 @@ async function pruneOldEvents(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promi
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
-  const conn = getConn();
+  const conn = await getDb();
   let totalDeleted = 0;
   for (const jobId of jobIds) {
     const before = await queryAll<{ id: string }>(conn, "SELECT id FROM job_events WHERE job_id = ?", [jobId]);
@@ -67,9 +68,7 @@ async function pruneOldEvents(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promi
   }
 
   if (totalDeleted > 0) {
-    console.log(
-      `[data-pruning] Pruned ${totalDeleted} event entries from ${jobIds.length} jobs older than ${retentionDays} days`,
-    );
+    log.info({ totalDeleted, jobCount: jobIds.length, retentionDays }, "Pruned event entries");
   }
   return totalDeleted;
 }
@@ -82,14 +81,14 @@ async function pruneArchivedJobs(retentionDays = DEFAULT_JOB_RETENTION_DAYS): Pr
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
-  const conn = getConn();
+  const conn = await getDb();
   for (const jobId of jobIds) {
     await execute(conn, "DELETE FROM job_logs WHERE job_id = ?", [jobId]);
     await execute(conn, "DELETE FROM job_events WHERE job_id = ?", [jobId]);
     await execute(conn, "DELETE FROM jobs WHERE id = ?", [jobId]);
   }
 
-  console.log(`[data-pruning] Pruned ${jobIds.length} archived jobs older than ${retentionDays} days`);
+  log.info({ jobCount: jobIds.length, retentionDays }, "Pruned archived jobs");
   return jobIds.length;
 }
 
@@ -97,7 +96,7 @@ async function pruneArchivedJobs(retentionDays = DEFAULT_JOB_RETENTION_DAYS): Pr
  * Run all pruning tasks. Called on startup.
  */
 export async function runDataPruning(): Promise<void> {
-  console.log("[data-pruning] Starting data pruning...");
+  log.info("Starting data pruning...");
 
   try {
     const logs = await pruneOldLogs();
@@ -105,11 +104,11 @@ export async function runDataPruning(): Promise<void> {
     const archivedJobs = await pruneArchivedJobs();
 
     if (logs > 0 || events > 0 || archivedJobs > 0) {
-      console.log(`[data-pruning] Complete: ${logs} logs, ${events} events, ${archivedJobs} jobs pruned`);
+      log.info({ logs, events, archivedJobs }, "Data pruning complete");
     } else {
-      console.log("[data-pruning] No old data to prune");
+      log.info("No old data to prune");
     }
   } catch (error) {
-    console.error("[data-pruning] Failed to prune data:", error);
+    log.error({ err: error }, "Failed to prune data");
   }
 }

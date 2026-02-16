@@ -1,5 +1,5 @@
 import { parseJsonField, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbRepository, DbSetting } from "../db/schema.js";
 import type { GitConfig } from "./git.js";
 
@@ -21,7 +21,7 @@ const DEFAULT_CLAUDE_SETTINGS: ClaudeCodeSettings = {
 };
 
 async function getSetting<T>(key: string): Promise<T | null> {
-  const conn = getConn();
+  const conn = await getDb();
   const row = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", [key]);
   return row ? parseJsonField<T>(row.value, null as T) : null;
 }
@@ -79,7 +79,7 @@ interface StartupValidationResult {
 export async function validateStartupSettings(): Promise<StartupValidationResult> {
   const warnings: string[] = [];
   const errors: string[] = [];
-  const conn = getConn();
+  const conn = await getDb();
 
   // Check for active repositories
   const activeRepos = await queryAll<{

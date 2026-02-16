@@ -1,7 +1,7 @@
 import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import {
   type DbJob,
   type DbJobEvent,
@@ -48,7 +48,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     }
 
     const { status, repositoryId, limit, offset } = parsed.data;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Build where conditions
     const whereParts: string[] = [];
@@ -91,7 +91,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Querystring: { thresholdMinutes?: string } }>("/stale", async (request, _reply) => {
     const thresholdMinutes = Number(request.query.thresholdMinutes) || 60;
     const staleThreshold = new Date(Date.now() - thresholdMinutes * 60 * 1000);
-    const conn = getConn();
+    const conn = await getDb();
 
     const { clause: inClause, params: inParams } = buildInClause("status", ["running", "needs_info"]);
 
@@ -110,7 +110,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
 
   // Get single job
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    const conn = getConn();
+    const conn = await getDb();
     const row = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [request.params.id]);
     if (!row) {
       return reply.status(404).send({ error: "Job not found" });
@@ -128,7 +128,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
     const now = new Date().toISOString();
 
     const newJob = await queryOne<DbJob>(
@@ -170,7 +170,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     }
 
     const { repositoryId, title, description } = parsed.data;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Verify repository exists and is active
     const repo = await queryOne<{ id: string; is_active: boolean }>(
@@ -244,7 +244,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     }
 
     const action = parsed.data;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Get current job
     const jobRow = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [request.params.id]);
@@ -356,7 +356,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       }
 
       const { limit, offset, after } = parsed.data;
-      const conn = getConn();
+      const conn = await getDb();
 
       // Check job exists
       const jobExists = await queryOne<{ id: string }>(conn, "SELECT id FROM jobs WHERE id = ?", [request.params.id]);
@@ -393,7 +393,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     }
 
     const { limit, afterSequence, stream } = parsed.data;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Check job exists
     const jobExists = await queryOne<{ id: string }>(conn, "SELECT id FROM jobs WHERE id = ?", [request.params.id]);
@@ -519,7 +519,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: "approved field (boolean) is required" });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
     const jobRow = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [request.params.id]);
 
     if (!jobRow) {
@@ -554,7 +554,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
 
   // Check for GitHub response on a needs_info job (manual trigger)
   fastify.post<{ Params: { id: string } }>("/:id/check-response", async (request, reply) => {
-    const conn = getConn();
+    const conn = await getDb();
     const jobRow = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [request.params.id]);
 
     if (!jobRow) {
@@ -598,7 +598,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: "No valid fields to update" });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
     const update = buildUpdate("jobs", request.params.id, updateData);
     if (!update) {
       return reply.status(400).send({ error: "No valid fields to update" });

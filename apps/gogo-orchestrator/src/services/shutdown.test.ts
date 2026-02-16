@@ -24,7 +24,7 @@ describe("shutdown", () => {
     mockExecute = vi.fn().mockResolvedValue(undefined);
 
     vi.doMock("../db/index.js", () => ({
-      getConn: vi.fn(() => ({})),
+      getDb: vi.fn(async () => ({})),
       closeDatabase: mockCloseDatabase,
     }));
     vi.doMock("@devkit/duckdb", () => ({

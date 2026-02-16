@@ -1,7 +1,7 @@
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob, DbResearchSession, DbResearchSuggestion, DbSetting } from "../db/schema.js";
 import { mapJob, mapResearchSession, mapResearchSuggestion, mapSetting } from "../db/schema.js";
 import { cancelResearchSession, getSessionSuggestions, startResearchSession } from "../services/research.js";
@@ -20,7 +20,7 @@ const ConvertSuggestionSchema = z.object({
 export const researchRouter: FastifyPluginAsync = async (fastify) => {
   // GET / — list all sessions with suggestion counts
   fastify.get("/sessions", async () => {
-    const conn = getConn();
+    const conn = await getDb();
     const rows = await queryAll<DbResearchSession>(conn, "SELECT * FROM research_sessions ORDER BY created_at DESC");
 
     const sessions = await Promise.all(
@@ -42,7 +42,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
 
   // GET /:id — get session with suggestions
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    const conn = getConn();
+    const conn = await getDb();
     const row = await queryOne<DbResearchSession>(conn, "SELECT * FROM research_sessions WHERE id = ?", [
       request.params.id,
     ]);
@@ -93,7 +93,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
 
   // GET /suggestions — list suggestions with optional filters
   fastify.get("/suggestions", async (request) => {
-    const conn = getConn();
+    const conn = await getDb();
     const query = request.query as {
       sessionId?: string;
       category?: string;
@@ -134,7 +134,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
     const suggestion = await queryOne<DbResearchSuggestion>(
       conn,
       "SELECT * FROM research_suggestions WHERE id = ? AND session_id = ?",

@@ -32,7 +32,7 @@ describe("polling", () => {
     mockSetLastPollTime = vi.fn();
 
     vi.doMock("../db/index.js", () => ({
-      getConn: vi.fn(() => ({})),
+      getDb: vi.fn(async () => ({})),
     }));
     vi.doMock("@devkit/duckdb", () => ({
       queryAll: vi.fn(),

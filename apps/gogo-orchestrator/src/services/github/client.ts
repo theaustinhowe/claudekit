@@ -6,10 +6,13 @@
 
 import { queryOne } from "@devkit/duckdb";
 import { Octokit } from "octokit";
-import { getConn } from "../../db/index.js";
+import { getDb } from "../../db/index.js";
 import type { DbRepository } from "../../db/schema.js";
+import { createServiceLogger } from "../../utils/logger.js";
 import { GitHubCredentialsError, RepositoryNotFoundError } from "./errors.js";
 import type { RateLimitInfo } from "./types.js";
+
+const log = createServiceLogger("github-client");
 
 // =============================================================================
 // Rate Limit Tracking
@@ -61,18 +64,15 @@ export function updateRateLimitFromResponse(token: string, headers: Record<strin
     const percentRemaining = info.remaining / info.limit;
 
     if (percentRemaining <= RATE_LIMIT_CRITICAL_THRESHOLD) {
-      console.error(
-        `[github] CRITICAL: Rate limit nearly exhausted! ${info.remaining}/${info.limit} remaining. ` +
-          `Resets at ${info.reset.toISOString()}`,
+      log.error(
+        { remaining: info.remaining, limit: info.limit, resetsAt: info.reset.toISOString() },
+        "CRITICAL: Rate limit nearly exhausted",
       );
     } else if (
       percentRemaining <= RATE_LIMIT_WARNING_THRESHOLD &&
       (!previous || previous.remaining / previous.limit > RATE_LIMIT_WARNING_THRESHOLD)
     ) {
-      console.warn(
-        `[github] Warning: Rate limit low. ${info.remaining}/${info.limit} remaining. ` +
-          `Resets at ${info.reset.toISOString()}`,
-      );
+      log.warn({ remaining: info.remaining, limit: info.limit, resetsAt: info.reset.toISOString() }, "Rate limit low");
     }
   }
 }
@@ -188,7 +188,7 @@ export async function getOctokitForRepo(repositoryId: string): Promise<Octokit> 
   const cached = octokitCache.get(repositoryId);
 
   // Get repository config
-  const conn = getConn();
+  const conn = await getDb();
   const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
   if (!repo) {

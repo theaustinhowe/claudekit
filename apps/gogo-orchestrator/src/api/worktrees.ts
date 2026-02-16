@@ -2,7 +2,7 @@ import { realpath, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { buildInClause, execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { type DbJob, type DbRepository, mapJob, mapRepositoryFull } from "../db/schema.js";
 import {
   type GitConfig,
@@ -31,7 +31,7 @@ interface CleanupResult {
 export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
   // List worktrees with job status - supports multi-repo
   fastify.get("/", async (_request, _reply) => {
-    const conn = getConn();
+    const conn = await getDb();
 
     // Get all active repositories
     const activeRepoRows = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
@@ -133,7 +133,7 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
   // Get PR merge status for a specific job
   fastify.get<{ Params: { jobId: string } }>("/:jobId/pr-status", async (request, reply) => {
     const { jobId } = request.params;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Look up job by ID
     const jobRow = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -190,7 +190,7 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
   // Get changed files in a worktree
   fastify.get<{ Params: { jobId: string } }>("/:jobId/changes", async (request, reply) => {
     const { jobId } = request.params;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Look up job by ID
     const jobRow = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -244,7 +244,7 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: "File path is required" });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Look up job by ID
     const jobRow = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -297,7 +297,7 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: "worktreePath is required" });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Find which repository this worktree belongs to by checking the path
     const activeRepoRows = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
@@ -359,7 +359,7 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: "path is required" });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Find which repository this worktree belongs to
     const activeRepoRows = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
@@ -412,7 +412,7 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
   // Cleanup a single job's worktree with full cleanup (worktree + jobs dir)
   fastify.post<{ Params: { jobId: string } }>("/:jobId/cleanup", async (request, reply) => {
     const { jobId } = request.params;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Look up job by ID
     const jobRow = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -582,7 +582,7 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Get jobs eligible for cleanup
     const { clause: inClause, params: inParams } = buildInClause("status", statusesToClean);

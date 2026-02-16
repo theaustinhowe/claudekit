@@ -3,11 +3,11 @@
 import { useIsMobile } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
+import { CollapsibleSidebar, SidebarLogo } from "@devkit/ui/components/collapsible-sidebar";
+import { NavLink } from "@devkit/ui/components/nav-link";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
-  ChevronLeft,
-  ChevronRight,
   FolderGit2,
   FolderKanban,
   Hammer,
@@ -24,7 +24,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { NavLink } from "@/components/layout/nav-link";
 
 interface NavItem {
   title: string;
@@ -288,80 +287,27 @@ function DesktopNav({ collapsed }: { collapsed: boolean }) {
 }
 
 export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const isMobile = useIsMobile();
 
   if (isMobile) return null;
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 64 : 240 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={cn(
-        "h-screen bg-sidebar border-r border-sidebar-border flex flex-col relative",
-        "sticky top-0 left-0 z-40 hidden md:flex",
+    <CollapsibleSidebar expandedWidth={240} toggleTooltip className="h-screen sticky top-0 left-0">
+      {({ collapsed }) => (
+        <>
+          <Link
+            href="/"
+            className="h-14 flex items-center justify-center px-4 border-b border-sidebar-border overflow-hidden"
+          >
+            <SidebarLogo
+              collapsed={collapsed}
+              icon={<Image src="/images/logo-icon.png" alt="Gadget" width={32} height={32} className="w-8 h-8" />}
+              wordmark={<Image src="/images/logo.png" alt="Gadget" width={1054} height={413} className="h-10 w-auto" />}
+            />
+          </Link>
+          <DesktopNav collapsed={collapsed} />
+        </>
       )}
-    >
-      {/* Collapse toggle — floating pill on right edge */}
-      <AnimatePresence>
-        {hovered && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.button
-                  type="button"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.15 }}
-                  onClick={() => setCollapsed(!collapsed)}
-                  className="absolute -right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-6 rounded-full border bg-accent shadow-sm flex items-center justify-center hover:bg-accent/80 text-accent-foreground transition-colors"
-                >
-                  {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-                </motion.button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{collapsed ? "Expand sidebar" : "Collapse sidebar"}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </AnimatePresence>
-
-      {/* Logo */}
-      <Link
-        href="/"
-        className="h-14 flex items-center justify-center px-4 border-b border-sidebar-border overflow-hidden"
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          {collapsed ? (
-            <motion.div
-              key="icon"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Image src="/images/logo-icon.png" alt="Gadget" width={32} height={32} className="w-8 h-8" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="wordmark"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Image src="/images/logo.png" alt="Gadget" width={1054} height={413} className="h-10 w-auto" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Link>
-
-      {/* Navigation */}
-      <DesktopNav collapsed={collapsed} />
-    </motion.aside>
+    </CollapsibleSidebar>
   );
 }

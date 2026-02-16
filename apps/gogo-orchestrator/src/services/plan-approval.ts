@@ -1,7 +1,10 @@
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { getIssueCommentsForRepo, isHumanComment } from "./github/index.js";
+
+const log = createServiceLogger("plan-approval");
 
 // Keywords that indicate plan approval
 const APPROVAL_PATTERN = /\b(approve[d]?|lgtm|looks good|ship it|go ahead)\b/i;
@@ -10,7 +13,7 @@ const APPROVAL_PATTERN = /\b(approve[d]?|lgtm|looks good|ship it|go ahead)\b/i;
  * Poll all jobs in AWAITING_PLAN_APPROVAL state for human responses on GitHub
  */
 export async function pollPlanApprovalJobs(): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const awaitingJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ?", ["awaiting_plan_approval"]);
 
   if (awaitingJobs.length === 0) {
@@ -22,13 +25,13 @@ export async function pollPlanApprovalJobs(): Promise<void> {
     return;
   }
 
-  console.log(`[plan-approval] Polling ${githubJobs.length} jobs for plan approval...`);
+  log.info({ jobCount: githubJobs.length }, "Polling jobs for plan approval");
 
   for (const job of githubJobs) {
     try {
       await checkJobForPlanApproval(job);
     } catch (error) {
-      console.error(`[plan-approval] Error checking job ${job.id}:`, error);
+      log.error({ err: error, jobId: job.id }, "Error checking job");
     }
   }
 }
@@ -45,12 +48,12 @@ interface PlanApprovalJob {
 
 async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
   if (!job.plan_comment_id) {
-    console.warn(`[plan-approval] Job ${job.id} missing plan_comment_id`);
+    log.warn({ jobId: job.id }, "Job missing plan_comment_id");
     return;
   }
 
   if (!job.repository_id) {
-    console.warn(`[plan-approval] Job ${job.id} missing repository_id`);
+    log.warn({ jobId: job.id }, "Job missing repository_id");
     return;
   }
 
@@ -65,19 +68,19 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
   if (humanComments.length === 0) {
     if (comments.length > 0) {
       const lastCommentId = Math.max(...comments.map((c) => c.id));
-      const conn = getConn();
+      const conn = await getDb();
       await execute(conn, "UPDATE jobs SET last_checked_plan_comment_id = ? WHERE id = ?", [lastCommentId, job.id]);
     }
     return;
   }
 
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
   const response = humanComments[0];
   const isApproval = APPROVAL_PATTERN.test(response.body);
 
   if (isApproval) {
-    console.log(`[plan-approval] Job ${job.id} plan approved by ${response.user?.login}`);
+    log.info({ jobId: job.id, approvedBy: response.user?.login }, "Job plan approved");
 
     await execute(
       conn,
@@ -110,10 +113,11 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
       broadcast({ type: "job:updated", payload: updated });
     }
 
-    console.log(`[plan-approval] Job ${job.id} transitioned to running after plan approval`);
+    log.info({ jobId: job.id }, "Job transitioned to running after plan approval");
   } else {
-    console.log(
-      `[plan-approval] Job ${job.id} received feedback from ${response.user?.login}: ${response.body.substring(0, 100)}...`,
+    log.info(
+      { jobId: job.id, from: response.user?.login, feedback: response.body.substring(0, 100) },
+      "Job received feedback",
     );
 
     await execute(
@@ -148,6 +152,6 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
       broadcast({ type: "job:updated", payload: updated });
     }
 
-    console.log(`[plan-approval] Job ${job.id} returned to planning for revision`);
+    log.info({ jobId: job.id }, "Job returned to planning for revision");
   }
 }

@@ -1,7 +1,7 @@
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import {
   type DbIssue,
   type DbIssueComment,
@@ -19,7 +19,10 @@ import {
   getIssueByNumber,
 } from "../services/github/index.js";
 import { syncCommentsForIssue, syncIssuesForRepo } from "../services/issue-sync.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
+
+const log = createServiceLogger("issues-api");
 
 // Validation schemas
 const ListIssuesQuerySchema = z.object({
@@ -46,7 +49,7 @@ async function jobExistsForIssue(
   repositoryId: string,
   issueNumber: number,
 ): Promise<{ exists: boolean; jobId?: string }> {
-  const conn = getConn();
+  const conn = await getDb();
   const existing = await queryOne<{ id: string }>(
     conn,
     "SELECT id FROM jobs WHERE repository_id = ? AND issue_number = ? LIMIT 1",
@@ -60,7 +63,7 @@ async function jobExistsForIssue(
  * Create a job from a GitHub issue (reused from issue-polling.ts logic)
  */
 async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Promise<{ id: string }> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   const newJob = await queryOne<DbJob>(
@@ -150,7 +153,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
     "/:id/issues",
     async (request, reply) => {
       const repositoryId = request.params.id;
-      const conn = getConn();
+      const conn = await getDb();
 
       // Check repository exists
       const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
@@ -234,7 +237,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
   // POST /api/repositories/:id/issues
   fastify.post<{ Params: { id: string }; Body: unknown }>("/:id/issues", async (request, reply) => {
     const repositoryId = request.params.id;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Check repository exists
     const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
@@ -301,7 +304,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: "Invalid issue number" });
       }
 
-      const conn = getConn();
+      const conn = await getDb();
 
       // Check repository exists
       const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
@@ -382,7 +385,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: "Invalid issue number" });
       }
 
-      const conn = getConn();
+      const conn = await getDb();
 
       // Check repository exists
       const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
@@ -432,7 +435,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: "Invalid issue number" });
       }
 
-      const conn = getConn();
+      const conn = await getDb();
 
       // Check repository exists
       const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
@@ -477,7 +480,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
   // POST /api/repositories/:id/issues/sync
   fastify.post<{ Params: { id: string } }>("/:id/issues/sync", async (request, reply) => {
     const repositoryId = request.params.id;
-    const conn = getConn();
+    const conn = await getDb();
 
     // Check repository exists
     const repoRow = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);

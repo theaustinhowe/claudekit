@@ -1,5 +1,8 @@
 import { execute, queryAll } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
+import { createServiceLogger } from "../utils/logger.js";
+
+const log = createServiceLogger("process-manager");
 
 interface ProcessInfo {
   jobId: string;
@@ -24,7 +27,7 @@ function processExists(pid: number): boolean {
  * Store PID in database when spawning a process
  */
 export async function registerProcess(jobId: string, pid: number): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
   await execute(conn, "UPDATE jobs SET process_pid = ?, process_started_at = ?, updated_at = ? WHERE id = ?", [
     pid,
@@ -38,7 +41,7 @@ export async function registerProcess(jobId: string, pid: number): Promise<void>
  * Remove PID from database when process exits
  */
 export async function unregisterProcess(jobId: string): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
   await execute(conn, "UPDATE jobs SET process_pid = NULL, process_started_at = NULL, updated_at = ? WHERE id = ?", [
     now,
@@ -51,7 +54,7 @@ export async function unregisterProcess(jobId: string): Promise<void> {
  * This happens when orchestrator crashes mid-run
  */
 export async function findOrphanedProcesses(): Promise<ProcessInfo[]> {
-  const conn = getConn();
+  const conn = await getDb();
   const jobsWithPids = await queryAll<{
     id: string;
     process_pid: number | null;
@@ -126,14 +129,14 @@ export async function cleanupOrphanedProcesses(): Promise<{
   let failed = 0;
 
   for (const proc of orphaned) {
-    console.log(`[process-manager] Found orphaned process: jobId=${proc.jobId}, pid=${proc.pid}`);
+    log.info({ jobId: proc.jobId, pid: proc.pid }, "Found orphaned process");
 
     const success = await safeTerminate(proc.pid);
     if (success) {
-      console.log(`[process-manager] Terminated orphaned process: pid=${proc.pid}`);
+      log.info({ pid: proc.pid }, "Terminated orphaned process");
       terminated++;
     } else {
-      console.log(`[process-manager] Failed to terminate or already dead: pid=${proc.pid}`);
+      log.info({ pid: proc.pid }, "Failed to terminate or already dead");
       failed++;
     }
 
@@ -153,7 +156,7 @@ export async function cleanupOrphanedProcesses(): Promise<{
  * Returns the number of stale references cleared
  */
 export async function clearStalePidReferences(): Promise<number> {
-  const conn = getConn();
+  const conn = await getDb();
   const jobsWithPids = await queryAll<{
     id: string;
     process_pid: number | null;
@@ -163,7 +166,7 @@ export async function clearStalePidReferences(): Promise<number> {
 
   for (const job of jobsWithPids) {
     if (job.process_pid !== null && !processExists(job.process_pid)) {
-      console.log(`[process-manager] Clearing stale PID reference: jobId=${job.id}, pid=${job.process_pid}`);
+      log.info({ jobId: job.id, pid: job.process_pid }, "Clearing stale PID reference");
       await unregisterProcess(job.id);
       cleared++;
     }

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../db/index.js", () => ({
-  getConn: vi.fn(() => ({})),
+  getDb: vi.fn(async () => ({})),
 }));
 
 vi.mock("@devkit/duckdb", () => ({

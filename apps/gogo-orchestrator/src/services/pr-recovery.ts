@@ -7,11 +7,14 @@
  */
 
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { getIssueByNumber, getOpenPullRequestsForRepo } from "./github/index.js";
 import { enterPrReviewing } from "./pr-reviewing.js";
+
+const log = createServiceLogger("pr-recovery");
 
 /**
  * Extract issue number from branch name
@@ -39,7 +42,7 @@ function extractIssueNumberFromBranch(branch: string): number | null {
  * Check if a job already exists for an issue in a repository
  */
 async function jobExistsForIssue(repositoryId: string, issueNumber: number): Promise<boolean> {
-  const conn = getConn();
+  const conn = await getDb();
   const existing = await queryOne<{ id: string }>(
     conn,
     "SELECT id FROM jobs WHERE repository_id = ? AND issue_number = ? LIMIT 1",
@@ -73,7 +76,7 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
     errors: [],
   };
 
-  const conn = getConn();
+  const conn = await getDb();
 
   // Get all active repositories
   const repos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
@@ -164,14 +167,13 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
         } catch (error) {
           // Non-fatal - job is created, monitoring can be retried
           const err = error as Error;
-          console.warn(
-            `[pr-recovery] Warning: Failed to enter pr_reviewing for recovered job ${newJob.id}: ${err.message}`,
-          );
+          log.warn({ jobId: newJob.id, err }, "Failed to enter pr_reviewing for recovered job");
         }
 
         result.jobsRecovered++;
-        console.log(
-          `[pr-recovery] Recovered job for issue #${issueNumber} from PR #${pr.number} in ${repo.owner}/${repo.name}`,
+        log.info(
+          { issueNumber, prNumber: pr.number, owner: repo.owner, repo: repo.name },
+          "Recovered job from orphaned PR",
         );
       }
     } catch (error) {

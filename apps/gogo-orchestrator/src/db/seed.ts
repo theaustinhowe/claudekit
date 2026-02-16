@@ -1,11 +1,9 @@
 import { execute, queryOne } from "@devkit/duckdb";
-import { getConn, initializeDatabase } from "./index.js";
+import { getDb } from "./index.js";
 import type { DbJob, DbRepository } from "./schema.js";
 
 async function seed() {
-  // Initialize the database connection first
-  await initializeDatabase();
-  const conn = getConn();
+  const conn = await getDb();
 
   console.log("Seeding database...");
 

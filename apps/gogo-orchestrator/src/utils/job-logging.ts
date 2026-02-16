@@ -1,8 +1,11 @@
 import { execute, queryOne } from "@devkit/duckdb";
 import type { JobStatus, LogStream } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";
+import { createServiceLogger } from "./logger.js";
+
+const log = createServiceLogger("job-logging");
 
 export interface LogState {
   sequence: number;
@@ -77,7 +80,7 @@ function ensureFlushTimer(): void {
   if (flushTimer) return;
   flushTimer = setInterval(() => {
     flushAllPending().catch((err) => {
-      console.error("[job-logging] Error flushing log buffers:", err);
+      log.error({ err }, "Error flushing log buffers");
     });
   }, FLUSH_INTERVAL_MS);
 }
@@ -98,7 +101,7 @@ async function flushAllPending(): Promise<void> {
   if (allPending.length === 0) return;
 
   try {
-    const conn = getConn();
+    const conn = await getDb();
     for (const entry of allPending) {
       await execute(
         conn,
@@ -107,7 +110,7 @@ async function flushAllPending(): Promise<void> {
       );
     }
   } catch (error) {
-    console.error(`[job-logging] Failed to batch-insert ${allPending.length} log entries:`, error);
+    log.error({ err: error, count: allPending.length }, "Failed to batch-insert log entries");
   }
 }
 
@@ -148,7 +151,7 @@ export async function updateJobStatus(
   message: string,
   updates?: Record<string, unknown>,
 ): Promise<boolean> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   // Build dynamic SET clause

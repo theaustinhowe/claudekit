@@ -1,7 +1,7 @@
 import { buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { type DbJob, type DbRepository, mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getOctokitForRepo } from "../services/github/index.js";
 import { TIMEOUTS, withTimeout } from "../utils/timeout.js";
@@ -96,7 +96,7 @@ function toSnakeCaseFields(data: Record<string, unknown>): Record<string, unknow
 export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
   // List all repositories
   fastify.get("/", async () => {
-    const conn = getConn();
+    const conn = await getDb();
     const repos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories ORDER BY updated_at");
 
     // Mask tokens in response
@@ -113,7 +113,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
 
   // Get single repository
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    const conn = getConn();
+    const conn = await getDb();
     const row = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
     if (!row) {
@@ -139,7 +139,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
     const now = new Date().toISOString();
     const d = parsed.data;
 
@@ -189,7 +189,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Check repository exists
     const existing = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
@@ -235,7 +235,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     }
     const { confirm } = queryParsed.data;
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Check repository exists
     const existing = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
@@ -299,7 +299,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
 
   // Get active repositories (for polling)
   fastify.get("/active", async () => {
-    const conn = getConn();
+    const conn = await getDb();
     const repos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
 
     // Mask tokens
@@ -316,7 +316,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
 
   // Get jobs for a specific repository
   fastify.get<{ Params: { id: string }; Querystring: Record<string, string> }>("/:id/jobs", async (request, reply) => {
-    const conn = getConn();
+    const conn = await getDb();
 
     // Check repository exists
     const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
@@ -370,7 +370,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
 
   // Get per-repo settings
   fastify.get<{ Params: { id: string } }>("/:id/settings", async (request, reply) => {
-    const conn = getConn();
+    const conn = await getDb();
     const row = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
     if (!row) {
@@ -403,7 +403,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Check repository exists
     const existing = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
@@ -443,7 +443,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
 
   // Get branches for a repository from GitHub
   fastify.get<{ Params: { id: string } }>("/:id/branches", async (request, reply) => {
-    const conn = getConn();
+    const conn = await getDb();
     const row = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [request.params.id]);
 
     if (!row) {

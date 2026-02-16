@@ -2,7 +2,10 @@ import { execFile as execFileCb } from "node:child_process";
 import { access, mkdir, readFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { createServiceLogger } from "../utils/logger.js";
 import { TIMEOUTS, withTimeout } from "../utils/timeout.js";
+
+const log = createServiceLogger("git");
 
 const execFile = promisify(execFileCb);
 
@@ -225,18 +228,18 @@ async function detectBaseBranch(config: GitConfig, bareRepoPath: string, preferr
     // Fallback: try common default branch names
     for (const fallback of ["main", "master"]) {
       if (branches.includes(fallback)) {
-        console.log(`[git] Configured branch '${preferredBranch}' not found, using '${fallback}'`);
+        log.info({ preferredBranch, fallback }, "Configured branch not found, using fallback");
         return fallback;
       }
     }
 
     // Last resort: use the first available branch
     const firstBranch = branches[0];
-    console.log(`[git] No standard branch found, using first available branch: '${firstBranch}'`);
+    log.info({ firstBranch }, "No standard branch found, using first available branch");
     return firstBranch;
   } catch (error) {
     const err = error as Error;
-    console.error("[git] detectBaseBranch error:", err.message);
+    log.error({ err }, "detectBaseBranch error");
     // If there's a specific error message about no branches, propagate it
     if (err.message?.includes("No branches found")) {
       throw err;
@@ -417,7 +420,7 @@ export async function hasCommits(config: GitConfig, worktreePath: string, baseBr
   try {
     await execGit(["-C", worktreePath, "fetch", "origin", baseBranch], config.workdir, config);
   } catch (error) {
-    console.warn(`[git] Failed to fetch origin/${baseBranch}, will use local refs:`, (error as Error).message);
+    log.warn({ err: error, baseBranch }, "Failed to fetch origin, will use local refs");
   }
 
   // Try comparing against origin/baseBranch
@@ -428,10 +431,10 @@ export async function hasCommits(config: GitConfig, worktreePath: string, baseBr
       config,
     );
     const count = Number.parseInt(stdout.trim(), 10);
-    console.log(`[git] Commits ahead of origin/${baseBranch}: ${count}`);
+    log.info({ ref: `origin/${baseBranch}`, count }, "Commits ahead of ref");
     if (count > 0) return true;
   } catch (error) {
-    console.warn(`[git] Failed to compare with origin/${baseBranch}:`, (error as Error).message);
+    log.warn({ err: error, ref: `origin/${baseBranch}` }, "Failed to compare with ref");
   }
 
   // Fallback: compare against local baseBranch ref (in case origin/ refs don't exist)
@@ -442,21 +445,21 @@ export async function hasCommits(config: GitConfig, worktreePath: string, baseBr
       config,
     );
     const count = Number.parseInt(stdout.trim(), 10);
-    console.log(`[git] Commits ahead of ${baseBranch}: ${count}`);
+    log.info({ ref: baseBranch, count }, "Commits ahead of ref");
     if (count > 0) return true;
   } catch (error) {
-    console.warn(`[git] Failed to compare with ${baseBranch}:`, (error as Error).message);
+    log.warn({ err: error, ref: baseBranch }, "Failed to compare with ref");
   }
 
   // Last resort: check if there are ANY commits on this branch
   try {
     const { stdout } = await execGit(["-C", worktreePath, "rev-list", "--count", "HEAD"], config.workdir, config);
     const count = Number.parseInt(stdout.trim(), 10);
-    console.log(`[git] Total commits on HEAD: ${count}`);
+    log.info({ count }, "Total commits on HEAD");
     // If we got here and there are commits, something is wrong with the comparison
     // but we'll return false to be safe
   } catch (error) {
-    console.error(`[git] Failed to count commits:`, (error as Error).message);
+    log.error({ err: error }, "Failed to count commits");
   }
 
   return false;
@@ -630,7 +633,7 @@ export async function getChangedFiles(
     }
   } catch (error) {
     // Log the error for debugging but continue
-    console.warn(`[git] Failed to get committed changes for ${worktreePath}:`, error);
+    log.warn({ err: error, worktreePath }, "Failed to get committed changes");
   }
 
   // Sort files alphabetically

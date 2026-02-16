@@ -1,6 +1,6 @@
 import { execute, queryAll } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { type DbSetting, mapSetting } from "../db/schema.js";
 
 // Global settings only - per-repo settings are in the repositories table
@@ -60,7 +60,7 @@ function transformFrontendToStored(
 export const settingsRouter: FastifyPluginAsync = async (fastify) => {
   // Get all settings - returns frontend format
   fastify.get("/", async () => {
-    const conn = getConn();
+    const conn = await getDb();
     const allSettings = await queryAll<DbSetting>(conn, "SELECT * FROM settings");
     const stored: Record<string, unknown> = {};
     for (const s of allSettings) {
@@ -73,7 +73,7 @@ export const settingsRouter: FastifyPluginAsync = async (fastify) => {
 
   // Update settings - accepts frontend format, stores in DB format
   fastify.put<{ Body: Record<string, unknown> }>("/", async (request) => {
-    const conn = getConn();
+    const conn = await getDb();
 
     // Fetch existing settings to merge with
     const allSettings = await queryAll<DbSetting>(conn, "SELECT * FROM settings");

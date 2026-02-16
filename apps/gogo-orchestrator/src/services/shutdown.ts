@@ -1,5 +1,5 @@
 import { execute, queryAll } from "@devkit/duckdb";
-import { closeDatabase, getConn } from "../db/index.js";
+import { closeDatabase, getDb } from "../db/index.js";
 import { shutdownLogBuffers } from "../utils/job-logging.js";
 import { createServiceLogger } from "../utils/logger.js";
 import { agentRegistry } from "./agents/index.js";
@@ -34,7 +34,7 @@ async function handleShutdown(): Promise<void> {
   log.info("Stopped polling for new work");
 
   // 2. Stop all active agent runs (save sessions) via the registry
-  const conn = getConn();
+  const conn = await getDb();
   for (const runner of agentRegistry.getAll()) {
     const activeCount = runner.getActiveRunCount();
     if (activeCount === 0) continue;

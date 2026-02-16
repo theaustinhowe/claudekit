@@ -1,6 +1,6 @@
 import { execute, queryOne } from "@devkit/duckdb";
 import type { JobStatus } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { emitLog, type LogState, updateJobStatus } from "../utils/job-logging.js";
 import { broadcast } from "../ws/handler.js";
@@ -29,7 +29,7 @@ export async function startJobRun(jobId: string): Promise<{ success: boolean; er
     return { success: false, error: "Job run already in progress" };
   }
 
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   // Atomic transition: only one caller can successfully claim the job

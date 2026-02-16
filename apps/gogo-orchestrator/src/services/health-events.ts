@@ -16,9 +16,12 @@
  */
 
 import { execute, queryAll } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbHealthEvent } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
+
+const log = createServiceLogger("health-events");
 
 type HealthEventType =
   | "poll_cycle_complete"
@@ -45,7 +48,7 @@ const eventBuffer: HealthEvent[] = [];
  * Errors are logged but do not affect the caller.
  */
 function persistEvent(event: HealthEvent): void {
-  const conn = getConn();
+  const conn = await getDb();
   execute(
     conn,
     "INSERT INTO health_events (id, type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?)",
@@ -53,7 +56,7 @@ function persistEvent(event: HealthEvent): void {
   )
     .then(() => {})
     .catch((error) => {
-      console.error("[health-events] Failed to persist event:", error);
+      log.error({ err: error }, "Failed to persist event");
     });
 }
 
@@ -94,7 +97,7 @@ export async function getRecentHealthEvents(limit = 50): Promise<HealthEvent[]> 
 
   // Buffer is empty — fall back to DB (e.g. after restart)
   try {
-    const conn = getConn();
+    const conn = await getDb();
     const rows = await queryAll<DbHealthEvent>(conn, "SELECT * FROM health_events ORDER BY created_at DESC LIMIT ?", [
       limit,
     ]);
@@ -107,7 +110,7 @@ export async function getRecentHealthEvents(limit = 50): Promise<HealthEvent[]> 
       metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
     }));
   } catch (error) {
-    console.error("[health-events] Failed to load events from database:", error);
+    log.error({ err: error }, "Failed to load events from database");
     return [];
   }
 }

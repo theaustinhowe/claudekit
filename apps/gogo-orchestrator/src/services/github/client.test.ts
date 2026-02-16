@@ -3,7 +3,7 @@ import { GitHubCredentialsError, RepositoryNotFoundError } from "./errors.js";
 
 // Mock the database
 vi.mock("../../db/index.js", () => ({
-  getConn: vi.fn(() => ({})),
+  getDb: vi.fn(async () => ({})),
 }));
 
 vi.mock("@devkit/duckdb", () => ({

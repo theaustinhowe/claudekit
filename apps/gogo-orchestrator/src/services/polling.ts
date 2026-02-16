@@ -1,6 +1,6 @@
 import { parseJsonField, queryOne } from "@devkit/duckdb";
 import { setLastPollTime } from "../api/health.js";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbSetting } from "../db/schema.js";
 import { createServiceLogger } from "../utils/logger.js";
 import { getAllRateLimitInfo } from "./github/index.js";
@@ -46,7 +46,7 @@ interface PollIntervalSetting {
 
 async function getPollIntervalMs(): Promise<number> {
   try {
-    const conn = getConn();
+    const conn = await getDb();
     const row = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["poll_interval_ms"]);
 
     if (row) {

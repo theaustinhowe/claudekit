@@ -10,7 +10,7 @@ if (existsSync(rootEnv)) config({ path: rootEnv, override: false });
 if (existsSync(rootEnvLocal)) config({ path: rootEnvLocal, override: false });
 
 import { execute, queryAll } from "@devkit/duckdb";
-import { getConn, initializeDatabase } from "./db/index.js";
+import { getDb } from "./db/index.js";
 import { createServer } from "./server.js";
 import { runDataPruning } from "./services/data-pruning.js";
 import { startPolling } from "./services/polling.js";
@@ -25,7 +25,6 @@ const log = createServiceLogger("startup");
 
 async function main() {
   // 0. Initialize database connection (DuckDB)
-  await initializeDatabase();
   log.info("Database connection initialized");
 
   // 1. Check binary dependencies
@@ -52,7 +51,7 @@ async function main() {
 
   // 4. Per AGENTS.md: On restart, set RUNNING and PLANNING jobs to PAUSED
   // (awaiting_plan_approval stays as-is since no process is running)
-  const conn = getConn();
+  const conn = await getDb();
 
   // First, get the list of RUNNING/PLANNING jobs so we can create audit events
   const runningJobs = await queryAll<{ id: string; status: string }>(

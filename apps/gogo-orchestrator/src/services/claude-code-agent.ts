@@ -2,13 +2,16 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { execute, queryOne } from "@devkit/duckdb";
 import type { InjectMode, JobStatus } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState, updateJobStatus } from "../utils/job-logging.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { AGENT_COMMENT_MARKER, createIssueCommentForRepo, getRepoConfigById } from "./github/index.js";
 import { registerProcess, unregisterProcess } from "./process-manager.js";
 import { type ClaudeCodeSettings, getClaudeSettings } from "./settings-helper.js";
+
+const log = createServiceLogger("claude-code-agent");
 
 /**
  * Error messages for configuration issues
@@ -396,7 +399,7 @@ export async function startClaudeRun(
   }
 
   // Get job
-  const conn = getConn();
+  const conn = await getDb();
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
@@ -507,14 +510,14 @@ export async function startClaudeRun(
     await registerProcess(jobId, claudeProcess.pid);
     await emitLog(jobId, "system", `Claude process started (PID: ${claudeProcess.pid})`, logState);
   } else {
-    console.error(`[claude-code] Failed to spawn claude process - no PID`);
+    log.error("Failed to spawn claude process - no PID");
     await emitLog(jobId, "stderr", "Failed to spawn Claude process - no PID assigned", logState);
     return { success: false, error: "Failed to spawn Claude process" };
   }
 
   // Verify stdio streams are available
   if (!claudeProcess.stdout || !claudeProcess.stderr) {
-    console.error(`[claude-code] Process spawned but stdio streams unavailable`);
+    log.error("Process spawned but stdio streams unavailable");
     await emitLog(jobId, "stderr", "Claude process spawned but stdio streams are not available", logState);
   }
 
@@ -744,7 +747,7 @@ export async function startClaudeRun(
 
   // Handle process error
   claudeProcess.on("error", async (error) => {
-    console.error(`[claude-code] Process error for job ${jobId}: ${error.message}`);
+    log.error({ err: error, jobId }, "Process error for job");
     clearTimeout(timeoutId);
     activeProcesses.delete(jobId);
 
@@ -775,7 +778,7 @@ export async function stopClaudeRun(jobId: string, saveSession = false): Promise
 
   // Save session ID if requested
   if (saveSession && proc.sessionId) {
-    const conn = getConn();
+    const conn = await getDb();
     await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
       proc.sessionId,
       new Date().toISOString(),
@@ -826,7 +829,7 @@ export async function resumeClaudeRun(
   jobId: string,
   injectedMessage?: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const conn = getConn();
+  const conn = await getDb();
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };
@@ -861,7 +864,7 @@ export async function injectMessage(
   message: string,
   mode: InjectMode,
 ): Promise<{ success: boolean; error?: string }> {
-  const conn = getConn();
+  const conn = await getDb();
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };

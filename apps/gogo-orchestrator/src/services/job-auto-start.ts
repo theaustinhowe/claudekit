@@ -1,13 +1,16 @@
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState } from "../utils/job-logging.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { startAgent } from "./agent-executor.js";
 import { startJobRun } from "./agent-runner.js";
 import { agentRegistry } from "./agents/index.js";
 import { getClaudeAvailabilityError } from "./claude-code-agent.js";
 import { getClaudeSettings } from "./settings-helper.js";
+
+const log = createServiceLogger("job-auto-start");
 
 interface AutoStartResult {
   started: number;
@@ -22,7 +25,7 @@ async function transitionToPaused(jobId: string, reason: string, logState: LogSt
   await emitLog(jobId, "stderr", `Agent failed to start: ${reason}`, logState);
   await emitLog(jobId, "system", "Job paused - check configuration and retry", logState);
 
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   await execute(conn, "UPDATE jobs SET status = ?, pause_reason = ?, updated_at = ? WHERE id = ?", [
@@ -71,7 +74,7 @@ async function runAgentPreflightChecks(agentType: string): Promise<string | null
  * Get the current count of running jobs
  */
 async function getRunningJobCount(): Promise<number> {
-  const conn = getConn();
+  const conn = await getDb();
   const result = await queryOne<{ total: bigint }>(conn, "SELECT COUNT(*) as total FROM jobs WHERE status = ?", [
     "running",
   ]);
@@ -113,7 +116,7 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
   }
 
   const availableSlots = maxParallel - runningCount;
-  const conn = getConn();
+  const conn = await getDb();
 
   // Get repositories with auto-start enabled
   const autoStartRepos = await queryAll<{
@@ -142,7 +145,7 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
     return result;
   }
 
-  console.log(`[auto-start] Found ${eligibleJobs.length} queued jobs, ${availableSlots} slots available`);
+  log.info({ eligibleJobs: eligibleJobs.length, availableSlots }, "Found queued jobs");
 
   // Start each eligible job
   for (const job of eligibleJobs) {
@@ -154,7 +157,7 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
     const currentRunning = await getRunningJobCount();
     if (currentRunning >= maxParallel) {
       result.skipped += eligibleJobs.length - result.started;
-      console.log("[auto-start] Max parallel jobs reached, stopping");
+      log.info("Max parallel jobs reached, stopping");
       break;
     }
 
@@ -165,11 +168,11 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
     try {
       const jobLabel = job.issue_number < 0 ? "manual job" : `issue #${job.issue_number}`;
       const targetStatus = "planning";
-      console.log(`[auto-start] Starting job ${job.id} (${jobLabel}) with ${agentType} (${targetStatus})...`);
+      log.info({ jobId: job.id, jobLabel, agentType, targetStatus }, "Starting job");
 
       // Check if job already has a worktree (e.g., from a previous failed run)
       if (job.worktree_path && job.branch) {
-        console.log(`[auto-start] Job ${job.id} already has worktree, transitioning to ${targetStatus}...`);
+        log.info({ jobId: job.id, targetStatus }, "Job already has worktree, transitioning");
         // Transition to the target state
         // IMPORTANT: Clear claude_session_id so we start fresh, not resume an old/invalid session
         const now = new Date().toISOString();
@@ -192,7 +195,7 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
 
         if (!runResult.success) {
           result.errors.push(`Job ${job.id}: ${runResult.error}`);
-          console.error(`[auto-start] Failed to start job run for ${job.id}: ${runResult.error}`);
+          log.error({ jobId: job.id, error: runResult.error }, "Failed to start job run");
           continue;
         }
 
@@ -203,7 +206,7 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
         if (!worktreeReady) {
           const errorMsg = "Worktree setup timed out after 60 seconds";
           result.errors.push(`Job ${job.id}: ${errorMsg}`);
-          console.error(`[auto-start] Worktree setup timed out for job ${job.id}`);
+          log.error({ jobId: job.id }, "Worktree setup timed out");
           await transitionToPaused(job.id, errorMsg, logState);
           continue;
         }
@@ -236,7 +239,7 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
       const preflightError = await runAgentPreflightChecks(agentType);
       if (preflightError) {
         result.errors.push(`Job ${job.id}: ${preflightError}`);
-        console.error(`[auto-start] Pre-flight check failed for ${job.id}: ${preflightError}`);
+        log.error({ jobId: job.id, preflightError }, "Pre-flight check failed");
         await transitionToPaused(job.id, preflightError, logState);
         continue;
       }
@@ -249,29 +252,29 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
       if (!agentResult.success) {
         const errorMsg = agentResult.error || "Unknown agent error";
         result.errors.push(`Job ${job.id}: ${errorMsg}`);
-        console.error(`[auto-start] Failed to start agent for ${job.id}: ${errorMsg}`);
+        log.error({ jobId: job.id, error: errorMsg }, "Failed to start agent");
         await transitionToPaused(job.id, errorMsg, logState);
         continue;
       }
 
       result.started++;
-      console.log(`[auto-start] Successfully started job ${job.id} with ${agentType}`);
+      log.info({ jobId: job.id, agentType }, "Successfully started job");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       result.errors.push(`Job ${job.id}: ${message}`);
-      console.error(`[auto-start] Error starting job ${job.id}:`, error);
+      log.error({ err: error, jobId: job.id }, "Error starting job");
 
       // Transition to paused on unexpected errors too
       try {
         await transitionToPaused(job.id, message, logState);
       } catch (transitionError) {
-        console.error(`[auto-start] Failed to transition job ${job.id} to paused:`, transitionError);
+        log.error({ err: transitionError, jobId: job.id }, "Failed to transition job to paused");
       }
     }
   }
 
   if (result.started > 0) {
-    console.log(`[auto-start] Started ${result.started} jobs`);
+    log.info({ started: result.started }, "Started jobs");
   }
 
   return result;
@@ -283,7 +286,7 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
 async function waitForWorktree(jobId: string, timeoutMs: number): Promise<boolean> {
   const startTime = Date.now();
   const pollInterval = 500; // Check every 500ms
-  const conn = getConn();
+  const conn = await getDb();
 
   while (Date.now() - startTime < timeoutMs) {
     const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);

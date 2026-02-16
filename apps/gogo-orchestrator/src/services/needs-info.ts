@@ -1,7 +1,8 @@
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { JobStatus } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import {
   AGENT_COMMENT_MARKER,
   createIssueCommentForRepo,
@@ -10,11 +11,13 @@ import {
 } from "./github/index.js";
 import { applyTransitionAtomic, validateTransition } from "./state-machine.js";
 
+const log = createServiceLogger("needs-info");
+
 /**
  * Transition a job to NEEDS_INFO state and post a question to GitHub
  */
 export async function enterNeedsInfo(jobId: string, question: string): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (!job) {
@@ -37,7 +40,7 @@ export async function enterNeedsInfo(jobId: string, question: string): Promise<v
     if (!result.success) {
       throw new Error(result.error || "Failed to transition to needs_info");
     }
-    console.log(`[needs-info] Manual job ${jobId} entered needs_info state (no GitHub comment)`);
+    log.info({ jobId }, "Manual job entered needs_info state (no GitHub comment)");
     return;
   }
 
@@ -54,14 +57,14 @@ export async function enterNeedsInfo(jobId: string, question: string): Promise<v
     throw new Error(result.error || "Failed to transition to needs_info");
   }
 
-  console.log(`[needs-info] Job ${jobId} entered needs_info state, GitHub comment ID: ${commentId}`);
+  log.info({ jobId, commentId }, "Job entered needs_info state");
 }
 
 /**
  * Poll all jobs in NEEDS_INFO state for human responses
  */
 export async function pollNeedsInfoJobs(): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const needsInfoJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ?", ["needs_info"]);
 
   if (needsInfoJobs.length === 0) {
@@ -73,13 +76,13 @@ export async function pollNeedsInfoJobs(): Promise<void> {
     return;
   }
 
-  console.log(`[needs-info] Polling ${githubJobs.length} jobs for responses...`);
+  log.info({ jobCount: githubJobs.length }, "Polling jobs for responses");
 
   for (const job of githubJobs) {
     try {
       await checkJobForResponse(job);
     } catch (error) {
-      console.error(`[needs-info] Error checking job ${job.id}:`, error);
+      log.error({ err: error, jobId: job.id }, "Error checking job");
     }
   }
 }
@@ -102,7 +105,7 @@ interface CheckResponseResult {
  * Check a specific job by ID for a response (for manual trigger)
  */
 export async function checkJobForResponseById(jobId: string): Promise<CheckResponseResult> {
-  const conn = getConn();
+  const conn = await getDb();
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (!job) {
@@ -118,12 +121,12 @@ export async function checkJobForResponseById(jobId: string): Promise<CheckRespo
 
 async function checkJobForResponse(job: JobWithNeedsInfo): Promise<CheckResponseResult> {
   if (!job.needs_info_comment_id) {
-    console.warn(`[needs-info] Job ${job.id} missing needs_info_comment_id`);
+    log.warn({ jobId: job.id }, "Job missing needs_info_comment_id");
     return { responseFound: false };
   }
 
   if (!job.repository_id) {
-    console.warn(`[needs-info] Job ${job.id} missing repository_id`);
+    log.warn({ jobId: job.id }, "Job missing repository_id");
     return { responseFound: false };
   }
 
@@ -138,18 +141,19 @@ async function checkJobForResponse(job: JobWithNeedsInfo): Promise<CheckResponse
   if (humanComments.length === 0) {
     if (comments.length > 0) {
       const lastCommentId = Math.max(...comments.map((c) => c.id));
-      const conn = getConn();
+      const conn = await getDb();
       await execute(conn, "UPDATE jobs SET last_checked_comment_id = ? WHERE id = ?", [lastCommentId, job.id]);
     }
     return { responseFound: false };
   }
 
   const response = humanComments[0];
-  console.log(
-    `[needs-info] Job ${job.id} received response from ${response.user?.login}: ${response.body.substring(0, 100)}...`,
+  log.info(
+    { jobId: job.id, from: response.user?.login, response: response.body.substring(0, 100) },
+    "Job received response",
   );
 
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
   await execute(
     conn,
@@ -174,10 +178,10 @@ async function checkJobForResponse(job: JobWithNeedsInfo): Promise<CheckResponse
   });
 
   if (!result.success) {
-    console.error(`[needs-info] Failed to transition job ${job.id} to running: ${result.error}`);
+    log.error({ jobId: job.id, error: result.error }, "Failed to transition job to running");
     return { responseFound: false };
   }
 
-  console.log(`[needs-info] Job ${job.id} auto-resumed after human response`);
+  log.info({ jobId: job.id }, "Job auto-resumed after human response");
   return { responseFound: true };
 }

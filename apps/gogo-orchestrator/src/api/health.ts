@@ -1,6 +1,6 @@
 import { queryAll } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { agentRegistry } from "../services/agents/index.js";
 import { getAllRateLimitInfo } from "../services/github/index.js";
 import { getRecentHealthEvents } from "../services/health-events.js";
@@ -19,7 +19,7 @@ export function setLastPollTime(time: Date): void {
 
 export const healthRouter: FastifyPluginAsync = async (fastify) => {
   fastify.get("/", async () => {
-    const conn = getConn();
+    const conn = await getDb();
 
     // Get job counts by status
     const jobCounts = await queryAll<{ status: string; count: bigint }>(

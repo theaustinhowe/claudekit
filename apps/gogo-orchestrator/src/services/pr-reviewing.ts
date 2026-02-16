@@ -8,8 +8,9 @@
 import { rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { resumeAgent } from "./agent-executor.js";
 import { getRepoDir, removeWorktree } from "./git.js";
@@ -25,11 +26,13 @@ import {
 import { toGitConfigFromRepo } from "./settings-helper.js";
 import { applyTransitionAtomic } from "./state-machine.js";
 
+const log = createServiceLogger("pr-reviewing");
+
 /**
  * Transition a job to pr_reviewing state
  */
 export async function enterPrReviewing(jobId: string): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
 
   if (!job) {
@@ -48,7 +51,7 @@ export async function enterPrReviewing(jobId: string): Promise<void> {
     throw new Error(result.error || "Failed to transition to pr_reviewing");
   }
 
-  console.log(`[pr-reviewing] Job ${jobId} entered pr_reviewing state`);
+  log.info({ jobId }, "Job entered pr_reviewing state");
 }
 
 interface JobWithPr {
@@ -68,46 +71,46 @@ interface JobWithPr {
  * Poll all jobs in pr_reviewing state for review feedback or merge status
  */
 export async function pollPrReviewingJobs(): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const prReviewingJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ?", ["pr_reviewing"]);
 
   if (prReviewingJobs.length === 0) {
     return;
   }
 
-  console.log(`[pr-reviewing] Polling ${prReviewingJobs.length} jobs for PR review feedback...`);
+  log.info({ jobCount: prReviewingJobs.length }, "Polling jobs for PR review feedback");
 
   for (const job of prReviewingJobs) {
     try {
       await checkPrStatus(job);
     } catch (error) {
-      console.error(`[pr-reviewing] Error checking job ${job.id}:`, error);
+      log.error({ err: error, jobId: job.id }, "Error checking job");
     }
   }
 }
 
 async function checkPrStatus(job: JobWithPr): Promise<void> {
   if (!job.pr_number) {
-    console.warn(`[pr-reviewing] Job ${job.id} missing pr_number`);
+    log.warn({ jobId: job.id }, "Job missing pr_number");
     return;
   }
 
   if (!job.repository_id) {
-    console.warn(`[pr-reviewing] Job ${job.id} missing repository_id`);
+    log.warn({ jobId: job.id }, "Job missing repository_id");
     return;
   }
 
   const prInfo = await getPullRequestByNumber(job.repository_id, job.pr_number);
 
   if (!prInfo) {
-    console.warn(`[pr-reviewing] Could not fetch PR #${job.pr_number} for job ${job.id}`);
+    log.warn({ jobId: job.id, prNumber: job.pr_number }, "Could not fetch PR for job");
     return;
   }
 
   if (prInfo.merged) {
-    console.log(`[pr-reviewing] Job ${job.id} PR #${job.pr_number} was merged!`);
+    log.info({ jobId: job.id, prNumber: job.pr_number }, "PR was merged");
 
-    const conn = getConn();
+    const conn = await getDb();
     const now = new Date().toISOString();
     await execute(
       conn,
@@ -127,9 +130,9 @@ async function checkPrStatus(job: JobWithPr): Promise<void> {
   }
 
   if (prInfo.state === "closed" && !prInfo.merged) {
-    console.log(`[pr-reviewing] Job ${job.id} PR #${job.pr_number} was closed without merge`);
+    log.info({ jobId: job.id, prNumber: job.pr_number }, "PR was closed without merge");
 
-    const conn = getConn();
+    const conn = await getDb();
     const now = new Date().toISOString();
     await execute(
       conn,
@@ -171,7 +174,7 @@ async function checkForReviewFeedback(job: JobWithPr): Promise<void> {
   const humanIssueComments = issueComments.filter(isHumanComment);
 
   // Update tracking IDs even if no human comments
-  const conn = getConn();
+  const conn = await getDb();
   const sets: string[] = [];
   const params: unknown[] = [];
 
@@ -199,7 +202,7 @@ async function checkForReviewFeedback(job: JobWithPr): Promise<void> {
 
   const feedback = formatReviewFeedback(humanReviewComments, humanIssueComments);
 
-  console.log(`[pr-reviewing] Job ${job.id} received review feedback: ${feedback.substring(0, 100)}...`);
+  log.info({ jobId: job.id, feedback: feedback.substring(0, 100) }, "Job received review feedback");
 
   const now = new Date().toISOString();
   await execute(
@@ -226,7 +229,7 @@ async function checkForReviewFeedback(job: JobWithPr): Promise<void> {
   const result = await applyTransitionAtomic(job.id, "running", "Received PR review feedback");
 
   if (!result.success) {
-    console.error(`[pr-reviewing] Failed to transition job ${job.id} to running: ${result.error}`);
+    log.error({ jobId: job.id, error: result.error }, "Failed to transition job to running");
     return;
   }
 
@@ -241,10 +244,10 @@ async function checkForReviewFeedback(job: JobWithPr): Promise<void> {
     const resumeResult = await resumeAgent(job.id, resumeMessage, job.agent_type || undefined);
 
     if (!resumeResult.success) {
-      console.error(`[pr-reviewing] Failed to resume agent for job ${job.id}: ${resumeResult.error}`);
+      log.error({ jobId: job.id, error: resumeResult.error }, "Failed to resume agent for job");
     }
   } else {
-    console.log(`[pr-reviewing] Job ${job.id} has no session to resume. Job moved to running for manual action.`);
+    log.info({ jobId: job.id }, "Job has no session to resume, moved to running for manual action");
   }
 }
 
@@ -271,21 +274,21 @@ function formatReviewFeedback(reviewComments: PullRequestReviewComment[], issueC
 
 async function cleanupWorktreeAfterMerge(job: JobWithPr): Promise<void> {
   if (!job.worktree_path) {
-    console.log(`[pr-reviewing] Job ${job.id} has no worktree path, skipping cleanup`);
+    log.info({ jobId: job.id }, "Job has no worktree path, skipping cleanup");
     return;
   }
 
   if (!job.repository_id) {
-    console.log(`[pr-reviewing] Job ${job.id} has no repository ID, skipping cleanup`);
+    log.info({ jobId: job.id }, "Job has no repository ID, skipping cleanup");
     return;
   }
 
   try {
-    const conn = getConn();
+    const conn = await getDb();
     const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repository_id]);
 
     if (!repo) {
-      console.warn(`[pr-reviewing] Repository ${job.repository_id} not found for job ${job.id}`);
+      log.warn({ jobId: job.id, repositoryId: job.repository_id }, "Repository not found for job");
       return;
     }
 
@@ -301,11 +304,11 @@ async function cleanupWorktreeAfterMerge(job: JobWithPr): Promise<void> {
     const normalizedRepoDir = resolve(repoDir);
     const normalizedWorktreePath = resolve(job.worktree_path);
     if (!normalizedWorktreePath.startsWith(normalizedRepoDir)) {
-      console.warn(`[pr-reviewing] Job ${job.id} worktree path is outside repo directory, skipping cleanup`);
+      log.warn({ jobId: job.id }, "Job worktree path is outside repo directory, skipping cleanup");
       return;
     }
 
-    console.log(`[pr-reviewing] Auto-cleaning up worktree for job ${job.id}: ${job.worktree_path}`);
+    log.info({ jobId: job.id, worktreePath: job.worktree_path }, "Auto-cleaning up worktree for job");
 
     await removeWorktree(gitConfig, job.worktree_path);
 
@@ -342,8 +345,8 @@ async function cleanupWorktreeAfterMerge(job: JobWithPr): Promise<void> {
       broadcast({ type: "job:updated", payload: updated });
     }
 
-    console.log(`[pr-reviewing] Successfully cleaned up worktree for job ${job.id}`);
+    log.info({ jobId: job.id }, "Successfully cleaned up worktree for job");
   } catch (error) {
-    console.error(`[pr-reviewing] Failed to cleanup worktree for job ${job.id}:`, error);
+    log.error({ err: error, jobId: job.id }, "Failed to cleanup worktree for job");
   }
 }

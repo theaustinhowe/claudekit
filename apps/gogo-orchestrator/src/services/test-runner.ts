@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { execute, parseJsonField, queryOne } from "@devkit/duckdb";
 import type { LogStream } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbSetting } from "../db/schema.js";
 import { sendLogToSubscribers } from "../ws/handler.js";
 
@@ -18,7 +18,7 @@ interface LogState {
 
 async function emitLog(jobId: string, stream: LogStream, content: string, state: LogState): Promise<void> {
   const sequence = state.sequence++;
-  const conn = getConn();
+  const conn = await getDb();
 
   await execute(
     conn,
@@ -30,7 +30,7 @@ async function emitLog(jobId: string, stream: LogStream, content: string, state:
 }
 
 async function getTestCommands(): Promise<string[]> {
-  const conn = getConn();
+  const conn = await getDb();
   const setting = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["testCommands"]);
 
   if (!setting) {
@@ -50,7 +50,7 @@ async function getTestCommands(): Promise<string[]> {
 }
 
 async function getMaxTestRetries(): Promise<number> {
-  const conn = getConn();
+  const conn = await getDb();
   const setting = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["maxTestRetries"]);
 
   if (!setting) {

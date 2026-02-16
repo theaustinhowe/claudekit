@@ -1,14 +1,17 @@
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { type GitHubIssue, getIssuesWithLabel, removeLabelFromIssue } from "./github/index.js";
+
+const log = createServiceLogger("issue-polling");
 
 /**
  * Get all active repositories that have auto-create enabled
  */
 async function getActiveRepositories(): Promise<DbRepository[]> {
-  const conn = getConn();
+  const conn = await getDb();
   return queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true AND auto_create_jobs = true");
 }
 
@@ -16,7 +19,7 @@ async function getActiveRepositories(): Promise<DbRepository[]> {
  * Check if a job already exists for an issue
  */
 async function jobExistsForIssue(repositoryId: string, issueNumber: number): Promise<boolean> {
-  const conn = getConn();
+  const conn = await getDb();
   const existing = await queryOne<{ id: string }>(
     conn,
     "SELECT id FROM jobs WHERE repository_id = ? AND issue_number = ? LIMIT 1",
@@ -30,7 +33,7 @@ async function jobExistsForIssue(repositoryId: string, issueNumber: number): Pro
  * Create a job from a GitHub issue
  */
 async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   await execute(
@@ -58,7 +61,7 @@ async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Pro
   // Broadcast job created
   broadcast({ type: "job:created", payload: newJob });
 
-  console.log(`[issue-polling] Created job for issue #${issue.number}: ${issue.title}`);
+  log.info({ issueNumber: issue.number, issueTitle: issue.title }, "Created job for issue");
 }
 
 /**
@@ -94,7 +97,7 @@ export async function pollForLabeledIssues(): Promise<{
   }
 
   if (totalCreated > 0) {
-    console.log(`[issue-polling] Created ${totalCreated} new jobs from ${totalChecked} labeled issues`);
+    log.info({ totalCreated, totalChecked }, "Created new jobs from labeled issues");
   }
 
   return { checked: totalChecked, created: totalCreated };

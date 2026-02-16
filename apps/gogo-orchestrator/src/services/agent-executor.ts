@@ -3,9 +3,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { execute, queryOne, withTransaction } from "@devkit/duckdb";
 import type { JobStatus, LogStream } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState } from "../utils/job-logging.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { agentRegistry } from "./agents/index.js";
 import type { AgentCallbacks, AgentConfig, AgentJobContext, AgentSignal, AgentStartResult } from "./agents/types.js";
@@ -13,6 +14,8 @@ import { AGENT_COMMENT_MARKER, createIssueCommentForRepo, getRepoConfigById } fr
 import { emitHealthEvent } from "./health-events.js";
 import { getClaudeSettings } from "./settings-helper.js";
 import { applyAction, applyTransitionAtomic } from "./state-machine.js";
+
+const log = createServiceLogger("agent-executor");
 
 /**
  * Track executor-level timeouts per job.
@@ -40,11 +43,11 @@ async function setupExecutorTimeout(jobId: string, agentType: string): Promise<v
     executorTimeouts.delete(jobId);
 
     // Check if job is still running (agent's own timeout may have handled it)
-    const conn = getConn();
+    const conn = await getDb();
     const job = await queryOne<{ status: string }>(conn, "SELECT status FROM jobs WHERE id = ?", [jobId]);
     if (!job || job.status !== "running") return;
 
-    console.log(`[agent-executor] Executor timeout reached for job ${jobId} after ${executorTimeoutMs}ms`);
+    log.info({ jobId, executorTimeoutMs }, "Executor timeout reached for job");
 
     const result = await applyTransitionAtomic(jobId, "paused", "Agent timed out (executor safety net)", {
       pause_reason: "Agent timed out - session preserved for resume",
@@ -211,7 +214,7 @@ function createAgentCallbacks(
     },
 
     onSessionCreated: async (sessionId: string) => {
-      const conn = getConn();
+      const conn = await getDb();
       await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
         sessionId,
         new Date().toISOString(),
@@ -221,7 +224,7 @@ function createAgentCallbacks(
     },
 
     onPhaseChange: async (phase: string, progress?: number) => {
-      const conn = getConn();
+      const conn = await getDb();
       await execute(conn, "UPDATE jobs SET phase = ?, progress = ?, updated_at = ? WHERE id = ?", [
         phase,
         progress ?? null,
@@ -242,7 +245,7 @@ function createAgentCallbacks(
  * Start an agent for a job
  */
 export async function startAgent(jobId: string, agentType?: string): Promise<AgentStartResult> {
-  const conn = getConn();
+  const conn = await getDb();
 
   // Get the job
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -341,7 +344,7 @@ export async function resumeAgent(jobId: string, message?: string, agentType?: s
     return { success: true }; // Already running, no action needed
   }
 
-  const conn = getConn();
+  const conn = await getDb();
 
   // Get the job and validate state
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -397,7 +400,7 @@ export async function resumeAgent(jobId: string, message?: string, agentType?: s
 
     if (sessionValidation.canStartFresh) {
       // Session is stale but we can start fresh - clear session and continue
-      console.log(`[agent-executor] Session validation failed for job ${jobId}: ${errorMessage}. Will start fresh.`);
+      log.info({ jobId, errorMessage }, "Session validation failed, will start fresh");
 
       // Clear the stale session ID
       const clearNow = new Date().toISOString();

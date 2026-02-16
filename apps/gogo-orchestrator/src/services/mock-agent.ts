@@ -1,6 +1,6 @@
 import { execute, queryOne } from "@devkit/duckdb";
 import type { JobStatus, LogStream } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";
 
@@ -65,7 +65,7 @@ const MOCK_LOGS: {
 ];
 
 async function updateJobStatus(jobId: string, newStatus: JobStatus, fromStatus: JobStatus): Promise<boolean> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   await execute(conn, "UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?", [newStatus, now, jobId]);
@@ -88,7 +88,7 @@ async function updateJobStatus(jobId: string, newStatus: JobStatus, fromStatus: 
 }
 
 async function emitLog(jobId: string, stream: LogStream, content: string, sequence: number) {
-  const conn = getConn();
+  const conn = await getDb();
 
   // Insert log into database
   await execute(
@@ -116,7 +116,7 @@ export async function startMockRun(
   }
 
   // Get current job state
-  const conn = getConn();
+  const conn = await getDb();
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
   if (!job) {
     return { success: false, error: "Job not found" };

@@ -6,16 +6,19 @@
  */
 
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbRepository } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { type GitHubComment, type GitHubIssue, getIssueCommentsForRepo, getIssuesForRepo } from "./github/index.js";
+
+const log = createServiceLogger("issue-sync");
 
 /**
  * Upsert a GitHub issue into the local database
  */
 async function upsertIssue(repositoryId: string, ghIssue: GitHubIssue): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   // Check if issue already exists locally
@@ -77,7 +80,7 @@ async function upsertIssue(repositoryId: string, ghIssue: GitHubIssue): Promise<
  */
 async function detectIssueEditForJob(repositoryId: string, ghIssue: GitHubIssue): Promise<void> {
   const issueUpdatedAt = new Date(ghIssue.updated_at);
-  const conn = getConn();
+  const conn = await getDb();
 
   // Find active jobs for this issue (not done, not failed)
   const activeJobs = await queryAll<{
@@ -132,7 +135,7 @@ async function detectIssueEditForJob(repositoryId: string, ghIssue: GitHubIssue)
         },
       });
 
-      console.log(`[issue-sync] Issue #${ghIssue.number} was edited after job ${job.id} was created`);
+      log.info({ issueNumber: ghIssue.number, jobId: job.id }, "Issue was edited after job was created");
     }
   }
 }
@@ -141,7 +144,7 @@ async function detectIssueEditForJob(repositoryId: string, ghIssue: GitHubIssue)
  * Upsert a GitHub comment into the local database
  */
 async function upsertComment(repositoryId: string, issueNumber: number, ghComment: GitHubComment): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const now = new Date().toISOString();
 
   const existing = await queryOne<{ id: string }>(
@@ -194,7 +197,7 @@ async function upsertComment(repositoryId: string, issueNumber: number, ghCommen
  * Uses incremental sync if lastIssueSyncAt is set.
  */
 export async function syncIssuesForRepo(repositoryId: string): Promise<{ synced: number; comments: number }> {
-  const conn = getConn();
+  const conn = await getDb();
 
   // Get repo config including last sync time
   const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
@@ -261,7 +264,7 @@ export async function syncCommentsForIssue(repositoryId: string, issueNumber: nu
  * Called from the main polling loop.
  */
 export async function syncAllIssues(): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const repos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
 
   let totalIssues = 0;
@@ -273,12 +276,12 @@ export async function syncAllIssues(): Promise<void> {
       totalIssues += synced;
       totalComments += comments;
     } catch (error) {
-      console.error(`[issue-sync] Failed to sync issues for ${repo.owner}/${repo.name}:`, error);
+      log.error({ err: error, owner: repo.owner, repo: repo.name }, "Failed to sync issues");
     }
   }
 
   if (totalIssues > 0 || totalComments > 0) {
-    console.log(`[issue-sync] Synced ${totalIssues} issues and ${totalComments} comments`);
+    log.info({ totalIssues, totalComments }, "Synced issues and comments");
     // Notify connected clients that issues were synced
     broadcast({
       type: "issue:synced",

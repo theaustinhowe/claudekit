@@ -8,10 +8,13 @@
  */
 
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";
 import { emitHealthEvent } from "./health-events.js";
+
+const log = createServiceLogger("stale-job-monitor");
 
 // A job is considered stale after 60 minutes without log output
 const STALE_THRESHOLD_MS = 60 * 60 * 1000;
@@ -40,7 +43,7 @@ export async function checkStaleJobs(): Promise<{
   let paused = 0;
   let warned = 0;
 
-  const conn = getConn();
+  const conn = await getDb();
   const runningJobs = await queryAll<DbJob>(conn, "SELECT * FROM jobs WHERE status = ?", ["running"]);
 
   const now = Date.now();
@@ -135,7 +138,7 @@ export async function checkStaleJobs(): Promise<{
           silentMinutes,
           processPid: job.process_pid,
         });
-        console.log(`[stale-monitor] Paused stale job ${job.id} - ${reason}`);
+        log.info({ jobId: job.id, reason }, "Paused stale job");
       }
     }
   }

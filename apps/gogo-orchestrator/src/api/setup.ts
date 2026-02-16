@@ -4,7 +4,7 @@ import { queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { Octokit } from "octokit";
 import { z } from "zod";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { type DbRepository, mapRepositoryFull } from "../db/schema.js";
 
 // Validation schemas
@@ -152,7 +152,7 @@ function findGitRepos(dir: string, maxDepth: number, currentDepth = 0): Discover
 export const setupRouter: FastifyPluginAsync = async (fastify) => {
   // Check if setup is needed (no active repositories configured)
   fastify.get("/status", async () => {
-    const conn = getConn();
+    const conn = await getDb();
     const activeRepos = await queryAll<DbRepository>(conn, "SELECT * FROM repositories WHERE is_active = true");
 
     return {
@@ -253,7 +253,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
     // Resolve the token
     let resolvedToken = token;
     if (!resolvedToken && reuseTokenFromRepoId) {
-      const conn = getConn();
+      const conn = await getDb();
       const existingRepo = await queryOne<{ github_token: string }>(
         conn,
         "SELECT github_token FROM repositories WHERE id = ?",
@@ -536,7 +536,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
 
     const { githubToken, reuseTokenFromRepoId, owner, name, triggerLabel, baseBranch, workdirPath } = parsed.data;
 
-    const conn = getConn();
+    const conn = await getDb();
 
     // Resolve the token - either use provided or fetch from existing repo
     let resolvedToken = githubToken;

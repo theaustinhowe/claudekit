@@ -5,11 +5,15 @@
  */
 
 import { queryOne } from "@devkit/duckdb";
-import { getConn } from "../../db/index.js";
+import { getDb } from "../../db/index.js";
 import type { DbRepository } from "../../db/schema.js";
+import { createServiceLogger } from "../../utils/logger.js";
 import { TIMEOUTS, withTimeout } from "../../utils/timeout.js";
 import { getOctokitForRepo } from "./client.js";
 import { RepositoryNotFoundError } from "./errors.js";
+
+const log = createServiceLogger("github-repo");
+
 import type {
   CreatePullRequestOptions,
   GitHubComment,
@@ -24,7 +28,7 @@ import type {
  * Get repository config by ID
  */
 export async function getRepoConfigById(repositoryId: string): Promise<RepoConfig> {
-  const conn = getConn();
+  const conn = await getDb();
   const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [repositoryId]);
 
   if (!repo) {
@@ -113,7 +117,7 @@ export async function getIssuesWithLabel(repositoryId: string, label: string): P
 
     return response.data.map(mapGitHubIssue);
   } catch (error) {
-    console.error(`[github] Failed to fetch issues for ${config.owner}/${config.name}:`, error);
+    log.error({ err: error, owner: config.owner, repo: config.name }, "Failed to fetch issues");
     return [];
   }
 }
@@ -205,9 +209,9 @@ export async function removeLabelFromIssue(repositoryId: string, issueNumber: nu
       TIMEOUTS.GITHUB_API,
       "removeLabelFromIssue",
     );
-    console.log(`[github] Removed label '${label}' from issue #${issueNumber} in ${config.owner}/${config.name}`);
+    log.info({ label, issueNumber, owner: config.owner, repo: config.name }, "Removed label from issue");
   } catch (error) {
-    console.error(`[github] Failed to remove label '${label}' from issue #${issueNumber}:`, error);
+    log.error({ err: error, label, issueNumber }, "Failed to remove label from issue");
   }
 }
 
@@ -284,7 +288,7 @@ export async function findExistingPrForRepo(
 
     const matchingPr = allPrs.find((pr) => pr.head.ref === branch);
     if (matchingPr) {
-      console.log(`[github] Found PR #${matchingPr.number} via fallback search (head: ${matchingPr.head.label})`);
+      log.info({ prNumber: matchingPr.number, headLabel: matchingPr.head.label }, "Found PR via fallback search");
       return {
         number: matchingPr.number,
         html_url: matchingPr.html_url,
@@ -293,7 +297,7 @@ export async function findExistingPrForRepo(
 
     return null;
   } catch (error) {
-    console.error(`[github] Error searching for existing PR:`, error);
+    log.error({ err: error }, "Error searching for existing PR");
     return null;
   }
 }
@@ -374,7 +378,7 @@ export async function getIssuesForRepo(repositoryId: string, options: GetIssuesO
     // Filter out pull requests (GitHub API returns them in issues endpoint)
     return response.data.filter((issue) => !issue.pull_request).map(mapGitHubIssue);
   } catch (error) {
-    console.error(`[github] Failed to fetch issues for ${config.owner}/${config.name}:`, error);
+    log.error({ err: error, owner: config.owner, repo: config.name }, "Failed to fetch issues");
     return [];
   }
 }
@@ -471,7 +475,7 @@ export async function getPullRequestByNumber(repositoryId: string, prNumber: num
       },
     };
   } catch (error) {
-    console.error(`[github] Failed to fetch PR #${prNumber} for repo ${repositoryId}:`, error);
+    log.error({ err: error, prNumber, repositoryId }, "Failed to fetch PR");
     return null;
   }
 }
@@ -514,7 +518,7 @@ export async function getPullRequestReviewComments(
 
     return comments;
   } catch (error) {
-    console.error(`[github] Failed to fetch review comments for PR #${prNumber}:`, error);
+    log.error({ err: error, prNumber }, "Failed to fetch review comments for PR");
     return [];
   }
 }
@@ -566,7 +570,7 @@ export async function getOpenPullRequestsForRepo(repositoryId: string): Promise<
       state: "open" as const,
     }));
   } catch (error) {
-    console.error(`[github] Failed to fetch open PRs for ${config.owner}/${config.name}:`, error);
+    log.error({ err: error, owner: config.owner, repo: config.name }, "Failed to fetch open PRs");
     return [];
   }
 }

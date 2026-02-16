@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { ResearchCategory } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbRepository, DbResearchSession, DbResearchSuggestion } from "../db/schema.js";
 import { mapResearchSuggestion } from "../db/schema.js";
 import { logger } from "../utils/logger.js";
@@ -28,7 +28,7 @@ export async function startResearchSession(
   repositoryId: string,
   focusAreas: ResearchCategory[],
 ): Promise<DbResearchSession> {
-  const conn = getConn();
+  const conn = await getDb();
 
   // Check no other session is running
   const running = await queryOne<DbResearchSession>(
@@ -218,7 +218,7 @@ export async function startResearchSession(
 
     log.error({ sessionId: session.id, error: err.message }, "Research process spawn error");
 
-    const conn = getConn();
+    const conn = await getDb();
     await execute(conn, "UPDATE research_sessions SET status = 'failed', updated_at = ? WHERE id = ?", [
       new Date().toISOString(),
       session.id,
@@ -245,7 +245,7 @@ export async function startResearchSession(
     log.info({ sessionId: session.id, exitCode: code }, "Research process closed");
 
     try {
-      const conn = getConn();
+      const conn = await getDb();
 
       // Process any remaining buffered output
       if (stdoutBuffer.trim()) {
@@ -284,7 +284,7 @@ export async function startResearchSession(
       log.error({ sessionId: session.id, error: String(err) }, "Error in research close handler");
 
       try {
-        const conn = getConn();
+        const conn = await getDb();
         await execute(conn, "UPDATE research_sessions SET status = 'failed', updated_at = ? WHERE id = ?", [
           new Date().toISOString(),
           session.id,
@@ -306,7 +306,7 @@ export async function startResearchSession(
  * Cancel a running research session.
  */
 export async function cancelResearchSession(sessionId: string): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
 
   const session = await queryOne<DbResearchSession>(conn, "SELECT * FROM research_sessions WHERE id = ?", [sessionId]);
   if (!session) {
@@ -346,7 +346,7 @@ export async function cancelResearchSession(sessionId: string): Promise<void> {
  * Get all suggestions for a session.
  */
 export async function getSessionSuggestions(sessionId: string) {
-  const conn = getConn();
+  const conn = await getDb();
   const rows = await queryAll<DbResearchSuggestion>(
     conn,
     "SELECT * FROM research_suggestions WHERE session_id = ? ORDER BY created_at ASC",
@@ -490,7 +490,7 @@ function parseSuggestionBlock(block: string): ParsedSuggestion | null {
 // ---------------------------------------------------------------------------
 
 async function storeSuggestion(sessionId: string, suggestion: ParsedSuggestion): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
 
   await execute(
     conn,

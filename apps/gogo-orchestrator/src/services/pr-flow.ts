@@ -1,8 +1,12 @@
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { emitLog, type LogState } from "../utils/job-logging.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
+
+const log = createServiceLogger("pr-flow");
+
 import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch } from "./git.js";
 import {
   AGENT_COMMENT_MARKER,
@@ -24,7 +28,7 @@ interface ProcessReadyToPrResult {
 }
 
 async function getNextLogSequence(jobId: string): Promise<number> {
-  const conn = getConn();
+  const conn = await getDb();
   const lastLog = await queryOne<{ sequence: number }>(
     conn,
     "SELECT sequence FROM job_logs WHERE job_id = ? ORDER BY sequence DESC LIMIT 1",
@@ -35,7 +39,7 @@ async function getNextLogSequence(jobId: string): Promise<number> {
 }
 
 async function updateJob(jobId: string, updates: Record<string, unknown>): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
   const sets: string[] = [];
   const params: unknown[] = [];
 
@@ -57,7 +61,7 @@ async function updateJob(jobId: string, updates: Record<string, unknown>): Promi
 }
 
 export async function processReadyToPr(jobId: string): Promise<ProcessReadyToPrResult> {
-  const conn = getConn();
+  const conn = await getDb();
 
   // Get current job
   const job = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -338,7 +342,7 @@ ${testCommands.map((cmd) => `- \`${cmd}\` ✓`).join("\n")}`;
  * Only processes jobs where the repository has autoCreatePr enabled.
  */
 export async function pollReadyToPrJobs(): Promise<void> {
-  const conn = getConn();
+  const conn = await getDb();
 
   // Get repositories with auto PR creation enabled
   const autoCreatePrRepos = await queryAll<{ id: string }>(
@@ -364,22 +368,22 @@ export async function pollReadyToPrJobs(): Promise<void> {
     return;
   }
 
-  console.log(`[pr-flow] Processing ${eligibleJobs.length} jobs ready for PR creation...`);
+  log.info({ jobCount: eligibleJobs.length }, "Processing jobs ready for PR creation");
 
   for (const job of eligibleJobs) {
     try {
-      console.log(`[pr-flow] Processing job ${job.id} (issue #${job.issue_number})...`);
+      log.info({ jobId: job.id, issueNumber: job.issue_number }, "Processing job for PR creation");
       const result = await processReadyToPr(job.id);
 
       if (result.success) {
-        console.log(`[pr-flow] Job ${job.id} PR created successfully: ${result.prUrl}`);
+        log.info({ jobId: job.id, prUrl: result.prUrl }, "Job PR created successfully");
       } else if (result.retriedToRunning) {
-        console.log(`[pr-flow] Job ${job.id} returned to running for test fixes`);
+        log.info({ jobId: job.id }, "Job returned to running for test fixes");
       } else {
-        console.error(`[pr-flow] Job ${job.id} PR creation failed: ${result.error}`);
+        log.error({ jobId: job.id, error: result.error }, "Job PR creation failed");
       }
     } catch (error) {
-      console.error(`[pr-flow] Error processing job ${job.id}:`, error);
+      log.error({ err: error, jobId: job.id }, "Error processing job");
     }
   }
 }

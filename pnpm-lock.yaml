@@ -601,6 +601,12 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
+      motion:
+        specifier: ^12.0.0
+        version: 12.34.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next:
+        specifier: ^16.0.0
+        version: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-themes:
         specifier: ^0.4.0
         version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

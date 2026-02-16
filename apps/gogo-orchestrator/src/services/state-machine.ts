@@ -1,6 +1,6 @@
 import { buildUpdate, execute, queryOne, withTransaction } from "@devkit/duckdb";
 import { type JobActionType, type JobEventType, type JobStatus, VALID_TRANSITIONS } from "@devkit/gogo-shared";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { type DbJob, JOB_JSON_FIELDS } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";
 
@@ -269,7 +269,7 @@ export async function applyTransitionAtomic(
   message: string,
   updates?: Record<string, unknown>,
 ): Promise<{ success: boolean; error?: string; job?: unknown }> {
-  const conn = getConn();
+  const conn = await getDb();
 
   const result = await withTransaction(conn, async (conn) => {
     // Get current job
@@ -329,7 +329,7 @@ export async function applyActionAtomic(
   payload?: { reason?: string; message?: string; mode?: string },
   metadata?: Record<string, unknown>,
 ): Promise<{ success: boolean; error?: string; job?: unknown }> {
-  const conn = getConn();
+  const conn = await getDb();
 
   const result = await withTransaction(conn, async (conn) => {
     // Get current job

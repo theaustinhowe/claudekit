@@ -1,6 +1,6 @@
 import { parseJsonField, queryOne } from "@devkit/duckdb";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { getConn } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import type { DbSetting } from "../db/schema.js";
 
 // Cache the token in memory to avoid DB lookup on every request
@@ -11,7 +11,7 @@ async function getApiToken(): Promise<string | null> {
   if (tokenChecked) return cachedToken;
 
   try {
-    const conn = getConn();
+    const conn = await getDb();
     const row = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", ["api_token"]);
 
     cachedToken = row ? String(parseJsonField(row.value, null)) : process.env.API_TOKEN || null;

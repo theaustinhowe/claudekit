@@ -1,7 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createDatabase, runMigrations } from "@devkit/duckdb";
-import type { DuckDBConnection } from "@duckdb/node-api";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
@@ -20,38 +19,13 @@ const db = createDatabase({
 
 /**
  * Get (or create) the DuckDB connection.
- * Preferred async API — use this for new code.
  */
 export const getDb = db.getDb;
-
-// Cache the connection after first init for sync access
-let cachedConnection: DuckDBConnection | null = null;
-
-/**
- * Initialize the database connection.
- * Must be called at startup before using getConn().
- */
-export async function initializeDatabase(): Promise<void> {
-  cachedConnection = await db.getDb();
-}
-
-/**
- * Get the raw DuckDB connection (sync).
- * Throws if database is not initialized via initializeDatabase().
- * @deprecated Prefer `await getDb()` for new code.
- */
-export function getConn(): DuckDBConnection {
-  if (!cachedConnection) {
-    throw new Error("Database not initialized. Call initializeDatabase() first.");
-  }
-  return cachedConnection;
-}
 
 /**
  * Close the database connection
  */
 export async function closeDatabase(): Promise<void> {
   await db.close();
-  cachedConnection = null;
   console.log("[db] Database connection closed");
 }

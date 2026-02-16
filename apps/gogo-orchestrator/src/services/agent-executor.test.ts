@@ -7,7 +7,7 @@ vi.mock("node:fs", () => ({
 
 // Mock dependencies before importing the module
 vi.mock("../db/index.js", () => ({
-  getConn: vi.fn(() => ({})),
+  getDb: vi.fn(async () => ({})),
 }));
 
 vi.mock("@devkit/duckdb", () => ({
