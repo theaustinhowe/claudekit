@@ -114,16 +114,16 @@ describe("getTodayUsageWithCost", () => {
     mockCreateReadStream.mockReturnValue(jsonlStream(lines));
 
     const result = await getTodayUsageWithCost();
-    expect(result).not.toBeNull();
-    expect(result?.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
+    if (!result) return expect(result).not.toBeNull();
+    expect(result.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
 
-    const breakdown = result?.modelBreakdown["claude-sonnet-4-5"];
+    const breakdown = result.modelBreakdown["claude-sonnet-4-5"];
     expect(breakdown.inputTokens).toBe(3000);
     expect(breakdown.outputTokens).toBe(1500);
     expect(breakdown.cacheReadInputTokens).toBe(200);
     expect(breakdown.cacheCreationInputTokens).toBe(100);
     expect(breakdown.costUSD).toBeGreaterThan(0);
-    expect(result?.totalCostUSD).toBe(breakdown.costUSD);
+    expect(result.totalCostUSD).toBe(breakdown.costUSD);
   });
 
   it("deduplicates messages by id (last entry wins)", async () => {
@@ -203,9 +203,9 @@ describe("getTodayUsageWithCost", () => {
     mockCreateReadStream.mockReturnValue(jsonlStream(lines));
 
     const result = await getTodayUsageWithCost();
-    expect(result).not.toBeNull();
-    expect(result?.totalCostUSD).toBe(0);
-    expect(Object.keys(result?.modelBreakdown)).toHaveLength(0);
+    if (!result) return expect(result).not.toBeNull();
+    expect(result.totalCostUSD).toBe(0);
+    expect(Object.keys(result.modelBreakdown)).toHaveLength(0);
   });
 
   it("returns null when projects directory is missing", async () => {
@@ -262,15 +262,15 @@ describe("getTodayUsageWithCost", () => {
     mockCreateReadStream.mockReturnValue(jsonlStream(lines));
 
     const result = await getTodayUsageWithCost();
-    expect(result).not.toBeNull();
-    expect(Object.keys(result?.modelBreakdown)).toHaveLength(2);
-    expect(result?.modelBreakdown["claude-opus-4-5"]).toBeDefined();
-    expect(result?.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
+    if (!result) return expect(result).not.toBeNull();
+    expect(Object.keys(result.modelBreakdown)).toHaveLength(2);
+    expect(result.modelBreakdown["claude-opus-4-5"]).toBeDefined();
+    expect(result.modelBreakdown["claude-sonnet-4-5"]).toBeDefined();
     // Opus should be more expensive than sonnet for similar token counts
-    expect(result?.modelBreakdown["claude-opus-4-5"].costUSD).toBeGreaterThan(0);
-    expect(result?.modelBreakdown["claude-sonnet-4-5"].costUSD).toBeGreaterThan(0);
-    expect(result?.totalCostUSD).toBeCloseTo(
-      result?.modelBreakdown["claude-opus-4-5"].costUSD + result?.modelBreakdown["claude-sonnet-4-5"].costUSD,
+    expect(result.modelBreakdown["claude-opus-4-5"].costUSD).toBeGreaterThan(0);
+    expect(result.modelBreakdown["claude-sonnet-4-5"].costUSD).toBeGreaterThan(0);
+    expect(result.totalCostUSD).toBeCloseTo(
+      result.modelBreakdown["claude-opus-4-5"].costUSD + result.modelBreakdown["claude-sonnet-4-5"].costUSD,
       10,
     );
   });
@@ -446,10 +446,10 @@ describe("getClaudeRateLimits", () => {
     });
 
     const result = await getClaudeRateLimits();
-    expect(result).not.toBeNull();
-    expect(result?.extraUsage).toBeNull();
-    expect(result?.fiveHour.utilization).toBe(10);
-    expect(Object.keys(result?.modelLimits)).toHaveLength(0);
+    if (!result) return expect(result).not.toBeNull();
+    expect(result.extraUsage).toBeNull();
+    expect(result.fiveHour.utilization).toBe(10);
+    expect(Object.keys(result.modelLimits)).toHaveLength(0);
   });
 
   it("skips seven_day_oauth_apps and seven_day_cowork from model limits", async () => {

@@ -53,7 +53,7 @@ describe("createFinalMergeRunner", () => {
       .mockResolvedValueOnce([{ flow_id: "f1", flow_name: "Login" }])
       .mockResolvedValueOnce([{ name: "MyApp", project_path: "/project" }]);
 
-    vi.mocked(generateChapters).mockReturnValue([{ flowName: "Login", startTime: "0:00" }]);
+    vi.mocked(generateChapters).mockReturnValue([{ flowName: "Login", startTime: "0:00", startSeconds: 0 }]);
 
     const runner = createFinalMergeRunner();
     const result = await runner(makeCtx());

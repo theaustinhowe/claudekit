@@ -85,7 +85,7 @@ describe("updateUpgradeTask", () => {
   it("skips undefined values", async () => {
     mockExecute.mockResolvedValue(undefined);
 
-    await updateUpgradeTask("task-1", { status: "running", title: undefined });
+    await updateUpgradeTask("task-1", { status: "in_progress", title: undefined });
     const sql = mockExecute.mock.calls[0][1] as string;
     expect(sql).toContain("status");
     expect(sql).not.toContain("title");

@@ -24,7 +24,7 @@ describe("mcp-list-scanner", () => {
         expect(server).toHaveProperty("command");
         expect(server).toHaveProperty("args");
         expect(server).toHaveProperty("tags");
-        expect(server.tags.length).toBeGreaterThan(0);
+        expect(server.tags?.length).toBeGreaterThan(0);
       }
     });
 

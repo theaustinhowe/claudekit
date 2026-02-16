@@ -159,11 +159,11 @@ describe("updateGeneratorProject", () => {
   it("updates project using buildUpdate", async () => {
     mockBuildUpdate.mockReturnValue({
       sql: "UPDATE generator_projects SET status = ? WHERE id = ?",
-      params: ["ready", "proj-1"],
+      params: ["designing", "proj-1"],
     });
     mockExecute.mockResolvedValue(undefined);
 
-    await updateGeneratorProject("proj-1", { status: "ready" });
+    await updateGeneratorProject("proj-1", { status: "designing" });
     expect(mockExecute).toHaveBeenCalled();
   });
 

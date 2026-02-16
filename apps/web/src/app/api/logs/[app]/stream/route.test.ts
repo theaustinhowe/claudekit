@@ -63,6 +63,7 @@ function setupFileMocks(logLines: string[]) {
 
 async function drainAvailableChunks(response: Response): Promise<string> {
   const reader = response.body?.getReader();
+  if (!reader) return "";
   const decoder = new TextDecoder();
   const chunks: string[] = [];
 

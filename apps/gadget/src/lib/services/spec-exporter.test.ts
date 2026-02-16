@@ -57,7 +57,7 @@ describe("spec-exporter", () => {
       const pkgFile = files.find((f) => f.path === "package.json");
 
       expect(pkgFile).toBeDefined();
-      const pkg = JSON.parse(pkgFile?.content);
+      const pkg = JSON.parse(pkgFile?.content ?? "{}");
       expect(pkg.dependencies.next).toBeDefined();
       expect(pkg.dependencies.react).toBeDefined();
       expect(pkg.devDependencies.tailwindcss).toBeDefined();
@@ -69,7 +69,7 @@ describe("spec-exporter", () => {
       const tsconfig = files.find((f) => f.path === "tsconfig.json");
 
       expect(tsconfig).toBeDefined();
-      const config = JSON.parse(tsconfig?.content);
+      const config = JSON.parse(tsconfig?.content ?? "{}");
       expect(config.compilerOptions.jsx).toBe("preserve");
     });
 
@@ -83,8 +83,26 @@ describe("spec-exporter", () => {
     it("generates page files for each route", () => {
       const spec = makeSpec({
         pages: [
-          { id: "p1", route: "/", title: "Home", description: "Home page", component_ids: [] },
-          { id: "p2", route: "/about", title: "About", description: "About page", component_ids: [] },
+          {
+            id: "p1",
+            route: "/",
+            title: "Home",
+            description: "Home page",
+            component_ids: [],
+            layout: null,
+            is_dynamic: false,
+            metadata: {},
+          },
+          {
+            id: "p2",
+            route: "/about",
+            title: "About",
+            description: "About page",
+            component_ids: [],
+            layout: null,
+            is_dynamic: false,
+            metadata: {},
+          },
         ],
       });
 
@@ -99,13 +117,14 @@ describe("spec-exporter", () => {
         {
           id: "e1",
           name: "User",
+          description: "A user entity",
           fields: [
-            { name: "id", type: "string", nullable: false },
-            { name: "email", type: "string", nullable: false },
+            { name: "id", type: "string", nullable: false, default_value: null },
+            { name: "email", type: "string", nullable: false, default_value: null },
           ],
           sample_rows: [{ id: "1", email: "test@test.com" }],
         },
-      ] as MockEntity[];
+      ];
 
       const files = generateExportFiles(makeProject(), makeSpec(), mockData);
       const typesFile = files.find((f) => f.path === "src/lib/types.ts");
@@ -132,7 +151,7 @@ describe("spec-exporter", () => {
       const project = makeProject({ services: ["stripe", "resend"] });
       const files = generateExportFiles(project, makeSpec(), []);
       const pkgFile = files.find((f) => f.path === "package.json");
-      const pkg = JSON.parse(pkgFile?.content);
+      const pkg = JSON.parse(pkgFile?.content ?? "{}");
 
       expect(pkg.dependencies.stripe).toBeDefined();
       expect(pkg.dependencies.resend).toBeDefined();

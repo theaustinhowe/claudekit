@@ -136,84 +136,71 @@ describe("auto-fix-engine", () => {
   });
 
   describe("error detection via handleLogLine", () => {
-    it("detects TypeScript errors in log lines", () => {
-      let logHandler: ((line: string) => void) | null = null;
+    /** Sets up onLog mock to capture the log callback and returns a function to emit log lines. */
+    function captureLogHandler(): (line: string) => void {
+      const ref: { handler: ((line: string) => void) | null } = { handler: null };
       vi.mocked(onLog).mockImplementation((_id, cb) => {
-        logHandler = cb;
+        ref.handler = cb;
         return vi.fn();
       });
+      return (line: string) => {
+        ref.handler?.(line);
+      };
+    }
+
+    it("detects TypeScript errors in log lines", () => {
+      const emitLog = captureLogHandler();
 
       enable("test-project", "/tmp/project");
-      expect(logHandler).not.toBeNull();
 
       // Emit an error line
-      logHandler?.("error TS2345: Argument of type 'string' is not assignable");
+      emitLog("error TS2345: Argument of type 'string' is not assignable");
 
       expect(getState("test-project").status).toBe("detecting");
     });
 
     it("detects SyntaxError in log lines", () => {
-      let logHandler: ((line: string) => void) | null = null;
-      vi.mocked(onLog).mockImplementation((_id, cb) => {
-        logHandler = cb;
-        return vi.fn();
-      });
+      const emitLog = captureLogHandler();
 
       enable("test-project", "/tmp/project");
-      logHandler?.("SyntaxError: Unexpected token");
+      emitLog("SyntaxError: Unexpected token");
       expect(getState("test-project").status).toBe("detecting");
     });
 
     it("detects Module not found errors", () => {
-      let logHandler: ((line: string) => void) | null = null;
-      vi.mocked(onLog).mockImplementation((_id, cb) => {
-        logHandler = cb;
-        return vi.fn();
-      });
+      const emitLog = captureLogHandler();
 
       enable("test-project", "/tmp/project");
-      logHandler?.("Module not found: Error: Can't resolve 'foo'");
+      emitLog("Module not found: Error: Can't resolve 'foo'");
       expect(getState("test-project").status).toBe("detecting");
     });
 
     it("ignores non-error lines", () => {
-      let logHandler: ((line: string) => void) | null = null;
-      vi.mocked(onLog).mockImplementation((_id, cb) => {
-        logHandler = cb;
-        return vi.fn();
-      });
+      const emitLog = captureLogHandler();
 
       enable("test-project", "/tmp/project");
-      logHandler?.("INFO: Server started on port 3000");
+      emitLog("INFO: Server started on port 3000");
       expect(getState("test-project").status).toBe("idle");
     });
 
     it("ignores errors when disabled", () => {
-      let logHandler: ((line: string) => void) | null = null;
-      vi.mocked(onLog).mockImplementation((_id, cb) => {
-        logHandler = cb;
-        return vi.fn();
-      });
+      const emitLog = captureLogHandler();
 
       enable("test-project", "/tmp/project");
       disable("test-project");
-      logHandler?.("error TS2345: Type error");
+      emitLog("error TS2345: Type error");
       expect(getState("test-project").status).toBe("idle");
     });
 
     it("triggers fix after debounce period", async () => {
-      let logHandler: ((line: string) => void) | null = null;
-      vi.mocked(onLog).mockImplementation((_id, cb) => {
-        logHandler = cb;
-        return vi.fn();
-      });
+      const emitLog = captureLogHandler();
       vi.mocked(startSession).mockResolvedValue({
         completionPromise: Promise.resolve(),
         status: "done",
       } as never);
 
       enable("test-project", "/tmp/project");
-      logHandler?.("error TS2345: Type error in foo.ts");
+      emitLog("error TS2345: Type error in foo.ts");
 
       // Advance past debounce (2s)
       await vi.advanceTimersByTimeAsync(2100);
@@ -244,14 +231,14 @@ describe("auto-fix-engine", () => {
     });
 
     it("is a no-op when already fixing", async () => {
-      let logHandler: ((line: string) => void) | null = null;
+      const logRef: { handler: ((line: string) => void) | null } = { handler: null };
       vi.mocked(onLog).mockImplementation((_id, cb) => {
-        logHandler = cb;
+        logRef.handler = cb;
         return vi.fn();
       });
 
       // Create a long-running session to keep status as "fixing"
-      let resolveCompletion: () => void;
+      let resolveCompletion: (() => void) | undefined;
       const completionPromise = new Promise<void>((resolve) => {
         resolveCompletion = resolve;
       });
@@ -261,7 +248,7 @@ describe("auto-fix-engine", () => {
       } as never);
 
       enable("test-project", "/tmp/project");
-      logHandler?.("error TS2345: Type error");
+      logRef.handler?.("error TS2345: Type error");
 
       // Trigger the debounce
       await vi.advanceTimersByTimeAsync(2100);

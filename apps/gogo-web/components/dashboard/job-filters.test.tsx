@@ -35,7 +35,7 @@ vi.mock("./create-manual-job-dialog", () => ({
 import { JobFilters } from "@/components/dashboard/job-filters";
 
 function makeJob(status: string) {
-  return { id: `job-${status}`, status } as { id: string; status: string };
+  return { id: `job-${status}`, status } as never;
 }
 
 describe("JobFilters", () => {

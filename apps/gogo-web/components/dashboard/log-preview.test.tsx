@@ -16,17 +16,15 @@ vi.mock("@/hooks/use-jobs", () => ({
 import { LogPreview } from "@/components/dashboard/log-preview";
 import { useJobLogs } from "@/hooks/use-jobs";
 
-type JobLog = { id: string; content: string; stream: string; jobId: string; sequence: number; createdAt: string };
-
-function makeLog(id: string, content: string, stream = "stdout"): JobLog {
-  return { id, content, stream, jobId: "j1", sequence: 1, createdAt: "2024-01-01T00:00:00Z" };
+function makeLog(id: string, content: string, stream = "stdout") {
+  return { id, content, stream, jobId: "j1", sequence: 1, createdAt: "2024-01-01T00:00:00Z" } as never;
 }
 
 describe("LogPreview", () => {
   afterEach(() => cleanup());
 
   it("renders nothing when no logs", () => {
-    vi.mocked(useJobLogs).mockReturnValue({ data: [] } as ReturnType<typeof useJobLogs>);
+    vi.mocked(useJobLogs).mockReturnValue({ data: [] } as never);
 
     const { container } = render(<LogPreview jobId="j1" />);
     expect(container.innerHTML).toBe("");
@@ -35,7 +33,7 @@ describe("LogPreview", () => {
   it("renders nothing when all logs are too short", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [makeLog("1", "ab"), makeLog("2", "cd")],
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     const { container } = render(<LogPreview jobId="j1" />);
     expect(container.innerHTML).toBe("");
@@ -44,7 +42,7 @@ describe("LogPreview", () => {
   it("renders log lines", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [makeLog("1", "Hello world output line"), makeLog("2", "Another meaningful line")],
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogPreview jobId="j1" />);
     expect(screen.getByText("Hello world output line")).toBeInTheDocument();
@@ -54,7 +52,7 @@ describe("LogPreview", () => {
   it("strips ANSI escape codes", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [makeLog("1", "\u001b[31mRed text here\u001b[0m")],
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogPreview jobId="j1" />);
     expect(screen.getByText("Red text here")).toBeInTheDocument();
@@ -63,7 +61,7 @@ describe("LogPreview", () => {
   it("collapses multiple spaces", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [makeLog("1", "word    with     spaces")],
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogPreview jobId="j1" />);
     expect(screen.getByText("word with spaces")).toBeInTheDocument();
@@ -76,7 +74,7 @@ describe("LogPreview", () => {
         makeLog("2", "Line two output here"),
         makeLog("3", "Line three output here"),
       ],
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogPreview jobId="j1" maxLines={2} />);
     expect(screen.queryByText("Line one output here")).not.toBeInTheDocument();
@@ -87,7 +85,7 @@ describe("LogPreview", () => {
   it("shows 'Recent output' header", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [makeLog("1", "Some meaningful output text")],
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogPreview jobId="j1" />);
     expect(screen.getByText("Recent output")).toBeInTheDocument();
@@ -96,7 +94,7 @@ describe("LogPreview", () => {
   it("filters out very short lines (3 chars or less)", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [makeLog("1", "ok"), makeLog("2", "A longer meaningful line")],
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogPreview jobId="j1" />);
     expect(screen.queryByText("ok")).not.toBeInTheDocument();

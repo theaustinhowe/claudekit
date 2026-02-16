@@ -44,7 +44,7 @@ beforeEach(() => {
 describe("getClaudeConfig", () => {
   it("returns config for a valid repo", async () => {
     mockQueryOne.mockResolvedValue({ local_path: "~/project" });
-    mockReadSettingsJson.mockResolvedValue({ content: '{"key":"val"}' });
+    mockReadSettingsJson.mockResolvedValue({ content: '{"key":"val"}', parsed: { key: "val" } });
     mockReadClaudeMd.mockResolvedValue("# CLAUDE.md content");
 
     const result = await getClaudeConfig("repo-1");

@@ -41,7 +41,7 @@ describe("createGenerateOutlineRunner", () => {
         { name: "App", framework: "Next.js", auth: "none", database_info: "none", project_path: "/p" },
       ])
       .mockResolvedValueOnce([]);
-    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", costUsd: 0, durationMs: 1000 });
+    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 
     const runner = createGenerateOutlineRunner();
 
@@ -61,8 +61,8 @@ describe("createGenerateOutlineRunner", () => {
     };
     vi.mocked(runClaude).mockResolvedValue({
       stdout: JSON.stringify(outline),
-      costUsd: 0.01,
-      durationMs: 5000,
+      stderr: "",
+      exitCode: 0,
     });
 
     const runner = createGenerateOutlineRunner();

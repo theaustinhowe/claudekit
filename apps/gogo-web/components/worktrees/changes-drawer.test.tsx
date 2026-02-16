@@ -81,13 +81,15 @@ describe("ChangesDrawer", () => {
   it("shows loading state then files", async () => {
     vi.mocked(fetchChangedFiles).mockResolvedValue({
       files: [
-        { path: "src/index.ts", status: "modified", additions: 5, deletions: 2 },
-        { path: "src/utils.ts", status: "added", additions: 10, deletions: 0 },
+        { path: "src/index.ts", status: "modified" },
+        { path: "src/utils.ts", status: "added" },
       ],
       baseBranch: "main",
     });
     vi.mocked(fetchFileDiff).mockResolvedValue({
       diff: "@@ -1 +1 @@\n-old\n+new",
+      filePath: "src/index.ts",
+      baseBranch: "main",
     });
 
     render(<ChangesDrawer jobId="job-1" title="Changes" open={true} onOpenChange={vi.fn()} />);

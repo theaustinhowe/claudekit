@@ -87,7 +87,7 @@ describe("updateSessionRecord", () => {
   it("skips undefined values", async () => {
     mockExecute.mockResolvedValue(undefined);
 
-    await updateSessionRecord("sess-1", { status: "completed", progress: undefined });
+    await updateSessionRecord("sess-1", { status: "done", progress: undefined });
     const sql = mockExecute.mock.calls[0][1] as string;
     expect(sql).not.toContain("progress");
   });
@@ -111,8 +111,8 @@ describe("listSessions", () => {
   it("filters by single status", async () => {
     mockQueryAll.mockResolvedValue([]);
 
-    await listSessions({ status: "completed" });
-    expect(mockQueryAll).toHaveBeenCalledWith({}, expect.stringContaining("status IN (?)"), ["completed"]);
+    await listSessions({ status: "done" });
+    expect(mockQueryAll).toHaveBeenCalledWith({}, expect.stringContaining("status IN (?)"), ["done"]);
   });
 
   it("filters by contextId and sessionType", async () => {

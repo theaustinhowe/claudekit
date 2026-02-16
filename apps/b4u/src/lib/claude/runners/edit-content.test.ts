@@ -50,8 +50,8 @@ describe("createEditContentRunner", () => {
     const updatedData = { summary: { name: "NewApp" }, routes: [] };
     vi.mocked(runClaude).mockResolvedValue({
       stdout: JSON.stringify(updatedData),
-      costUsd: 0,
-      durationMs: 1000,
+      stderr: "",
+      exitCode: 0,
     });
 
     const runner = createEditContentRunner(2, "rename to NewApp");
@@ -63,7 +63,7 @@ describe("createEditContentRunner", () => {
   it("throws when Claude returns no JSON", async () => {
     vi.mocked(queryAll).mockResolvedValue([{ name: "App" }]);
     vi.mocked(queryOne).mockResolvedValue({ project_path: "/p" });
-    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", costUsd: 0, durationMs: 1000 });
+    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 
     const runner = createEditContentRunner(2, "edit");
 

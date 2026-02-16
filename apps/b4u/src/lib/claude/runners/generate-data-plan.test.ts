@@ -59,8 +59,8 @@ describe("createGenerateDataPlanRunner", () => {
     };
     vi.mocked(runClaude).mockResolvedValue({
       stdout: JSON.stringify(dataPlan),
-      costUsd: 0.01,
-      durationMs: 5000,
+      stderr: "",
+      exitCode: 0,
     });
 
     const runner = createGenerateDataPlanRunner();

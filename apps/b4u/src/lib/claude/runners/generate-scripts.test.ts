@@ -70,8 +70,8 @@ describe("createGenerateScriptsRunner", () => {
     };
 
     vi.mocked(runClaude)
-      .mockResolvedValueOnce({ stdout: JSON.stringify(scripts), costUsd: 0, durationMs: 1000 })
-      .mockResolvedValueOnce({ stdout: JSON.stringify(voiceover), costUsd: 0, durationMs: 1000 });
+      .mockResolvedValueOnce({ stdout: JSON.stringify(scripts), stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({ stdout: JSON.stringify(voiceover), stderr: "", exitCode: 0 });
 
     const runner = createGenerateScriptsRunner();
     const result = await runner(makeCtx());
@@ -89,7 +89,7 @@ describe("createGenerateScriptsRunner", () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: "f1", name: "Login", steps: [] }]);
 
-    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", costUsd: 0, durationMs: 1000 });
+    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 
     const runner = createGenerateScriptsRunner();
 

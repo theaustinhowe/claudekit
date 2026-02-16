@@ -66,7 +66,7 @@ describe("AgentsSettings", () => {
     vi.mocked(useAllAgents).mockReturnValue({
       data: [],
       isLoading: true,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getAllByTestId("skeleton")).toHaveLength(2);
@@ -76,7 +76,7 @@ describe("AgentsSettings", () => {
     vi.mocked(useAllAgents).mockReturnValue({
       data: [],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText(/No agents are configured yet/)).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe("AgentsSettings", () => {
     vi.mocked(useAllAgents).mockReturnValue({
       data: [makeAgent()],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Claude Code")).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe("AgentsSettings", () => {
     vi.mocked(useAllAgents).mockReturnValue({
       data: [makeAgent()],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Pause/Resume")).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe("AgentsSettings", () => {
         }),
       ],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Other Agent")).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe("AgentsSettings", () => {
         }),
       ],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Not Configured")).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe("AgentsSettings", () => {
         }),
       ],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Configured Agent")).toBeInTheDocument();
@@ -172,7 +172,7 @@ describe("AgentsSettings", () => {
         }),
       ],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Environment Variables")).toBeInTheDocument();
@@ -190,7 +190,7 @@ describe("AgentsSettings", () => {
         }),
       ],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Run npm install other-agent")).toBeInTheDocument();
@@ -200,7 +200,7 @@ describe("AgentsSettings", () => {
     vi.mocked(useAllAgents).mockReturnValue({
       data: [],
       isLoading: false,
-    } as ReturnType<typeof useAllAgents>);
+    } as never);
 
     render(<AgentsSettings />);
     expect(screen.getByText("Agent Providers")).toBeInTheDocument();

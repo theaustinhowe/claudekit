@@ -27,7 +27,7 @@ describe("createAnalyzeProjectRunner", () => {
   });
 
   it("throws when Claude returns no JSON", async () => {
-    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json here", costUsd: 0, durationMs: 1000 });
+    vi.mocked(runClaude).mockResolvedValue({ stdout: "no json here", stderr: "", exitCode: 0 });
 
     const runner = createAnalyzeProjectRunner("/project");
 
@@ -35,7 +35,7 @@ describe("createAnalyzeProjectRunner", () => {
   });
 
   it("throws on invalid JSON from Claude", async () => {
-    vi.mocked(runClaude).mockResolvedValue({ stdout: "{invalid json}", costUsd: 0, durationMs: 1000 });
+    vi.mocked(runClaude).mockResolvedValue({ stdout: "{invalid json}", stderr: "", exitCode: 0 });
 
     const runner = createAnalyzeProjectRunner("/project");
 
@@ -52,8 +52,8 @@ describe("createAnalyzeProjectRunner", () => {
     };
     vi.mocked(runClaude).mockResolvedValue({
       stdout: JSON.stringify(analysis),
-      costUsd: 0.01,
-      durationMs: 5000,
+      stderr: "",
+      exitCode: 0,
     });
 
     const runner = createAnalyzeProjectRunner("/project");
@@ -74,8 +74,8 @@ describe("createAnalyzeProjectRunner", () => {
   it("reports progress through onProgress", async () => {
     vi.mocked(runClaude).mockResolvedValue({
       stdout: '{"name": "Test"}',
-      costUsd: 0,
-      durationMs: 1000,
+      stderr: "",
+      exitCode: 0,
     });
 
     const ctx = makeCtx();
@@ -93,8 +93,8 @@ describe("createAnalyzeProjectRunner", () => {
   it("extracts JSON from markdown-wrapped output", async () => {
     vi.mocked(runClaude).mockResolvedValue({
       stdout: '```json\n{"name": "Wrapped"}\n```',
-      costUsd: 0,
-      durationMs: 1000,
+      stderr: "",
+      exitCode: 0,
     });
 
     const runner = createAnalyzeProjectRunner("/project");

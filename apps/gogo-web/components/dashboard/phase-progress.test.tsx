@@ -13,10 +13,8 @@ vi.mock("lucide-react", () => ({
 
 import { PhaseProgress } from "@/components/dashboard/phase-progress";
 
-type JobLog = { id: string; content: string; stream: string; jobId: string; sequence: number; createdAt: string };
-
-function makeLog(content: string): JobLog {
-  return { id: "1", content, stream: "stdout", jobId: "j1", sequence: 1, createdAt: "2024-01-01T00:00:00Z" };
+function makeLog(content: string) {
+  return { id: "1", content, stream: "stdout", jobId: "j1", sequence: 1, createdAt: "2024-01-01T00:00:00Z" } as never;
 }
 
 describe("PhaseProgress", () => {

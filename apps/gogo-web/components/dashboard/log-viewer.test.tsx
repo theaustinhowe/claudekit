@@ -74,7 +74,7 @@ describe("LogViewer", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [],
       isLoading: true,
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -85,7 +85,7 @@ describe("LogViewer", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [],
       isLoading: false,
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -101,7 +101,7 @@ describe("LogViewer", () => {
         { id: "log-2", stream: "stderr", content: "Error occurred", createdAt: "2024-01-01T00:00:01Z" },
       ],
       isLoading: false,
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -117,7 +117,7 @@ describe("LogViewer", () => {
         { id: "log-3", stream: "system", content: "sys1", createdAt: "2024-01-01T00:00:02Z" },
       ],
       isLoading: false,
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -131,7 +131,7 @@ describe("LogViewer", () => {
     vi.mocked(useJobLogs).mockReturnValue({
       data: [],
       isLoading: false,
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     const { unmount } = render(<LogViewer jobId="job-42" />, { wrapper: createWrapper() });
 
@@ -148,7 +148,7 @@ describe("LogViewer", () => {
         { id: "log-2", stream: "stderr", content: "err2", createdAt: "2024-01-01T00:00:01Z" },
       ],
       isLoading: false,
-    } as ReturnType<typeof useJobLogs>);
+    } as never);
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 

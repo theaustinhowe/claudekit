@@ -31,8 +31,8 @@ describe("createVoiceoverAudioRunner", () => {
       { flow_id: "f2", paragraph_index: 0, text: "Another flow" },
     ]);
     vi.mocked(generateFlowVoiceover)
-      .mockResolvedValueOnce({ filePath: "/audio/f1.mp3", durationEstimate: 10 })
-      .mockResolvedValueOnce({ filePath: "/audio/f2.mp3", durationEstimate: 5 });
+      .mockResolvedValueOnce({ flowId: "f1", filePath: "/audio/f1.mp3", durationEstimate: 10 })
+      .mockResolvedValueOnce({ flowId: "f2", filePath: "/audio/f2.mp3", durationEstimate: 5 });
 
     const runner = createVoiceoverAudioRunner("voice-1", 1.0);
     const result = await runner(makeCtx());
@@ -59,7 +59,7 @@ describe("createVoiceoverAudioRunner", () => {
     // Abort after first generateFlowVoiceover call
     vi.mocked(generateFlowVoiceover).mockImplementation(async () => {
       controller.abort();
-      return { filePath: "/audio/f1.mp3", durationEstimate: 5 };
+      return { flowId: "f1", filePath: "/audio/f1.mp3", durationEstimate: 5 };
     });
 
     const _runner = createVoiceoverAudioRunner("voice-1");

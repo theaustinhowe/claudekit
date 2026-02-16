@@ -21,7 +21,7 @@ beforeEach(() => {
 describe("POST /api/analyze/project", () => {
   it("creates and starts an analyze-project session", async () => {
     mockCreateSession.mockResolvedValue("session-123");
-    mockStartSession.mockResolvedValue(undefined);
+    mockStartSession.mockResolvedValue(undefined as never);
 
     const req = new Request("http://localhost/api/analyze/project", {
       method: "POST",

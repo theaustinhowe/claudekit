@@ -193,7 +193,7 @@ describe("startClaudeRun", () => {
       worktree_path: "/tmp/work",
       repository_id: "repo-1",
     } as DbJob);
-    vi.mocked(getRepoConfigById).mockResolvedValue(null);
+    vi.mocked(getRepoConfigById).mockResolvedValue(null as never);
     const result = await startClaudeRun("job-1");
     expect(result.success).toBe(false);
     expect(result.error).toContain("configuration not found");

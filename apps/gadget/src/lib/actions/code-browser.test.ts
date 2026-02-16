@@ -93,7 +93,7 @@ function mockLocalRepo(repoPath = "/projects/my-app") {
 function mockGitExec(output: string) {
   vi.mocked(execFile).mockImplementation((_cmd, _args, _opts, callback) => {
     if (typeof callback === "function") {
-      (callback as (err: Error | null, result: { stdout: string }) => void)(null, { stdout: output });
+      (callback as never as (err: Error | null, result: { stdout: string }) => void)(null, { stdout: output });
     }
     return {} as ReturnType<typeof execFile>;
   });
@@ -105,7 +105,7 @@ function mockGitExecSequence(...outputs: string[]) {
   for (const output of outputs) {
     mock.mockImplementationOnce((_cmd, _args, _opts, callback) => {
       if (typeof callback === "function") {
-        (callback as (err: Error | null, result: { stdout: string }) => void)(null, { stdout: output });
+        (callback as never as (err: Error | null, result: { stdout: string }) => void)(null, { stdout: output });
       }
       return {} as ReturnType<typeof execFile>;
     });

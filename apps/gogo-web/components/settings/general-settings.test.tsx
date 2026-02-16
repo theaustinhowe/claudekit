@@ -64,7 +64,7 @@ describe("GeneralSettings", () => {
   beforeEach(() => {
     vi.mocked(useSettings).mockReturnValue({
       data: { workDirectory: "/tmp/agent-worktrees", maxParallelJobs: 3 },
-    } as ReturnType<typeof useSettings>);
+    } as never);
     vi.mocked(useUpdateSettings).mockReturnValue({
       mutate: mockMutate,
       isPending: false,
@@ -108,7 +108,7 @@ describe("GeneralSettings", () => {
   it("shows singular 'job' for maxParallelJobs = 1", () => {
     vi.mocked(useSettings).mockReturnValue({
       data: { workDirectory: "/tmp/agent-worktrees", maxParallelJobs: 1 },
-    } as ReturnType<typeof useSettings>);
+    } as never);
     render(<GeneralSettings />);
     expect(screen.getByText("1 job")).toBeInTheDocument();
   });

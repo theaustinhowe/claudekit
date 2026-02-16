@@ -43,7 +43,7 @@ describe("StaleJobsAlert", () => {
     vi.mocked(useStaleJobs).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as ReturnType<typeof useStaleJobs>);
+    } as never);
 
     const { container } = render(<StaleJobsAlert />, { wrapper: createWrapper() });
     expect(container.innerHTML).toBe("");
@@ -53,7 +53,7 @@ describe("StaleJobsAlert", () => {
     vi.mocked(useStaleJobs).mockReturnValue({
       data: { data: [] },
       isLoading: false,
-    } as ReturnType<typeof useStaleJobs>);
+    } as never);
 
     const { container } = render(<StaleJobsAlert />, { wrapper: createWrapper() });
     expect(container.innerHTML).toBe("");
@@ -73,7 +73,7 @@ describe("StaleJobsAlert", () => {
         ],
       },
       isLoading: false,
-    } as ReturnType<typeof useStaleJobs>);
+    } as never);
 
     render(<StaleJobsAlert />, { wrapper: createWrapper() });
     expect(screen.getByText(/stuck job/i)).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe("StaleJobsAlert", () => {
         ],
       },
       isLoading: false,
-    } as ReturnType<typeof useStaleJobs>);
+    } as never);
 
     render(<StaleJobsAlert />, { wrapper: createWrapper() });
     expect(screen.getByText(/job 1/i)).toBeInTheDocument();

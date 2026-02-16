@@ -113,7 +113,7 @@ describe("pollPrReviewingJobs", () => {
     // First job throws, second job succeeds
     vi.mocked(getPullRequestByNumber)
       .mockRejectedValueOnce(new Error("API error"))
-      .mockResolvedValueOnce({ state: "open", merged: false });
+      .mockResolvedValueOnce({ state: "open", merged: false } as never);
 
     // Set up for second job's review check
     vi.mocked(getPullRequestReviewComments).mockResolvedValue([]);
@@ -145,7 +145,7 @@ describe("pollPrReviewingJobs", () => {
       state: "closed",
       merged: true,
       merged_at: "2026-02-16T12:00:00Z",
-    });
+    } as never);
     vi.mocked(applyTransitionAtomic).mockResolvedValue({ success: true });
 
     await pollPrReviewingJobs();
@@ -161,7 +161,7 @@ describe("pollPrReviewingJobs", () => {
     vi.mocked(getPullRequestByNumber).mockResolvedValue({
       state: "closed",
       merged: false,
-    });
+    } as never);
     vi.mocked(applyTransitionAtomic).mockResolvedValue({ success: true });
 
     await pollPrReviewingJobs();
@@ -187,10 +187,10 @@ describe("pollPrReviewingJobs", () => {
         agent_type: "claude-code",
       },
     ]);
-    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false });
+    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false } as never);
     vi.mocked(getPullRequestReviewComments).mockResolvedValue([
       { id: 100, body: "Please fix this", user: { login: "reviewer" }, path: "src/index.ts", line: 10 },
-    ]);
+    ] as never);
     vi.mocked(getPullRequestIssueComments).mockResolvedValue([]);
     vi.mocked(applyTransitionAtomic).mockResolvedValue({ success: true });
     vi.mocked(queryOne).mockResolvedValue({ id: "job-1", status: "running" });
@@ -214,7 +214,7 @@ describe("pollPrReviewingJobs", () => {
         last_checked_pr_review_comment_id: null,
       },
     ]);
-    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false });
+    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false } as never);
     vi.mocked(getPullRequestReviewComments).mockResolvedValue([]);
     vi.mocked(getPullRequestIssueComments).mockResolvedValue([]);
 
@@ -235,11 +235,11 @@ describe("pollPrReviewingJobs", () => {
         last_checked_pr_review_comment_id: null,
       },
     ]);
-    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false });
+    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false } as never);
     // Bot comments (filtered out as non-human by our mock)
     vi.mocked(getPullRequestReviewComments).mockResolvedValue([
       { id: 200, body: "auto check", user: { login: "github-bot" } },
-    ]);
+    ] as never);
     vi.mocked(getPullRequestIssueComments).mockResolvedValue([]);
 
     await pollPrReviewingJobs();
@@ -264,10 +264,10 @@ describe("pollPrReviewingJobs", () => {
         claude_session_id: "session-1",
       },
     ]);
-    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false });
+    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false } as never);
     vi.mocked(getPullRequestReviewComments).mockResolvedValue([
       { id: 100, body: "fix this", user: { login: "human" } },
-    ]);
+    ] as never);
     vi.mocked(getPullRequestIssueComments).mockResolvedValue([]);
     vi.mocked(applyTransitionAtomic).mockResolvedValue({ success: false, error: "conflict" });
 
@@ -290,10 +290,10 @@ describe("pollPrReviewingJobs", () => {
         agent_type: null,
       },
     ]);
-    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false });
+    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false } as never);
     vi.mocked(getPullRequestReviewComments).mockResolvedValue([
       { id: 100, body: "fix this", user: { login: "human" } },
-    ]);
+    ] as never);
     vi.mocked(getPullRequestIssueComments).mockResolvedValue([]);
     vi.mocked(applyTransitionAtomic).mockResolvedValue({ success: true });
     vi.mocked(queryOne).mockResolvedValue({ id: "job-1", status: "running" });
