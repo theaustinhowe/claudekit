@@ -5,6 +5,9 @@ import { getDb } from "../db/index.js";
 import type { DbJob, DbResearchSession, DbResearchSuggestion, DbSetting } from "../db/schema.js";
 import { mapJob, mapResearchSession, mapResearchSuggestion, mapSetting } from "../db/schema.js";
 import { cancelResearchSession, getSessionSuggestions, startResearchSession } from "../services/research.js";
+import { createServiceLogger } from "../utils/logger.js";
+
+const log = createServiceLogger("research-api");
 
 const StartResearchSchema = z.object({
   repositoryId: z.string().uuid(),
@@ -212,7 +215,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
-        console.error("[research] Failed to convert suggestion to job:", message);
+        log.error({ err: message }, "Failed to convert suggestion to job");
         return reply.status(500).send({ error: `Failed to create job: ${message}` });
       }
     }

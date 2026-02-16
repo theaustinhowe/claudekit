@@ -4,7 +4,10 @@ import { z } from "zod";
 import { getDb } from "../db/index.js";
 import { type DbJob, type DbRepository, mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getOctokitForRepo } from "../services/github/index.js";
+import { createServiceLogger } from "../utils/logger.js";
 import { TIMEOUTS, withTimeout } from "../utils/timeout.js";
+
+const log = createServiceLogger("repositories-api");
 
 // Validation schemas
 const CreateRepositorySchema = z.object({
@@ -492,7 +495,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
 
       return { data: branches, defaultBranch };
     } catch (error) {
-      console.error(`[repositories] Failed to fetch branches for ${repo.owner}/${repo.name}:`, error);
+      log.error({ err: error, owner: repo.owner, repo: repo.name }, "Failed to fetch branches");
       return reply.status(500).send({
         error: "Failed to fetch branches from GitHub",
       });

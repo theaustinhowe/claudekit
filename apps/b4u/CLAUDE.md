@@ -57,3 +57,4 @@ pnpm format       # Biome format
 - Use `cn()` from `@/lib/utils` for conditional class merging
 - TypeScript strict mode enabled
 - DuckDB singleton via `globalThis` caching (see `src/lib/db.ts`)
+- Database path env var: `DATABASE_PATH` (default: `data/b4u.duckdb`)

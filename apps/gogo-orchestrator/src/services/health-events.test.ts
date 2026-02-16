@@ -15,6 +15,14 @@ vi.mock("@devkit/duckdb", () => ({
   checkpoint: vi.fn(),
 }));
 
+vi.mock("../utils/logger.js", () => ({
+  createServiceLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
 vi.mock("../ws/handler.js", () => ({
   broadcast: vi.fn(),
 }));
@@ -38,14 +46,17 @@ describe("health-events", () => {
   });
 
   describe("emitHealthEvent", () => {
-    it("should persist event to database", () => {
+    it("should persist event to database", async () => {
       emitHealthEvent("agent_started", "Agent started for job-1");
 
-      expect(execute).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.stringContaining("INSERT INTO health_events"),
-        expect.arrayContaining(["agent_started", "Agent started for job-1"]),
-      );
+      // persistEvent is async fire-and-forget, wait for microtask
+      await vi.waitFor(() => {
+        expect(execute).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.stringContaining("INSERT INTO health_events"),
+          expect.arrayContaining(["agent_started", "Agent started for job-1"]),
+        );
+      });
     });
 
     it("should broadcast event via WebSocket", () => {
@@ -61,23 +72,28 @@ describe("health-events", () => {
       });
     });
 
-    it("should include metadata when provided", () => {
+    it("should include metadata when provided", async () => {
       emitHealthEvent("stale_job_detected", "Stale job found", { jobId: "j1", silentMinutes: 90 });
 
-      expect(execute).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.stringContaining("INSERT INTO health_events"),
-        expect.arrayContaining([
-          "stale_job_detected",
-          "Stale job found",
-          JSON.stringify({ jobId: "j1", silentMinutes: 90 }),
-        ]),
-      );
+      await vi.waitFor(() => {
+        expect(execute).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.stringContaining("INSERT INTO health_events"),
+          expect.arrayContaining([
+            "stale_job_detected",
+            "Stale job found",
+            JSON.stringify({ jobId: "j1", silentMinutes: 90 }),
+          ]),
+        );
+      });
     });
 
-    it("should pass null metadata when not provided", () => {
+    it("should pass null metadata when not provided", async () => {
       emitHealthEvent("poll_cycle_complete", "Poll done");
 
+      await vi.waitFor(() => {
+        expect(execute).toHaveBeenCalled();
+      });
       const params = vi.mocked(execute).mock.calls[0][2] as unknown[];
       // metadata param should be null
       expect(params[2]).toBeNull();

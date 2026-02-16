@@ -4,6 +4,16 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
+const mockLogger = vi.hoisted(() => ({
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+}));
+
+vi.mock("../utils/logger.js", () => ({
+  createServiceLogger: () => mockLogger,
+}));
+
 vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
@@ -26,19 +36,15 @@ describe("data-pruning", () => {
 
   describe("runDataPruning", () => {
     it("should log 'no old data' when nothing to prune", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       // All three calls to getOldTerminalJobIds return no jobs
       vi.mocked(queryAll).mockResolvedValue([]);
 
       await runDataPruning();
 
-      expect(consoleSpy).toHaveBeenCalledWith("[data-pruning] No old data to prune");
-      consoleSpy.mockRestore();
+      expect(mockLogger.info).toHaveBeenCalledWith("No old data to prune");
     });
 
     it("should prune logs for old terminal jobs", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
       const oldJobs = [{ id: "job-old-1" }, { id: "job-old-2" }];
 
       // getOldTerminalJobIds for logs (14 days), returns old jobs
@@ -59,13 +65,9 @@ describe("data-pruning", () => {
         (call) => typeof call[1] === "string" && call[1].includes("DELETE FROM job_logs"),
       );
       expect(logDeletes).toHaveLength(2);
-
-      consoleSpy.mockRestore();
     });
 
     it("should query for terminal statuses (done, failed)", async () => {
-      vi.spyOn(console, "log").mockImplementation(() => {});
-
       vi.mocked(queryAll).mockResolvedValue([]);
 
       await runDataPruning();
@@ -79,7 +81,6 @@ describe("data-pruning", () => {
     });
 
     it("should prune archived jobs (logs, events, then job records)", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
       const archivedJobs = [{ id: "archived-1" }];
 
       vi.mocked(queryAll)
@@ -96,26 +97,17 @@ describe("data-pruning", () => {
       expect(executeCalls[0][1]).toContain("DELETE FROM job_logs");
       expect(executeCalls[1][1]).toContain("DELETE FROM job_events");
       expect(executeCalls[2][1]).toContain("DELETE FROM jobs");
-
-      consoleSpy.mockRestore();
     });
 
     it("should handle errors gracefully", async () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      vi.spyOn(console, "log").mockImplementation(() => {});
-
       vi.mocked(queryAll).mockRejectedValue(new Error("DB connection failed"));
 
       await runDataPruning();
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[data-pruning] Failed to prune data:", expect.any(Error));
-
-      consoleErrorSpy.mockRestore();
+      expect(mockLogger.error).toHaveBeenCalledWith({ err: expect.any(Error) }, "Failed to prune data");
     });
 
     it("should log completion summary when data was pruned", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
       vi.mocked(queryAll)
         .mockResolvedValueOnce([{ id: "job-1" }]) // pruneOldLogs
         .mockResolvedValueOnce([{ id: "log-1" }, { id: "log-2" }]) // log count for job-1
@@ -124,9 +116,10 @@ describe("data-pruning", () => {
 
       await runDataPruning();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Complete: 2 logs, 0 events, 0 jobs pruned"));
-
-      consoleSpy.mockRestore();
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ logs: 2, events: 0, archivedJobs: 0 }),
+        "Data pruning complete",
+      );
     });
   });
 });

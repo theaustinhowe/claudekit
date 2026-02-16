@@ -4,6 +4,16 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
+const mockLogger = vi.hoisted(() => ({
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+}));
+
+vi.mock("../utils/logger.js", () => ({
+  createServiceLogger: () => mockLogger,
+}));
+
 vi.mock("@devkit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
@@ -175,9 +185,6 @@ describe("needs-info", () => {
     });
 
     it("should handle errors for individual jobs gracefully", async () => {
-      vi.spyOn(console, "log").mockImplementation(() => {});
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
       vi.mocked(queryAll).mockResolvedValue([
         {
           id: "job-1",
@@ -192,12 +199,10 @@ describe("needs-info", () => {
 
       await pollNeedsInfoJobs();
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[needs-info] Error checking job job-1"),
-        expect.any(Error),
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ err: expect.any(Error), jobId: "job-1" }),
+        "Error checking job",
       );
-
-      consoleErrorSpy.mockRestore();
     });
   });
 

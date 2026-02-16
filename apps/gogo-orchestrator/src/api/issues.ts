@@ -91,7 +91,7 @@ async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Pro
   // Broadcast job created
   broadcast({ type: "job:created", payload: mapped });
 
-  console.log(`[issues-api] Created job for issue #${issue.number}: ${issue.title}`);
+  log.info({ issueNumber: issue.number, issueTitle: issue.title }, "Created job for issue");
 
   return { id: mapped.id };
 }
@@ -179,7 +179,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         try {
           await syncIssuesForRepo(repositoryId);
         } catch (error) {
-          console.error("[issues-api] Initial sync failed, returning empty:", error);
+          log.error({ err: error }, "Initial sync failed, returning empty");
         }
       }
 
@@ -284,7 +284,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
 
       return { data: ghIssue };
     } catch (error) {
-      console.error("[issues-api] Failed to create issue:", error);
+      log.error({ err: error }, "Failed to create issue");
       return reply.status(500).send({
         error: "Failed to create issue on GitHub",
         message: error instanceof Error ? error.message : "Unknown error",
@@ -414,7 +414,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
 
           return { data: freshComments.map(mapLocalCommentToResponse) };
         } catch (error) {
-          console.error("[issues-api] Failed to sync comments:", error);
+          log.error({ err: error }, "Failed to sync comments");
           return { data: [] };
         }
       }
@@ -467,7 +467,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
 
         return { data: ghComment };
       } catch (error) {
-        console.error("[issues-api] Failed to create comment:", error);
+        log.error({ err: error }, "Failed to create comment");
         return reply.status(500).send({
           error: "Failed to create comment on GitHub",
           message: error instanceof Error ? error.message : "Unknown error",
@@ -508,7 +508,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         message: `Synced ${synced} issues and ${comments} comments`,
       };
     } catch (error) {
-      console.error("[issues-api] Manual sync failed:", error);
+      log.error({ err: error }, "Manual sync failed");
       return reply.status(500).send({
         error: "Failed to sync issues from GitHub",
         message: error instanceof Error ? error.message : "Unknown error",

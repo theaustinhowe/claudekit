@@ -11,9 +11,9 @@ import { Button } from "@devkit/ui/components/button";
 import { cn } from "@devkit/ui";
 ```
 
-## Components (31)
+## Components (36)
 
-alert-dialog, badge, button, calendar, card, checkbox, collapsible, dialog, diff-viewer, directory-picker, dropdown-menu, file-tree, file-viewer, input, label, markdown-renderer, popover, progress, scroll-area, select, separator, sheet, skeleton, slider, sonner, switch, syntax-highlighter, table, tabs, textarea, tooltip
+alert-dialog, badge, button, calendar, card, checkbox, collapsible, collapsible-sidebar, dialog, diff-viewer, directory-picker, dropdown-menu, error-boundary, file-tree, file-viewer, input, label, markdown-renderer, nav-link, popover, progress, scroll-area, select, separator, sheet, skeleton, slider, sonner, split-panel, switch, syntax-highlighter, table, tabs, textarea, theme-toggle, tooltip
 
 ## Utilities
 

@@ -5,6 +5,14 @@ vi.mock("node:fs", () => ({
   existsSync: vi.fn().mockReturnValue(true),
 }));
 
+vi.mock("../utils/logger.js", () => ({
+  createServiceLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
 // Mock dependencies before importing the module
 vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),

@@ -47,17 +47,13 @@ const eventBuffer: HealthEvent[] = [];
  * Persist a health event to the database (fire-and-forget).
  * Errors are logged but do not affect the caller.
  */
-function persistEvent(event: HealthEvent): void {
+async function persistEvent(event: HealthEvent): Promise<void> {
   const conn = await getDb();
-  execute(
+  await execute(
     conn,
     "INSERT INTO health_events (id, type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?)",
     [event.type, event.message, event.metadata ? JSON.stringify(event.metadata) : null, event.timestamp],
-  )
-    .then(() => {})
-    .catch((error) => {
-      log.error({ err: error }, "Failed to persist event");
-    });
+  );
 }
 
 /**
@@ -78,7 +74,9 @@ export function emitHealthEvent(type: HealthEventType, message: string, metadata
     eventBuffer.shift();
   }
 
-  persistEvent(event);
+  persistEvent(event).catch((error) => {
+    log.error({ err: error }, "Failed to persist event");
+  });
   broadcast({ type: "health:event", payload: event });
 }
 

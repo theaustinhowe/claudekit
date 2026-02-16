@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 
 const DB_DIR = path.join(os.homedir(), ".gadget");
-const DB_PATH = process.env.DB_PATH || path.join(DB_DIR, "data.duckdb");
+const DB_PATH = process.env.DATABASE_PATH || path.join(DB_DIR, "data.duckdb");
 
 const db = createDatabase({
   dbPath: DB_PATH,

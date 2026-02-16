@@ -5,7 +5,18 @@ import { Badge } from "@devkit/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { Skeleton } from "@devkit/ui/components/skeleton";
-import { BookOpen, ChevronDown, Cpu, ExternalLink, Rocket, RotateCw, ScrollText, Video, Wrench } from "lucide-react";
+import {
+  BookOpen,
+  ChevronDown,
+  Cpu,
+  ExternalLink,
+  Monitor,
+  Rocket,
+  RotateCw,
+  ScrollText,
+  Video,
+  Wrench,
+} from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -174,12 +185,18 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                       )}
                     >
                       {/* Upper zone — click to open app */}
-                      <button
-                        type="button"
+                      <div
+                        role={app.status === "running" ? "link" : undefined}
                         tabIndex={app.status === "running" ? 0 : -1}
                         className={cn("w-full text-left", app.status === "running" && "cursor-pointer")}
                         onClick={() => {
                           if (app.status === "running") {
+                            window.open(app.url, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (app.status === "running" && (e.key === "Enter" || e.key === " ")) {
+                            e.preventDefault();
                             window.open(app.url, "_blank", "noopener,noreferrer");
                           }
                         }}
@@ -235,7 +252,7 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                             )}
                           </div>
                         </div>
-                      </button>
+                      </div>
 
                       {/* Lower zone — collapsible logs */}
                       {appLogs.length > 0 && (
