@@ -1,6 +1,7 @@
 "use client";
 
 import { SessionProgressCard } from "@/components/chat/session-progress-card";
+import { B4UDirectoryPicker } from "@/components/ui/directory-picker-wrapper";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePhaseController } from "@/lib/phase-controller";
 import { useApp } from "@/lib/store";
@@ -17,30 +18,11 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
   switch (card.type) {
     case "folder-select":
       return (
-        <button
-          type="button"
-          onClick={() => dispatch({ type: "SET_FILE_BROWSER_OPEN", open: true })}
-          className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-all group bg-muted border border-border rounded-lg text-foreground"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "hsl(var(--primary))";
-            e.currentTarget.style.background = "hsl(var(--primary) / 0.1)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "hsl(var(--border))";
-            e.currentTarget.style.background = "hsl(var(--muted))";
-          }}
-        >
-          <span className="w-[34px] h-[34px] flex items-center justify-center text-md bg-primary/10 rounded-md text-primary">
-            📁
-          </span>
-          <div className="text-left">
-            <div className="text-sm font-medium">Select Project Folder</div>
-            <div className="text-2xs text-muted-foreground/70">Choose a local web app directory to scan</div>
-          </div>
-          <Tooltip label="Browse folders" position="left">
-            <span className="ml-auto text-xs text-primary">→</span>
-          </Tooltip>
-        </button>
+        <div className="px-4 py-3.5 bg-muted border border-border rounded-lg space-y-2">
+          <div className="text-sm font-medium">Select Project Folder</div>
+          <div className="text-2xs text-muted-foreground/70">Choose a local web app directory to scan</div>
+          <B4UDirectoryPicker value="" onChange={(path) => controller.handleFolderSelected(path)} />
+        </div>
       );
 
     case "project-summary":

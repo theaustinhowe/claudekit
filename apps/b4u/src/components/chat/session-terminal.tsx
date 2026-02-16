@@ -2,7 +2,11 @@
 
 import { useAutoScroll } from "@devkit/hooks";
 import { useCallback, useState } from "react";
-import type { LogEntry } from "@/lib/hooks/use-session-stream";
+
+interface LogEntry {
+  log: string;
+  logType: string;
+}
 
 interface SessionTerminalProps {
   logs: LogEntry[];

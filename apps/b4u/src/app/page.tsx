@@ -1,12 +1,11 @@
 "use client";
 
+import { ErrorBoundary } from "@devkit/ui/components/error-boundary";
+import { SplitPanel } from "@devkit/ui/components/split-panel";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { LayoutShell } from "@/components/layout/layout-shell";
-import { SplitPanel } from "@/components/layout/split-panel";
 import { RightPanel } from "@/components/phases/right-panel";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { FileBrowser } from "@/components/ui/file-browser";
 import { useRunParam } from "@/lib/hooks/use-run-param";
 import { useStateSync } from "@/lib/hooks/use-state-sync";
 import { usePhaseController } from "@/lib/phase-controller";
@@ -94,14 +93,6 @@ function AppShell() {
           </ErrorBoundary>
         }
         right={<RightPanel />}
-      />
-      <FileBrowser
-        open={state.fileBrowserOpen}
-        onClose={() => dispatch({ type: "SET_FILE_BROWSER_OPEN", open: false })}
-        onSelect={(path) => {
-          dispatch({ type: "SET_FILE_BROWSER_OPEN", open: false });
-          controller.handleFolderSelected(path);
-        }}
       />
     </LayoutShell>
   );

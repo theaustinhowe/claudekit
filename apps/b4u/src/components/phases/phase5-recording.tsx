@@ -1,8 +1,8 @@
 "use client";
 
+import { useSessionStream } from "@devkit/hooks";
 import { useEffect, useState } from "react";
 import { ErrorState, LoadingState } from "@/components/ui/api-state";
-import { useSessionStream } from "@/lib/hooks/use-session-stream";
 import { useApp } from "@/lib/store";
 import type { FlowScript, RecordingStatus } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
@@ -31,7 +31,7 @@ interface Phase5RecordingProps {
 export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
   const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>("/api/flow-scripts");
   const { state } = useApp();
-  const { events, status: streamStatus } = useSessionStream(state.activeSessionId);
+  const { events, status: streamStatus } = useSessionStream({ sessionId: state.activeSessionId });
   const [recordings, setRecordings] = useState<RecordingStatus[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
 

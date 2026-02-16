@@ -1,7 +1,7 @@
 "use client";
 
+import { useSessionStream } from "@devkit/hooks";
 import { useState } from "react";
-import { useSessionStream } from "@/lib/hooks/use-session-stream";
 import { SessionTerminal } from "./session-terminal";
 
 interface SessionProgressCardProps {
@@ -10,7 +10,8 @@ interface SessionProgressCardProps {
 }
 
 export function SessionProgressCard({ sessionId, label }: SessionProgressCardProps) {
-  const { status, logs, progress, phase, error, elapsed, cancel, reconnect, lastEvent } = useSessionStream(sessionId);
+  const { status, logs, progress, phase, error, elapsed, cancel, reconnect, events } = useSessionStream({ sessionId });
+  const lastEvent = events.length > 0 ? events[events.length - 1] : null;
   const [expanded, setExpanded] = useState(false);
 
   const message = lastEvent?.message ?? label;

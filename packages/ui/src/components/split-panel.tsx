@@ -1,15 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "../utils";
 
 interface SplitPanelProps {
   left: React.ReactNode;
   right: React.ReactNode;
+  defaultWidth?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  mobileLabels?: [string, string];
 }
 
-export function SplitPanel({ left, right }: SplitPanelProps) {
-  const [leftWidth, setLeftWidth] = useState(60);
-  const [activeTab, setActiveTab] = useState<"chat" | "panel">("chat");
+export function SplitPanel({
+  left,
+  right,
+  defaultWidth = 60,
+  minWidth = 35,
+  maxWidth = 75,
+  mobileLabels = ["Chat", "Panel"],
+}: SplitPanelProps) {
+  const [leftWidth, setLeftWidth] = useState(defaultWidth);
+  const [activeTab, setActiveTab] = useState<"left" | "right">("left");
   const [isMobile, setIsMobile] = useState(false);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +44,7 @@ export function SplitPanel({ left, right }: SplitPanelProps) {
       if (!isDragging.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const pct = ((e.clientX - rect.left) / rect.width) * 100;
-      setLeftWidth(Math.min(Math.max(pct, 35), 75));
+      setLeftWidth(Math.min(Math.max(pct, minWidth), maxWidth));
     };
 
     const handleMouseUp = () => {
@@ -47,43 +59,40 @@ export function SplitPanel({ left, right }: SplitPanelProps) {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, []);
+  }, [minWidth, maxWidth]);
 
   if (isMobile) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Mobile tab bar */}
         <div className="flex shrink-0 bg-card border-b border-border">
           <button
             type="button"
-            onClick={() => setActiveTab("chat")}
-            className="flex-1 py-2.5 text-xs font-medium text-center transition-colors"
-            style={{
-              color: activeTab === "chat" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-              borderBottom: activeTab === "chat" ? "2px solid hsl(var(--primary))" : "2px solid transparent",
-              background: activeTab === "chat" ? "hsl(var(--accent))" : "transparent",
-            }}
+            onClick={() => setActiveTab("left")}
+            className={cn(
+              "flex-1 py-2.5 text-xs font-medium text-center transition-colors border-b-2",
+              activeTab === "left"
+                ? "text-primary border-primary bg-accent"
+                : "text-muted-foreground border-transparent",
+            )}
           >
-            Chat
+            {mobileLabels[0]}
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("panel")}
-            className="flex-1 py-2.5 text-xs font-medium text-center transition-colors"
-            style={{
-              color: activeTab === "panel" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-              borderBottom: activeTab === "panel" ? "2px solid hsl(var(--primary))" : "2px solid transparent",
-              background: activeTab === "panel" ? "hsl(var(--accent))" : "transparent",
-            }}
+            onClick={() => setActiveTab("right")}
+            className={cn(
+              "flex-1 py-2.5 text-xs font-medium text-center transition-colors border-b-2",
+              activeTab === "right"
+                ? "text-primary border-primary bg-accent"
+                : "text-muted-foreground border-transparent",
+            )}
           >
-            Panel
+            {mobileLabels[1]}
           </button>
         </div>
-
-        {/* Mobile content */}
         <div className="flex-1 overflow-hidden">
-          <div className={activeTab === "chat" ? "h-full" : "hidden"}>{left}</div>
-          <div className={activeTab === "panel" ? "h-full" : "hidden"}>{right}</div>
+          <div className={activeTab === "left" ? "h-full" : "hidden"}>{left}</div>
+          <div className={activeTab === "right" ? "h-full" : "hidden"}>{right}</div>
         </div>
       </div>
     );

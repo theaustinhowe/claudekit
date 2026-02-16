@@ -1,9 +1,9 @@
 "use client";
 
 import { ClaudeUsageDialog, HeaderUsageWidget } from "@devkit/claude-usage/components/usage-shared";
+import { ThemeToggle } from "@devkit/ui/components/theme-toggle";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { SessionIndicator } from "@/components/sessions/session-indicator";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 import type { ClaudeRateLimits, ClaudeUsageStats } from "@/lib/types";
 import { MobileMenuButton, MobileSidebar } from "./app-sidebar";

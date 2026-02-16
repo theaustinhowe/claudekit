@@ -43,8 +43,6 @@ export interface UseAppThemeOptions {
   storageKey?: string;
   /** Default theme when no stored value exists. Default: "amethyst" */
   defaultTheme?: ThemeId;
-  /** Legacy storage keys to migrate from (old key → new key). */
-  legacyKeys?: string[];
 }
 
 export interface UseAppThemeReturn {
@@ -56,29 +54,19 @@ export interface UseAppThemeReturn {
 }
 
 export function useAppTheme(options: UseAppThemeOptions = {}): UseAppThemeReturn {
-  const { storageKey = "devkit-theme", defaultTheme = DEFAULT_THEME, legacyKeys = [] } = options;
+  const { storageKey = "devkit-theme", defaultTheme = DEFAULT_THEME } = options;
 
   const [theme, setThemeState] = useState<ThemeId>(defaultTheme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Migrate from legacy storage keys
-    for (const oldKey of legacyKeys) {
-      const oldVal = localStorage.getItem(oldKey);
-      if (oldVal) {
-        localStorage.setItem(storageKey, oldVal);
-        localStorage.removeItem(oldKey);
-        break;
-      }
-    }
-
     const stored = localStorage.getItem(storageKey);
     if (stored && THEMES.some((t) => t.id === stored)) {
       setThemeState(stored);
       applyThemeClass(stored);
     }
     setMounted(true);
-  }, [storageKey, legacyKeys]);
+  }, [storageKey]);
 
   const setTheme = useCallback(
     (newTheme: ThemeId) => {

@@ -1,24 +1,26 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import { Button } from "./button";
 
-interface Props {
+interface ErrorBoundaryProps {
   children: ReactNode;
   fallbackLabel?: string;
+  onReset?: () => void;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
@@ -28,6 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleReset = () => {
     this.setState({ hasError: false, error: null });
+    this.props.onReset?.();
   };
 
   render() {
@@ -42,24 +45,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="text-2xs mb-4 break-words text-muted-foreground/70">
               {this.state.error?.message || "An unexpected error occurred"}
             </div>
-            <button
-              type="button"
-              onClick={this.handleReset}
-              className="px-4 py-2 text-xs font-medium transition-colors bg-muted border border-border rounded-md text-foreground"
-              style={{
-                borderColor: "hsl(var(--foreground) / 0.2)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "hsl(var(--primary))";
-                e.currentTarget.style.color = "hsl(var(--primary))";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "hsl(var(--foreground) / 0.2)";
-                e.currentTarget.style.color = "";
-              }}
-            >
+            <Button variant="outline" size="sm" onClick={this.handleReset}>
               Try again
-            </button>
+            </Button>
           </div>
         </div>
       );

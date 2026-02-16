@@ -1,9 +1,9 @@
 "use client";
 
+import { ThemeToggle } from "@devkit/ui/components/theme-toggle";
 import Image from "next/image";
 import Link from "next/link";
 import { SetupWizard } from "@/components/setup/setup-wizard";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useRepositories } from "@/hooks/use-repositories";
 
 export default function SetupPage() {

@@ -3,8 +3,8 @@
 import type { ClaudeRateLimits, ClaudeUsageStats } from "@devkit/claude-usage";
 import { ClaudeUsageDialog, HeaderUsageWidget } from "@devkit/claude-usage/components/usage-shared";
 import { cn } from "@devkit/ui";
+import { ThemeToggle } from "@devkit/ui/components/theme-toggle";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 import { useApp } from "@/lib/store";
 import { PHASE_LABELS, type Phase } from "@/lib/types";
