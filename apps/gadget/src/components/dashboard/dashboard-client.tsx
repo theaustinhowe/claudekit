@@ -10,7 +10,6 @@ import {
   Brush,
   CheckCircle,
   Clock,
-  Eye,
   FolderGit2,
   Hammer,
   MessageSquare,
@@ -150,15 +149,6 @@ function GettingStartedChecklist({ onboarding }: { onboarding: OnboardingState }
 
 /* ─── Needs Attention List ───────────────────────────────────────── */
 
-function getRepoAction(repo: AttentionRepo): {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-} {
-  if (repo.is_stale) return { label: "Scan", icon: Play };
-  if (repo.critical_count > 0 || repo.warning_count > 0) return { label: "Review", icon: Eye };
-  return { label: "View", icon: ArrowRight };
-}
-
 function NeedsAttentionList({ repos }: { repos: AttentionRepo[] }) {
   return (
     <motion.div
@@ -187,53 +177,42 @@ function NeedsAttentionList({ repos }: { repos: AttentionRepo[] }) {
             </div>
           ) : (
             <div className="space-y-1">
-              {repos.map((repo) => {
-                const action = getRepoAction(repo);
-                return (
-                  <Link key={repo.id} href={`/repositories/${repo.id}`}>
-                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
-                      <FolderGit2 className="w-5 h-5 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{repo.name}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {repo.critical_count > 0 && (
-                          <Badge variant="destructive" className="text-xs tabular-nums">
-                            {formatNumber(repo.critical_count)} critical
-                          </Badge>
-                        )}
-                        {repo.warning_count > 0 && repo.critical_count === 0 && (
-                          <Badge
-                            variant="secondary"
-                            className="text-xs bg-warning/10 text-warning border-warning/20 tabular-nums"
-                          >
-                            {formatNumber(repo.warning_count)} warning
-                            {repo.warning_count !== 1 ? "s" : ""}
-                          </Badge>
-                        )}
-                        {repo.is_stale && (
-                          <Badge variant="outline" className="text-xs text-muted-foreground">
-                            {repo.last_scanned_at ? timeAgo(repo.last_scanned_at) : "Not scanned"}
-                          </Badge>
-                        )}
-                        {!repo.is_stale && repo.last_scanned_at && (
-                          <span className="text-xs text-muted-foreground hidden sm:inline">
-                            {timeAgo(repo.last_scanned_at)}
-                          </span>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <action.icon className="w-3.5 h-3.5 mr-1" />
-                          {action.label}
-                        </Button>
-                      </div>
+              {repos.map((repo) => (
+                <Link key={repo.id} href={`/repositories/${repo.id}`}>
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                    <FolderGit2 className="w-5 h-5 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{repo.name}</p>
                     </div>
-                  </Link>
-                );
-              })}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {repo.critical_count > 0 && (
+                        <Badge variant="destructive" className="text-xs tabular-nums">
+                          {formatNumber(repo.critical_count)} critical
+                        </Badge>
+                      )}
+                      {repo.warning_count > 0 && repo.critical_count === 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-warning/10 text-warning border-warning/20 tabular-nums"
+                        >
+                          {formatNumber(repo.warning_count)} warning
+                          {repo.warning_count !== 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                      {repo.is_stale && (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                          {repo.last_scanned_at ? timeAgo(repo.last_scanned_at) : "Not scanned"}
+                        </Badge>
+                      )}
+                      {!repo.is_stale && repo.last_scanned_at && (
+                        <span className="text-xs text-muted-foreground hidden sm:inline">
+                          {timeAgo(repo.last_scanned_at)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </CardContent>
