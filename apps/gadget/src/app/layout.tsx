@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeFOUCScript } from "@devkit/hooks";
 import { Toaster } from "@devkit/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
 import { LayoutShell } from "@/components/layout/layout-shell";
@@ -42,10 +43,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var k="workbench-theme",o="workbench-color-scheme",m={purple:"amethyst",blue:"sapphire",green:"emerald",rose:"ruby",orange:"amber",teal:"slate"},s=localStorage.getItem(k);if(!s){var v=localStorage.getItem(o);if(v){s=m[v]||"amethyst";localStorage.setItem(k,s);localStorage.removeItem(o)}}if(s&&s!=="amethyst")document.documentElement.classList.add("theme-"+s)}catch(e){}})()`,
-          }}
+        <ThemeFOUCScript
+          legacyKeys={["workbench-theme", "workbench-color-scheme"]}
+          legacyThemeMap={{ purple: "amethyst", blue: "sapphire", green: "emerald", rose: "ruby", orange: "amber", teal: "slate" }}
         />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <LayoutShell>{children}</LayoutShell>

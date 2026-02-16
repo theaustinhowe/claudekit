@@ -3,7 +3,8 @@
 import { Badge } from "@devkit/ui/components/badge";
 import { Check, Clock, Loader2, X } from "lucide-react";
 import type { SessionStatus } from "@/lib/types";
-import { cn, formatElapsed } from "@/lib/utils";
+import { cn } from "@devkit/ui";
+import { formatElapsed } from "@/lib/utils";
 
 interface SessionBadgeProps {
   status: SessionStatus;

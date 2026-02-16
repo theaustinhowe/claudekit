@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devki
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -16,7 +16,7 @@ export function ThemeToggle() {
     theme: appTheme,
     setTheme: setAppTheme,
     mounted: themeMounted,
-  } = useAppTheme({ storageKey: "workbench-theme", legacyKeys: ["workbench-color-scheme"] });
+  } = useAppTheme({ legacyKeys: ["workbench-theme", "workbench-color-scheme"] });
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 

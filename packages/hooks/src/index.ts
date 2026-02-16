@@ -1,5 +1,6 @@
 export type { ThemeDefinition, ThemeId, UseAppThemeOptions, UseAppThemeReturn } from "./use-app-theme.js";
 export { THEMES, useAppTheme } from "./use-app-theme.js";
+export { ThemeFOUCScript } from "./theme-fouc-script.js";
 export { useAutoScroll } from "./use-auto-scroll.js";
 export { useIsMobile } from "./use-mobile.js";
 export type {

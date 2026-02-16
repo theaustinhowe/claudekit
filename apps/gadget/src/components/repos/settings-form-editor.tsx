@@ -39,7 +39,8 @@ import {
   serializeFormToJson,
   setFieldValue,
 } from "@/lib/services/claude-settings-schema";
-import { cn, formatNumber } from "@/lib/utils";
+import { cn } from "@devkit/ui";
+import { formatNumber } from "@/lib/utils";
 import { KeyValueEditor } from "./settings-form/key-value-editor";
 import { PermissionRulesEditor } from "./settings-form/permission-rules-editor";
 import { StringArrayEditor } from "./settings-form/string-array-editor";

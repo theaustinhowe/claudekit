@@ -24,7 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { NavLink } from "@/components/layout/nav-link";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface NavItem {
   title: string;

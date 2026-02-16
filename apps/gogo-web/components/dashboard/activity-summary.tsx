@@ -5,7 +5,7 @@ import { differenceInMinutes, formatDistanceToNow } from "date-fns";
 import { Activity, AlertTriangle, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { useJobLogs } from "@/hooks/use-jobs";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 import { PhaseProgress } from "./phase-progress";
 
 // Threshold in minutes before showing stale indicator

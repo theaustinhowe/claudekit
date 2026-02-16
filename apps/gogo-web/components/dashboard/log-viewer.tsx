@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWebSocketContext } from "@/contexts/websocket-context";
 import { useJobLogs } from "@/hooks/use-jobs";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface LogViewerProps {
   jobId: string;

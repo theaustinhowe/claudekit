@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useStaleJobs } from "@/hooks/use-jobs";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface StaleJobsAlertProps {
   onJobSelect?: (jobId: string) => void;

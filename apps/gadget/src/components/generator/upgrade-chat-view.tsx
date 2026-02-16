@@ -21,7 +21,7 @@ import { MarkdownRenderer } from "@/components/code/markdown-renderer";
 import type { StreamEntry } from "@/components/generator/streaming-display";
 import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
 import type { UpgradeTask, UpgradeTaskStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface UpgradeChatViewProps {
   projectId: string;

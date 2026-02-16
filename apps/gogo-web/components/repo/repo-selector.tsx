@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRepositoryContext } from "@/contexts/repository-context";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface RepoSelectorProps {
   collapsed?: boolean;

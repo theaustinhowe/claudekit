@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRepositoryContext } from "@/contexts/repository-context";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 import type { Job, JobStatus } from "@/types/job";
 import { CreateManualJobDialog } from "./create-manual-job-dialog";
 

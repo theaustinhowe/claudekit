@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import { RepoSelector } from "@/components/repo/repo-selector";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJobs } from "@/hooks/use-jobs";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 

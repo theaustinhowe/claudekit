@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devki
 import { ArrowDown, CheckCircle2, Loader2, Pause, ShieldAlert, Sparkles, X, Zap } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AutoFixStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface AutoFixIndicatorProps {
   projectId: string;

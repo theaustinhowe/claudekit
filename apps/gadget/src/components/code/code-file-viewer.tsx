@@ -11,7 +11,8 @@ import { MarkdownRenderer } from "@/components/code/markdown-renderer";
 import { SyntaxHighlighter } from "@/components/code/syntax-highlighter";
 import { IMAGE_EXTENSIONS } from "@/lib/constants";
 import type { CodeFileContent } from "@/lib/types";
-import { cn, formatBytes } from "@/lib/utils";
+import { cn } from "@devkit/ui";
+import { formatBytes } from "@/lib/utils";
 
 interface CodeFileViewerProps {
   file: CodeFileContent;

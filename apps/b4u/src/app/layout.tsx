@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeFOUCScript } from "@devkit/hooks";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
@@ -25,15 +26,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* FOUC prevention: apply theme class before React hydrates */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("b4u-theme");if(t&&t!=="amethyst"){document.documentElement.classList.add("theme-"+t)}}catch(e){}})()`,
-          }}
-        />
-      </head>
       <body className={`${geist.variable} ${geistMono.variable}`}>
+        <ThemeFOUCScript legacyKeys={["b4u-theme"]} />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>

@@ -3,7 +3,7 @@
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useApp } from "@/lib/store";
 import { PHASE_LABELS, type Phase } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 export function AppHeader() {
   const { state, dispatch } = useApp();

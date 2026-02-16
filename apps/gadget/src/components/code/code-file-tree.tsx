@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, File, Folder, FolderOpen } from "lucide-reac
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getDirectoryContents } from "@/lib/actions/code-browser";
 import type { CodeTreeEntry } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface CodeFileTreeProps {
   rootEntries: CodeTreeEntry[];

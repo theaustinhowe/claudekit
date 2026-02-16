@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { DiffViewer } from "@/components/code/diff-viewer";
 import { commitChanges, getGitStatus, getWorkingDiff, stageFiles, unstageFiles } from "@/lib/actions/code-browser";
 import type { GitFileStatus, GitStatusFile, GitStatusResult } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface CodeChangesViewProps {
   repoId: string;

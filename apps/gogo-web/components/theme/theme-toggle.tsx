@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface ThemeToggleProps {
   showLabel?: boolean;
@@ -17,7 +17,7 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ showLabel = false, className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
-  const { theme: appTheme, setTheme: setAppTheme, mounted: themeMounted } = useAppTheme({ storageKey: "gogo-theme" });
+  const { theme: appTheme, setTheme: setAppTheme, mounted: themeMounted } = useAppTheme({ legacyKeys: ["gogo-theme"] });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);

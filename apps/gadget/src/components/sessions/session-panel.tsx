@@ -11,7 +11,8 @@ import { SessionBadge } from "@/components/sessions/session-badge";
 import { useSessionContext } from "@/components/sessions/session-context";
 import { SESSION_TYPE_LABELS } from "@/lib/constants";
 import type { SessionRow } from "@/lib/types";
-import { cn, formatElapsed } from "@/lib/utils";
+import { cn } from "@devkit/ui";
+import { formatElapsed } from "@/lib/utils";
 
 /** Map session types to the relevant tab query param on the context page */
 const SESSION_TYPE_TAB: Partial<Record<string, string>> = {

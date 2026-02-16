@@ -3,3 +3,5 @@ export { createDatabase } from "./connection.js";
 export type { QueryParams } from "./helpers.js";
 export { checkpoint, convertRow, execute, queryAll, queryOne, withTransaction } from "./helpers.js";
 export { buildInClause, buildUpdate, parseJsonField } from "./utils.js";
+export type { MigrateOptions } from "./migrate.js";
+export { runMigrations } from "./migrate.js";

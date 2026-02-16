@@ -2,7 +2,7 @@
 
 import type { JobLog } from "@devkit/gogo-shared";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 // Phase definitions for the work progress indicator
 export type Phase = "setup" | "analysis" | "implementation" | "testing" | "complete";

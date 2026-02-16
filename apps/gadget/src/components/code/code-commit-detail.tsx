@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
 import { DiffViewer } from "@/components/code/diff-viewer";
 import { getCommitDetailAction, getCommitFilePatch } from "@/lib/actions/code-browser";
 import type { CommitDetail, CommitFile, CommitFileStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface CodeCommitDetailProps {
   repoId: string;

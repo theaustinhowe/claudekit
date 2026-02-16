@@ -31,7 +31,7 @@ import { createScanRoot, deleteScanRoot } from "@/lib/actions/scans";
 import { setCleanupFiles } from "@/lib/actions/settings";
 import { DEFAULT_CLEANUP_FILES } from "@/lib/constants";
 import type { ScanRoot } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface SettingsClientProps {
   scanRoots: ScanRoot[];
@@ -60,7 +60,7 @@ export function SettingsClient({
     theme: appTheme,
     setTheme: setAppTheme,
     mounted: themeMounted,
-  } = useAppTheme({ storageKey: "workbench-theme", legacyKeys: ["workbench-color-scheme"] });
+  } = useAppTheme({ legacyKeys: ["workbench-theme", "workbench-color-scheme"] });
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [roots, setRoots] = useState<ScanRoot[]>(initialScanRoots.length > 0 ? initialScanRoots : []);

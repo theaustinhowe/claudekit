@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { forwardRef } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface NavLinkProps extends Omit<React.ComponentPropsWithoutRef<"a">, "href"> {
   href: string;

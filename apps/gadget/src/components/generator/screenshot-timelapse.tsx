@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devki
 import { Film, Maximize2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { ProjectScreenshot } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface ScreenshotTimelapseProps {
   projectId: string;

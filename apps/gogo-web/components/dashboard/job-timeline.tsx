@@ -4,7 +4,7 @@ import type { JobEvent } from "@devkit/gogo-shared";
 import { formatDistanceStrict } from "date-fns";
 import { CheckCircle2, Circle, Clock, Eye, GitPullRequest, Loader2, PauseCircle, XCircle } from "lucide-react";
 import { useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface JobTimelineProps {
   events: JobEvent[];

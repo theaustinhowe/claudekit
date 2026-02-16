@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useWebSocketContext } from "@/contexts/websocket-context";
 import { useHealth } from "@/hooks/use-jobs";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 import { Sidebar } from "./sidebar";
 
 interface AppShellProps {

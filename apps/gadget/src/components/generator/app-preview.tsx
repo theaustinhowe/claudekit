@@ -4,7 +4,7 @@ import { Button } from "@devkit/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { AlertCircle, Circle, Loader2, Monitor, MonitorDot, Play, RefreshCw, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface AppPreviewProps {
   port: number | null;

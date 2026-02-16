@@ -92,7 +92,8 @@ import type {
   Repo,
   RepoWithCounts,
 } from "@/lib/types";
-import { cn, formatNumber, timeAgo } from "@/lib/utils";
+import { cn } from "@devkit/ui";
+import { formatNumber, timeAgo } from "@/lib/utils";
 
 interface RepoDetailClientProps {
   repo: RepoWithCounts;

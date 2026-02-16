@@ -15,6 +15,7 @@
     "@devkit/gogo-shared": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "@devkit/logger": "workspace:*",
+    "@devkit/ui": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.4",
     "@radix-ui/react-collapsible": "^1.1.12",
@@ -48,16 +49,16 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
-    "autoprefixer": "^10.4.20",
     "jsdom": "^25.0.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
   }

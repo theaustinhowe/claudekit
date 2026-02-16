@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { cn, formatElapsed } from "@/lib/utils";
+import { cn } from "@devkit/ui";
+import { formatElapsed } from "@/lib/utils";
 
 type TerminalStatus = "idle" | "connecting" | "streaming" | "done" | "error" | "reconnecting";
 

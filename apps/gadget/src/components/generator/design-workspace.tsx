@@ -53,7 +53,7 @@ import type {
   UpgradeTask,
   UpgradeTaskStatus,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 const stageConfig: Record<GeneratorProjectStatus, { label: string; color: string }> = {
   drafting: { label: "Draft", color: "bg-blue-500/10 text-blue-600" },

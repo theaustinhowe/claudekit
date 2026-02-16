@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 interface DiffLine {
   type: "header" | "hunk" | "add" | "delete" | "context";

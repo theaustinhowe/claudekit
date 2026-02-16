@@ -1,8 +1,11 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { DuckDBConnection } from "@duckdb/node-api";
 import { DuckDBInstance } from "@duckdb/node-api";
-import { execute } from "./helpers.js";
-import { runMigrations } from "./migrate.js";
+import { execute, runMigrations } from "@devkit/duckdb";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 
 // Database path - use environment variable or default to local file
 const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "gogo.duckdb");
@@ -33,7 +36,7 @@ export async function initializeDatabase(): Promise<void> {
   await execute(duckdbConnection, "SET wal_autocheckpoint = '256KB'");
 
   // Run numbered migrations from src/db/migrations/
-  await runMigrations(duckdbConnection);
+  await runMigrations(duckdbConnection, { migrationsDir: MIGRATIONS_DIR });
 
   console.log(`[db] Database initialized at ${dbPath}`);
 }

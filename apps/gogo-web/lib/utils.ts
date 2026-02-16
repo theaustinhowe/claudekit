@@ -1,10 +1,3 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
 /**
  * Format a date as a human-readable relative time string (e.g. "5s ago", "3m ago").
  * Falls back to locale time string for dates older than 1 hour.

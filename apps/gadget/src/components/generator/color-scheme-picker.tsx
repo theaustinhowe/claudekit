@@ -7,7 +7,7 @@ import { Button } from "@devkit/ui/components/button";
 import { Label } from "@devkit/ui/components/label";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@devkit/ui";
 
 const PRESETS = [
   { name: "Indigo/Amber", primary: "#6366f1", accent: "#f59e0b" },
