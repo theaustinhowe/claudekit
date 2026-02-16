@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx scripts/dev.ts",
+    "dev": "tsx scripts/dev-start.ts",
+    "dev:start": "tsx scripts/dev-start.ts",
+    "dev:stop": "tsx scripts/dev-stop.ts",
+    "dev:fg": "tsx scripts/dev.ts",
     "dev:gadget": "pnpm --filter gadget dev",
     "dev:gogo": "stmux -w always -e ERROR -m beep -- [ -t \"web\" \"exec pnpm --filter gogo-web dev\" .. -t \"orchestrator\" \"exec pnpm --filter gogo-orchestrator dev\" ]",
     "dev:web": "pnpm --filter web dev",
@@ -14,6 +17,7 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "pnpm -r test",
+    "db:reset": "tsx scripts/db-reset.ts",
     "knip": "knip",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "storybook": "pnpm --filter @devkit/ui storybook"

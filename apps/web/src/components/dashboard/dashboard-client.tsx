@@ -4,7 +4,7 @@ import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { ChevronDown, Cpu, ExternalLink, Rocket, ScrollText, Video, Wrench } from "lucide-react";
+import { BookOpen, ChevronDown, Cpu, ExternalLink, Rocket, ScrollText, Video, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -31,6 +31,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Rocket: <Rocket className="h-5 w-5" />,
   Cpu: <Cpu className="h-5 w-5" />,
   Video: <Video className="h-5 w-5" />,
+  BookOpen: <BookOpen className="h-5 w-5" />,
 };
 
 const ACCENT_COLORS: Record<string, string> = {
@@ -38,6 +39,7 @@ const ACCENT_COLORS: Record<string, string> = {
   "gogo-web": "border-l-blue-500",
   "gogo-orchestrator": "border-l-cyan-500",
   b4u: "border-l-amber-500",
+  storybook: "border-l-pink-500",
 };
 
 function formatSize(bytes: number): string {

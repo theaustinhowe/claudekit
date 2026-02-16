@@ -39,6 +39,13 @@ const APP_DEFINITIONS = [
     port: 2300,
     icon: "Video",
   },
+  {
+    id: "storybook",
+    name: "Storybook",
+    description: "Interactive component library and documentation",
+    port: 6006,
+    icon: "BookOpen",
+  },
 ];
 
 async function checkAppHealth(port: number): Promise<boolean> {

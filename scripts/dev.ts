@@ -16,6 +16,7 @@ const apps: App[] = [
   { name: "gogo-web", filter: "gogo-web", color: "\x1b[36m", port: 2200 }, // cyan
   { name: "gogo-orch", filter: "gogo-orchestrator", color: "\x1b[33m", port: 2201 }, // yellow
   { name: "b4u", filter: "b4u", color: "\x1b[32m", port: 2300 }, // green
+  { name: "storybook", filter: "@devkit/ui", color: "\x1b[31m", port: 6006 }, // red
 ];
 
 const RESET = "\x1b[0m";
