@@ -20,6 +20,7 @@
     "@devkit/claude-runner": "workspace:*",
     "@devkit/claude-usage": "workspace:*",
     "@devkit/duckdb": "workspace:*",
+    "@devkit/session": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "@devkit/ui": "workspace:*",
     "@dayflow/blossom-color-picker": "^2.0.1",

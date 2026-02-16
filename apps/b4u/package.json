@@ -17,6 +17,7 @@
   "dependencies": {
     "@devkit/claude-runner": "workspace:*",
     "@devkit/claude-usage": "workspace:*",
+    "@devkit/session": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "@devkit/ui": "workspace:*",
     "@duckdb/node-api": "1.4.4-r.1",
