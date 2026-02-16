@@ -50,8 +50,8 @@
   --shadow-elevation-3: var(--shadow-lg);
   --shadow-elevation-4: var(--shadow-xl);
 
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-accordion-down: accordion-down 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-accordion-up: accordion-up 0.2s cubic-bezier(0.32, 0.72, 0, 1);
   --animate-scale-in: scale-in 200ms ease-out;
   --animate-fade-in: fade-in 200ms ease-out;
   --animate-slide-up: slide-up 200ms ease-out;

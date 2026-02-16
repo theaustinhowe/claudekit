@@ -28,7 +28,7 @@ const SheetOverlay = React.forwardRef<HTMLDivElement, React.ComponentPropsWithou
   ({ className, ...props }, ref) => (
     <SheetPrimitive.Backdrop
       className={cn(
-        "fixed inset-0 z-50 bg-black/80 data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0",
+        "fixed inset-0 z-50 bg-black/80 data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[open]:duration-[var(--sht-open-dur,200ms)] data-[closed]:duration-[var(--sht-close-dur,150ms)]",
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ const SheetOverlay = React.forwardRef<HTMLDivElement, React.ComponentPropsWithou
 SheetOverlay.displayName = "SheetOverlay";
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg overflow-y-auto overflow-x-hidden transition ease-in-out data-[open]:animate-in data-[closed]:animate-out data-[closed]:duration-300 data-[open]:duration-500",
+  "fixed z-50 gap-4 bg-background p-6 shadow-lg overflow-y-auto overflow-x-hidden data-[open]:animate-in data-[closed]:animate-out data-[open]:duration-[var(--sht-open-dur,400ms)] data-[closed]:duration-[var(--sht-close-dur,250ms)] data-[open]:ease-out data-[closed]:ease-in",
   {
     variants: {
       side: {
@@ -58,21 +58,40 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Popup>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  /** Animation duration in ms. Close duration is 62.5% of open. Default 400. */
+  duration?: number;
+}
 
 const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Popup ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {children}
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-xs opacity-70 ring-offset-background transition-opacity data-[open]:bg-secondary hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Popup>
-    </SheetPortal>
-  ),
+  ({ side = "right", className, children, duration, style, ...props }, ref) => {
+    const durationStyle =
+      duration != null
+        ? ({
+            "--sht-open-dur": `${duration}ms`,
+            "--sht-close-dur": `${Math.round(duration * 0.625)}ms`,
+            ...style,
+          } as React.CSSProperties & Record<string, string>)
+        : style;
+
+    return (
+      <SheetPortal>
+        <SheetOverlay style={durationStyle} />
+        <SheetPrimitive.Popup
+          ref={ref}
+          style={durationStyle}
+          className={cn(sheetVariants({ side }), className)}
+          {...props}
+        >
+          {children}
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-xs opacity-70 ring-offset-background transition-opacity data-[open]:bg-secondary hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        </SheetPrimitive.Popup>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = "SheetContent";
 
