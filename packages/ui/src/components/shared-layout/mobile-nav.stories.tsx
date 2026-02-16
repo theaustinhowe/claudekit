@@ -26,7 +26,7 @@ const sampleConfig: AppLayoutConfig = {
 
 const mobileOverride = (Story: ComponentType) => (
   <>
-    <style>{`.md\\:hidden { display: flex !important; } .safe-bottom { padding-bottom: 0; }`}</style>
+    <style>{`.md\\:hidden { display: block !important; } .safe-bottom { padding-bottom: 0; }`}</style>
     <Story />
   </>
 );
