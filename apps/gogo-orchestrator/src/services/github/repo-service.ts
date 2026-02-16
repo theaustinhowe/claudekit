@@ -54,7 +54,8 @@ async function getRepoContext(repositoryId: string) {
  * Extracted to avoid repeating this 20-line mapping block in every
  * function that returns issues.
  */
-function mapGitHubIssue(issue: Record<string, unknown>): GitHubIssue {
+// biome-ignore lint/suspicious/noExplicitAny: GitHub API response type is complex
+function mapGitHubIssue(issue: any): GitHubIssue {
   return {
     number: issue.number,
     title: issue.title,
