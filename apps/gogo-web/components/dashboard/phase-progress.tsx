@@ -1,13 +1,13 @@
 "use client";
 
 import type { JobLog } from "@devkit/gogo-shared";
-import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { cn } from "@devkit/ui";
+import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 // Phase definitions for the work progress indicator
-export type Phase = "setup" | "analysis" | "implementation" | "testing" | "complete";
+type Phase = "setup" | "analysis" | "implementation" | "testing" | "complete";
 
-export const PHASES: { key: Phase; label: string }[] = [
+const PHASES: { key: Phase; label: string }[] = [
   { key: "setup", label: "Setup" },
   { key: "analysis", label: "Analysis" },
   { key: "implementation", label: "Implementation" },
@@ -19,7 +19,7 @@ export const PHASES: { key: Phase; label: string }[] = [
  * Detect which phases have been reached based on log content.
  * Returns a map of phase -> true/false.
  */
-export function detectPhases(logs: JobLog[]): Record<Phase, boolean> {
+function detectPhases(logs: JobLog[]): Record<Phase, boolean> {
   const detected: Record<Phase, boolean> = {
     setup: false,
     analysis: false,
@@ -91,7 +91,7 @@ export function detectPhases(logs: JobLog[]): Record<Phase, boolean> {
 /**
  * Find current phase index (last detected phase that's true)
  */
-export function getCurrentPhaseIndex(detectedPhases: Record<Phase, boolean>): number {
+function getCurrentPhaseIndex(detectedPhases: Record<Phase, boolean>): number {
   let lastIndex = -1;
   for (let i = 0; i < PHASES.length; i++) {
     if (detectedPhases[PHASES[i].key]) {

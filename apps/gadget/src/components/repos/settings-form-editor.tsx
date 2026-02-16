@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Input } from "@devkit/ui/components/input";
@@ -39,7 +40,6 @@ import {
   serializeFormToJson,
   setFieldValue,
 } from "@/lib/services/claude-settings-schema";
-import { cn } from "@devkit/ui";
 import { formatNumber } from "@/lib/utils";
 import { KeyValueEditor } from "./settings-form/key-value-editor";
 import { PermissionRulesEditor } from "./settings-form/permission-rules-editor";

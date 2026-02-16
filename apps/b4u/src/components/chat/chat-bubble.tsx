@@ -1,7 +1,7 @@
 "use client";
 
-import type { ChatMessage } from "@/lib/types";
 import { cn } from "@devkit/ui";
+import type { ChatMessage } from "@/lib/types";
 import { ActionCardRenderer } from "./action-card";
 
 interface ChatBubbleProps {

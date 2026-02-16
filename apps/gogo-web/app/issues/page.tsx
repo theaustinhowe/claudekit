@@ -1,5 +1,7 @@
 "use client";
 
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { Inbox } from "lucide-react";
 import { parseAsInteger, parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, useMemo, useState } from "react";
@@ -9,8 +11,6 @@ import { IssueDetailDrawer } from "@/components/issues/issue-detail-drawer";
 import { IssueList } from "@/components/issues/issue-list";
 import { PageTabs, type Tab } from "@/components/layout/page-tabs";
 import { RepoSelector } from "@/components/repo/repo-selector";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useRepositoryContext } from "@/contexts/repository-context";
 import { useCreateIssue, useCreateJobFromIssue, useIssues } from "@/hooks/use-issues";
 import { useJobs } from "@/hooks/use-jobs";

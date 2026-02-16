@@ -247,7 +247,7 @@ export interface ConceptLinkWithConcept extends ConceptLink {
 
 export type ToolCategory = "package-manager" | "runtime" | "dev-tool" | "vcs" | "ai-tool";
 
-export type { ClaudeRateLimits, ClaudeUsageStats, RateLimitWindow } from "@devkit/claude-usage";
+export type { ClaudeRateLimits, ClaudeUsageStats } from "@devkit/claude-usage";
 
 export interface OnboardingState {
   hasScanRoots: boolean;

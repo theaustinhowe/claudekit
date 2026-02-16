@@ -1,7 +1,7 @@
 import { execute, queryAll } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 
-export interface ProcessInfo {
+interface ProcessInfo {
   jobId: string;
   pid: number;
   startedAt: Date;

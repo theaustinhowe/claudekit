@@ -1,6 +1,10 @@
 "use client";
 
 import { useIsMobile } from "@devkit/hooks";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent } from "@devkit/ui/components/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import {
   Activity,
@@ -23,10 +27,6 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RepoBadge } from "@/components/repo/repo-badge";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useJobAction, useJobLogs } from "@/hooks/use-jobs";
 import type { Job } from "@/types/job";
 import { JOB_STATUS_CONFIG } from "@/types/job";

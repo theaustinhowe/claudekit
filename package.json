@@ -15,11 +15,11 @@
     "format": "biome format --write .",
     "test": "pnpm -r test",
     "knip": "knip",
-    "check": "pnpm typecheck && pnpm lint && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "storybook": "pnpm --filter @devkit/ui storybook"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15",
-    "dotenv": "^17.3.1",
     "knip": "^5.83.1",
     "stmux": "^1.8.11",
     "tsx": "^4.21.0",

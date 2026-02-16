@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, FolderGit2, FolderOpen, Github, Loader2, Rocket } from "lucide-react";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { CheckCircle2, FolderGit2, FolderOpen, Github, Loader2, Rocket } from "lucide-react";
 import type { SelectedRepo } from "./setup-wizard";
 
 interface ReviewStepProps {

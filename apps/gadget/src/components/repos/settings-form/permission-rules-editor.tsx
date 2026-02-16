@@ -93,7 +93,7 @@ export function PermissionRulesEditor({ value, onChange, placeholder, fieldPath 
           </PopoverTrigger>
           {filteredSuggestions.length > 0 && (
             <PopoverContent
-              className="p-1 w-[var(--radix-popover-trigger-width)]"
+              className="p-1 w-[var(--anchor-width)]"
               align="start"
               sideOffset={4}
               onOpenAutoFocus={(e) => e.preventDefault()}

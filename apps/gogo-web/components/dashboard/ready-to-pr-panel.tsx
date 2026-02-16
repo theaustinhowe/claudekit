@@ -1,12 +1,12 @@
 "use client";
 
 import type { Job } from "@devkit/gogo-shared";
-import { AlertTriangle, CheckCircle2, ChevronDown, Loader2, RefreshCw, TestTube, Wrench } from "lucide-react";
-import { useState } from "react";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Progress } from "@devkit/ui/components/progress";
+import { AlertTriangle, CheckCircle2, ChevronDown, Loader2, RefreshCw, TestTube, Wrench } from "lucide-react";
+import { useState } from "react";
 
 interface ReadyToPrPanelProps {
   job: Job;

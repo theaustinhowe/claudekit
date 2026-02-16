@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Checkbox } from "@devkit/ui/components/checkbox";
@@ -21,7 +22,6 @@ import { toast } from "sonner";
 import { DiffViewer } from "@/components/code/diff-viewer";
 import { commitChanges, getGitStatus, getWorkingDiff, stageFiles, unstageFiles } from "@/lib/actions/code-browser";
 import type { GitFileStatus, GitStatusFile, GitStatusResult } from "@/lib/types";
-import { cn } from "@devkit/ui";
 
 interface CodeChangesViewProps {
   repoId: string;

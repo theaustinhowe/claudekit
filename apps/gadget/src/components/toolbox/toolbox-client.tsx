@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
@@ -37,7 +38,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { setToolboxToolIds } from "@/lib/actions/toolbox";
 import { DEFAULT_TOOLS, TOOL_CATEGORY_LABELS, type ToolDefinition } from "@/lib/constants/tools";
 import type { ToolCategory, ToolCheckResult } from "@/lib/types";
-import { cn } from "@devkit/ui";
 import { formatNumber } from "@/lib/utils";
 
 interface ToolboxClientProps {

@@ -85,7 +85,7 @@ function ensureFlushTimer(): void {
 /**
  * Flush all pending log entries to the database in batches.
  */
-export async function flushAllPending(): Promise<void> {
+async function flushAllPending(): Promise<void> {
   const allPending: LogEntry[] = [];
 
   for (const [_jobId, buffer] of jobBuffers) {

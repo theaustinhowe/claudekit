@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cleanupWorktree, fetchWorktrees } from "@/lib/api";
 
 // Query key factory for worktrees
-export const worktreeKeys = {
+const worktreeKeys = {
   all: ["worktrees"] as const,
   list: () => [...worktreeKeys.all, "list"] as const,
 };

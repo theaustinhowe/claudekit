@@ -31,7 +31,7 @@ function cutoffFromDays(days: number): Date {
 /**
  * Prune old job logs for completed/failed jobs older than N days.
  */
-export async function pruneOldLogs(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> {
+async function pruneOldLogs(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> {
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
@@ -54,7 +54,7 @@ export async function pruneOldLogs(retentionDays = DEFAULT_LOG_RETENTION_DAYS): 
 /**
  * Prune old job events for completed/failed jobs older than N days.
  */
-export async function pruneOldEvents(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> {
+async function pruneOldEvents(retentionDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> {
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 
@@ -78,7 +78,7 @@ export async function pruneOldEvents(retentionDays = DEFAULT_LOG_RETENTION_DAYS)
  * Prune archived jobs (done/failed) older than N days.
  * Deletes associated logs and events first, then removes the job records.
  */
-export async function pruneArchivedJobs(retentionDays = DEFAULT_JOB_RETENTION_DAYS): Promise<number> {
+async function pruneArchivedJobs(retentionDays = DEFAULT_JOB_RETENTION_DAYS): Promise<number> {
   const jobIds = await getOldTerminalJobIds(cutoffFromDays(retentionDays));
   if (jobIds.length === 0) return 0;
 

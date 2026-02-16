@@ -9,7 +9,7 @@ import {
   startResearch,
 } from "@/lib/api";
 
-export const researchKeys = {
+const researchKeys = {
   all: ["research"] as const,
   sessions: () => [...researchKeys.all, "sessions"] as const,
   session: (id: string) => [...researchKeys.all, "session", id] as const,

@@ -216,7 +216,7 @@ export function mapRepository(row: DbRepository): Repository {
 }
 
 /** Extended repository type including fields not in shared Repository */
-export interface RepositoryFull extends Repository {
+interface RepositoryFull extends Repository {
   autoStartJobs: boolean;
   autoCreatePr: boolean;
   pollIntervalMs: number;

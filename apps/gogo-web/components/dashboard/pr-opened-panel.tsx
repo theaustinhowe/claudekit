@@ -1,9 +1,9 @@
 "use client";
 
 import type { Job } from "@devkit/gogo-shared";
-import { CheckCircle2, ExternalLink, GitPullRequest } from "lucide-react";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { CheckCircle2, ExternalLink, GitPullRequest } from "lucide-react";
 
 interface PrOpenedPanelProps {
   job: Job;

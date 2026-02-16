@@ -1,16 +1,16 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
+import { Separator } from "@devkit/ui/components/separator";
+import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Textarea } from "@devkit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { format, formatDistanceToNow } from "date-fns";
 import { ExternalLink, Loader2, MessageSquare, Send } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { Button } from "@devkit/ui/components/button";
-import { Separator } from "@devkit/ui/components/separator";
-import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useCreateIssueComment, useIssueComments } from "@/hooks/use-issue-comments";
 import type { GitHubComment } from "@/lib/api";
 

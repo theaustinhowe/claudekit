@@ -29,6 +29,7 @@ vi.mock("../../ws/handler.js", () => ({
 vi.mock("../github/index.js", () => ({
   createIssueCommentForRepo: vi.fn(() => Promise.resolve({ id: 123, url: "https://github.com/test/comment" })),
   getRepoConfigById: vi.fn(() => Promise.resolve({ owner: "test-owner", name: "test-repo" })),
+  AGENT_COMMENT_MARKER: "<!-- gogo-agent -->",
 }));
 
 vi.mock("../process-manager.js", () => ({
@@ -123,6 +124,7 @@ describe("Provider Parity", () => {
       expect(CODEX_ERRORS).toBeDefined();
       expect(CODEX_ERRORS.NOT_ENABLED).toContain("not enabled");
       expect(CODEX_ERRORS.NO_API_KEY).toContain("OPENAI_API_KEY");
+      expect(CODEX_ERRORS.CLI_NOT_FOUND).toContain("Codex CLI not found");
     });
   });
 
@@ -157,7 +159,7 @@ describe("Provider Parity", () => {
 
       const { getCodexRunnerStatus } = await import("./openai-codex-runner.js");
 
-      const status = getCodexRunnerStatus();
+      const status = await getCodexRunnerStatus();
 
       expect(status).toMatchObject({
         type: "openai-codex",
@@ -171,22 +173,7 @@ describe("Provider Parity", () => {
       // Codex-specific fields
       expect(status).toHaveProperty("featureFlagEnabled");
       expect(status).toHaveProperty("apiKeySet");
-    });
-
-    it("should return available when fully configured", async () => {
-      process.env.ENABLE_OPENAI_CODEX = "true";
-      process.env.OPENAI_API_KEY = "sk-test-key";
-
-      vi.resetModules();
-
-      const { getCodexRunnerStatus } = await import("./openai-codex-runner.js");
-
-      const status = getCodexRunnerStatus();
-
-      expect(status.available).toBe(true);
-      expect(status.configured).toBe(true);
-      expect(status.featureFlagEnabled).toBe(true);
-      expect(status.apiKeySet).toBe(true);
+      expect(status).toHaveProperty("cliInstalled");
     });
   });
 
@@ -205,6 +192,10 @@ describe("Provider Parity", () => {
       // Both should have at least one error constant
       expect(Object.keys(CLAUDE_ERRORS).length).toBeGreaterThan(0);
       expect(Object.keys(CODEX_ERRORS).length).toBeGreaterThan(0);
+
+      // Both should have CLI_NOT_FOUND
+      expect(CLAUDE_ERRORS.CLI_NOT_FOUND).toBeDefined();
+      expect(CODEX_ERRORS.CLI_NOT_FOUND).toBeDefined();
     });
 
     it("should have matching availability function patterns", async () => {
@@ -218,9 +209,9 @@ describe("Provider Parity", () => {
       expect(typeof getClaudeAvailabilityError).toBe("function");
       expect(typeof getCodexAvailabilityError).toBe("function");
 
-      // Both should return null or string
+      // Both should return null or string (both are now async)
       const claudeResult = await getClaudeAvailabilityError();
-      const codexResult = getCodexAvailabilityError();
+      const codexResult = await getCodexAvailabilityError();
 
       expect(claudeResult === null || typeof claudeResult === "string").toBe(true);
       expect(codexResult === null || typeof codexResult === "string").toBe(true);

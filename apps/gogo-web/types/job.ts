@@ -1,39 +1,11 @@
 // Re-export core types and constants from shared package (source of truth)
 export type {
   Job,
-  JobEvent,
-  JobEventType,
-  JobLog,
-  JobSource,
-  LogStream,
 } from "@devkit/gogo-shared";
-export { ARCHIVABLE_STATUSES } from "@devkit/gogo-shared";
 
 // Import JobStatus as a value for use in constants
 import type { JobStatus as JobStatusType } from "@devkit/gogo-shared";
 export type JobStatus = JobStatusType;
-
-// UI-specific types for log sections (used in drawer display)
-export type LogSectionStatus = "pending" | "running" | "completed" | "failed";
-
-export interface LogEntry {
-  timestamp: Date;
-  message: string;
-}
-
-export interface LogSection {
-  id: string;
-  title: string;
-  status: LogSectionStatus;
-  entries: LogEntry[];
-}
-
-export interface SupervisorMessage {
-  id: string;
-  timestamp: Date;
-  message: string;
-  author: "supervisor" | "agent";
-}
 
 export const JOB_STATUS_CONFIG: Record<
   JobStatus,
@@ -108,31 +80,6 @@ export const JOB_STATUS_CONFIG: Record<
     label: "Failed",
     color: "text-red-600 dark:text-red-400",
     bgColor: "bg-red-100 dark:bg-red-900/30",
-    icon: "x-circle",
-  },
-};
-
-export const LOG_STATUS_CONFIG: Record<
-  LogSectionStatus,
-  {
-    color: string;
-    icon: string;
-  }
-> = {
-  pending: {
-    color: "text-muted-foreground",
-    icon: "circle",
-  },
-  running: {
-    color: "text-blue-600 dark:text-blue-400",
-    icon: "loader",
-  },
-  completed: {
-    color: "text-emerald-600 dark:text-emerald-400",
-    icon: "check-circle",
-  },
-  failed: {
-    color: "text-red-600 dark:text-red-400",
     icon: "x-circle",
   },
 };

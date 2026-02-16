@@ -13,7 +13,7 @@ import {
 import { repositoryKeys } from "./use-repositories";
 
 // Query key for setup status
-export const setupKeys = {
+const setupKeys = {
   status: ["setup", "status"] as const,
 };
 

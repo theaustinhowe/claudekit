@@ -1,11 +1,11 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Filter } from "lucide-react";
-import { useMemo } from "react";
+import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
+import { AlertCircle, CheckCircle2, Filter } from "lucide-react";
+import { useMemo } from "react";
 import { useRepositoryContext } from "@/contexts/repository-context";
-import { cn } from "@devkit/ui";
 import type { Job, JobStatus } from "@/types/job";
 import { CreateManualJobDialog } from "./create-manual-job-dialog";
 

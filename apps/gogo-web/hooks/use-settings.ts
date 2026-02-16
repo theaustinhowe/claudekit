@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchSettings, updateSettings } from "@/lib/api";
 
 // Query key for settings
-export const settingsKeys = {
+const settingsKeys = {
   all: ["settings"] as const,
 };
 

@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@devkit/ui";
+import { Button } from "@devkit/ui/components/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Check, ChevronsUpDown, GitBranch, Plus } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@devkit/ui/components/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useRepositoryContext } from "@/contexts/repository-context";
-import { cn } from "@devkit/ui";
 
 interface RepoSelectorProps {
   collapsed?: boolean;

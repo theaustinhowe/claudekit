@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { Textarea } from "@devkit/ui/components/textarea";
 import {
   AlertCircle,
   Bot,
@@ -13,10 +17,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { Textarea } from "@devkit/ui/components/textarea";
 import { useResumeAgent } from "@/hooks/use-jobs";
 import { formatLastChecked } from "@/lib/utils";
 

@@ -69,11 +69,7 @@ export function PreviewPanel({
 
         <div className="flex-1 min-h-0 relative">
           {showTasksTab && (
-            <TabsContent
-              value="tasks"
-              className="mt-0 absolute inset-0 flex flex-col data-[state=inactive]:hidden"
-              forceMount
-            >
+            <TabsContent value="tasks" className="mt-0 absolute inset-0 flex flex-col data-[hidden]:hidden" keepMounted>
               {tasksContent}
             </TabsContent>
           )}

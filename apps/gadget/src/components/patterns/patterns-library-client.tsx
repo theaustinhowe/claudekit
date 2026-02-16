@@ -601,7 +601,7 @@ export function PatternsLibraryClient({
           {viewConcept?.content && (
             <Collapsible className="mt-4">
               <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors group w-full">
-                <ChevronRight className="w-4 h-4 transition-transform group-data-[state=open]:rotate-90" />
+                <ChevronRight className="w-4 h-4 transition-transform group-data-[open]:rotate-90" />
                 <Code2 className="w-4 h-4 text-muted-foreground" />
                 File Contents
               </CollapsibleTrigger>

@@ -20,7 +20,7 @@ import { getConn } from "../db/index.js";
 import type { DbHealthEvent } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";
 
-export type HealthEventType =
+type HealthEventType =
   | "poll_cycle_complete"
   | "rate_limit_transition"
   | "agent_started"
@@ -29,7 +29,7 @@ export type HealthEventType =
   | "stale_job_detected"
   | "shutdown_initiated";
 
-export interface HealthEvent {
+interface HealthEvent {
   type: HealthEventType;
   timestamp: string;
   message: string;

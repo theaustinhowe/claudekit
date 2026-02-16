@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
-import { Button } from "@devkit/ui/components/button";
 
 export default function HealthError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {

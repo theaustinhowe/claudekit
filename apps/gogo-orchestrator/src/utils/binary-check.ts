@@ -10,7 +10,7 @@ import { promisify } from "node:util";
 
 const execFile = promisify(execFileCb);
 
-export interface BinaryInfo {
+interface BinaryInfo {
   name: string;
   command: string;
   versionFlag: string;
@@ -19,7 +19,7 @@ export interface BinaryInfo {
   installHint: string;
 }
 
-export interface BinaryCheckResult {
+interface BinaryCheckResult {
   name: string;
   found: boolean;
   version: string | null;
@@ -27,7 +27,7 @@ export interface BinaryCheckResult {
   error: string | null;
 }
 
-export interface ValidationResult {
+interface ValidationResult {
   allRequiredFound: boolean;
   results: BinaryCheckResult[];
   missingRequired: BinaryCheckResult[];

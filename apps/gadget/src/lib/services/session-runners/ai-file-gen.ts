@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import { runClaude } from "@devkit/claude-runner";
 import { refreshAIFileFindings } from "@/lib/actions/findings";
 import { getDb } from "@/lib/db";
 import { queryOne } from "@/lib/db/helpers";
-import { runClaude } from "@devkit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 import { expandTilde } from "@/lib/utils";

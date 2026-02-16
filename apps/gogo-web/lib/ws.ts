@@ -37,7 +37,7 @@ const MAX_RECONNECT_ATTEMPTS = 10;
 
 export type ConnectionState = "connected" | "disconnected" | "reconnecting" | "failed";
 
-export interface UseWebSocketReturn {
+interface UseWebSocketReturn {
   connected: boolean;
   connectionState: ConnectionState;
   reconnectAttempt: number;

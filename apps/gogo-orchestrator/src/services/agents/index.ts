@@ -12,9 +12,7 @@ if (isCodexEnabled()) {
   console.log("[agents] OpenAI Codex runner registered (ENABLE_OPENAI_CODEX=true)");
 }
 
-export { claudeCodeRunner } from "./claude-code-runner.js";
 export { KNOWN_AGENTS } from "./known-agents.js";
-export { openaiCodexRunner } from "./openai-codex-runner.js";
 export { agentRegistry } from "./registry.js";
 // Re-export everything
 export * from "./types.js";

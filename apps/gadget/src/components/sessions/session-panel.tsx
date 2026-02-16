@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { Progress } from "@devkit/ui/components/progress";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
@@ -11,7 +12,6 @@ import { SessionBadge } from "@/components/sessions/session-badge";
 import { useSessionContext } from "@/components/sessions/session-context";
 import { SESSION_TYPE_LABELS } from "@/lib/constants";
 import type { SessionRow } from "@/lib/types";
-import { cn } from "@devkit/ui";
 import { formatElapsed } from "@/lib/utils";
 
 /** Map session types to the relevant tab query param on the context page */

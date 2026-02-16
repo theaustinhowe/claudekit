@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { cn } from "@devkit/ui";
+import type { ReactNode } from "react";
 
 export interface Tab {
   id: string;

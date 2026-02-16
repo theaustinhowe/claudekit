@@ -1,6 +1,10 @@
 "use client";
 
 import type { WsMessage } from "@devkit/gogo-shared";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent } from "@devkit/ui/components/card";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import {
   AlertCircle,
   ChevronDown,
@@ -16,10 +20,6 @@ import { parseAsString, useQueryState } from "nuqs";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { SuggestionCard } from "@/components/research/suggestion-card";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import { useRepositoryContext } from "@/contexts/repository-context";
 import { useCancelResearch, useResearchSession, useResearchSessions, useStartResearch } from "@/hooks/use-research";
 

@@ -2,10 +2,6 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { loadRootEnv } from "./load-root-env.js";
-
-loadRootEnv(join(import.meta.dirname, ".."));
-
 interface App {
   name: string;
   filter: string;

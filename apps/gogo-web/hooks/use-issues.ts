@@ -5,7 +5,7 @@ import { type CreateIssueParams, createIssue, createJobFromIssue, fetchIssues } 
 import { jobKeys } from "./use-jobs";
 
 // Query key factory for issues
-export const issueKeys = {
+const issueKeys = {
   all: ["issues"] as const,
   list: (repositoryId: string) => [...issueKeys.all, "list", repositoryId] as const,
   listWithParams: (repositoryId: string, params?: { state?: string; labels?: string; page?: number }) =>

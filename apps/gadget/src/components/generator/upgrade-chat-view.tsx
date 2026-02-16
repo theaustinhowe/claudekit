@@ -2,6 +2,7 @@
 
 import type { SessionStreamEvent } from "@devkit/hooks";
 import { useSessionStream } from "@devkit/hooks";
+import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { Progress } from "@devkit/ui/components/progress";
 import {
@@ -21,7 +22,6 @@ import { MarkdownRenderer } from "@/components/code/markdown-renderer";
 import type { StreamEntry } from "@/components/generator/streaming-display";
 import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
 import type { UpgradeTask, UpgradeTaskStatus } from "@/lib/types";
-import { cn } from "@devkit/ui";
 
 interface UpgradeChatViewProps {
   projectId: string;

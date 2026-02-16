@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
@@ -8,8 +10,6 @@ import { JobDetailDrawer } from "@/components/dashboard/job-detail-drawer";
 import { JobFilters } from "@/components/dashboard/job-filters";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { StaleJobsAlert } from "@/components/dashboard/stale-jobs-alert";
-import { Button } from "@devkit/ui/components/button";
-import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useRepositoryContext } from "@/contexts/repository-context";
 import { useJobs } from "@/hooks/use-jobs";
 import { useSetupStatus } from "@/hooks/use-setup";

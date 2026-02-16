@@ -22,7 +22,7 @@ export const TIMEOUTS = {
 /**
  * Error thrown when an operation exceeds its timeout duration.
  */
-export class TimeoutError extends Error {
+class TimeoutError extends Error {
   public readonly operationName: string;
   public readonly timeoutMs: number;
 

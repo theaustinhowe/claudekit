@@ -3,7 +3,7 @@ import { getConn } from "../db/index.js";
 import type { DbRepository, DbSetting } from "../db/schema.js";
 import type { GitConfig } from "./git.js";
 
-export interface WorkspaceSettings {
+interface WorkspaceSettings {
   workdir: string;
   owner: string;
   name: string;
@@ -46,7 +46,7 @@ const DEFAULT_CODEX_SETTINGS: OpenAICodexSettings = {
   test_command: "npm test",
 };
 
-export interface ValidationResult {
+interface ValidationResult {
   valid: boolean;
   errors: string[];
 }
@@ -202,7 +202,7 @@ export function hasOpenAIApiKey(): boolean {
   return !!process.env.OPENAI_API_KEY;
 }
 
-export interface StartupValidationResult {
+interface StartupValidationResult {
   ready: boolean;
   warnings: string[];
   errors: string[];

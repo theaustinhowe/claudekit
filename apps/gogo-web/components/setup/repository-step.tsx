@@ -1,5 +1,18 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@devkit/ui/components/dialog";
+import { Input } from "@devkit/ui/components/input";
+import { Label } from "@devkit/ui/components/label";
 import {
   CheckCircle2,
   ChevronRight,
@@ -15,19 +28,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
 import { useBrowseDirectory } from "@/hooks/use-setup";
 import type { DiscoveredRepo, VerifyRepositoryResponse } from "@/lib/api";
 import type { SelectedRepo } from "./setup-wizard";
@@ -253,7 +253,7 @@ export function RepositoryStep({
                         type="button"
                         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors group"
                       >
-                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[open]:rotate-90" />
                         <span className="font-medium flex-1">
                           {repo.owner}/{repo.name}
                         </span>

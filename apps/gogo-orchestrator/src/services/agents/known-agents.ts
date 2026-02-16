@@ -3,7 +3,7 @@ import type { AgentCapabilities } from "./types.js";
 /**
  * Metadata for a known agent type
  */
-export interface KnownAgentMetadata {
+interface KnownAgentMetadata {
   type: string;
   displayName: string;
   description: string;
@@ -44,7 +44,7 @@ export const KNOWN_AGENTS: KnownAgentMetadata[] = [
     type: "openai-codex",
     displayName: "OpenAI Codex",
     description:
-      "OpenAI's GPT-4 based coding agent using the Responses API. Requires an OpenAI API key and feature flag enabled.",
+      "OpenAI Codex CLI for autonomous coding tasks. Requires the Codex CLI installed, an API key, and feature flag enabled.",
     capabilities: {
       canResume: true,
       canInject: true,
@@ -63,12 +63,12 @@ export const KNOWN_AGENTS: KnownAgentMetadata[] = [
       },
       {
         name: "OPENAI_MODEL",
-        description: "Model to use (defaults to gpt-4o)",
+        description: "Model to use (defaults to o4-mini)",
         required: false,
       },
     ],
-    docsUrl: "/docs/openai.md",
+    docsUrl: "https://github.com/openai/codex",
     installInstructions:
-      "Set ENABLE_OPENAI_CODEX=true and OPENAI_API_KEY in your environment, then restart the orchestrator.",
+      "Install the Codex CLI: npm install -g @openai/codex. Set ENABLE_OPENAI_CODEX=true and OPENAI_API_KEY in your environment, then restart the orchestrator.",
   },
 ];

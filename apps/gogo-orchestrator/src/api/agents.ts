@@ -35,7 +35,7 @@ export const agentsRouter: FastifyPluginAsync = async (fastify) => {
             },
           };
         } else if (knownAgent.type === "openai-codex") {
-          const codexStatus = getCodexRunnerStatus();
+          const codexStatus = await getCodexRunnerStatus();
           status = {
             available: codexStatus.available,
             configured: codexStatus.configured,
@@ -43,6 +43,7 @@ export const agentsRouter: FastifyPluginAsync = async (fastify) => {
             details: {
               featureFlagEnabled: codexStatus.featureFlagEnabled,
               apiKeySet: codexStatus.apiKeySet,
+              cliInstalled: codexStatus.cliInstalled,
             },
           };
         } else {
@@ -87,7 +88,7 @@ export const agentsRouter: FastifyPluginAsync = async (fastify) => {
 
     // Handle OpenAI Codex status check
     if (type === "openai-codex") {
-      return { data: getCodexRunnerStatus() };
+      return { data: await getCodexRunnerStatus() };
     }
 
     // Handle Claude Code status check

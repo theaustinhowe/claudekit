@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { DuckDBInstance } from "@duckdb/node-api";
 import { runMigrations } from "@devkit/duckdb";
+import { DuckDBInstance } from "@duckdb/node-api";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");

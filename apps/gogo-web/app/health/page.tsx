@@ -1,5 +1,11 @@
 "use client";
 
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Skeleton } from "@devkit/ui/components/skeleton";
+import { TooltipProvider } from "@devkit/ui/components/tooltip";
 import { formatDistanceToNow } from "date-fns";
 import {
   Activity,
@@ -17,12 +23,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Skeleton } from "@devkit/ui/components/skeleton";
-import { TooltipProvider } from "@devkit/ui/components/tooltip";
 import { useWebSocketContext } from "@/contexts/websocket-context";
 import { useHealth, useHealthEvents } from "@/hooks/use-jobs";
 import { fetchHealth as fetchHealthApi } from "@/lib/api";

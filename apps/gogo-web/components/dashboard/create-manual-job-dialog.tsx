@@ -1,8 +1,5 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
@@ -17,6 +14,9 @@ import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
 import { Textarea } from "@devkit/ui/components/textarea";
+import { Loader2, Plus } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useCreateManualJob } from "@/hooks/use-jobs";
 import { useRepositories } from "@/hooks/use-repositories";
 

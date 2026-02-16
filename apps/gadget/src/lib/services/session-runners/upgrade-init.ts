@@ -1,10 +1,10 @@
 import { execSync } from "node:child_process";
 import path from "node:path";
+import { runClaude } from "@devkit/claude-runner";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { createUpgradeTasks, deleteUpgradeTasks } from "@/lib/actions/upgrade-tasks";
 import { getDb } from "@/lib/db";
 import { execute } from "@/lib/db/helpers";
-import { runClaude } from "@devkit/claude-runner";
 import { safeGitCommit } from "@/lib/services/git-utils";
 import { buildImplementationPrompt, buildUpgradePlanPrompt } from "@/lib/services/scaffold-prompt";
 import type { SessionRunner } from "@/lib/services/session-manager";

@@ -4,7 +4,7 @@ import { getConn } from "../db/index.js";
 import { type DbJob, JOB_JSON_FIELDS } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";
 
-export interface TransitionResult {
+interface TransitionResult {
   valid: boolean;
   error?: string;
   eventType: JobEventType;
@@ -37,9 +37,7 @@ export function validateTransition(from: JobStatus, to: JobStatus): TransitionRe
   };
 }
 
-export type { JobActionType } from "@devkit/gogo-shared";
-
-export interface ActionResult {
+interface ActionResult {
   newStatus: JobStatus | null; // null means no status change
   eventType: JobEventType;
   updates: {

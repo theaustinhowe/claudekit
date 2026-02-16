@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.ts"]
+    },
+    "apps/web": {},
+    "apps/gadget": {},
+    "apps/gogo-web": {
+      "ignore": ["__tests__/**"]
+    },
+    "apps/gogo-orchestrator": {
+      "ignore": ["src/**/*.test.ts"]
+    },
+    "apps/b4u": {},
+    "packages/ui": {
+      "entry": ["src/components/*.tsx"],
+      "ignore": ["src/components/*.stories.tsx"],
+      "ignoreDependencies": ["next-themes", "sonner"]
+    },
+    "packages/duckdb": {},
+    "packages/hooks": {},
+    "packages/session": {},
+    "packages/claude-runner": {},
+    "packages/logger": {
+      "ignoreDependencies": ["pino-pretty"]
+    },
+    "packages/gogo-shared": {},
+    "packages/claude-usage": {
+      "entry": ["src/components/*.tsx"]
+    },
+    "packages/mcp-logs": {},
+    "packages/config": {
+      "entry": ["*.json"],
+      "project": ["*.json"]
+    }
+  }
+}

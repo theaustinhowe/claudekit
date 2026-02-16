@@ -1,7 +1,7 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { cn } from "@devkit/ui";
+import { Check } from "lucide-react";
 
 export interface Step {
   id: number;

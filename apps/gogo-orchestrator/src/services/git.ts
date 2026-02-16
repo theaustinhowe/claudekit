@@ -15,13 +15,13 @@ export interface GitConfig {
   baseBranch?: string;
 }
 
-export interface WorktreeInfo {
+interface WorktreeInfo {
   path: string;
   branch: string;
   commit: string;
 }
 
-export interface CreateWorktreeResult {
+interface CreateWorktreeResult {
   worktreePath: string;
   branch: string;
 }
@@ -30,7 +30,7 @@ export interface CreateWorktreeResult {
  * Error thrown when a branch already exists remotely.
  * This indicates a collision that requires user intervention.
  */
-export class BranchCollisionError extends Error {
+class BranchCollisionError extends Error {
   public readonly branch: string;
   public readonly issueNumber: number;
 
@@ -128,7 +128,7 @@ async function execGit(args: string[], cwd: string, config: GitConfig): Promise<
 /**
  * Check if a branch exists on the remote.
  */
-export async function remoteBranchExists(config: GitConfig, branch: string): Promise<boolean> {
+async function remoteBranchExists(config: GitConfig, branch: string): Promise<boolean> {
   const bareRepoPath = getBareRepoPath(config);
   try {
     const { stdout } = await execGit(
@@ -491,7 +491,7 @@ export async function getCommitLog(config: GitConfig, worktreePath: string, base
   }
 }
 
-export interface ChangedFile {
+interface ChangedFile {
   path: string;
   status: "added" | "modified" | "deleted" | "renamed" | "copied" | "unknown";
   additions?: number;

@@ -1,10 +1,10 @@
 "use client";
 
 import type { JobLog } from "@devkit/gogo-shared";
+import { cn } from "@devkit/ui";
 import { Terminal } from "lucide-react";
 import { useMemo } from "react";
 import { useJobLogs } from "@/hooks/use-jobs";
-import { cn } from "@devkit/ui";
 
 interface LogPreviewProps {
   jobId: string;

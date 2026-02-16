@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@devkit/ui";
 import { Input } from "@devkit/ui/components/input";
 import { File, Folder, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getFileTree } from "@/lib/actions/code-browser";
 import { fuzzyMatch } from "@/lib/fuzzy-match";
 import type { CodeTreeEntry } from "@/lib/types";
-import { cn } from "@devkit/ui";
 
 interface InlineFileSearchProps {
   repoId: string;

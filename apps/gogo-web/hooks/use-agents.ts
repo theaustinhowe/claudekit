@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAgentStatus, fetchAgents, fetchAllAgents } from "@/lib/api";
 
 // Query key factory for consistent keys
-export const agentKeys = {
+const agentKeys = {
   all: ["agents"] as const,
   lists: () => [...agentKeys.all, "list"] as const,
   known: () => [...agentKeys.all, "known"] as const,

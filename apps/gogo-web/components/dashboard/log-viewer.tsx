@@ -1,15 +1,15 @@
 "use client";
 
 import type { JobLog, LogStream } from "@devkit/gogo-shared";
-import { format } from "date-fns";
-import { AlertCircle, ArrowDown, Info, Loader2, Terminal } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { ScrollArea } from "@devkit/ui/components/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { format } from "date-fns";
+import { AlertCircle, ArrowDown, Info, Loader2, Terminal } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWebSocketContext } from "@/contexts/websocket-context";
 import { useJobLogs } from "@/hooks/use-jobs";
-import { cn } from "@devkit/ui";
 
 interface LogViewerProps {
   jobId: string;

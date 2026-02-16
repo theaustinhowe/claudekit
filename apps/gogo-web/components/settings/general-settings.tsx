@@ -1,13 +1,13 @@
 "use client";
 
-import { FolderOpen, Loader2, Settings } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Slider } from "@devkit/ui/components/slider";
+import { FolderOpen, Loader2, Settings } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
 
 interface GeneralSettingsState {

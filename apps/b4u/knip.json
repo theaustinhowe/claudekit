@@ -1,6 +1,0 @@
-{
-  "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/app/**/{page,layout,loading,error,not-found}.{ts,tsx}"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignoreDependencies": ["postcss-load-config"]
-}

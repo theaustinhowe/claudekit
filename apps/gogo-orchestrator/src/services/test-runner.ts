@@ -5,7 +5,7 @@ import { getConn } from "../db/index.js";
 import type { DbSetting } from "../db/schema.js";
 import { sendLogToSubscribers } from "../ws/handler.js";
 
-export interface TestResult {
+interface TestResult {
   success: boolean;
   output: string;
   exitCode: number;

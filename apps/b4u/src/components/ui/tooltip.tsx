@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@devkit/ui/components/tooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger, Tooltip as UITooltip } from "@devkit/ui/components/tooltip";
 
 interface TooltipProps {
   label: string;

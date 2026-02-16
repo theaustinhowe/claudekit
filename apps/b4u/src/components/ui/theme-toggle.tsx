@@ -2,12 +2,7 @@
 
 import { useAppTheme } from "@devkit/hooks";
 import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@devkit/ui/components/tooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger, Tooltip as UITooltip } from "@devkit/ui/components/tooltip";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 

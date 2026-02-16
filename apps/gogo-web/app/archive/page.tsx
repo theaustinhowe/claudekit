@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@devkit/ui/components/button";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { Inbox } from "lucide-react";
 import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
@@ -7,9 +10,6 @@ import { Suspense, useMemo } from "react";
 import { toast } from "sonner";
 import { ArchivedJobCard } from "@/components/archive/archived-job-card";
 import { PageTabs, type Tab } from "@/components/layout/page-tabs";
-import { Button } from "@devkit/ui/components/button";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Skeleton } from "@devkit/ui/components/skeleton";
 import { useJobAction, useJobs } from "@/hooks/use-jobs";
 import type { Job } from "@/types/job";
 

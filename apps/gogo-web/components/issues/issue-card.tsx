@@ -1,14 +1,13 @@
 "use client";
 
-import { format, formatDistanceToNow } from "date-fns";
-import { ExternalLink, Loader2, Play, User, Zap } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { format, formatDistanceToNow } from "date-fns";
+import { ExternalLink, Loader2, Play, User, Zap } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import type { GitHubIssue } from "@/lib/api";
 
 interface IssueCardProps {

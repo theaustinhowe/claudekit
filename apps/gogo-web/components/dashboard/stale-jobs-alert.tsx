@@ -1,13 +1,13 @@
 "use client";
 
 import type { Job } from "@devkit/gogo-shared";
+import { cn } from "@devkit/ui";
+import { Button } from "@devkit/ui/components/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, Clock, ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@devkit/ui/components/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { useStaleJobs } from "@/hooks/use-jobs";
-import { cn } from "@devkit/ui";
 
 interface StaleJobsAlertProps {
   onJobSelect?: (jobId: string) => void;

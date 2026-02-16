@@ -23,14 +23,6 @@ export interface SessionEvent {
   chunk?: string;
 }
 
-export interface ProgressInfo {
-  message: string;
-  bytesReceived: number;
-  chunk?: string;
-  log?: string;
-  logType?: "tool" | "thinking" | "status";
-}
-
 export type SessionRunner = (ctx: {
   onProgress: (event: SessionEvent) => void;
   signal: AbortSignal;

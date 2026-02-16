@@ -1,5 +1,23 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@devkit/ui/components/alert-dialog";
+import { Badge } from "@devkit/ui/components/badge";
+import { Button } from "@devkit/ui/components/button";
+import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { format, formatDistanceStrict } from "date-fns";
 import {
   AlertTriangle,
@@ -29,24 +47,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { IssueComments, IssueDescription } from "@/components/issues/issue-content";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@devkit/ui/components/alert-dialog";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { useCheckNeedsInfoResponse, useCreatePr, useJob, useJobAction, useJobEvents } from "@/hooks/use-jobs";
 import type { JobActionType } from "@/lib/api";
 import { JOB_STATUS_CONFIG } from "@/types/job";
@@ -500,28 +500,28 @@ export function JobDetailDrawer({ jobId, open, onOpenChange, queuePosition, jobs
             <TabsList className="w-full justify-start h-9 bg-transparent p-0 gap-4">
               <TabsTrigger
                 value="overview"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 pb-2"
+                className="data-[selected]:bg-transparent data-[selected]:shadow-none border-b-2 border-transparent data-[selected]:border-primary rounded-none px-1 pb-2"
               >
                 <FileText className="h-4 w-4 mr-1.5" />
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="issue"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 pb-2"
+                className="data-[selected]:bg-transparent data-[selected]:shadow-none border-b-2 border-transparent data-[selected]:border-primary rounded-none px-1 pb-2"
               >
                 <MessageSquare className="h-4 w-4 mr-1.5" />
                 Issue
               </TabsTrigger>
               <TabsTrigger
                 value="logs"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 pb-2"
+                className="data-[selected]:bg-transparent data-[selected]:shadow-none border-b-2 border-transparent data-[selected]:border-primary rounded-none px-1 pb-2"
               >
                 <Terminal className="h-4 w-4 mr-1.5" />
                 Logs
               </TabsTrigger>
               <TabsTrigger
                 value="history"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 pb-2"
+                className="data-[selected]:bg-transparent data-[selected]:shadow-none border-b-2 border-transparent data-[selected]:border-primary rounded-none px-1 pb-2"
               >
                 <History className="h-4 w-4 mr-1.5" />
                 History

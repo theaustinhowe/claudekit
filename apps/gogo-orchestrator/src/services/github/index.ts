@@ -9,18 +9,8 @@
 export {
   getAllRateLimitInfo,
   getOctokitForRepo,
-  getRateLimitInfo,
-  shouldThrottleRequests,
 } from "./client.js";
 
-// Re-export errors
-export { GitHubCredentialsError, RepositoryNotFoundError } from "./errors.js";
-// Re-export option types
-export type {
-  CreateIssueOptions,
-  GetIssuesOptions,
-  OpenPullRequest,
-} from "./repo-service.js";
 // Re-export repo-scoped operations
 export {
   AGENT_COMMENT_MARKER,
@@ -37,20 +27,13 @@ export {
   getPullRequestIssueComments,
   getPullRequestReviewComments,
   getRepoConfigById,
-  hasAgentMarker,
   isHumanComment,
   isHumanReviewComment,
   removeLabelFromIssue,
 } from "./repo-service.js";
 // Re-export types
 export type {
-  CreatePullRequestOptions,
   GitHubComment,
   GitHubIssue,
-  GitHubLabel,
-  PullRequestInfo,
-  PullRequestResult,
   PullRequestReviewComment,
-  RateLimitInfo,
-  RepoConfig,
 } from "./types.js";

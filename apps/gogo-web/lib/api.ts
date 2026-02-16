@@ -114,7 +114,7 @@ export async function fetchJob(id: string): Promise<ApiResponse<Job>> {
 }
 
 // Stale jobs response type
-export interface StaleJobsResponse {
+interface StaleJobsResponse {
   data: Job[];
   thresholdMinutes: number;
   count: number;
@@ -194,7 +194,7 @@ export async function resumeAgentWithMessage(
 }
 
 // Settings response type
-export interface SettingsResponse {
+interface SettingsResponse {
   data: Record<string, unknown>;
 }
 
@@ -220,7 +220,7 @@ export interface AgentInfo {
   };
 }
 
-export interface AgentStatusResponse {
+interface AgentStatusResponse {
   type: string;
   available: boolean;
   configured: boolean;
@@ -293,7 +293,7 @@ export async function updateSettings(settings: Record<string, unknown>): Promise
 }
 
 // Create PR response type
-export interface CreatePrResponse {
+interface CreatePrResponse {
   success: boolean;
   prUrl?: string;
   prNumber?: number;
@@ -303,7 +303,7 @@ export interface CreatePrResponse {
 }
 
 // Health check response type
-export interface HealthResponse {
+interface HealthResponse {
   status: string;
   uptime: number;
   uptimeFormatted: string;
@@ -350,7 +350,7 @@ export interface HealthResponse {
 }
 
 // Health event from the activity timeline
-export interface HealthEvent {
+interface HealthEvent {
   type: string;
   timestamp: string;
   message: string;
@@ -381,7 +381,7 @@ export async function fetchHealth(): Promise<HealthResponse> {
 }
 
 // Approve or reject a plan for a job
-export interface ApprovePlanResult {
+interface ApprovePlanResult {
   data?: Job;
   error?: string;
 }
@@ -396,7 +396,7 @@ export async function approvePlan(jobId: string, approved: boolean, message?: st
 }
 
 // Check for GitHub response response type
-export interface CheckResponseResult {
+interface CheckResponseResult {
   success: boolean;
   responseFound: boolean;
   message: string;
@@ -446,7 +446,7 @@ export async function fetchWorktrees(): Promise<{ data: WorktreeInfo[] }> {
 }
 
 // PR merge status response
-export interface PrMergeStatusResponse {
+interface PrMergeStatusResponse {
   merged: boolean;
   prNumber: number | null;
   prUrl: string | null;
@@ -459,7 +459,7 @@ export async function fetchPrMergeStatus(jobId: string): Promise<PrMergeStatusRe
 }
 
 // Single worktree cleanup response
-export interface SingleWorktreeCleanupResponse {
+interface SingleWorktreeCleanupResponse {
   success: boolean;
   error?: string;
   cleaned?: {
@@ -484,7 +484,7 @@ export interface ChangedFile {
 }
 
 // Fetch changed files in a worktree
-export interface ChangedFilesResponse {
+interface ChangedFilesResponse {
   files: ChangedFile[];
   baseBranch: string;
   error?: string;
@@ -496,7 +496,7 @@ export async function fetchChangedFiles(jobId: string): Promise<ChangedFilesResp
 }
 
 // Fetch diff for a specific file
-export interface FileDiffResponse {
+interface FileDiffResponse {
   diff: string;
   filePath: string;
   baseBranch: string;
@@ -532,7 +532,7 @@ export async function fetchFileDiffByPath(worktreePath: string, filePath: string
 // Setup Wizard
 // =============================================================================
 
-export interface SetupStatusResponse {
+interface SetupStatusResponse {
   needsSetup: boolean;
   repositoryCount: number;
 }
@@ -577,7 +577,7 @@ export interface VerifyWorkspaceResponse {
   };
 }
 
-export interface CompleteSetupResponse {
+interface CompleteSetupResponse {
   success: boolean;
   error?: string;
   data?: {
@@ -596,7 +596,7 @@ export interface DiscoveredRepo {
   currentBranch: string;
 }
 
-export interface DiscoverReposResponse {
+interface DiscoverReposResponse {
   success: boolean;
   error?: string;
   data?: {
@@ -666,7 +666,7 @@ export async function completeSetup(data: {
 }
 
 // Browse directory - list subdirectories for directory picker
-export interface BrowseDirectoryResponse {
+interface BrowseDirectoryResponse {
   success: boolean;
   error?: string;
   data?: {
@@ -718,7 +718,7 @@ export interface RepositoryInfo {
   updatedAt: string;
 }
 
-export interface RepositorySettings {
+interface RepositorySettings {
   pollIntervalMs: number | null;
   testCommand: string | null;
   agentProvider: string | null;
@@ -773,7 +773,7 @@ export async function updateRepositorySettings(
 }
 
 // Fetch branches for a repository
-export interface BranchInfo {
+interface BranchInfo {
   name: string;
   isDefault: boolean;
   protected: boolean;
@@ -805,7 +805,7 @@ export async function fetchNetworkInfo(): Promise<ApiResponse<NetworkInfo>> {
 // Research
 // =============================================================================
 
-export interface ResearchSessionInfo {
+interface ResearchSessionInfo {
   id: string;
   repositoryId: string;
   status: "running" | "completed" | "failed" | "cancelled";
@@ -831,7 +831,7 @@ export interface ResearchSuggestionInfo {
   createdAt: string;
 }
 
-export interface ResearchSessionDetail extends ResearchSessionInfo {
+interface ResearchSessionDetail extends ResearchSessionInfo {
   suggestions: ResearchSuggestionInfo[];
 }
 
@@ -922,7 +922,7 @@ export interface GitHubIssue {
   jobId: string | null;
 }
 
-export interface IssuesResponse {
+interface IssuesResponse {
   data: GitHubIssue[];
   pagination: {
     page: number;
@@ -936,7 +936,7 @@ export interface CreateIssueParams {
   labels?: string[];
 }
 
-export interface CreateJobFromIssueResponse {
+interface CreateJobFromIssueResponse {
   success: boolean;
   jobId: string;
   message: string;
@@ -956,7 +956,7 @@ export interface GitHubComment {
   created_at: string;
 }
 
-export interface IssueCommentsResponse {
+interface IssueCommentsResponse {
   data: GitHubComment[];
 }
 

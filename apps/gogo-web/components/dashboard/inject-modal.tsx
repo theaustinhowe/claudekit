@@ -1,8 +1,5 @@
 "use client";
 
-import { Clock, Loader2, MessageSquarePlus, Send, Zap } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
@@ -15,6 +12,9 @@ import {
 } from "@devkit/ui/components/dialog";
 import { Label } from "@devkit/ui/components/label";
 import { Textarea } from "@devkit/ui/components/textarea";
+import { Clock, Loader2, MessageSquarePlus, Send, Zap } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useJobAction } from "@/hooks/use-jobs";
 
 type InjectMode = "immediate" | "queued";

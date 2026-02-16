@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@devkit/ui";
 import { FileCode, FileMinus, FilePlus, FileQuestion, FileText, Folder, FolderOpen } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ChangedFile } from "@/lib/api";
-import { cn } from "@devkit/ui";
 
 interface FileTreeNode {
   name: string;

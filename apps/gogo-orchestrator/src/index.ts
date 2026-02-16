@@ -1,6 +1,6 @@
-import { config } from "dotenv";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { config } from "dotenv";
 
 // Load root .env/.env.local for shared env vars (override: false so app-specific wins)
 const rootDir = resolve(import.meta.dirname, "../../..");

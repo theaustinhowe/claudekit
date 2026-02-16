@@ -1,9 +1,9 @@
 "use client";
 
 import { useIsMobile } from "@devkit/hooks";
-import { useMemo } from "react";
 import { ScrollArea, ScrollBar } from "@devkit/ui/components/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { useMemo } from "react";
 import { COLUMN_GROUPS, type ColumnGroup, JOB_STATUS_CONFIG, type Job, type JobStatus } from "@/types/job";
 import { ATTENTION_STATES, type FilterType } from "./job-filters";
 import { KanbanColumn } from "./kanban-column";
@@ -66,7 +66,7 @@ export function KanbanBoard({ jobs, onJobClick, filter = "active" }: KanbanBoard
                   <TabsTrigger
                     key={group.id}
                     value={group.id}
-                    className="rounded-full px-3 py-1.5 text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="rounded-full px-3 py-1.5 text-xs font-medium data-[selected]:bg-primary data-[selected]:text-primary-foreground"
                   >
                     {group.label} ({count})
                   </TabsTrigger>

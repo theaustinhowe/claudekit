@@ -1,6 +1,7 @@
 "use client";
 
 import { THEMES, useAppTheme } from "@devkit/hooks";
+import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import { Input } from "@devkit/ui/components/input";
@@ -31,7 +32,6 @@ import { createScanRoot, deleteScanRoot } from "@/lib/actions/scans";
 import { setCleanupFiles } from "@/lib/actions/settings";
 import { DEFAULT_CLEANUP_FILES } from "@/lib/constants";
 import type { ScanRoot } from "@/lib/types";
-import { cn } from "@devkit/ui";
 
 interface SettingsClientProps {
   scanRoots: ScanRoot[];

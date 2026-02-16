@@ -45,7 +45,14 @@ export default function RootLayout({
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <ThemeFOUCScript
           legacyKeys={["workbench-theme", "workbench-color-scheme"]}
-          legacyThemeMap={{ purple: "amethyst", blue: "sapphire", green: "emerald", rose: "ruby", orange: "amber", teal: "slate" }}
+          legacyThemeMap={{
+            purple: "amethyst",
+            blue: "sapphire",
+            green: "emerald",
+            rose: "ruby",
+            orange: "amber",
+            teal: "slate",
+          }}
         />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <LayoutShell>{children}</LayoutShell>

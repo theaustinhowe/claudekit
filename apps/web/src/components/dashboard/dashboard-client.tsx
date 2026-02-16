@@ -188,7 +188,7 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                             <span>
                               {appLogs.length} log {appLogs.length === 1 ? "file" : "files"}
                             </span>
-                            <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[state=open]:rotate-180" />
+                            <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
                           </CollapsibleTrigger>
                         )}
                       </CardContent>

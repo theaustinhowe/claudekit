@@ -72,7 +72,7 @@ async function setupExecutorTimeout(jobId: string, agentType: string): Promise<v
 /**
  * Clear the executor-level timeout for a job
  */
-export function clearExecutorTimeout(jobId: string): void {
+function clearExecutorTimeout(jobId: string): void {
   const existing = executorTimeouts.get(jobId);
   if (existing) {
     clearTimeout(existing);
@@ -117,29 +117,14 @@ function validateClaudeSession(sessionId: string, worktreePath: string): Session
 }
 
 /**
- * Validate an OpenAI Codex session exists in the database
+ * Validate an OpenAI Codex session exists
+ * The Codex CLI manages session files internally — we just need a non-empty session ID.
  */
-function validateCodexSession(agentSessionData: unknown): SessionValidationResult {
-  if (!agentSessionData) {
+function validateCodexSession(sessionId: string): SessionValidationResult {
+  if (!sessionId) {
     return {
       valid: false,
-      error: "No session data stored for Codex agent",
-      canStartFresh: true,
-    };
-  }
-
-  const sessionData = agentSessionData as {
-    conversationHistory?: unknown[];
-  };
-
-  if (
-    !sessionData.conversationHistory ||
-    !Array.isArray(sessionData.conversationHistory) ||
-    sessionData.conversationHistory.length === 0
-  ) {
-    return {
-      valid: false,
-      error: "Codex session has no conversation history to resume from",
+      error: "No Codex session ID to resume from",
       canStartFresh: true,
     };
   }
@@ -151,7 +136,7 @@ function validateCodexSession(agentSessionData: unknown): SessionValidationResul
  * Validate session before attempting resume
  * Returns validation result with error details if invalid
  */
-export function validateSession(
+function validateSession(
   agentType: string,
   sessionId: string | null,
   worktreePath: string | null,
@@ -177,7 +162,7 @@ export function validateSession(
       return validateClaudeSession(sessionId, worktreePath);
 
     case "openai-codex":
-      return validateCodexSession(agentSessionData);
+      return validateCodexSession(sessionId);
 
     default:
       // Unknown agent type - assume session is valid if ID exists

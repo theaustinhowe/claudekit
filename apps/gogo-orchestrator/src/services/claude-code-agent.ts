@@ -94,7 +94,7 @@ interface StreamJsonMessage {
  * @param approvedPlan - The approved plan to follow (when phase is "implementing_with_plan")
  * @param feedback - Feedback from human to incorporate when revising a plan
  */
-export function buildPrompt(
+function buildPrompt(
   job: {
     issueNumber: number;
     issueTitle: string;
@@ -327,7 +327,7 @@ function detectPhase(parsed: ParsedLine): { phase: string; progress?: number } |
 /**
  * Parse a line of stream-json output from Claude CLI
  */
-export function parseStreamJsonLine(line: string, _jobId: string, _logState: LogState): ParsedLine {
+function parseStreamJsonLine(line: string, _jobId: string, _logState: LogState): ParsedLine {
   if (!line.trim()) {
     return { type: "unknown" };
   }

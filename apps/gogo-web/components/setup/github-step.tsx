@@ -1,7 +1,5 @@
 "use client";
 
-import { CheckCircle2, ExternalLink, Eye, EyeOff, Github, HelpCircle, Loader2, XCircle } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
 import {
@@ -15,6 +13,8 @@ import {
 } from "@devkit/ui/components/dialog";
 import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
+import { CheckCircle2, ExternalLink, Eye, EyeOff, Github, HelpCircle, Loader2, XCircle } from "lucide-react";
+import { useState } from "react";
 import type { VerifyGitHubResponse } from "@/lib/api";
 
 interface GitHubStepProps {

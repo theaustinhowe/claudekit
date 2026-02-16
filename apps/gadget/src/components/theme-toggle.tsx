@@ -1,6 +1,7 @@
 "use client";
 
 import { THEMES, useAppTheme } from "@devkit/hooks";
+import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { Label } from "@devkit/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
@@ -8,7 +9,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devki
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { cn } from "@devkit/ui";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();

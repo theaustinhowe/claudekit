@@ -1,20 +1,5 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
-import {
-  Check,
-  ClipboardCopy,
-  Code,
-  ExternalLink,
-  FileDiff,
-  GitBranch,
-  GitFork,
-  GitPullRequest,
-  Loader2,
-  Trash2,
-} from "lucide-react";
-import { useState } from "react";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +15,20 @@ import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { formatDistanceToNow } from "date-fns";
+import {
+  Check,
+  ClipboardCopy,
+  Code,
+  ExternalLink,
+  FileDiff,
+  GitBranch,
+  GitFork,
+  GitPullRequest,
+  Loader2,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 import type { WorktreeInfo } from "@/lib/api";
 import type { JobStatus } from "@/types/job";
 import { JOB_STATUS_CONFIG } from "@/types/job";

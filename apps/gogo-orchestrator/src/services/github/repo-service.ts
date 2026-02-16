@@ -340,7 +340,7 @@ export function isHumanReviewComment(comment: PullRequestReviewComment): boolean
 /**
  * Options for fetching issues
  */
-export interface GetIssuesOptions {
+interface GetIssuesOptions {
   state?: "open" | "closed" | "all";
   labels?: string;
   per_page?: number;
@@ -382,7 +382,7 @@ export async function getIssuesForRepo(repositoryId: string, options: GetIssuesO
 /**
  * Options for creating an issue
  */
-export interface CreateIssueOptions {
+interface CreateIssueOptions {
   title: string;
   body?: string;
   labels?: string[];
@@ -534,7 +534,7 @@ export async function getPullRequestIssueComments(
 /**
  * Open PR info for recovery
  */
-export interface OpenPullRequest {
+interface OpenPullRequest {
   number: number;
   html_url: string;
   head_ref: string; // branch name

@@ -1,8 +1,5 @@
 "use client";
 
-import { AlertCircle, Bot, ChevronDown, GitBranch, Loader2, Shield, Sparkles, TestTube2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
@@ -13,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@devkit/ui/components/slider";
 import { Switch } from "@devkit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { AlertCircle, Bot, ChevronDown, GitBranch, Loader2, Shield, Sparkles, TestTube2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useAgentStatus, useAgents } from "@/hooks/use-agents";
 import { useRepositoryBranches, useRepositorySettings, useUpdateRepositorySettings } from "@/hooks/use-repositories";
 import type { AgentInfo, RepositoryInfo } from "@/lib/api";

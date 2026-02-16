@@ -1,8 +1,5 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-
 import { Button } from "@devkit/ui/components/button";
 import {
   Dialog,
@@ -16,6 +13,8 @@ import {
 import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Textarea } from "@devkit/ui/components/textarea";
+import { Loader2, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface CreateIssueDialogProps {
   onSubmit: (data: { title: string; body?: string; labels?: string[] }) => void;

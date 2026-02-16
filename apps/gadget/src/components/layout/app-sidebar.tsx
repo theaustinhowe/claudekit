@@ -1,6 +1,7 @@
 "use client";
 
 import { useIsMobile } from "@devkit/hooks";
+import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
@@ -24,7 +25,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { NavLink } from "@/components/layout/nav-link";
-import { cn } from "@devkit/ui";
 
 interface NavItem {
   title: string;

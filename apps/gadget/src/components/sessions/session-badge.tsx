@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Check, Clock, Loader2, X } from "lucide-react";
 import type { SessionStatus } from "@/lib/types";
-import { cn } from "@devkit/ui";
 import { formatElapsed } from "@/lib/utils";
 
 interface SessionBadgeProps {

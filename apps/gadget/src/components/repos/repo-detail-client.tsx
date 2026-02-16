@@ -1,6 +1,7 @@
 "use client";
 
 import { useSessionStream } from "@devkit/hooks";
+import { cn } from "@devkit/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,7 +93,6 @@ import type {
   Repo,
   RepoWithCounts,
 } from "@/lib/types";
-import { cn } from "@devkit/ui";
 import { formatNumber, timeAgo } from "@/lib/utils";
 
 interface RepoDetailClientProps {

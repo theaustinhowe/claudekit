@@ -4,15 +4,13 @@ import {
   getActiveRunCount,
   getCodexAvailabilityError,
   injectCodexMessage,
+  isCodexCliAvailable,
   isRunning,
-  pauseCodexRun,
   resumeCodexRun,
   startCodexRun,
   stopCodexRun,
 } from "../openai-codex-agent.js";
-
-// Re-export for external use
-export { pauseCodexRun };
+import { hasOpenAIApiKey, isCodexEnabled } from "../settings-helper.js";
 
 import type {
   AgentCallbacks,
@@ -27,16 +25,15 @@ import type {
 /**
  * OpenAI Codex agent runner
  *
- * This runner uses the OpenAI Responses API with custom tools
- * for shell/file operations to implement an autonomous coding agent.
+ * This runner spawns the Codex CLI for autonomous coding tasks,
+ * mirroring the pattern used by the Claude Code runner.
  *
  * To enable:
  * 1. Set ENABLE_OPENAI_CODEX=true environment variable
  * 2. Set OPENAI_API_KEY environment variable
- * 3. Optionally set OPENAI_MODEL (defaults to gpt-4o)
- * 4. Restart the orchestrator
- *
- * See docs/openai.md for full documentation.
+ * 3. Install the Codex CLI: npm install -g @openai/codex
+ * 4. Optionally set OPENAI_MODEL (defaults to o4-mini)
+ * 5. Restart the orchestrator
  */
 export const openaiCodexRunner: AgentRunner = {
   type: "openai-codex",
@@ -48,36 +45,35 @@ export const openaiCodexRunner: AgentRunner = {
     supportsStreaming: true,
   } as AgentCapabilities,
 
-  async start(context: AgentJobContext, config: AgentConfig, callbacks: AgentCallbacks): Promise<AgentStartResult> {
+  async start(context: AgentJobContext, _config: AgentConfig, _callbacks: AgentCallbacks): Promise<AgentStartResult> {
     // Check availability first
-    const availabilityError = getCodexAvailabilityError();
+    const availabilityError = await getCodexAvailabilityError();
     if (availabilityError) {
       return { success: false, error: availabilityError };
     }
 
-    // Delegate to real implementation
-    return startCodexRun(context, config, callbacks);
+    return startCodexRun(context.jobId);
   },
 
   async resume(
     context: AgentJobContext,
     _session: AgentSession,
-    config: AgentConfig,
-    callbacks: AgentCallbacks,
+    _config: AgentConfig,
+    _callbacks: AgentCallbacks,
     message?: string,
   ): Promise<AgentStartResult> {
     // Check availability first
-    const availabilityError = getCodexAvailabilityError();
+    const availabilityError = await getCodexAvailabilityError();
     if (availabilityError) {
       return { success: false, error: availabilityError };
     }
 
-    return resumeCodexRun(context, config, callbacks, message);
+    return resumeCodexRun(context.jobId, message);
   },
 
   async inject(jobId: string, message: string, mode: InjectMode): Promise<AgentStartResult> {
     // Check availability first
-    const availabilityError = getCodexAvailabilityError();
+    const availabilityError = await getCodexAvailabilityError();
     if (availabilityError) {
       return { success: false, error: availabilityError };
     }
@@ -102,39 +98,41 @@ export const openaiCodexRunner: AgentRunner = {
  * Get the status of the OpenAI Codex runner
  * Used by the /agents/:type/status API endpoint
  */
-export function getCodexRunnerStatus(): {
+export async function getCodexRunnerStatus(): Promise<{
   type: string;
   available: boolean;
   configured: boolean;
   featureFlagEnabled: boolean;
   apiKeySet: boolean;
+  cliInstalled: boolean;
   registered: boolean;
   message: string;
   stub: boolean;
-} {
-  const error = getCodexAvailabilityError();
-
-  // Determine individual flags by checking env directly
-  const enabled = process.env.ENABLE_OPENAI_CODEX === "true";
-  const hasApiKey = !!process.env.OPENAI_API_KEY;
+}> {
+  const enabled = isCodexEnabled();
+  const hasApiKey = hasOpenAIApiKey();
+  const cliInstalled = enabled && hasApiKey ? await isCodexCliAvailable() : false;
 
   let message: string;
   if (!enabled) {
     message = CODEX_ERRORS.NOT_ENABLED;
   } else if (!hasApiKey) {
     message = CODEX_ERRORS.NO_API_KEY;
+  } else if (!cliInstalled) {
+    message = CODEX_ERRORS.CLI_NOT_FOUND;
   } else {
     message = "OpenAI Codex runner is ready";
   }
 
   return {
     type: "openai-codex",
-    available: !error,
-    configured: enabled && hasApiKey,
+    available: enabled && hasApiKey && cliInstalled,
+    configured: enabled && hasApiKey && cliInstalled,
     featureFlagEnabled: enabled,
     apiKeySet: hasApiKey,
+    cliInstalled,
     registered: enabled,
     message,
-    stub: false, // No longer a stub!
+    stub: false,
   };
 }

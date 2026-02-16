@@ -1,8 +1,7 @@
 "use client";
 
-import { Inbox } from "lucide-react";
-
 import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Inbox } from "lucide-react";
 import type { GitHubIssue } from "@/lib/api";
 import { IssueCard } from "./issue-card";
 

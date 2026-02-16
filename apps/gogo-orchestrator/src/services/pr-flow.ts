@@ -15,7 +15,7 @@ import { toGitConfigFromRepo } from "./settings-helper.js";
 import { applyTransitionAtomic } from "./state-machine.js";
 import { getMaxTestRetries, getTestCommands, runTests } from "./test-runner.js";
 
-export interface ProcessReadyToPrResult {
+interface ProcessReadyToPrResult {
   success: boolean;
   error?: string;
   prUrl?: string;
