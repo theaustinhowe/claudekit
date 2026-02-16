@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PageBanner } from "@/components/layout/page-banner";
 import { setToolboxToolIds } from "@/lib/actions/toolbox";
 import { DEFAULT_TOOLS, TOOL_CATEGORY_LABELS, type ToolDefinition } from "@/lib/constants/tools";
 import type { ToolCategory, ToolCheckResult } from "@/lib/types";
@@ -232,176 +233,178 @@ export function ToolboxClient({ initialToolIds }: ToolboxClientProps) {
 
   return (
     <TooltipProvider>
-      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-              <Hammer className="w-6 h-6" />
-              Toolbox
-            </h1>
-            <p className="text-muted-foreground">Check installed developer tools and their versions</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
-              <Settings2 className="w-4 h-4 mr-2" />
-              Manage Tools
-            </Button>
-            <Button size="sm" onClick={() => runChecks()} disabled={checking}>
-              {checking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-              Check All
-            </Button>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-          <SummaryCard label="Total" value={tools.length} icon={Hammer} loading={checking && results.size === 0} />
-          <SummaryCard
-            label="Installed"
-            value={installed.length}
-            icon={CheckCircle2}
-            variant="success"
-            loading={checking && results.size === 0}
-          />
-          <SummaryCard
-            label="Updates"
-            value={withUpdates.length}
-            icon={ArrowUpCircle}
-            variant="update"
-            loading={checking && results.size === 0}
-          />
-          <SummaryCard
-            label="Missing"
-            value={missing.length}
-            icon={XCircle}
-            variant="destructive"
-            loading={checking && results.size === 0}
-          />
-          <SummaryCard
-            label="Check Failures"
-            value={withErrors.length}
-            icon={AlertCircle}
-            variant="warning"
-            loading={checking && results.size === 0}
-          />
-        </div>
-
-        {/* Tool Groups */}
-        <div className="space-y-6">
-          {grouped.map((group, gi) => (
-            <motion.div
-              key={group.category}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: gi * 0.05 }}
-            >
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{group.label}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="divide-y divide-border">
-                    {group.tools.map((tool) => (
-                      <ToolRow
-                        key={tool.id}
-                        tool={tool}
-                        result={results.get(tool.id)}
-                        checking={checking}
-                        onRunCommand={handleRunCommand}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Manage Tools Dialog */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Manage Tools</DialogTitle>
-              <DialogDescription>Choose which developer tools to track in your Toolbox.</DialogDescription>
-            </DialogHeader>
-            <div className="max-h-80 overflow-y-auto space-y-4 py-2">
-              {CATEGORY_ORDER.map((cat) => {
-                const catTools = DEFAULT_TOOLS.filter((t) => t.category === cat);
-                if (catTools.length === 0) return null;
-                return (
-                  <div key={cat}>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                      {TOOL_CATEGORY_LABELS[cat]}
-                    </p>
-                    <div className="space-y-2">
-                      {catTools.map((tool) => {
-                        const toolChecked = dialogSelection.includes(tool.id);
-                        return (
-                          <div key={tool.id} className="flex items-center gap-3">
-                            <Checkbox
-                              id={`tool-${tool.id}`}
-                              checked={toolChecked}
-                              onCheckedChange={(checked) => {
-                                setDialogSelection((prev) =>
-                                  checked ? [...prev, tool.id] : prev.filter((id) => id !== tool.id),
-                                );
-                              }}
-                            />
-                            <label htmlFor={`tool-${tool.id}`} className="cursor-pointer">
-                              <span className="text-sm font-medium">{tool.name}</span>
-                              <span className="text-xs text-muted-foreground ml-2">{tool.description}</span>
-                            </label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
+      <div className="flex h-full flex-col">
+        <PageBanner
+          title="Toolbox"
+          actions={
+            <>
+              <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+                <Settings2 className="w-4 h-4 mr-1.5" />
+                Manage Tools
               </Button>
-              <Button onClick={handleSaveTools} disabled={dialogSelection.length === 0}>
-                Save
+              <Button size="sm" onClick={() => runChecks()} disabled={checking}>
+                {checking ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-1.5" />
+                )}
+                Check All
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        {/* Command Output Sheet */}
-        <Sheet open={cmdSheetOpen} onOpenChange={setCmdSheetOpen}>
-          <SheetContent className="sm:max-w-lg flex flex-col">
-            <SheetHeader>
-              <SheetTitle>
-                {cmdAction === "install" ? "Installing" : "Updating"} {cmdToolName}
-              </SheetTitle>
-              <SheetDescription>
-                {cmdRunning ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Running...
-                  </span>
-                ) : cmdExitCode === 0 ? (
-                  <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Completed successfully
-                  </span>
-                ) : cmdExitCode !== null ? (
-                  <span className="flex items-center gap-2 text-destructive">
-                    <XCircle className="w-3.5 h-3.5" />
-                    Exited with code {cmdExitCode}
-                  </span>
-                ) : null}
-              </SheetDescription>
-            </SheetHeader>
-            <div className="flex-1 mt-4 bg-zinc-950 rounded-lg p-4 overflow-y-auto font-mono text-xs text-zinc-200 whitespace-pre-wrap">
-              {cmdOutput.join("")}
-              <div ref={cmdEndRef} />
+            </>
+          }
+        />
+        <div className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+              <SummaryCard label="Total" value={tools.length} icon={Hammer} loading={checking && results.size === 0} />
+              <SummaryCard
+                label="Installed"
+                value={installed.length}
+                icon={CheckCircle2}
+                variant="success"
+                loading={checking && results.size === 0}
+              />
+              <SummaryCard
+                label="Updates"
+                value={withUpdates.length}
+                icon={ArrowUpCircle}
+                variant="update"
+                loading={checking && results.size === 0}
+              />
+              <SummaryCard
+                label="Missing"
+                value={missing.length}
+                icon={XCircle}
+                variant="destructive"
+                loading={checking && results.size === 0}
+              />
+              <SummaryCard
+                label="Check Failures"
+                value={withErrors.length}
+                icon={AlertCircle}
+                variant="warning"
+                loading={checking && results.size === 0}
+              />
             </div>
-          </SheetContent>
-        </Sheet>
+
+            {/* Tool Groups */}
+            <div className="space-y-6">
+              {grouped.map((group, gi) => (
+                <motion.div
+                  key={group.category}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: gi * 0.05 }}
+                >
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{group.label}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-border">
+                        {group.tools.map((tool) => (
+                          <ToolRow
+                            key={tool.id}
+                            tool={tool}
+                            result={results.get(tool.id)}
+                            checking={checking}
+                            onRunCommand={handleRunCommand}
+                          />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Manage Tools Dialog */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Manage Tools</DialogTitle>
+                  <DialogDescription>Choose which developer tools to track in your Toolbox.</DialogDescription>
+                </DialogHeader>
+                <div className="max-h-80 overflow-y-auto space-y-4 py-2">
+                  {CATEGORY_ORDER.map((cat) => {
+                    const catTools = DEFAULT_TOOLS.filter((t) => t.category === cat);
+                    if (catTools.length === 0) return null;
+                    return (
+                      <div key={cat}>
+                        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                          {TOOL_CATEGORY_LABELS[cat]}
+                        </p>
+                        <div className="space-y-2">
+                          {catTools.map((tool) => {
+                            const toolChecked = dialogSelection.includes(tool.id);
+                            return (
+                              <div key={tool.id} className="flex items-center gap-3">
+                                <Checkbox
+                                  id={`tool-${tool.id}`}
+                                  checked={toolChecked}
+                                  onCheckedChange={(checked) => {
+                                    setDialogSelection((prev) =>
+                                      checked ? [...prev, tool.id] : prev.filter((id) => id !== tool.id),
+                                    );
+                                  }}
+                                />
+                                <label htmlFor={`tool-${tool.id}`} className="cursor-pointer">
+                                  <span className="text-sm font-medium">{tool.name}</span>
+                                  <span className="text-xs text-muted-foreground ml-2">{tool.description}</span>
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveTools} disabled={dialogSelection.length === 0}>
+                    Save
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            {/* Command Output Sheet */}
+            <Sheet open={cmdSheetOpen} onOpenChange={setCmdSheetOpen}>
+              <SheetContent className="sm:max-w-lg flex flex-col">
+                <SheetHeader>
+                  <SheetTitle>
+                    {cmdAction === "install" ? "Installing" : "Updating"} {cmdToolName}
+                  </SheetTitle>
+                  <SheetDescription>
+                    {cmdRunning ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Running...
+                      </span>
+                    ) : cmdExitCode === 0 ? (
+                      <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Completed successfully
+                      </span>
+                    ) : cmdExitCode !== null ? (
+                      <span className="flex items-center gap-2 text-destructive">
+                        <XCircle className="w-3.5 h-3.5" />
+                        Exited with code {cmdExitCode}
+                      </span>
+                    ) : null}
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="flex-1 mt-4 bg-zinc-950 rounded-lg p-4 overflow-y-auto font-mono text-xs text-zinc-200 whitespace-pre-wrap">
+                  {cmdOutput.join("")}
+                  <div ref={cmdEndRef} />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
       </div>
     </TooltipProvider>
   );

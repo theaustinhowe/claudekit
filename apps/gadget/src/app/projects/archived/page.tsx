@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ProjectCard } from "@/components/generator/project-card";
+import { PageBanner } from "@/components/layout/page-banner";
 import { getGeneratorProjects } from "@/lib/actions/generator-projects";
 import { getLatestScreenshot } from "@/lib/actions/screenshots";
 import type { GeneratorProjectStatus } from "@/lib/types";
@@ -33,38 +34,39 @@ export default async function ArchivedProjectsPage() {
   );
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Archived Projects</h1>
-          <p className="text-muted-foreground">
-            {archivedProjects.length} archived project{archivedProjects.length !== 1 ? "s" : ""}
-          </p>
+    <div className="flex h-full flex-col">
+      <PageBanner
+        title="Archived Projects"
+        count={archivedProjects.length}
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/projects">
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              Active Projects
+            </Link>
+          </Button>
+        }
+      />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 max-w-4xl mx-auto">
+          {archivedProjects.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <p>No archived projects yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {archivedProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  statusColors={STATUS_COLORS}
+                  screenshotId={screenshotMap.get(project.id) ?? null}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/projects">
-            <ArrowLeft className="w-4 h-4 mr-1.5" />
-            Active Projects
-          </Link>
-        </Button>
       </div>
-
-      {archivedProjects.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <p>No archived projects yet.</p>
-        </div>
-      ) : (
-        <div className="space-y-0">
-          {archivedProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              statusColors={STATUS_COLORS}
-              screenshotId={screenshotMap.get(project.id) ?? null}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

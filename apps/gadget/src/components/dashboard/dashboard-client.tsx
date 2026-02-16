@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
+import { PageBanner } from "@/components/layout/page-banner";
 import { SessionBadge } from "@/components/sessions/session-badge";
 import { SESSION_TYPE_LABELS } from "@/lib/constants";
 import type { AttentionRepo, DashboardStats, OnboardingState, SessionRow } from "@/lib/types";
@@ -51,26 +52,40 @@ export function DashboardClient({ stats, onboardingState, attentionRepos, recent
 
   if (state === "empty" || state === "configured") {
     return (
-      <div className="p-4 sm:p-6 space-y-6 max-w-3xl mx-auto">
-        <GettingStartedChecklist onboarding={onboardingState} />
+      <div className="flex h-full flex-col">
+        <PageBanner title="Dashboard" />
+        <div className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-6 space-y-6 max-w-3xl mx-auto">
+            <GettingStartedChecklist onboarding={onboardingState} />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-7xl mx-auto h-[calc(100dvh-3.5rem)] overflow-hidden">
-      {/* Workspace Pulse */}
-      <div className="shrink-0">
-        <WorkspacePulse stats={stats} isClean={state === "active-clean"} />
-      </div>
+    <div className="flex h-full flex-col">
+      <PageBanner title="Dashboard" />
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-7xl mx-auto">
+          {/* Workspace Pulse */}
+          <div className="shrink-0">
+            <WorkspacePulse stats={stats} isClean={state === "active-clean"} />
+          </div>
 
-      {/* Two-column layout: Needs Attention + Recent Sessions */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-5">
-        <div className="lg:col-span-3 min-h-0">
-          {state === "active-clean" ? <WorkspaceHealth stats={stats} /> : <NeedsAttentionList repos={attentionRepos} />}
-        </div>
-        <div className="lg:col-span-2 min-h-0">
-          <RecentSessionsFeed sessions={recentSessions} />
+          {/* Two-column layout: Needs Attention + Recent Sessions */}
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-5">
+            <div className="lg:col-span-3 min-h-0">
+              {state === "active-clean" ? (
+                <WorkspaceHealth stats={stats} />
+              ) : (
+                <NeedsAttentionList repos={attentionRepos} />
+              )}
+            </div>
+            <div className="lg:col-span-2 min-h-0">
+              <RecentSessionsFeed sessions={recentSessions} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

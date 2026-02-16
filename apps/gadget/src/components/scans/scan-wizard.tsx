@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { DirectoryPicker } from "@/components/directory-picker";
+import { PageBanner } from "@/components/layout/page-banner";
 import { matchPolicy } from "@/lib/services/policy-matcher";
 import type { Policy, RepoType, RepoWithCounts, ScanRoot } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
@@ -571,68 +572,68 @@ export function ScanWizard({ policies, repos: _repos, savedScanRoots }: ScanWiza
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold mb-2">New Scan</h1>
-        <p className="text-muted-foreground">Discover and audit repositories in your directories</p>
-      </div>
+    <div className="flex h-full flex-col">
+      <PageBanner title="New Scan" />
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+          {step !== "running" && step !== "complete" && (
+            <nav aria-label="Scan progress" className="flex items-center gap-2 mb-8">
+              {[
+                { key: "roots", label: "Scan Roots" },
+                { key: "discovery", label: "Discovery" },
+                { key: "policy", label: "Policy" },
+              ].map((s, i) => {
+                const stepIndex = ["roots", "discovery", "policy"].indexOf(step);
+                const isComplete = stepIndex > i;
+                const isCurrent = step === s.key;
 
-      {step !== "running" && step !== "complete" && (
-        <nav aria-label="Scan progress" className="flex items-center gap-2 mb-8">
-          {[
-            { key: "roots", label: "Scan Roots" },
-            { key: "discovery", label: "Discovery" },
-            { key: "policy", label: "Policy" },
-          ].map((s, i) => {
-            const stepIndex = ["roots", "discovery", "policy"].indexOf(step);
-            const isComplete = stepIndex > i;
-            const isCurrent = step === s.key;
+                return (
+                  <div key={s.key} className="flex items-center">
+                    <div
+                      aria-current={isCurrent ? "step" : undefined}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                        isCurrent
+                          ? "bg-accent text-accent-foreground"
+                          : isComplete
+                            ? "bg-accent/50 text-accent-foreground"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {isComplete ? <Check className="w-4 h-4" /> : i + 1}
+                    </div>
+                    <span className="ml-2 text-sm hidden sm:inline">{s.label}</span>
+                    {i < 2 && <ChevronRight className="w-4 h-4 mx-2 text-muted-foreground" />}
+                  </div>
+                );
+              })}
+            </nav>
+          )}
 
-            return (
-              <div key={s.key} className="flex items-center">
-                <div
-                  aria-current={isCurrent ? "step" : undefined}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                    isCurrent
-                      ? "bg-accent text-accent-foreground"
-                      : isComplete
-                        ? "bg-accent/50 text-accent-foreground"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {isComplete ? <Check className="w-4 h-4" /> : i + 1}
-                </div>
-                <span className="ml-2 text-sm hidden sm:inline">{s.label}</span>
-                {i < 2 && <ChevronRight className="w-4 h-4 mx-2 text-muted-foreground" />}
-              </div>
-            );
-          })}
-        </nav>
-      )}
+          <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
 
-      <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
-
-      {step !== "running" && step !== "complete" && (
-        <div className="flex justify-between mt-6">
-          <Button variant="outline" onClick={prevStep} disabled={step === "roots"}>
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <Button onClick={nextStep} disabled={!canProceed()}>
-            {step === "policy" ? (
-              <>
-                <Play className="w-4 h-4 mr-2" />
-                Start Scan
-              </>
-            ) : (
-              <>
-                Next
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
+          {step !== "running" && step !== "complete" && (
+            <div className="flex justify-between mt-6">
+              <Button variant="outline" onClick={prevStep} disabled={step === "roots"}>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button onClick={nextStep} disabled={!canProceed()}>
+                {step === "policy" ? (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Start Scan
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

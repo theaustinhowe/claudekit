@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DescribeStep } from "@/components/generator/describe-step";
 import { ProjectCard } from "@/components/generator/project-card";
+import { PageBanner } from "@/components/layout/page-banner";
 import { getGeneratorProjects } from "@/lib/actions/generator-projects";
 import { getScanRoots } from "@/lib/actions/scans";
 import { getLatestScreenshot } from "@/lib/actions/screenshots";
@@ -45,71 +46,73 @@ export default async function GeneratorPage() {
 
   if (projects.length === 0) {
     return (
-      <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-muted-foreground">Describe your idea and generate a complete project scaffold</p>
+      <div className="flex h-full flex-col">
+        <PageBanner title="Projects" />
+        <div className="flex-1 overflow-auto">
+          <div className="p-6">
+            <DescribeStep scanRoots={scanRoots} installedPMs={installedPMs} />
+          </div>
         </div>
-        <DescribeStep scanRoots={scanRoots} installedPMs={installedPMs} />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-muted-foreground">
-            {activeProjects.length} active project{activeProjects.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {archivedCount > 0 && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/projects/archived">
-                <Archive className="w-3.5 h-3.5" />
-                Archived ({archivedCount})
+    <div className="flex h-full flex-col">
+      <PageBanner
+        title="Projects"
+        count={activeProjects.length}
+        actions={
+          <>
+            {archivedCount > 0 && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/projects/archived">
+                  <Archive className="w-3.5 h-3.5" />
+                  Archived ({archivedCount})
+                </Link>
+              </Button>
+            )}
+            <Button size="sm" asChild>
+              <Link href="/projects/new">
+                <Sparkles className="w-4 h-4" />
+                New Project
               </Link>
             </Button>
+          </>
+        }
+      />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 max-w-4xl mx-auto">
+          {activeProjects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="rounded-full bg-muted p-4 mb-4">
+                <FolderKanban className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h2 className="text-lg font-medium mb-1">No active projects</h2>
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                All your projects have been archived. Create a new one to get started.
+              </p>
+              <Button asChild>
+                <Link href="/projects/new">
+                  <Sparkles className="w-4 h-4" />
+                  New Project
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {activeProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  statusColors={STATUS_COLORS}
+                  screenshotId={screenshotMap.get(project.id) ?? null}
+                />
+              ))}
+            </div>
           )}
-          <Button asChild>
-            <Link href="/projects/new">
-              <Sparkles className="w-4 h-4" />
-              New Project
-            </Link>
-          </Button>
         </div>
       </div>
-
-      {activeProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <FolderKanban className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h2 className="text-lg font-medium mb-1">No active projects</h2>
-          <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            All your projects have been archived. Create a new one to get started.
-          </p>
-          <Button asChild>
-            <Link href="/projects/new">
-              <Sparkles className="w-4 h-4" />
-              New Project
-            </Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-0">
-          {activeProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              statusColors={STATUS_COLORS}
-              screenshotId={screenshotMap.get(project.id) ?? null}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

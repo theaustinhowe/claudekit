@@ -31,6 +31,7 @@ import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PageBanner } from "@/components/layout/page-banner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { deleteRepos } from "@/lib/actions/repos";
 import type { RepoWithCounts } from "@/lib/types";
@@ -178,300 +179,303 @@ export function ReposClient({ repos }: ReposClientProps) {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Repositories</h1>
-          <p className="text-muted-foreground text-sm">{formatNumber(repos.length)} repositories audited</p>
-        </div>
-        <Button onClick={() => router.push("/scans/new")} className="w-full sm:w-auto">
-          <Play className="w-4 h-4 mr-2" />
-          New Scan
-        </Button>
-      </div>
-
-      {/* Search and filters */}
-      <div className="flex items-center gap-2 sm:gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search repos, paths..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-            aria-label="Search repositories"
-          />
-        </div>
-      </div>
-
-      {/* Empty States */}
-      {repos.length === 0 && !searchQuery && (
-        <EmptyState
-          icon={FolderGit2}
-          title="No repositories discovered yet"
-          description="Run a scan to discover repos in your workspace, or connect your GitHub account to sync repos."
-          actions={[{ label: "New Scan", href: "/scans/new" }]}
-        />
-      )}
-
-      {repos.length > 0 && filteredRepos.length === 0 && searchQuery && (
-        <div className="text-center py-12 space-y-3">
-          <Search className="w-8 h-8 text-muted-foreground/40 mx-auto" />
-          <p className="text-muted-foreground">No repositories match &ldquo;{searchQuery}&rdquo;</p>
-          <Button variant="ghost" size="sm" onClick={() => setSearchQuery("")}>
-            Clear search
+    <div className="flex h-full flex-col">
+      <PageBanner
+        title="Repositories"
+        count={repos.length}
+        actions={
+          <Button size="sm" onClick={() => router.push("/scans/new")}>
+            <Play className="w-4 h-4 mr-1.5" />
+            New Scan
           </Button>
-        </div>
-      )}
-
-      {filteredRepos.length > 0 && (
-        <>
-          {/* Bulk actions */}
-          {selectedRepos.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 bg-muted rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2"
-            >
-              <span className="text-sm">{formatNumber(selectedRepos.length)} repositories selected</span>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="flex-1 sm:flex-none"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Remove
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Remove {formatNumber(selectedRepos.length)} repositories?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will remove the selected repositories and all associated findings, fixes, and concepts from
-                  Gadget. The actual files on disk will not be affected.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Removing...
-                    </>
-                  ) : (
-                    "Remove"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Mobile: Card layout */}
-          <div className="block md:hidden space-y-3">
-            {sortedRepos.map((repo) => (
-              <Card key={repo.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  {/* biome-ignore lint/a11y/useSemanticElements: contains nested Checkbox */}
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="p-4 cursor-pointer hover:bg-muted/50 transition-colors w-full text-left"
-                    onClick={() => router.push(`/repositories/${repo.id}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        router.push(`/repositories/${repo.id}`);
-                      }
-                    }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        checked={selectedRepos.includes(repo.id)}
-                        onCheckedChange={() => toggleRepo(repo.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mt-1"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <FolderGit2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <p className="font-medium truncate">{repo.name}</p>
-                        </div>
-                        <p className="text-xs text-muted-foreground font-mono truncate mb-2">{repo.local_path}</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {repo.repo_type && (
-                            <Badge className={getRepoTypeColor(repo.repo_type)} variant="secondary">
-                              {repo.repo_type}
-                            </Badge>
-                          )}
-                          {repo.package_manager && (
-                            <Badge variant="outline" className="capitalize">
-                              {repo.package_manager}
-                            </Badge>
-                          )}
-                          {repo.last_modified_at && (
-                            <Badge variant="outline" className="text-xs">
-                              Modified {new Date(repo.last_modified_at).toLocaleDateString()}
-                            </Badge>
-                          )}
-                          {repo.critical_count > 0 && (
-                            <Badge variant="destructive">{formatNumber(repo.critical_count)} critical</Badge>
-                          )}
-                          {repo.warning_count > 0 && (
-                            <Badge variant="secondary" className="bg-warning/10 text-warning">
-                              {formatNumber(repo.warning_count)} warn
-                            </Badge>
-                          )}
-                          {repo.critical_count === 0 && repo.warning_count === 0 && (
-                            <Badge variant="secondary">Clean</Badge>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        }
+      />
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          {/* Search and filters */}
+          <div className="flex items-center gap-2 sm:gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search repos, paths..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+                aria-label="Search repositories"
+              />
+            </div>
           </div>
 
-          {/* Desktop: Table layout */}
-          <Card className="hidden md:block">
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedRepos.length === filteredRepos.length && filteredRepos.length > 0}
-                        onCheckedChange={toggleSelectAll}
-                        aria-label={
-                          selectedRepos.length === filteredRepos.length
-                            ? "Deselect all repositories"
-                            : "Select all repositories"
-                        }
-                      />
-                    </TableHead>
-                    <SortableHeader
-                      column="name"
-                      label="Repository"
-                      currentColumn={sortColumn}
-                      currentDirection={sortDirection}
-                      onToggle={toggleSort}
-                    />
-                    <SortableHeader
-                      column="repo_type"
-                      label="Type"
-                      currentColumn={sortColumn}
-                      currentDirection={sortDirection}
-                      onToggle={toggleSort}
-                    />
-                    <SortableHeader
-                      column="package_manager"
-                      label="Package Manager"
-                      currentColumn={sortColumn}
-                      currentDirection={sortDirection}
-                      onToggle={toggleSort}
-                    />
-                    <SortableHeader
-                      column="last_scanned_at"
-                      label="Last Scan"
-                      currentColumn={sortColumn}
-                      currentDirection={sortDirection}
-                      onToggle={toggleSort}
-                    />
-                    <SortableHeader
-                      column="last_modified_at"
-                      label="Last Modified"
-                      currentColumn={sortColumn}
-                      currentDirection={sortDirection}
-                      onToggle={toggleSort}
-                    />
-                    <SortableHeader
-                      column="issues"
-                      label="Issues"
-                      currentColumn={sortColumn}
-                      currentDirection={sortDirection}
-                      onToggle={toggleSort}
-                      className="text-right"
-                    />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedRepos.map((repo) => (
-                    <TableRow
-                      key={repo.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => router.push(`/repositories/${repo.id}`)}
+          {/* Empty States */}
+          {repos.length === 0 && !searchQuery && (
+            <EmptyState
+              icon={FolderGit2}
+              title="No repositories discovered yet"
+              description="Run a scan to discover repos in your workspace, or connect your GitHub account to sync repos."
+              actions={[{ label: "New Scan", href: "/scans/new" }]}
+            />
+          )}
+
+          {repos.length > 0 && filteredRepos.length === 0 && searchQuery && (
+            <div className="text-center py-12 space-y-3">
+              <Search className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+              <p className="text-muted-foreground">No repositories match &ldquo;{searchQuery}&rdquo;</p>
+              <Button variant="ghost" size="sm" onClick={() => setSearchQuery("")}>
+                Clear search
+              </Button>
+            </div>
+          )}
+
+          {filteredRepos.length > 0 && (
+            <>
+              {/* Bulk actions */}
+              {selectedRepos.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 p-3 bg-muted rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2"
+                >
+                  <span className="text-sm">{formatNumber(selectedRepos.length)} repositories selected</span>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="flex-1 sm:flex-none"
+                      onClick={() => setShowDeleteDialog(true)}
                     >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedRepos.includes(repo.id)}
-                          onCheckedChange={() => toggleRepo(repo.id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <FolderGit2 className="w-5 h-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">{repo.name}</p>
-                            <p className="text-xs text-muted-foreground font-mono">{repo.local_path}</p>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove {formatNumber(selectedRepos.length)} repositories?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will remove the selected repositories and all associated findings, fixes, and concepts from
+                      Gadget. The actual files on disk will not be affected.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Removing...
+                        </>
+                      ) : (
+                        "Remove"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Mobile: Card layout */}
+              <div className="block md:hidden space-y-3">
+                {sortedRepos.map((repo) => (
+                  <Card key={repo.id} className="overflow-hidden">
+                    <CardContent className="p-0">
+                      {/* biome-ignore lint/a11y/useSemanticElements: contains nested Checkbox */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        className="p-4 cursor-pointer hover:bg-muted/50 transition-colors w-full text-left"
+                        onClick={() => router.push(`/repositories/${repo.id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            router.push(`/repositories/${repo.id}`);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={selectedRepos.includes(repo.id)}
+                            onCheckedChange={() => toggleRepo(repo.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <FolderGit2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <p className="font-medium truncate">{repo.name}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground font-mono truncate mb-2">{repo.local_path}</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {repo.repo_type && (
+                                <Badge className={getRepoTypeColor(repo.repo_type)} variant="secondary">
+                                  {repo.repo_type}
+                                </Badge>
+                              )}
+                              {repo.package_manager && (
+                                <Badge variant="outline" className="capitalize">
+                                  {repo.package_manager}
+                                </Badge>
+                              )}
+                              {repo.last_modified_at && (
+                                <Badge variant="outline" className="text-xs">
+                                  Modified {new Date(repo.last_modified_at).toLocaleDateString()}
+                                </Badge>
+                              )}
+                              {repo.critical_count > 0 && (
+                                <Badge variant="destructive">{formatNumber(repo.critical_count)} critical</Badge>
+                              )}
+                              {repo.warning_count > 0 && (
+                                <Badge variant="secondary" className="bg-warning/10 text-warning">
+                                  {formatNumber(repo.warning_count)} warn
+                                </Badge>
+                              )}
+                              {repo.critical_count === 0 && repo.warning_count === 0 && (
+                                <Badge variant="secondary">Clean</Badge>
+                              )}
+                            </div>
                           </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {repo.repo_type && (
-                          <Badge className={getRepoTypeColor(repo.repo_type)} variant="secondary">
-                            {repo.repo_type}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {repo.package_manager && (
-                          <Badge variant="outline" className="capitalize">
-                            {repo.package_manager}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {repo.last_scanned_at ? new Date(repo.last_scanned_at).toLocaleDateString() : "Never"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {repo.last_modified_at ? new Date(repo.last_modified_at).toLocaleDateString() : "\u2014"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {repo.critical_count > 0 && (
-                            <Badge variant="destructive">{formatNumber(repo.critical_count)}</Badge>
-                          )}
-                          {repo.warning_count > 0 && (
-                            <Badge variant="secondary" className="bg-warning/10 text-warning">
-                              {formatNumber(repo.warning_count)}
-                            </Badge>
-                          )}
-                          {repo.critical_count === 0 && repo.warning_count === 0 && (
-                            <Badge variant="secondary">Clean</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
-      )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop: Table layout */}
+              <Card className="hidden md:block">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedRepos.length === filteredRepos.length && filteredRepos.length > 0}
+                            onCheckedChange={toggleSelectAll}
+                            aria-label={
+                              selectedRepos.length === filteredRepos.length
+                                ? "Deselect all repositories"
+                                : "Select all repositories"
+                            }
+                          />
+                        </TableHead>
+                        <SortableHeader
+                          column="name"
+                          label="Repository"
+                          currentColumn={sortColumn}
+                          currentDirection={sortDirection}
+                          onToggle={toggleSort}
+                        />
+                        <SortableHeader
+                          column="repo_type"
+                          label="Type"
+                          currentColumn={sortColumn}
+                          currentDirection={sortDirection}
+                          onToggle={toggleSort}
+                        />
+                        <SortableHeader
+                          column="package_manager"
+                          label="Package Manager"
+                          currentColumn={sortColumn}
+                          currentDirection={sortDirection}
+                          onToggle={toggleSort}
+                        />
+                        <SortableHeader
+                          column="last_scanned_at"
+                          label="Last Scan"
+                          currentColumn={sortColumn}
+                          currentDirection={sortDirection}
+                          onToggle={toggleSort}
+                        />
+                        <SortableHeader
+                          column="last_modified_at"
+                          label="Last Modified"
+                          currentColumn={sortColumn}
+                          currentDirection={sortDirection}
+                          onToggle={toggleSort}
+                        />
+                        <SortableHeader
+                          column="issues"
+                          label="Issues"
+                          currentColumn={sortColumn}
+                          currentDirection={sortDirection}
+                          onToggle={toggleSort}
+                          className="text-right"
+                        />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedRepos.map((repo) => (
+                        <TableRow
+                          key={repo.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => router.push(`/repositories/${repo.id}`)}
+                        >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedRepos.includes(repo.id)}
+                              onCheckedChange={() => toggleRepo(repo.id)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <FolderGit2 className="w-5 h-5 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">{repo.name}</p>
+                                <p className="text-xs text-muted-foreground font-mono">{repo.local_path}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {repo.repo_type && (
+                              <Badge className={getRepoTypeColor(repo.repo_type)} variant="secondary">
+                                {repo.repo_type}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {repo.package_manager && (
+                              <Badge variant="outline" className="capitalize">
+                                {repo.package_manager}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {repo.last_scanned_at ? new Date(repo.last_scanned_at).toLocaleDateString() : "Never"}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {repo.last_modified_at ? new Date(repo.last_modified_at).toLocaleDateString() : "\u2014"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {repo.critical_count > 0 && (
+                                <Badge variant="destructive">{formatNumber(repo.critical_count)}</Badge>
+                              )}
+                              {repo.warning_count > 0 && (
+                                <Badge variant="secondary" className="bg-warning/10 text-warning">
+                                  {formatNumber(repo.warning_count)}
+                                </Badge>
+                              )}
+                              {repo.critical_count === 0 && repo.warning_count === 0 && (
+                                <Badge variant="secondary">Clean</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

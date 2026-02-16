@@ -30,7 +30,6 @@ import { Progress } from "@devkit/ui/components/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Switch } from "@devkit/ui/components/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   AlertTriangle,
@@ -39,7 +38,6 @@ import {
   Clock,
   ExternalLink,
   Eye,
-  FolderGit2,
   GitBranch,
   GitBranchPlus,
   Github,
@@ -64,6 +62,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { CodeTabContent } from "@/components/code/code-tab-content";
+import { PageTabs } from "@/components/layout/page-tabs";
 import { AIFileGenTerminal, useAIFileGen } from "@/components/repos/ai-file-gen-terminal";
 import { ClaudeTabContent } from "@/components/repos/claude-tab-content";
 import { ManualFindingForm, type ManualFindingFormData } from "@/components/repos/manual-finding-form";
@@ -528,29 +527,25 @@ export function RepoDetailClient({
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
-          <Link href="/repositories" className="hover:text-foreground transition-colors">
-            Repos
-          </Link>
-          <span>/</span>
-          <span className="text-foreground font-medium truncate">{repo.name}</span>
-        </nav>
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-3 flex-wrap">
-              {repo.name}
-              {repo.repo_type && (
-                <Badge variant="outline" className="capitalize font-normal">
-                  {repo.repo_type}
-                </Badge>
-              )}
-            </h1>
-            <p className="text-muted-foreground font-mono text-sm mt-1 truncate">{repo.local_path}</p>
-          </div>
-          <div className="flex gap-2 shrink-0 items-center">
+    <div className="flex h-full flex-col">
+      <PageTabs
+        tabs={[
+          { id: "overview", label: "Overview" },
+          { id: "code", label: "Code" },
+          { id: "findings", label: "Findings", count: findings.length || undefined },
+          { id: "ai-files", label: "AI Files" },
+          { id: "ai-config", label: "AI Config" },
+          {
+            id: "ai-integrations",
+            label: "AI Integrations",
+            count: concepts.length + linkedConcepts.length || undefined,
+          },
+          { id: "github", label: "GitHub" },
+        ]}
+        value={activeTab}
+        onValueChange={setActiveTab}
+        actions={
+          <>
             {isScanning && (
               <span className="text-sm text-muted-foreground flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -569,604 +564,514 @@ export function RepoDetailClient({
               disabled={isScanning || isImproving}
               onClick={() => setShowDeleteDialog(true)}
             >
-              <Trash2 className="w-4 h-4 mr-1.5" />
-              Remove
+              <Trash2 className="w-4 h-4" />
             </Button>
-          </div>
-        </div>
-        {isScanning && <Progress value={scanProgress} className="mt-3 h-2" />}
-        {improveSessions.length > 0 && (
-          <div className="space-y-2">
-            {improveSessions.map((s) => (
-              <QuickImproveTerminal
-                key={s.id}
-                sessionId={s.id}
-                persona={s.persona}
-                minimized={improveExpandedId !== s.id}
-                onToggleMinimize={() => toggleImproveExpand(s.id)}
-                onDismiss={() => dismissImproveSession(s.id)}
-                onMarkRunning={(running) => markImproveRunning(s.id, running)}
-                onRetry={() => handleQuickImprove(s.persona)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="code">
-            <FolderGit2 className="w-4 h-4 mr-1.5" />
-            Code
-          </TabsTrigger>
-          <TabsTrigger value="findings">
-            Findings
-            {findings.length > 0 && (
-              <Badge variant="destructive" className="ml-1.5 h-5 px-1.5">
-                {formatNumber(findings.length)}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="ai-files">
-            AI Files
-            {aiFiles.filter((f) => !f.present).length > 0 && (
-              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5">
-                {formatNumber(aiFiles.filter((f) => !f.present).length)} missing
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="ai-config">AI Config</TabsTrigger>
-          <TabsTrigger value="ai-integrations">
-            AI Integrations
-            {concepts.length + linkedConcepts.length > 0 && (
-              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5">
-                {formatNumber(concepts.length + linkedConcepts.length)}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="github">
-            <Github className="w-4 h-4 mr-1.5" />
-            GitHub
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview">
-          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Repository Info</CardTitle>
-              </CardHeader>
-              <CardContent className="grid sm:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Package Manager</p>
-                    <p className="font-medium capitalize">{repo.package_manager || "Unknown"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <GitBranch className="w-5 h-5 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Default Branch</p>
-                    <p className="font-medium">{codeBranches.find((b) => b.isDefault)?.name || repo.default_branch}</p>
-                  </div>
-                </div>
-                {(() => {
-                  const currentBranch = codeBranches.find((b) => b.isCurrent)?.name;
-                  const defaultBranch = codeBranches.find((b) => b.isDefault)?.name || repo.default_branch;
-                  if (currentBranch && currentBranch !== defaultBranch) {
-                    return (
-                      <div className="flex items-center gap-3">
-                        <GitBranchPlus className="w-5 h-5 text-primary shrink-0" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Current Branch</p>
-                          <p className="font-medium text-primary">{currentBranch}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Last Modified</p>
-                    <p className="font-medium">{repo.last_modified_at ? timeAgo(repo.last_modified_at) : "Unknown"}</p>
-                  </div>
-                </div>
-                {repo.git_remote ? (
-                  <div className="flex items-center gap-3 sm:col-span-2">
-                    <ExternalLink className="w-5 h-5 text-muted-foreground shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm text-muted-foreground">Remote</p>
-                      <a
-                        href={repo.git_remote}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-primary hover:underline truncate block"
-                      >
-                        {repo.git_remote}
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 sm:col-span-2">
-                    <Github className="w-5 h-5 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-muted-foreground">Remote</p>
-                      <p className="text-sm text-muted-foreground italic">No remote configured</p>
-                    </div>
-                    {patAvailable ? (
-                      <Button size="sm" variant="outline" onClick={openRemoteDialog}>
-                        <Github className="w-4 h-4 mr-1.5" />
-                        Create GitHub Repo
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href="/settings">
-                          <Settings className="w-4 h-4 mr-1.5" />
-                          Configure Token
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Findings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-destructive" />
-                    Critical
-                  </span>
-                  <span className="font-bold">{formatNumber(repo.critical_count)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-warning" />
-                    Warnings
-                  </span>
-                  <span className="font-bold">{formatNumber(repo.warning_count)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-info" />
-                    Info
-                  </span>
-                  <span className="font-bold">{formatNumber(repo.info_count)}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Code Tab */}
-        <TabsContent value="code">
-          <CodeTabContent
-            repoId={repo.id}
-            repoName={repo.name}
-            repoPath={repo.local_path}
-            branches={codeBranches}
-            rootEntries={codeRootDir}
-            readme={codeReadme ?? null}
-          />
-        </TabsContent>
-
-        {/* Findings Tab (merged Dependencies + Structure) */}
-        <TabsContent value="findings">
-          <div className="space-y-4">
-            {/* Category filter chips */}
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  { key: "all", label: "All", count: visibleFindings.length },
-                  {
-                    key: "dependencies",
-                    label: "Dependencies",
-                    count: visibleFindings.filter((f) => f.category === "dependencies").length,
-                  },
-                  {
-                    key: "structure",
-                    label: "Structure",
-                    count: visibleFindings.filter((f) => f.category === "structure").length,
-                  },
-                  {
-                    key: "ai-files",
-                    label: "AI Files",
-                    count: visibleFindings.filter((f) => f.category === "ai-files").length,
-                  },
-                  {
-                    key: "config",
-                    label: "Config",
-                    count: visibleFindings.filter((f) => f.category === "config").length,
-                  },
-                  {
-                    key: "custom",
-                    label: "Custom",
-                    count:
-                      visibleFindings.filter((f) => f.category === "custom").length + unresolvedManualFindings.length,
-                  },
-                ] as const
-              ).map((chip) => (
-                <Button
-                  key={chip.key}
-                  variant={findingsFilter === chip.key ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFindingsFilter(chip.key)}
-                  className="gap-1.5"
-                >
-                  {chip.label}
-                  {chip.count > 0 && (
-                    <Badge
-                      variant={findingsFilter === chip.key ? "secondary" : "outline"}
-                      className="h-5 px-1.5 text-[10px]"
-                    >
-                      {formatNumber(chip.count)}
-                    </Badge>
-                  )}
-                </Button>
+          </>
+        }
+      />
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+          {isScanning && <Progress value={scanProgress} className="h-2" />}
+          {improveSessions.length > 0 && (
+            <div className="space-y-2">
+              {improveSessions.map((s) => (
+                <QuickImproveTerminal
+                  key={s.id}
+                  sessionId={s.id}
+                  persona={s.persona}
+                  minimized={improveExpandedId !== s.id}
+                  onToggleMinimize={() => toggleImproveExpand(s.id)}
+                  onDismiss={() => dismissImproveSession(s.id)}
+                  onMarkRunning={(running) => markImproveRunning(s.id, running)}
+                  onRetry={() => handleQuickImprove(s.persona)}
+                />
               ))}
             </div>
+          )}
 
-            {/* Toolbar row */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <Button variant="outline" size="sm" onClick={selectAllFixable} disabled={anyFixing}>
-                <div
-                  aria-hidden="true"
-                  className={cn(
-                    "mr-1.5 h-4 w-4 shrink-0 rounded-xs border border-accent-foreground/30 ring-offset-background",
-                    visibleFindings.filter((f) => classifyFinding(f).autoFixable).length > 0 &&
+          {/* Overview Tab */}
+          {activeTab === "overview" && (
+            <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Repository Info</CardTitle>
+                </CardHeader>
+                <CardContent className="grid sm:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <Package className="w-5 h-5 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Package Manager</p>
+                      <p className="font-medium capitalize">{repo.package_manager || "Unknown"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <GitBranch className="w-5 h-5 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Default Branch</p>
+                      <p className="font-medium">
+                        {codeBranches.find((b) => b.isDefault)?.name || repo.default_branch}
+                      </p>
+                    </div>
+                  </div>
+                  {(() => {
+                    const currentBranch = codeBranches.find((b) => b.isCurrent)?.name;
+                    const defaultBranch = codeBranches.find((b) => b.isDefault)?.name || repo.default_branch;
+                    if (currentBranch && currentBranch !== defaultBranch) {
+                      return (
+                        <div className="flex items-center gap-3">
+                          <GitBranchPlus className="w-5 h-5 text-primary shrink-0" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Current Branch</p>
+                            <p className="font-medium text-primary">{currentBranch}</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-5 h-5 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Last Modified</p>
+                      <p className="font-medium">
+                        {repo.last_modified_at ? timeAgo(repo.last_modified_at) : "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+                  {repo.git_remote ? (
+                    <div className="flex items-center gap-3 sm:col-span-2">
+                      <ExternalLink className="w-5 h-5 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm text-muted-foreground">Remote</p>
+                        <a
+                          href={repo.git_remote}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-primary hover:underline truncate block"
+                        >
+                          {repo.git_remote}
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 sm:col-span-2">
+                      <Github className="w-5 h-5 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-muted-foreground">Remote</p>
+                        <p className="text-sm text-muted-foreground italic">No remote configured</p>
+                      </div>
+                      {patAvailable ? (
+                        <Button size="sm" variant="outline" onClick={openRemoteDialog}>
+                          <Github className="w-4 h-4 mr-1.5" />
+                          Create GitHub Repo
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline" asChild>
+                          <Link href="/settings">
+                            <Settings className="w-4 h-4 mr-1.5" />
+                            Configure Token
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Findings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-destructive" />
+                      Critical
+                    </span>
+                    <span className="font-bold">{formatNumber(repo.critical_count)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-warning" />
+                      Warnings
+                    </span>
+                    <span className="font-bold">{formatNumber(repo.warning_count)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-info" />
+                      Info
+                    </span>
+                    <span className="font-bold">{formatNumber(repo.info_count)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Code Tab */}
+          {activeTab === "code" && (
+            <CodeTabContent
+              repoId={repo.id}
+              repoName={repo.name}
+              repoPath={repo.local_path}
+              branches={codeBranches}
+              rootEntries={codeRootDir}
+              readme={codeReadme ?? null}
+            />
+          )}
+
+          {/* Findings Tab (merged Dependencies + Structure) */}
+          {activeTab === "findings" && (
+            <div className="space-y-4">
+              {/* Category filter chips */}
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    { key: "all", label: "All", count: visibleFindings.length },
+                    {
+                      key: "dependencies",
+                      label: "Dependencies",
+                      count: visibleFindings.filter((f) => f.category === "dependencies").length,
+                    },
+                    {
+                      key: "structure",
+                      label: "Structure",
+                      count: visibleFindings.filter((f) => f.category === "structure").length,
+                    },
+                    {
+                      key: "ai-files",
+                      label: "AI Files",
+                      count: visibleFindings.filter((f) => f.category === "ai-files").length,
+                    },
+                    {
+                      key: "config",
+                      label: "Config",
+                      count: visibleFindings.filter((f) => f.category === "config").length,
+                    },
+                    {
+                      key: "custom",
+                      label: "Custom",
+                      count:
+                        visibleFindings.filter((f) => f.category === "custom").length + unresolvedManualFindings.length,
+                    },
+                  ] as const
+                ).map((chip) => (
+                  <Button
+                    key={chip.key}
+                    variant={findingsFilter === chip.key ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFindingsFilter(chip.key)}
+                    className="gap-1.5"
+                  >
+                    {chip.label}
+                    {chip.count > 0 && (
+                      <Badge
+                        variant={findingsFilter === chip.key ? "secondary" : "outline"}
+                        className="h-5 px-1.5 text-[10px]"
+                      >
+                        {formatNumber(chip.count)}
+                      </Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Toolbar row */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button variant="outline" size="sm" onClick={selectAllFixable} disabled={anyFixing}>
+                  <div
+                    aria-hidden="true"
+                    className={cn(
+                      "mr-1.5 h-4 w-4 shrink-0 rounded-xs border border-accent-foreground/30 ring-offset-background",
+                      visibleFindings.filter((f) => classifyFinding(f).autoFixable).length > 0 &&
+                        visibleFindings
+                          .filter((f) => classifyFinding(f).autoFixable)
+                          .every((f) => selectedFindingIds.has(f.id))
+                        ? "bg-accent text-accent-foreground"
+                        : "",
+                    )}
+                  >
+                    {visibleFindings.filter((f) => classifyFinding(f).autoFixable).length > 0 &&
                       visibleFindings
                         .filter((f) => classifyFinding(f).autoFixable)
-                        .every((f) => selectedFindingIds.has(f.id))
-                      ? "bg-accent text-accent-foreground"
-                      : "",
-                  )}
-                >
-                  {visibleFindings.filter((f) => classifyFinding(f).autoFixable).length > 0 &&
-                    visibleFindings
-                      .filter((f) => classifyFinding(f).autoFixable)
-                      .every((f) => selectedFindingIds.has(f.id)) && <Check className="h-3.5 w-3.5 text-current" />}
-                </div>
-                Select all fixable
-              </Button>
-              {selectedFindingIds.size > 0 && (
-                <span className="text-sm text-muted-foreground">{selectedFindingIds.size} selected</span>
-              )}
-              <Button
-                size="sm"
-                onClick={handleAutoFix}
-                disabled={selectedFindingIds.size === 0 || anyFixing}
-                className="gap-1.5"
-              >
-                {anyFixing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                Auto-fix Selected
-              </Button>
-              {selectedFindingIds.size > 0 && (
-                <Button variant="outline" size="sm" onClick={dismissSelected} className="gap-1.5">
-                  <X className="w-4 h-4" />
-                  Dismiss Selected
+                        .every((f) => selectedFindingIds.has(f.id)) && <Check className="h-3.5 w-3.5 text-current" />}
+                  </div>
+                  Select all fixable
                 </Button>
-              )}
-              {dismissedCount > 0 && (
-                <button
-                  type="button"
-                  onClick={undoDismiss}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  <Undo2 className="w-3.5 h-3.5" />
-                  Show {dismissedCount} dismissed
-                </button>
-              )}
-              <div className="ml-auto">
+                {selectedFindingIds.size > 0 && (
+                  <span className="text-sm text-muted-foreground">{selectedFindingIds.size} selected</span>
+                )}
                 <Button
-                  variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setEditingManualFinding(undefined);
-                    setManualFindingFormOpen(true);
-                  }}
+                  onClick={handleAutoFix}
+                  disabled={selectedFindingIds.size === 0 || anyFixing}
+                  className="gap-1.5"
                 >
-                  <Plus className="w-4 h-4 mr-1.5" />
-                  Add Finding
+                  {anyFixing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                  Auto-fix Selected
                 </Button>
+                {selectedFindingIds.size > 0 && (
+                  <Button variant="outline" size="sm" onClick={dismissSelected} className="gap-1.5">
+                    <X className="w-4 h-4" />
+                    Dismiss Selected
+                  </Button>
+                )}
+                {dismissedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={undoDismiss}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                    Show {dismissedCount} dismissed
+                  </button>
+                )}
+                <div className="ml-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditingManualFinding(undefined);
+                      setManualFindingFormOpen(true);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Add Finding
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* Fix terminal */}
-            {fixSessionId && (
-              <SessionTerminal
-                logs={fixSession.logs}
-                progress={fixSession.progress}
-                phase={fixSession.phase}
-                status={fixSession.status}
-                error={fixSession.error}
-                elapsed={fixSession.elapsed}
-                onCancel={fixSession.cancel}
-                onDismiss={() => setFixSessionId(null)}
-                variant="compact"
-              />
-            )}
+              {/* Fix terminal */}
+              {fixSessionId && (
+                <SessionTerminal
+                  logs={fixSession.logs}
+                  progress={fixSession.progress}
+                  phase={fixSession.phase}
+                  status={fixSession.status}
+                  error={fixSession.error}
+                  elapsed={fixSession.elapsed}
+                  onCancel={fixSession.cancel}
+                  onDismiss={() => setFixSessionId(null)}
+                  variant="compact"
+                />
+              )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Findings</CardTitle>
-                <CardDescription>
-                  {findingsFilter === "all"
-                    ? "All issues detected across categories"
-                    : `Issues in ${findingsFilter} category`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <TooltipProvider>
-                  {visibleFindings
-                    .filter((f) => {
-                      if (findingsFilter === "all") return true;
-                      return f.category === findingsFilter;
-                    })
-                    .map((finding) => {
-                      const classification = classifyFinding(finding);
-                      const isSelected = selectedFindingIds.has(finding.id);
+              <Card>
+                <CardHeader>
+                  <CardTitle>Findings</CardTitle>
+                  <CardDescription>
+                    {findingsFilter === "all"
+                      ? "All issues detected across categories"
+                      : `Issues in ${findingsFilter} category`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <TooltipProvider>
+                    {visibleFindings
+                      .filter((f) => {
+                        if (findingsFilter === "all") return true;
+                        return f.category === findingsFilter;
+                      })
+                      .map((finding) => {
+                        const classification = classifyFinding(finding);
+                        const isSelected = selectedFindingIds.has(finding.id);
 
-                      return (
-                        <motion.div
-                          key={finding.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`p-3 sm:p-4 rounded-lg border transition-colors ${
-                            isSelected
-                              ? "border-primary/50 bg-primary/5"
-                              : finding.severity === "critical"
-                                ? "bg-destructive/5 border-destructive/20"
-                                : finding.severity === "warning"
-                                  ? "bg-warning/5 border-warning/20"
-                                  : "bg-muted/50"
+                        return (
+                          <motion.div
+                            key={finding.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`p-3 sm:p-4 rounded-lg border transition-colors ${
+                              isSelected
+                                ? "border-primary/50 bg-primary/5"
+                                : finding.severity === "critical"
+                                  ? "bg-destructive/5 border-destructive/20"
+                                  : finding.severity === "warning"
+                                    ? "bg-warning/5 border-warning/20"
+                                    : "bg-muted/50"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              {/* Checkbox */}
+                              {classification.autoFixable ? (
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() => toggleFindingSelection(finding.id)}
+                                  disabled={anyFixing}
+                                  className="mt-0.5 shrink-0"
+                                />
+                              ) : (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="mt-0.5 shrink-0">
+                                      <Checkbox disabled className="opacity-40" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">
+                                    <p className="text-xs">{classification.reason || "Cannot be auto-fixed"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                              {severityIcon(finding.severity)}
+                              {/* biome-ignore lint/a11y/noStaticElementInteractions: clickable detail area wraps interactive controls */}
+                              <div
+                                className="flex-1 min-w-0 cursor-pointer"
+                                onClick={() => openWhyFlagged(finding)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") openWhyFlagged(finding);
+                                }}
+                              >
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <Badge variant="outline" className="capitalize text-xs">
+                                    {finding.category}
+                                  </Badge>
+                                  <h4 className="font-medium">{finding.title}</h4>
+                                  <Badge
+                                    variant={finding.severity === "critical" ? "destructive" : "secondary"}
+                                    className="capitalize"
+                                  >
+                                    {finding.severity}
+                                  </Badge>
+                                  {classification.autoFixable && (
+                                    <Badge variant="outline" className="text-[10px] gap-1">
+                                      <Zap className="w-3 h-3" />
+                                      {classification.risk}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">{finding.details}</p>
+                                {finding.evidence && (
+                                  <p className="text-xs font-mono text-muted-foreground mt-2 truncate">
+                                    {finding.evidence}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="hidden sm:inline-flex"
+                                  onClick={() => openWhyFlagged(finding)}
+                                >
+                                  Why flagged?
+                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                      onClick={() => {
+                                        setDismissedFindingIds((prev) => new Set([...prev, finding.id]));
+                                        setSelectedFindingIds((prev) => {
+                                          const next = new Set(prev);
+                                          next.delete(finding.id);
+                                          return next;
+                                        });
+                                      }}
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Dismiss</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                  </TooltipProvider>
+                  {visibleFindings.filter((f) => {
+                    if (findingsFilter === "all") return true;
+                    return f.category === findingsFilter;
+                  }).length === 0 &&
+                    unresolvedManualFindings.length === 0 && (
+                      <div className="text-center py-10 space-y-2">
+                        <ShieldCheck className="w-8 h-8 text-success/60 mx-auto" />
+                        <p className="text-muted-foreground">
+                          {findingsFilter === "all"
+                            ? "No issues found — this repo looks clean."
+                            : `No ${findingsFilter} issues found.`}
+                        </p>
+                      </div>
+                    )}
+                </CardContent>
+              </Card>
+
+              {/* Manual Findings */}
+              {(findingsFilter === "all" || findingsFilter === "custom") && unresolvedManualFindings.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Manual Findings</CardTitle>
+                    <CardDescription>User-created findings that persist across re-scans</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <TooltipProvider>
+                      {unresolvedManualFindings.map((mf) => (
+                        <div
+                          key={mf.id}
+                          className={`p-3 sm:p-4 rounded-lg border ${
+                            mf.severity === "critical"
+                              ? "bg-destructive/5 border-destructive/20"
+                              : mf.severity === "warning"
+                                ? "bg-warning/5 border-warning/20"
+                                : "bg-muted/50"
                           }`}
                         >
                           <div className="flex items-start gap-3">
-                            {/* Checkbox */}
-                            {classification.autoFixable ? (
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => toggleFindingSelection(finding.id)}
-                                disabled={anyFixing}
-                                className="mt-0.5 shrink-0"
-                              />
-                            ) : (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="mt-0.5 shrink-0">
-                                    <Checkbox disabled className="opacity-40" />
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  <p className="text-xs">{classification.reason || "Cannot be auto-fixed"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                            {severityIcon(finding.severity)}
-                            {/* biome-ignore lint/a11y/noStaticElementInteractions: clickable detail area wraps interactive controls */}
-                            <div
-                              className="flex-1 min-w-0 cursor-pointer"
-                              onClick={() => openWhyFlagged(finding)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") openWhyFlagged(finding);
-                              }}
-                            >
+                            {severityIcon(mf.severity)}
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <Badge variant="outline" className="capitalize text-xs">
-                                  {finding.category}
+                                  {mf.category}
                                 </Badge>
-                                <h4 className="font-medium">{finding.title}</h4>
+                                <Badge variant="secondary" className="text-xs">
+                                  Manual
+                                </Badge>
+                                <h4 className="font-medium">{mf.title}</h4>
                                 <Badge
-                                  variant={finding.severity === "critical" ? "destructive" : "secondary"}
+                                  variant={mf.severity === "critical" ? "destructive" : "secondary"}
                                   className="capitalize"
                                 >
-                                  {finding.severity}
+                                  {mf.severity}
                                 </Badge>
-                                {classification.autoFixable && (
-                                  <Badge variant="outline" className="text-[10px] gap-1">
-                                    <Zap className="w-3 h-3" />
-                                    {classification.risk}
-                                  </Badge>
-                                )}
                               </div>
-                              <p className="text-sm text-muted-foreground">{finding.details}</p>
-                              {finding.evidence && (
-                                <p className="text-xs font-mono text-muted-foreground mt-2 truncate">
-                                  {finding.evidence}
-                                </p>
+                              {mf.details && <p className="text-sm text-muted-foreground">{mf.details}</p>}
+                              {mf.evidence && (
+                                <p className="text-xs font-mono text-muted-foreground mt-2 truncate">{mf.evidence}</p>
                               )}
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="hidden sm:inline-flex"
-                                onClick={() => openWhyFlagged(finding)}
-                              >
-                                Why flagged?
-                              </Button>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                    onClick={() => {
-                                      setDismissedFindingIds((prev) => new Set([...prev, finding.id]));
-                                      setSelectedFindingIds((prev) => {
-                                        const next = new Set(prev);
-                                        next.delete(finding.id);
-                                        return next;
-                                      });
-                                    }}
+                                    className="h-7 w-7"
+                                    onClick={() => handleResolveManualFinding(mf.id)}
                                   >
-                                    <X className="w-4 h-4" />
+                                    <CheckCircle2 className="w-4 h-4 text-success" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Dismiss</TooltipContent>
+                                <TooltipContent>Resolve</TooltipContent>
                               </Tooltip>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                </TooltipProvider>
-                {visibleFindings.filter((f) => {
-                  if (findingsFilter === "all") return true;
-                  return f.category === findingsFilter;
-                }).length === 0 &&
-                  unresolvedManualFindings.length === 0 && (
-                    <div className="text-center py-10 space-y-2">
-                      <ShieldCheck className="w-8 h-8 text-success/60 mx-auto" />
-                      <p className="text-muted-foreground">
-                        {findingsFilter === "all"
-                          ? "No issues found — this repo looks clean."
-                          : `No ${findingsFilter} issues found.`}
-                      </p>
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
-
-            {/* Manual Findings */}
-            {(findingsFilter === "all" || findingsFilter === "custom") && unresolvedManualFindings.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Manual Findings</CardTitle>
-                  <CardDescription>User-created findings that persist across re-scans</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <TooltipProvider>
-                    {unresolvedManualFindings.map((mf) => (
-                      <div
-                        key={mf.id}
-                        className={`p-3 sm:p-4 rounded-lg border ${
-                          mf.severity === "critical"
-                            ? "bg-destructive/5 border-destructive/20"
-                            : mf.severity === "warning"
-                              ? "bg-warning/5 border-warning/20"
-                              : "bg-muted/50"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          {severityIcon(mf.severity)}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <Badge variant="outline" className="capitalize text-xs">
-                                {mf.category}
-                              </Badge>
-                              <Badge variant="secondary" className="text-xs">
-                                Manual
-                              </Badge>
-                              <h4 className="font-medium">{mf.title}</h4>
-                              <Badge
-                                variant={mf.severity === "critical" ? "destructive" : "secondary"}
-                                className="capitalize"
-                              >
-                                {mf.severity}
-                              </Badge>
-                            </div>
-                            {mf.details && <p className="text-sm text-muted-foreground">{mf.details}</p>}
-                            {mf.evidence && (
-                              <p className="text-xs font-mono text-muted-foreground mt-2 truncate">{mf.evidence}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => handleResolveManualFinding(mf.id)}
-                                >
-                                  <CheckCircle2 className="w-4 h-4 text-success" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Resolve</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => {
-                                    setEditingManualFinding(mf);
-                                    setManualFindingFormOpen(true);
-                                  }}
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Edit</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                  onClick={() => handleDeleteManualFinding(mf.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </TooltipProvider>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Show resolved toggle */}
-            {(findingsFilter === "all" || findingsFilter === "custom") && resolvedManualFindings.length > 0 && (
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setShowResolved(!showResolved)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showResolved ? "Hide" : "Show"} {resolvedManualFindings.length} resolved finding
-                  {resolvedManualFindings.length !== 1 ? "s" : ""}
-                </button>
-                {showResolved && (
-                  <div className="space-y-3 mt-4">
-                    {resolvedManualFindings.map((mf) => (
-                      <div key={mf.id} className="p-3 rounded-lg border bg-muted/30 opacity-60">
-                        <div className="flex items-start gap-3">
-                          <CheckCircle2 className="w-4 h-4 text-success mt-0.5" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h4 className="font-medium line-through">{mf.title}</h4>
-                              <Badge variant="secondary" className="text-xs">
-                                Resolved
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => handleUnresolveManualFinding(mf.id)}
-                            >
-                              Unresolve
-                            </Button>
-                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => {
+                                      setEditingManualFinding(mf);
+                                      setManualFindingFormOpen(true);
+                                    }}
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Edit</TooltipContent>
+                              </Tooltip>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
@@ -1180,234 +1085,297 @@ export function RepoDetailClient({
                                 </TooltipTrigger>
                                 <TooltipContent>Delete</TooltipContent>
                               </Tooltip>
-                            </TooltipProvider>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </TabsContent>
+                      ))}
+                    </TooltipProvider>
+                  </CardContent>
+                </Card>
+              )}
 
-        {/* AI Files Tab */}
-        <TabsContent value="ai-files">
-          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <CardTitle>AI Assistant Files</CardTitle>
-                    <CardDescription>Files that help AI assistants understand your project</CardDescription>
-                  </div>
-                  {selectableAIFiles.length > 0 && (
-                    <Button
-                      size="sm"
-                      onClick={handleUpdateSelected}
-                      disabled={selectedAIFiles.size === 0 || anyGenerating}
-                    >
-                      {anyGenerating ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Pencil className="w-4 h-4 mr-2" />
-                      )}
-                      Generate Selected ({selectedAIFiles.size})
-                    </Button>
+              {/* Show resolved toggle */}
+              {(findingsFilter === "all" || findingsFilter === "custom") && resolvedManualFindings.length > 0 && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowResolved(!showResolved)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showResolved ? "Hide" : "Show"} {resolvedManualFindings.length} resolved finding
+                    {resolvedManualFindings.length !== 1 ? "s" : ""}
+                  </button>
+                  {showResolved && (
+                    <div className="space-y-3 mt-4">
+                      {resolvedManualFindings.map((mf) => (
+                        <div key={mf.id} className="p-3 rounded-lg border bg-muted/30 opacity-60">
+                          <div className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-success mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <h4 className="font-medium line-through">{mf.title}</h4>
+                                <Badge variant="secondary" className="text-xs">
+                                  Resolved
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => handleUnresolveManualFinding(mf.id)}
+                              >
+                                Unresolve
+                              </Button>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                      onClick={() => handleDeleteManualFinding(mf.id)}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Delete</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {genSessions.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    {genSessions.map((s) => (
-                      <AIFileGenTerminal
-                        key={s.id}
-                        sessionId={s.id}
-                        fileName={s.fileName}
-                        minimized={genExpandedId !== s.id}
-                        onToggleMinimize={() => toggleGenExpand(s.id)}
-                        onDismiss={() => dismissGenSession(s.id)}
-                        onStatusChange={(status) => updateFileStatus(s.fileName, status)}
-                      />
-                    ))}
-                  </div>
-                )}
-                {selectableAIFiles.length > 0 && (
-                  <div className="flex items-center gap-2 pb-2 border-b">
-                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} disabled={anyGenerating} />
-                    <span className="text-sm text-muted-foreground">Select all</span>
-                  </div>
-                )}
-                {aiFiles.map((file) => {
-                  const fileStatus = fileStatuses.get(file.path);
-                  const isGenerating = !!fileStatus?.generating;
-                  const isSelected = selectedAIFiles.has(file.path);
+              )}
+            </div>
+          )}
 
-                  return (
-                    // biome-ignore lint/a11y/noStaticElementInteractions: clickable row wraps Checkbox — can't use <button> (nested button) or role="button" (useSemanticElements)
-                    <div
-                      key={file.path}
-                      className={`flex items-center gap-3 sm:gap-4 p-3 rounded-lg border transition-colors cursor-pointer text-left w-full ${
-                        isGenerating
-                          ? "bg-primary/5 border-primary/30"
-                          : fileStatus?.done === "success"
-                            ? "bg-success/5 border-success/20"
-                            : fileStatus?.done === "error"
-                              ? "bg-destructive/5 border-destructive/20"
-                              : isSelected
-                                ? "border-primary/50 bg-primary/5"
-                                : file.present
-                                  ? "bg-success/5 border-success/20"
-                                  : "bg-muted/50"
-                      }`}
-                      onClick={() => {
-                        if (!isGenerating && !fileStatus?.done && !anyGenerating) toggleAIFile(file.path);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          if (!isGenerating && !fileStatus?.done && !anyGenerating) toggleAIFile(file.path);
-                        }
-                      }}
-                    >
-                      {isGenerating ? (
-                        <Loader2 className="w-5 h-5 text-primary shrink-0 animate-spin" />
-                      ) : fileStatus?.done === "success" ? (
-                        <Check className="w-5 h-5 text-success shrink-0" />
-                      ) : fileStatus?.done === "error" ? (
-                        <X className="w-5 h-5 text-destructive shrink-0" />
-                      ) : (
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleAIFile(file.path)}
-                          disabled={anyGenerating}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm sm:text-base">{file.name}</p>
-                        {isGenerating && fileStatus.statusText ? (
-                          <p className="text-xs sm:text-sm text-primary font-medium truncate">
-                            {fileStatus.statusText}
-                          </p>
-                        ) : fileStatus?.done === "skipped" ? (
-                          <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                            Skipped — updated recently
-                          </p>
-                        ) : (
-                          <p className="text-xs sm:text-sm text-muted-foreground font-mono truncate">{file.path}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {!isGenerating && !fileStatus?.done && file.present && file.quality !== undefined && (
-                          <>
-                            <Progress value={file.quality} className="w-16 sm:w-20 h-2" />
-                            <span className="text-xs sm:text-sm text-muted-foreground">{file.quality}%</span>
-                          </>
-                        )}
-                        {!isGenerating && !fileStatus?.done && !file.present && (
-                          <Badge variant="outline" className="text-xs text-muted-foreground">
-                            Missing
-                          </Badge>
-                        )}
-                        {file.present && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewFile(file);
-                                  }}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>View file</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-
-            <div className="space-y-4 sm:space-y-6">
-              <Card>
+          {/* AI Files Tab */}
+          {activeTab === "ai-files" && (
+            <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+              <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Coverage</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-4">
-                      <svg
-                        className="w-full h-full -rotate-90"
-                        viewBox="0 0 128 128"
-                        aria-label={`AI file coverage: ${aiFileScore}%`}
-                        role="img"
-                      >
-                        <circle
-                          cx="64"
-                          cy="64"
-                          r="56"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="12"
-                          className="text-muted"
-                        />
-                        <circle
-                          cx="64"
-                          cy="64"
-                          r="56"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="12"
-                          strokeDasharray={`${aiFileScore * 3.52} 352`}
-                          className="text-primary"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-2xl sm:text-3xl font-bold">{aiFileScore}%</span>
-                      </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <CardTitle>AI Assistant Files</CardTitle>
+                      <CardDescription>Files that help AI assistants understand your project</CardDescription>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {formatNumber(aiFiles.filter((f) => f.present).length)} of {formatNumber(aiFiles.length)} files
-                      present
-                    </p>
+                    {selectableAIFiles.length > 0 && (
+                      <Button
+                        size="sm"
+                        onClick={handleUpdateSelected}
+                        disabled={selectedAIFiles.size === 0 || anyGenerating}
+                      >
+                        {anyGenerating ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Pencil className="w-4 h-4 mr-2" />
+                        )}
+                        Generate Selected ({selectedAIFiles.size})
+                      </Button>
+                    )}
                   </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {genSessions.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      {genSessions.map((s) => (
+                        <AIFileGenTerminal
+                          key={s.id}
+                          sessionId={s.id}
+                          fileName={s.fileName}
+                          minimized={genExpandedId !== s.id}
+                          onToggleMinimize={() => toggleGenExpand(s.id)}
+                          onDismiss={() => dismissGenSession(s.id)}
+                          onStatusChange={(status) => updateFileStatus(s.fileName, status)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {selectableAIFiles.length > 0 && (
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} disabled={anyGenerating} />
+                      <span className="text-sm text-muted-foreground">Select all</span>
+                    </div>
+                  )}
+                  {aiFiles.map((file) => {
+                    const fileStatus = fileStatuses.get(file.path);
+                    const isGenerating = !!fileStatus?.generating;
+                    const isSelected = selectedAIFiles.has(file.path);
+
+                    return (
+                      // biome-ignore lint/a11y/noStaticElementInteractions: clickable row wraps Checkbox — can't use <button> (nested button) or role="button" (useSemanticElements)
+                      <div
+                        key={file.path}
+                        className={`flex items-center gap-3 sm:gap-4 p-3 rounded-lg border transition-colors cursor-pointer text-left w-full ${
+                          isGenerating
+                            ? "bg-primary/5 border-primary/30"
+                            : fileStatus?.done === "success"
+                              ? "bg-success/5 border-success/20"
+                              : fileStatus?.done === "error"
+                                ? "bg-destructive/5 border-destructive/20"
+                                : isSelected
+                                  ? "border-primary/50 bg-primary/5"
+                                  : file.present
+                                    ? "bg-success/5 border-success/20"
+                                    : "bg-muted/50"
+                        }`}
+                        onClick={() => {
+                          if (!isGenerating && !fileStatus?.done && !anyGenerating) toggleAIFile(file.path);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            if (!isGenerating && !fileStatus?.done && !anyGenerating) toggleAIFile(file.path);
+                          }
+                        }}
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="w-5 h-5 text-primary shrink-0 animate-spin" />
+                        ) : fileStatus?.done === "success" ? (
+                          <Check className="w-5 h-5 text-success shrink-0" />
+                        ) : fileStatus?.done === "error" ? (
+                          <X className="w-5 h-5 text-destructive shrink-0" />
+                        ) : (
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleAIFile(file.path)}
+                            disabled={anyGenerating}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm sm:text-base">{file.name}</p>
+                          {isGenerating && fileStatus.statusText ? (
+                            <p className="text-xs sm:text-sm text-primary font-medium truncate">
+                              {fileStatus.statusText}
+                            </p>
+                          ) : fileStatus?.done === "skipped" ? (
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                              Skipped — updated recently
+                            </p>
+                          ) : (
+                            <p className="text-xs sm:text-sm text-muted-foreground font-mono truncate">{file.path}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!isGenerating && !fileStatus?.done && file.present && file.quality !== undefined && (
+                            <>
+                              <Progress value={file.quality} className="w-16 sm:w-20 h-2" />
+                              <span className="text-xs sm:text-sm text-muted-foreground">{file.quality}%</span>
+                            </>
+                          )}
+                          {!isGenerating && !fileStatus?.done && !file.present && (
+                            <Badge variant="outline" className="text-xs text-muted-foreground">
+                              Missing
+                            </Badge>
+                          )}
+                          {file.present && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleViewFile(file);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>View file</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
+
+              <div className="space-y-4 sm:space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Coverage</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center">
+                      <div className="relative w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-4">
+                        <svg
+                          className="w-full h-full -rotate-90"
+                          viewBox="0 0 128 128"
+                          aria-label={`AI file coverage: ${aiFileScore}%`}
+                          role="img"
+                        >
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="56"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="12"
+                            className="text-muted"
+                          />
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="56"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="12"
+                            strokeDasharray={`${aiFileScore * 3.52} 352`}
+                            className="text-primary"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-2xl sm:text-3xl font-bold">{aiFileScore}%</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {formatNumber(aiFiles.filter((f) => f.present).length)} of {formatNumber(aiFiles.length)} files
+                        present
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
-        </TabsContent>
+          )}
 
-        {/* AI Config Tab (Settings + CLAUDE.md) */}
-        <TabsContent value="ai-config">
-          <ClaudeTabContent
-            repoId={repo.id}
-            claudeConfig={claudeConfig}
-            defaultClaudeSettings={defaultClaudeSettings}
-            onSaved={() => router.refresh()}
-          />
-        </TabsContent>
+          {/* AI Config Tab (Settings + CLAUDE.md) */}
+          {activeTab === "ai-config" && (
+            <ClaudeTabContent
+              repoId={repo.id}
+              claudeConfig={claudeConfig}
+              defaultClaudeSettings={defaultClaudeSettings}
+              onSaved={() => router.refresh()}
+            />
+          )}
 
-        {/* AI Integrations Tab */}
-        <TabsContent value="ai-integrations">
-          <RepoIntegrationsContent repoId={repo.id} concepts={concepts} linkedConcepts={linkedConcepts} repos={repos} />
-        </TabsContent>
+          {/* AI Integrations Tab */}
+          {activeTab === "ai-integrations" && (
+            <RepoIntegrationsContent
+              repoId={repo.id}
+              concepts={concepts}
+              linkedConcepts={linkedConcepts}
+              repos={repos}
+            />
+          )}
 
-        {/* GitHub Tab */}
-        <TabsContent value="github">
-          <GitHubTabContent repoId={repo.id} gitRemote={repo.git_remote} hasGitHubPat={patAvailable} />
-        </TabsContent>
-      </Tabs>
+          {/* GitHub Tab */}
+          {activeTab === "github" && (
+            <GitHubTabContent repoId={repo.id} gitRemote={repo.git_remote} hasGitHubPat={patAvailable} />
+          )}
+        </div>
+      </div>
 
       {/* View AI File Drawer */}
       <Sheet open={!!viewingAIFile} onOpenChange={(open) => !open && setViewingAIFile(null)}>

@@ -6,7 +6,6 @@ import { Card, CardContent } from "@devkit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { Input } from "@devkit/ui/components/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   Bot,
@@ -34,6 +33,8 @@ import { toast } from "sonner";
 import { AddSourceDialog } from "@/components/concepts/add-source-dialog";
 import { ConceptSourcesPanel } from "@/components/concepts/concept-sources-panel";
 import { InstallConceptDialog } from "@/components/concepts/install-concept-dialog";
+import { PageBanner } from "@/components/layout/page-banner";
+import { PageTabs, type Tab } from "@/components/layout/page-tabs";
 import { refreshAllSources } from "@/lib/actions/concept-sources";
 import { CONCEPT_TYPE_LABELS, CONCEPT_TYPE_SINGULAR, LIBRARY_REPO_ID } from "@/lib/constants";
 import type { ConceptSourceWithStats, ConceptWithRepo, Repo } from "@/lib/types";
@@ -244,101 +245,89 @@ export function PatternsLibraryClient({
 
   if (totalCount === 0 && sources.length === 0) {
     return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <h1 className="text-xl sm:text-2xl font-bold mb-6">AI Integrations</h1>
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Puzzle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No AI Integrations Yet</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
-              Add sources to discover concepts — scan GitHub repos, browse curated MCP servers, or import an MCP server
-              list.
-            </p>
-            <div className="flex gap-2 justify-center">
-              <Button variant="outline" onClick={() => setShowAddSource(true)}>
-                <Plus className="w-4 h-4 mr-1.5" />
-                Add Source
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/scans">Scan Local Repos</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        <AddSourceDialog open={showAddSource} onOpenChange={setShowAddSource} />
+      <div className="flex h-full flex-col">
+        <PageBanner title="AI Integrations" />
+        <div className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Puzzle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No AI Integrations Yet</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+                  Add sources to discover concepts — scan GitHub repos, browse curated MCP servers, or import an MCP
+                  server list.
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button variant="outline" onClick={() => setShowAddSource(true)}>
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Add Source
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/scans">Scan Local Repos</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            <AddSourceDialog open={showAddSource} onOpenChange={setShowAddSource} />
+          </div>
+        </div>
       </div>
     );
   }
 
+  const conceptTabs: Tab[] = CONCEPT_TYPES.map((type) => {
+    const rawCount = type === "all" ? totalCount : stats[type] || 0;
+    const count = type === "mcp_server" ? visibleMcpCount : type === "all" ? totalCount - hiddenMcpCount : rawCount;
+    const label = type === "all" ? "All" : CONCEPT_TYPE_LABELS[type] || type;
+    return { id: type, label, count: count > 0 ? count : undefined };
+  });
+
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold">AI Integrations</h1>
-          <Badge variant="secondary" className="text-sm">
-            {totalCount - hiddenMcpCount}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleRescanAll} disabled={isRescanningAll}>
-            {isRescanningAll ? (
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4 mr-1.5" />
-            )}
-            {isRescanningAll ? "Scanning..." : "Rescan All"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowSources(!showSources)}>
-            {showSources ? <ChevronUp className="w-4 h-4 mr-1.5" /> : <ChevronDown className="w-4 h-4 mr-1.5" />}
-            Sources ({formatNumber(visibleSources.length)})
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowAddSource(true)}>
-            <Plus className="w-4 h-4 mr-1.5" />
-            Add Source
-          </Button>
-        </div>
-      </div>
+    <div className="flex h-full flex-col">
+      <PageTabs
+        tabs={conceptTabs}
+        value={activeType}
+        onValueChange={setActiveType}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={handleRescanAll} disabled={isRescanningAll}>
+              {isRescanningAll ? (
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-1.5" />
+              )}
+              {isRescanningAll ? "Scanning..." : "Rescan All"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowSources(!showSources)}>
+              {showSources ? <ChevronUp className="w-4 h-4 mr-1.5" /> : <ChevronDown className="w-4 h-4 mr-1.5" />}
+              Sources ({formatNumber(visibleSources.length)})
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowAddSource(true)}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add Source
+            </Button>
+          </>
+        }
+      />
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          {/* Sources panel (collapsible) */}
+          {showSources && (
+            <div className="mb-6">
+              <ConceptSourcesPanel sources={visibleSources} hiddenGitHubCount={hiddenSourceCount} />
+            </div>
+          )}
 
-      {/* Sources panel (collapsible) */}
-      {showSources && (
-        <div className="mb-6">
-          <ConceptSourcesPanel sources={visibleSources} hiddenGitHubCount={hiddenSourceCount} />
-        </div>
-      )}
-
-      <Tabs value={activeType} onValueChange={setActiveType} className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <TabsList className="w-full sm:w-auto justify-start overflow-x-auto flex-nowrap">
-            {CONCEPT_TYPES.map((type) => {
-              const rawCount = type === "all" ? totalCount : stats[type] || 0;
-              const count =
-                type === "mcp_server" ? visibleMcpCount : type === "all" ? totalCount - hiddenMcpCount : rawCount;
-              const label = type === "all" ? "All" : CONCEPT_TYPE_LABELS[type] || type;
-              return (
-                <TabsTrigger key={type} value={type} disabled={count === 0 && type !== "all"}>
-                  {label}
-                  {count > 0 && (
-                    <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px]">
-                      {count}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-          <div className="relative sm:ml-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search integrations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full sm:w-64"
-            />
-          </div>
-        </div>
-
-        {CONCEPT_TYPES.map((type) => (
-          <TabsContent key={type} value={type}>
+          <div className="space-y-4">
+            <div className="relative sm:ml-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search integrations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-full sm:w-64"
+              />
+            </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {filtered.map((concept) => {
                 const Icon = CONCEPT_ICONS[concept.concept_type] || Puzzle;
@@ -464,7 +453,7 @@ export function PatternsLibraryClient({
                 <p>No integrations match your search</p>
               </div>
             )}
-            {(type === "mcp_server" || type === "all") && hiddenMcpCount > 0 && (
+            {(activeType === "mcp_server" || activeType === "all") && hiddenMcpCount > 0 && (
               <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/50 text-sm text-muted-foreground mt-4">
                 <Info className="w-4 h-4 shrink-0" />
                 <span>
@@ -476,9 +465,9 @@ export function PatternsLibraryClient({
                 </span>
               </div>
             )}
-          </TabsContent>
-        ))}
-      </Tabs>
+          </div>
+        </div>
+      </div>
 
       {/* View integration sheet */}
       <Sheet open={!!viewConcept} onOpenChange={(open) => !open && setViewConcept(null)}>

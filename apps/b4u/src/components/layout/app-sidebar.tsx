@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@devkit/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Clock, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -120,18 +122,36 @@ function RunCard({
 
   if (collapsed) {
     return (
-      <button
-        type="button"
-        className={cn(
-          "w-10 h-10 rounded-md border flex items-center justify-center text-2xs font-bold transition-colors",
-          "border-border hover:border-primary/50 hover:bg-accent",
-          VARIANT_COLORS[variant],
-        )}
-        onClick={() => run.runId && onSelect?.(run.runId)}
-        title={run.projectName}
-      >
-        {run.projectName.charAt(0).toUpperCase()}
-      </button>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "w-10 h-10 rounded-md border flex items-center justify-center text-2xs font-bold transition-colors",
+              "border-border hover:border-primary/50 hover:bg-accent",
+              VARIANT_COLORS[variant],
+            )}
+            onClick={() => run.runId && onSelect?.(run.runId)}
+          >
+            {run.projectName.charAt(0).toUpperCase()}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent side="right" className="w-56 p-3">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium text-foreground truncate">{run.projectName}</span>
+              <StatusPill run={run} />
+            </div>
+            <span className="text-xs text-muted-foreground">{phaseLabel(run)}</span>
+            {relativeTime(run.startedAt) && (
+              <span className="text-xs text-muted-foreground">{relativeTime(run.startedAt)}</span>
+            )}
+            {run.hasError && run.errorMessage && (
+              <span className="text-xs text-destructive/80 truncate">{run.errorMessage}</span>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
     );
   }
 
@@ -262,14 +282,20 @@ export function SessionList({
       ) : (
         onNewThread && (
           <div className="px-2 pt-2 flex justify-center">
-            <button
-              type="button"
-              onClick={onNewThread}
-              className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
-              title="New thread"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onNewThread}
+                    className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">New thread</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         )
       )}

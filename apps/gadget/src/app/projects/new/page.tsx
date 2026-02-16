@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DescribeStep } from "@/components/generator/describe-step";
+import { PageBanner } from "@/components/layout/page-banner";
 import { getScanRoots } from "@/lib/actions/scans";
 import { DEFAULT_TOOLS } from "@/lib/constants/tools";
 import { checkTools } from "@/lib/services/tool-checker";
@@ -11,12 +12,13 @@ export default async function NewProjectPage() {
   const [scanRoots, installedPMs] = await Promise.all([getScanRoots(), checkTools(pmTools)]);
 
   return (
-    <div className="p-6">
-      <div className="mb-8 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold">New Project</h1>
-        <p className="text-muted-foreground">Describe your idea and generate a complete project scaffold</p>
+    <div className="flex h-full flex-col">
+      <PageBanner title="New Project" />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6">
+          <DescribeStep scanRoots={scanRoots} installedPMs={installedPMs} />
+        </div>
       </div>
-      <DescribeStep scanRoots={scanRoots} installedPMs={installedPMs} />
     </div>
   );
 }
