@@ -216,9 +216,9 @@ describe("auditStructure", () => {
       return false;
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     mockReaddirSync.mockReturnValue([
       { name: "utils", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     ] as any);
 
     const findings = auditStructure("/repo", stubPolicy);
@@ -243,9 +243,9 @@ describe("resolveWorkspacePackages", () => {
       return "";
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     mockReaddirSync.mockReturnValue([
       { name: "ui", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     ] as any);
 
     const packages = resolveWorkspacePackages("/repo");
@@ -269,9 +269,9 @@ describe("resolveWorkspacePackages", () => {
       return "";
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     mockReaddirSync.mockReturnValue([
       { name: "web", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     ] as any);
 
     const packages = resolveWorkspacePackages("/repo");

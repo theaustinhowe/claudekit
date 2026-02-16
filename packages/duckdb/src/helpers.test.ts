@@ -262,6 +262,7 @@ describe("execute", () => {
 
     await execute(conn, "DELETE FROM jobs");
 
+    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
     expect((conn as any).prepare).toHaveBeenCalledWith("DELETE FROM jobs");
     expect(prepared.run).toHaveBeenCalled();
   });
@@ -278,6 +279,7 @@ describe("checkpoint", () => {
 
     await checkpoint(conn);
 
+    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
     expect((conn as any).prepare).toHaveBeenCalledWith("CHECKPOINT");
     expect(prepared.run).toHaveBeenCalled();
   });

@@ -59,7 +59,9 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql", "002_add_index.sql"] as any);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readFile overloads
     vi.mocked(fs.promises.readFile).mockImplementation(async (filePath: any) => {
       if (String(filePath).includes("001_initial.sql")) {
         return "CREATE TABLE jobs (id VARCHAR PRIMARY KEY)";
@@ -99,6 +101,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql", "002_add_index.sql"] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE something (id VARCHAR)");
 
@@ -126,6 +129,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_multi.sql"] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue(
       "CREATE TABLE a (id VARCHAR);\nCREATE TABLE b (id VARCHAR);\nCREATE INDEX idx ON a (id)",
@@ -159,6 +163,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql"] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE jobs (id VARCHAR PRIMARY KEY)");
 
@@ -184,6 +189,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_idx.sql"] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE INDEX idx ON jobs (id)");
 
@@ -209,6 +215,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_broken.sql"] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue("INSERT INTO broken VALUES");
 
@@ -243,6 +250,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql"] as any);
 
     const count = await runMigrations(conn, {
@@ -265,6 +273,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_comments.sql"] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue(
       "-- This is a comment\nCREATE TABLE jobs (id VARCHAR);\n-- Another comment\nCREATE INDEX idx ON jobs (id)",
@@ -289,6 +298,7 @@ describe("runMigrations", () => {
     const logger = (msg: string) => logMessages.push(msg);
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql"] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE jobs (id VARCHAR)");
 
@@ -337,6 +347,7 @@ describe("runMigrations", () => {
       "README.md",
       ".DS_Store",
       "002_update.sql",
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
     ] as any);
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE t (id VARCHAR)");
 

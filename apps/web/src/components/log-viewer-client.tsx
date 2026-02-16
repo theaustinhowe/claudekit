@@ -314,8 +314,9 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
             return (
               <Tooltip key={virtualItem.key}>
                 <TooltipTrigger asChild>
+                  {/* biome-ignore lint/a11y/useSemanticElements: virtualized list row with custom positioning */}
                   <div
-                    role="row"
+                    role="button"
                     tabIndex={0}
                     style={{
                       position: "absolute",
