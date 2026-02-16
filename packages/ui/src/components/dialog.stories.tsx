@@ -22,6 +22,38 @@ export default meta;
 
 type Story = StoryObj<typeof Dialog>;
 
+interface PlaygroundArgs {
+  title: string;
+  description: string;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    title: { control: "text" },
+    description: { control: "text" },
+  },
+  args: {
+    title: "Edit profile",
+    description: "Make changes to your profile here. Click save when you're done.",
+  },
+  render: (args) => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Open</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{args.title}</DialogTitle>
+          <DialogDescription>{args.description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="submit">Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  ),
+};
+
 export const Default: Story = {
   render: () => (
     <Dialog>

@@ -11,8 +11,11 @@ export default meta;
 type Story = StoryObj<typeof Select>;
 
 export const Default: Story = {
-  render: () => (
-    <Select>
+  args: {
+    disabled: false,
+  },
+  render: (args) => (
+    <Select disabled={args.disabled}>
       <SelectTrigger className="w-[180px]">
         <SelectValue placeholder="Select a fruit" />
       </SelectTrigger>

@@ -21,6 +21,40 @@ export default meta;
 
 type Story = StoryObj<typeof AlertDialog>;
 
+interface PlaygroundArgs {
+  title: string;
+  description: string;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    title: { control: "text" },
+    description: { control: "text" },
+  },
+  args: {
+    title: "Are you absolutely sure?",
+    description:
+      "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+  },
+  render: (args) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Show Dialog</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{args.title}</AlertDialogTitle>
+          <AlertDialogDescription>{args.description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ),
+};
+
 export const Default: Story = {
   render: () => (
     <AlertDialog>

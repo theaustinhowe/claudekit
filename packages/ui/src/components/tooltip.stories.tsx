@@ -18,6 +18,40 @@ export default meta;
 
 type Story = StoryObj<typeof Tooltip>;
 
+interface PlaygroundArgs {
+  side: "top" | "bottom" | "left" | "right";
+  content: string;
+  sideOffset: number;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    side: {
+      control: "select",
+      options: ["top", "bottom", "left", "right"],
+    },
+    content: { control: "text" },
+    sideOffset: { control: "number" },
+  },
+  args: {
+    side: "top",
+    content: "Add to library",
+    sideOffset: 4,
+  },
+  render: (args) => (
+    <div className="flex items-center justify-center p-24">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="outline">Hover me</Button>
+        </TooltipTrigger>
+        <TooltipContent side={args.side} sideOffset={args.sideOffset}>
+          <p>{args.content}</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  ),
+};
+
 export const Default: Story = {
   render: () => (
     <Tooltip>

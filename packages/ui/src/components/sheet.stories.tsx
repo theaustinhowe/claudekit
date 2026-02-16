@@ -22,6 +22,41 @@ export default meta;
 
 type Story = StoryObj<typeof Sheet>;
 
+interface PlaygroundArgs {
+  side: "top" | "bottom" | "left" | "right";
+  title: string;
+  description: string;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    side: {
+      control: "select",
+      options: ["right", "left", "top", "bottom"],
+    },
+    title: { control: "text" },
+    description: { control: "text" },
+  },
+  args: {
+    side: "right",
+    title: "Edit profile",
+    description: "Make changes to your profile here.",
+  },
+  render: (args) => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open</Button>
+      </SheetTrigger>
+      <SheetContent side={args.side}>
+        <SheetHeader>
+          <SheetTitle>{args.title}</SheetTitle>
+          <SheetDescription>{args.description}</SheetDescription>
+        </SheetHeader>
+      </SheetContent>
+    </Sheet>
+  ),
+};
+
 export const Default: Story = {
   render: () => (
     <Sheet>

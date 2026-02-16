@@ -22,6 +22,54 @@ export default meta;
 
 type Story = StoryObj;
 
+interface PlaygroundArgs {
+  message: string;
+  description: string;
+  type: "default" | "success" | "error" | "info" | "warning";
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    message: { control: "text" },
+    description: { control: "text" },
+    type: {
+      control: "select",
+      options: ["default", "success", "error", "info", "warning"],
+    },
+  },
+  args: {
+    message: "Event has been created",
+    description: "Sunday, December 03, 2023 at 9:00 AM",
+    type: "default",
+  },
+  render: (args) => (
+    <Button
+      variant="outline"
+      onClick={() => {
+        const opts = args.description ? { description: args.description } : undefined;
+        switch (args.type) {
+          case "success":
+            toast.success(args.message, opts);
+            break;
+          case "error":
+            toast.error(args.message, opts);
+            break;
+          case "info":
+            toast.info(args.message, opts);
+            break;
+          case "warning":
+            toast.warning(args.message, opts);
+            break;
+          default:
+            toast(args.message, opts);
+        }
+      }}
+    >
+      Show Toast
+    </Button>
+  ),
+};
+
 export const Default: Story = {
   render: () => (
     <Button variant="outline" onClick={() => toast("Event has been created")}>

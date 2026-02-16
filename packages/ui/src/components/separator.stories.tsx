@@ -10,6 +10,40 @@ export default meta;
 
 type Story = StoryObj<typeof Separator>;
 
+export const Playground: Story = {
+  argTypes: {
+    orientation: {
+      control: "radio",
+      options: ["horizontal", "vertical"],
+    },
+  },
+  args: {
+    orientation: "horizontal",
+  },
+  render: (args) => (
+    <div className="flex items-center justify-center p-8">
+      {args.orientation === "horizontal" ? (
+        <div className="w-[300px]">
+          <div className="space-y-1">
+            <h4 className="text-sm font-medium leading-none">Base UI Primitives</h4>
+            <p className="text-sm text-muted-foreground">An open-source UI component library.</p>
+          </div>
+          <Separator className="my-4" orientation={args.orientation} />
+          <p className="text-sm text-muted-foreground">Content below the separator.</p>
+        </div>
+      ) : (
+        <div className="flex h-10 items-center space-x-4 text-sm">
+          <div>Blog</div>
+          <Separator orientation={args.orientation} />
+          <div>Docs</div>
+          <Separator orientation={args.orientation} />
+          <div>Source</div>
+        </div>
+      )}
+    </div>
+  ),
+};
+
 export const Horizontal: Story = {
   render: () => (
     <div className="w-[300px]">
