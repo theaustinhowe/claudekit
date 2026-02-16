@@ -36,7 +36,8 @@ This file provides guidance to Claude Code when working in this monorepo.
 pnpm dev              # Start all apps (colored output via scripts/dev.ts)
 pnpm dev:web          # Just Web dashboard (port 2000)
 pnpm dev:gadget       # Just Gadget (port 2100)
-pnpm dev:gogo         # GoGo web + orchestrator (split terminal)
+pnpm dev:gogo-web     # Just GoGo web dashboard (port 2200)
+pnpm dev:gogo-orch    # Just GoGo orchestrator (port 2201)
 pnpm dev:b4u          # Just B4U (port 2300)
 pnpm build            # Build all packages and apps
 pnpm typecheck        # TypeScript check across everything
