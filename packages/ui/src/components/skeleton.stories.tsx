@@ -33,3 +33,18 @@ export const Card: Story = {
     </div>
   ),
 };
+
+export const TextLines: Story = {
+  render: () => (
+    <div className="space-y-2 w-[300px]">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-[260px]" />
+      <Skeleton className="h-4 w-[220px]" />
+      <Skeleton className="h-4 w-[280px]" />
+    </div>
+  ),
+};
+
+export const Avatar: Story = {
+  render: () => <Skeleton className="h-16 w-16 rounded-full" />,
+};

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/themes.css";
 @source "./components";
 
 @theme {
@@ -43,6 +44,15 @@
   --color-info: hsl(var(--info));
   --color-info-foreground: hsl(var(--info-foreground));
 
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -52,6 +62,8 @@
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.15s ease-out;
   --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-in-left: slide-in-left 0.3s ease-out;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
 
   @keyframes collapsible-down {
     from {
@@ -101,83 +113,27 @@
       opacity: 1;
     }
   }
-}
 
-/* ─── Amethyst (default) ─── */
-:root {
-  --background: 268 18% 97%;
-  --foreground: 262 12% 10%;
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 
-  --card: 268 14% 98%;
-  --card-foreground: 262 12% 10%;
-
-  --popover: 268 14% 98%;
-  --popover-foreground: 262 12% 10%;
-
-  --primary: 262 83% 58%;
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 262 14% 94%;
-  --secondary-foreground: 262 12% 10%;
-
-  --muted: 262 14% 94%;
-  --muted-foreground: 262 8% 45%;
-
-  --accent: 262 83% 95%;
-  --accent-foreground: 262 83% 40%;
-
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-
-  --border: 262 14% 88%;
-  --input: 262 14% 88%;
-  --ring: 262 83% 58%;
-
-  --radius: 0.5rem;
-
-  --success: 142 71% 45%;
-  --success-foreground: 0 0% 100%;
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 100%;
-  --info: 199 89% 48%;
-  --info-foreground: 0 0% 100%;
-}
-
-.dark {
-  --background: 268 22% 6%;
-  --foreground: 0 0% 95%;
-
-  --card: 268 20% 9%;
-  --card-foreground: 0 0% 95%;
-
-  --popover: 268 20% 9%;
-  --popover-foreground: 0 0% 95%;
-
-  --primary: 262 83% 65%;
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 268 14% 14%;
-  --secondary-foreground: 0 0% 95%;
-
-  --muted: 268 14% 14%;
-  --muted-foreground: 262 8% 65%;
-
-  --accent: 262 83% 20%;
-  --accent-foreground: 262 83% 80%;
-
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-
-  --border: 268 12% 18%;
-  --input: 268 12% 18%;
-  --ring: 262 83% 65%;
-
-  --success: 142 71% 45%;
-  --success-foreground: 0 0% 100%;
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 100%;
-  --info: 199 89% 48%;
-  --info-foreground: 0 0% 100%;
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
+    }
+  }
 }
 
 @layer base {
@@ -188,4 +144,20 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@utility gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
+}
+
+@utility glass {
+  backdrop-filter: blur(12px);
+  background: hsl(var(--background) / 0.8);
+}
+
+@utility text-gradient {
+  background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

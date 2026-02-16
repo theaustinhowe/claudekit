@@ -1,11 +1,14 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from "@storybook/react-vite";
 import tailwindcss from "@tailwindcss/vite";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
   stories: ["../src/components/**/*.stories.tsx"],
   framework: "@storybook/react-vite",
-  addons: ["@storybook/addon-themes"],
+  addons: [],
   viteFinal(config) {
     config.plugins ??= [];
     config.plugins.push(tailwindcss());

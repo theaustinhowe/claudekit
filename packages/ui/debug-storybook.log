@@ -1,0 +1,19 @@
+[08:23:18.201] [INFO] storybook v10.2.8
+[08:23:18.786] [DEBUG] Getting package.json info for /Users/howey/Documents/Github/devkit/packages/ui/package.json...
+[08:23:18.984] [INFO] Starting...
+[08:23:19.148] [DEBUG] Starting preview..
+[08:23:19.189] [DEBUG] Using tsconfig paths for react-docgen
+[08:23:19.189] [ERROR] Failed to build the preview
+[08:23:19.191] [ERROR] [38;2;241;97;97mReferenceError: __dirname is not defined[39m
+    at Object.viteFinal (file://./.storybook/main.ts:13:33)
+    at file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/storybook@10.2.8_@testing-library+dom@10.4.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/storybook/dist/_node-chunks/chunk-WF46L34H.js:10114:36
+    at async createViteServer (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/@storybook+builder-vite@10.2.8_esbuild@0.27.3_rollup@4.57.1_storybook@10.2.8_@testing-library_tfchctqfyd4crkqcdfn2q4brwu/node_modules/@storybook/builder-vite/dist/index.js:1898:21)
+    at async Module.start (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/@storybook+builder-vite@10.2.8_esbuild@0.27.3_rollup@4.57.1_storybook@10.2.8_@testing-library_tfchctqfyd4crkqcdfn2q4brwu/node_modules/@storybook/builder-vite/dist/index.js:1923:17)
+    at async storybookDevServer (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/storybook@10.2.8_@testing-library+dom@10.4.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/storybook/dist/core-server/index.js:7207:83)
+    at async buildOrThrow (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/storybook@10.2.8_@testing-library+dom@10.4.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/storybook/dist/core-server/index.js:4504:12)
+    at async buildDevStandalone (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/storybook@10.2.8_@testing-library+dom@10.4.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/storybook/dist/core-server/index.js:7577:66)
+    at async withTelemetry (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/storybook@10.2.8_@testing-library+dom@10.4.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/storybook/dist/_node-chunks/chunk-KIOKJLL5.js:218:12)
+    at async dev (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/storybook@10.2.8_@testing-library+dom@10.4.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/storybook/dist/bin/core.js:2734:3)
+    at async _Command.<anonymous> (file:///Users/howey/Documents/Github/devkit/node_modules/.pnpm/storybook@10.2.8_@testing-library+dom@10.4.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/storybook/dist/bin/core.js:2803:92)
+[08:23:19.194] [WARN] Broken build, fix the error above.
+You may need to refresh the browser.
