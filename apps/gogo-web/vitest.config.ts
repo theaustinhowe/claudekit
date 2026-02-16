@@ -14,5 +14,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./__tests__/setup.ts"],
     include: ["__tests__/**/*.test.{ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      include: ["lib/**/*.ts", "hooks/**/*.ts", "components/**/*.tsx", "contexts/**/*.tsx"],
+      exclude: ["**/*.test.ts", "**/*.test.tsx", "**/*.d.ts"],
+    },
   },
 });
