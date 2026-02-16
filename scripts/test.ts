@@ -278,9 +278,14 @@ async function main() {
 
   // Run sequentially to keep output readable
   const results: TestResult[] = [];
-  for (const pkg of packages) {
-    const result = await runTests(pkg, jsonDir);
+  for (let i = 0; i < packages.length; i++) {
+    const result = await runTests(packages[i], jsonDir, i, packages.length);
     results.push(result);
+  }
+
+  // Clear progress line
+  if (!verboseMode) {
+    process.stdout.write(`\r${" ".repeat(60)}\r`);
   }
 
   // --- Summary table ---
