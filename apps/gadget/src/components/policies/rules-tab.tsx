@@ -17,7 +17,7 @@ import { Switch } from "@devkit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { createCustomRule, deleteCustomRule, toggleCustomRule, updateCustomRule } from "@/lib/actions/custom-rules";
 import type { CustomRule, Policy } from "@/lib/types";
@@ -26,15 +26,25 @@ import { RuleForm, type RuleFormData } from "./rule-form";
 interface RulesTabProps {
   rules: CustomRule[];
   policies: Policy[];
+  createTrigger?: number;
 }
 
-export function RulesTab({ rules, policies }: RulesTabProps) {
+export function RulesTab({ rules, policies, createTrigger = 0 }: RulesTabProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<CustomRule | undefined>(undefined);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<CustomRule | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastCreateTrigger = useRef(createTrigger);
+
+  useEffect(() => {
+    if (createTrigger !== lastCreateTrigger.current) {
+      lastCreateTrigger.current = createTrigger;
+      setEditingRule(undefined);
+      setFormOpen(true);
+    }
+  }, [createTrigger]);
 
   const openCreateForm = () => {
     setEditingRule(undefined);
@@ -103,16 +113,6 @@ export function RulesTab({ rules, policies }: RulesTabProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground">
-          {rules.length} rule{rules.length !== 1 ? "s" : ""}
-        </p>
-        <Button size="sm" onClick={openCreateForm}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Rule
-        </Button>
-      </div>
-
       <div className="space-y-3">
         {rules.map((rule) => (
           <Card key={rule.id} className={rule.is_enabled ? "" : "opacity-60"}>

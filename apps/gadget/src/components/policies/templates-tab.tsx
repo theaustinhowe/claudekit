@@ -19,7 +19,7 @@ import { Textarea } from "@devkit/ui/components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Book, Globe, Layers, Plus, Server, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { createPolicyTemplate, deletePolicyTemplate } from "@/lib/actions/policy-templates";
 import type { Policy, PolicyTemplate } from "@/lib/types";
@@ -34,9 +34,10 @@ const iconMap: Record<string, React.ReactNode> = {
 interface TemplatesTabProps {
   templates: PolicyTemplate[];
   onUseTemplate: (defaults: Partial<Policy>) => void;
+  createTrigger?: number;
 }
 
-export function TemplatesTab({ templates, onUseTemplate }: TemplatesTabProps) {
+export function TemplatesTab({ templates, onUseTemplate, createTrigger = 0 }: TemplatesTabProps) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -44,6 +45,14 @@ export function TemplatesTab({ templates, onUseTemplate }: TemplatesTabProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const lastCreateTrigger = useRef(createTrigger);
+
+  useEffect(() => {
+    if (createTrigger !== lastCreateTrigger.current) {
+      lastCreateTrigger.current = createTrigger;
+      setCreateOpen(true);
+    }
+  }, [createTrigger]);
 
   const handleCreate = async () => {
     if (!name.trim()) return;

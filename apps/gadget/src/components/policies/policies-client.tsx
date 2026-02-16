@@ -65,6 +65,8 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createDefaults, setCreateDefaults] = useState<Partial<Policy> | undefined>(undefined);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const [ruleCreateTrigger, setRuleCreateTrigger] = useState(0);
+  const [templateCreateTrigger, setTemplateCreateTrigger] = useState(0);
 
   // --- Edit ---
   const openEditDialog = (policy: Policy) => {
@@ -205,8 +207,43 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
     }
   };
 
+  const tabActions = (() => {
+    switch (activeTab) {
+      case "templates":
+        return (
+          <Button size="sm" onClick={() => setTemplateCreateTrigger((t) => t + 1)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Template
+          </Button>
+        );
+      case "policies":
+        return (
+          <>
+            <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+            <Button size="sm" onClick={() => openCreateDialog()}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Policy
+            </Button>
+          </>
+        );
+      case "rules":
+        return (
+          <Button size="sm" onClick={() => setRuleCreateTrigger((t) => t + 1)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Rule
+          </Button>
+        );
+      default:
+        return null;
+    }
+  })();
+
   return (
     <div className="flex flex-col">
+      <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       <PageTabs
         tabs={[
           { id: "templates", label: "Templates", count: templates.length },
@@ -215,6 +252,7 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
         ]}
         value={activeTab}
         onValueChange={setActiveTab}
+        actions={tabActions}
       />
       <div className="flex-1">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -223,179 +261,161 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
             <TemplatesTab
               templates={templates}
               onUseTemplate={(defaults) => openCreateDialog(defaults as Partial<Policy>)}
+              createTrigger={templateCreateTrigger}
             />
           )}
 
           {/* Policies Tab */}
           {activeTab === "policies" && (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-muted-foreground">
-                  {policies.length} polic{policies.length !== 1 ? "ies" : "y"}
-                </p>
-                <div className="flex gap-2">
-                  <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-                  <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Import
-                  </Button>
-                  <Button size="sm" onClick={() => openCreateDialog()}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Policy
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {policies.map((policy) => (
-                  <motion.div key={policy.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <Card className="hover:border-primary/30 transition-colors">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                              <Shield className="w-5 h-5 text-accent-foreground" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg">{policy.name}</CardTitle>
-                              <CardDescription>{policy.description}</CardDescription>
-                            </div>
+            <div className="space-y-4">
+              {policies.map((policy) => (
+                <motion.div key={policy.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <Card className="hover:border-primary/30 transition-colors">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                            <Shield className="w-5 h-5 text-accent-foreground" />
                           </div>
-                          <TooltipProvider>
-                            <div className="flex gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label="Edit policy"
-                                    onClick={() => openEditDialog(policy)}
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Edit</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label="Duplicate policy"
-                                    onClick={() => handleDuplicate(policy)}
-                                  >
-                                    <Copy className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Duplicate</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label="Download policy"
-                                    onClick={() => handleDownload(policy)}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Download</TooltipContent>
-                              </Tooltip>
-                              {!policy.is_builtin && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      aria-label="Delete policy"
-                                      onClick={() => openDeleteDialog(policy)}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Delete</TooltipContent>
-                                </Tooltip>
-                              )}
-                            </div>
-                          </TooltipProvider>
+                          <div>
+                            <CardTitle className="text-lg">{policy.name}</CardTitle>
+                            <CardDescription>{policy.description}</CardDescription>
+                          </div>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid sm:grid-cols-3 gap-6">
-                          {/* Expected Versions */}
-                          <div>
-                            <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                              <Package className="w-4 h-4" />
-                              Expected Versions
-                            </h4>
-                            <div className="space-y-1">
-                              {Object.entries(policy.expected_versions)
-                                .slice(0, 4)
-                                .map(([pkg, version]) => (
-                                  <div key={pkg} className="flex items-center justify-between text-sm">
-                                    <span className="font-mono text-muted-foreground">{pkg}</span>
-                                    <Badge variant="outline" className="font-mono text-xs">
-                                      {version}
-                                    </Badge>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-
-                          {/* Banned Dependencies */}
-                          <div>
-                            <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                              <AlertTriangle className="w-4 h-4 text-warning" />
-                              Banned Dependencies
-                            </h4>
-                            {policy.banned_dependencies.length > 0 ? (
-                              <div className="space-y-1">
-                                {policy.banned_dependencies.map((dep) => (
-                                  <div key={dep.name} className="flex items-center gap-2 text-sm">
-                                    <X className="w-3 h-3 text-destructive" />
-                                    <span className="font-mono">{dep.name}</span>
-                                    {dep.replacement && (
-                                      <>
-                                        <span className="text-muted-foreground">&rarr;</span>
-                                        <span className="font-mono text-success">{dep.replacement}</span>
-                                      </>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">None</p>
+                        <TooltipProvider>
+                          <div className="flex gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="Edit policy"
+                                  onClick={() => openEditDialog(policy)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="Duplicate policy"
+                                  onClick={() => handleDuplicate(policy)}
+                                >
+                                  <Copy className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Duplicate</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="Download policy"
+                                  onClick={() => handleDownload(policy)}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Download</TooltipContent>
+                            </Tooltip>
+                            {!policy.is_builtin && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label="Delete policy"
+                                    onClick={() => openDeleteDialog(policy)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete</TooltipContent>
+                              </Tooltip>
                             )}
                           </div>
-
-                          {/* Package Managers */}
-                          <div>
-                            <h4 className="text-sm font-medium mb-2">Package Managers</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {policy.allowed_package_managers.map((pm) => (
-                                <Badge
-                                  key={pm}
-                                  variant={pm === policy.preferred_package_manager ? "default" : "secondary"}
-                                  className="capitalize"
-                                >
-                                  {pm === policy.preferred_package_manager && <Check className="w-3 h-3 mr-1" />}
-                                  {pm}
-                                </Badge>
+                        </TooltipProvider>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid sm:grid-cols-3 gap-6">
+                        {/* Expected Versions */}
+                        <div>
+                          <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <Package className="w-4 h-4" />
+                            Expected Versions
+                          </h4>
+                          <div className="space-y-1">
+                            {Object.entries(policy.expected_versions)
+                              .slice(0, 4)
+                              .map(([pkg, version]) => (
+                                <div key={pkg} className="flex items-center justify-between text-sm">
+                                  <span className="font-mono text-muted-foreground">{pkg}</span>
+                                  <Badge variant="outline" className="font-mono text-xs">
+                                    {version}
+                                  </Badge>
+                                </div>
                               ))}
-                            </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </>
+
+                        {/* Banned Dependencies */}
+                        <div>
+                          <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-warning" />
+                            Banned Dependencies
+                          </h4>
+                          {policy.banned_dependencies.length > 0 ? (
+                            <div className="space-y-1">
+                              {policy.banned_dependencies.map((dep) => (
+                                <div key={dep.name} className="flex items-center gap-2 text-sm">
+                                  <X className="w-3 h-3 text-destructive" />
+                                  <span className="font-mono">{dep.name}</span>
+                                  {dep.replacement && (
+                                    <>
+                                      <span className="text-muted-foreground">&rarr;</span>
+                                      <span className="font-mono text-success">{dep.replacement}</span>
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">None</p>
+                          )}
+                        </div>
+
+                        {/* Package Managers */}
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Package Managers</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {policy.allowed_package_managers.map((pm) => (
+                              <Badge
+                                key={pm}
+                                variant={pm === policy.preferred_package_manager ? "default" : "secondary"}
+                                className="capitalize"
+                              >
+                                {pm === policy.preferred_package_manager && <Check className="w-3 h-3 mr-1" />}
+                                {pm}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           )}
 
           {/* Rules Tab */}
-          {activeTab === "rules" && <RulesTab rules={rules} policies={policies} />}
+          {activeTab === "rules" && <RulesTab rules={rules} policies={policies} createTrigger={ruleCreateTrigger} />}
         </div>
       </div>
 

@@ -1,0 +1,41 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/db", () => ({
+  getDb: vi.fn().mockResolvedValue({}),
+  queryAll: vi.fn(),
+}));
+
+import { GET } from "@/app/api/mock-data-entities/route";
+import { queryAll } from "@/lib/db";
+
+const mockQueryAll = vi.mocked(queryAll);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+describe("GET /api/mock-data-entities", () => {
+  it("returns mock data entities", async () => {
+    const entities = [
+      { name: "User", count: 10, note: "Admin + regular" },
+      { name: "Product", count: 50, note: "Various categories" },
+    ];
+    mockQueryAll.mockResolvedValue(entities as never);
+
+    const response = await GET();
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual(entities);
+  });
+
+  it("returns 500 on database error", async () => {
+    mockQueryAll.mockRejectedValue(new Error("DB error"));
+
+    const response = await GET();
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.error).toContain("Internal server error");
+  });
+});
