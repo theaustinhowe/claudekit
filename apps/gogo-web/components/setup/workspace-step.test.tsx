@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@devkit/ui/components/button", () => ({
   Button: ({ children, onClick, disabled }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) => (
-    <button onClick={onClick} disabled={disabled}>
+    <button type="button" onClick={onClick} disabled={disabled}>
       {children}
     </button>
   ),
@@ -25,6 +25,7 @@ vi.mock("@devkit/ui/components/input", () => ({
 }));
 
 vi.mock("@devkit/ui/components/label", () => ({
+  // biome-ignore lint/a11y/noLabelWithoutControl: test mock
   Label: ({ children }: { children: ReactNode }) => <label>{children}</label>,
 }));
 

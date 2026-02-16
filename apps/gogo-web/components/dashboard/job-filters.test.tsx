@@ -32,7 +32,6 @@ vi.mock("./create-manual-job-dialog", () => ({
   CreateManualJobDialog: () => <div data-testid="create-job-dialog" />,
 }));
 
-import type { FilterType } from "@/components/dashboard/job-filters";
 import { JobFilters } from "@/components/dashboard/job-filters";
 
 function makeJob(status: string) {

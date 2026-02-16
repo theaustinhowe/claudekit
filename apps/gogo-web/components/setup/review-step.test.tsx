@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@devkit/ui/components/button", () => ({
   Button: ({ children, onClick, disabled }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) => (
-    <button onClick={onClick} disabled={disabled}>
+    <button type="button" onClick={onClick} disabled={disabled}>
       {children}
     </button>
   ),
@@ -53,10 +53,8 @@ describe("ReviewStep", () => {
   });
 
   it("shows repository owner/name", () => {
-    render(<ReviewStep {...defaultProps} />);
-    expect(screen.getByText("org")).toBeInTheDocument();
-    expect(screen.getByText("/")).toBeInTheDocument();
-    expect(screen.getByText("repo1")).toBeInTheDocument();
+    const { container } = render(<ReviewStep {...defaultProps} />);
+    expect(container.textContent).toContain("org/repo1");
   });
 
   it("shows workspace path", () => {
@@ -64,14 +62,13 @@ describe("ReviewStep", () => {
     expect(screen.getByText("/tmp/work")).toBeInTheDocument();
   });
 
-  it("shows trigger label", () => {
+  it("shows trigger label and base branch in repo details", () => {
     render(<ReviewStep {...defaultProps} />);
-    expect(screen.getByText("agent")).toBeInTheDocument();
-  });
-
-  it("shows base branch", () => {
-    render(<ReviewStep {...defaultProps} />);
-    expect(screen.getByText("main")).toBeInTheDocument();
+    // Both "agent" and "main" appear in trigger/branch code elements
+    const agentElements = screen.getAllByText("agent");
+    expect(agentElements.length).toBeGreaterThanOrEqual(1);
+    const mainElements = screen.getAllByText("main");
+    expect(mainElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows error message when error is present", () => {

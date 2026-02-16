@@ -34,7 +34,7 @@ function getPeakHour(hourCounts: Record<string, number>): string {
 
 function formatCost(usd: number): string {
   if (usd < 0.01) return "<$0.01";
-  return `~$${usd.toFixed(2)}`;
+  return `~$${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function getUtilizationColor(pct: number): string {
@@ -278,8 +278,16 @@ export function ClaudeUsageDialog({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium">Extra credits</span>
                       <span className="tabular-nums text-muted-foreground">
-                        ${rateLimits.extraUsage.usedCredits.toFixed(2)} / $
-                        {rateLimits.extraUsage.monthlyLimit.toFixed(2)}
+                        $
+                        {rateLimits.extraUsage.usedCredits.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        / $
+                        {rateLimits.extraUsage.monthlyLimit.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
