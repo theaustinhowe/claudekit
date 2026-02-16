@@ -168,7 +168,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({
         success: false,
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -244,7 +244,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({
         success: false,
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -323,7 +323,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({
         success: false,
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -403,7 +403,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({
         success: false,
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -472,7 +472,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({
         success: false,
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -530,7 +530,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({
         success: false,
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 

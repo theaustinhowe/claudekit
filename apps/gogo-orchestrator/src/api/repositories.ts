@@ -61,7 +61,7 @@ const DeleteRepoQuerySchema = z.object({
     .enum(["true", "false"])
     .transform((v) => v === "true")
     .optional()
-    .default("false"),
+    .default(false),
 });
 
 /** Map camelCase field names from Zod schemas to snake_case DB column names */
@@ -135,7 +135,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request body",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -185,7 +185,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request body",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -230,7 +230,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     if (!queryParsed.success) {
       return reply.status(400).send({
         error: "Invalid query parameters",
-        details: queryParsed.error.format(),
+        details: z.treeifyError(queryParsed.error),
       });
     }
     const { confirm } = queryParsed.data;
@@ -329,7 +329,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid query parameters",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -399,7 +399,7 @@ export const repositoriesRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request body",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 

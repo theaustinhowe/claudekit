@@ -67,7 +67,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -130,7 +130,7 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 

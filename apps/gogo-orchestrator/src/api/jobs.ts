@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import { z } from "zod";
 import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "../db/helpers.js";
 import { getConn } from "../db/index.js";
 import {
@@ -42,7 +43,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid query parameters",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -123,7 +124,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request body",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -164,7 +165,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request body",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -239,7 +240,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Params: { id: string }; Body: unknown }>("/:id/actions", async (request, reply) => {
     const parsed = JobActionSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ error: "Invalid action", details: parsed.error.format() });
+      return reply.status(400).send({ error: "Invalid action", details: z.treeifyError(parsed.error) });
     }
 
     const action = parsed.data;
@@ -350,7 +351,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       if (!parsed.success) {
         return reply.status(400).send({
           error: "Invalid query parameters",
-          details: parsed.error.format(),
+          details: z.treeifyError(parsed.error),
         });
       }
 
@@ -387,7 +388,7 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid query parameters",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 

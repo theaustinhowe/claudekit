@@ -73,7 +73,7 @@ export const JobSchema = z.object({
   processPid: z.number().int().nullable(),
   processStartedAt: z.coerce.date().nullable(),
   agentType: z.string(),
-  agentSessionData: z.record(z.unknown()).nullable(),
+  agentSessionData: z.record(z.string(), z.unknown()).nullable(),
   planContent: z.string().nullable(),
   planCommentId: z.number().int().nullable(),
   lastCheckedPlanCommentId: z.number().int().nullable(),
@@ -107,7 +107,7 @@ export const JobEventSchema = z.object({
   fromStatus: JobStatusSchema.nullable(),
   toStatus: JobStatusSchema.nullable(),
   message: z.string().nullable(),
-  metadata: z.record(z.unknown()).nullable(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
   createdAt: z.coerce.date(),
 });
 
@@ -146,7 +146,7 @@ export const JobActionSchema = z.object({
 // Response wrappers
 // ---------------------------------------------------------------------------
 
-export function PaginatedResponseSchema<T extends z.ZodTypeAny>(itemSchema: T) {
+export function PaginatedResponseSchema<T extends z.ZodType>(itemSchema: T) {
   return z.object({
     data: z.array(itemSchema),
     pagination: z.object({
@@ -157,7 +157,7 @@ export function PaginatedResponseSchema<T extends z.ZodTypeAny>(itemSchema: T) {
   });
 }
 
-export function ApiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
+export function ApiResponseSchema<T extends z.ZodType>(dataSchema: T) {
   return z.object({
     data: dataSchema.optional(),
     error: z.string().optional(),

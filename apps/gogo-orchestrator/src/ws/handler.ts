@@ -1,5 +1,6 @@
 import type { JobLog, WsMessage } from "@devkit/gogo-shared";
 import type { WebSocket } from "@fastify/websocket";
+import { z } from "zod";
 import { WsClientMessageSchema } from "../schemas/index.js";
 import { getRingBuffer } from "../utils/job-logging.js";
 
@@ -44,7 +45,7 @@ export function setupWebSocket(socket: WebSocket) {
           type: "error",
           payload: {
             message: "Invalid message format",
-            details: parsed.error.format(),
+            details: z.treeifyError(parsed.error),
           },
         });
         return;

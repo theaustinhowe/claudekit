@@ -165,7 +165,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       if (!parsed.success) {
         return reply.status(400).send({
           error: "Invalid query parameters",
-          details: parsed.error.format(),
+          details: z.treeifyError(parsed.error),
         });
       }
 
@@ -247,7 +247,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Invalid request body",
-        details: parsed.error.format(),
+        details: z.treeifyError(parsed.error),
       });
     }
 
@@ -445,7 +445,7 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       if (!parsed.success) {
         return reply.status(400).send({
           error: "Invalid request body",
-          details: parsed.error.format(),
+          details: z.treeifyError(parsed.error),
         });
       }
 
