@@ -14,3 +14,18 @@ export const Default: Story = {
   args: { defaultValue: [50], max: 100, step: 1 },
   render: (args) => <Slider {...args} className="w-[300px]" />,
 };
+
+export const Range: Story = {
+  args: { defaultValue: [25, 75], max: 100, step: 1 },
+  render: (args) => <Slider {...args} className="w-[300px]" />,
+};
+
+export const SmallStep: Story = {
+  args: { defaultValue: [50], max: 100, step: 10 },
+  render: (args) => <Slider {...args} className="w-[300px]" />,
+};
+
+export const Disabled: Story = {
+  args: { defaultValue: [50], max: 100, step: 1, disabled: true },
+  render: (args) => <Slider {...args} className="w-[300px]" />,
+};

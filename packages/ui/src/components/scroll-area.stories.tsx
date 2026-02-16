@@ -47,3 +47,24 @@ export const Horizontal: Story = {
     </ScrollArea>
   ),
 };
+
+export const BothDirections: Story = {
+  render: () => (
+    <ScrollArea className="h-72 w-72 rounded-md border" orientation="both">
+      <div className="w-[600px] p-4">
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: demo
+            key={i}
+            className="flex gap-4 py-1 text-sm whitespace-nowrap"
+          >
+            <span className="w-20 font-medium">Row {i + 1}</span>
+            <span className="text-muted-foreground">
+              This is a long line of content that extends beyond the container width to demonstrate horizontal scrolling
+            </span>
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
+  ),
+};

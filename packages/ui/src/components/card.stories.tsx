@@ -35,3 +35,38 @@ export const Default: Story = {
     </Card>
   ),
 };
+
+export const SimpleCard: Story = {
+  render: () => (
+    <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>Notifications</CardTitle>
+        <CardDescription>You have 3 unread messages.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">Check your inbox for the latest updates and announcements.</p>
+      </CardContent>
+    </Card>
+  ),
+};
+
+export const WithFooterActions: Story = {
+  render: () => (
+    <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>Payment Method</CardTitle>
+        <CardDescription>Add a new payment method to your account.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="card-name">Name on card</Label>
+          <Input id="card-name" placeholder="John Doe" />
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="ghost">Cancel</Button>
+        <Button>Save</Button>
+      </CardFooter>
+    </Card>
+  ),
+};

@@ -40,3 +40,46 @@ export const Default: Story = {
     </Popover>
   ),
 };
+
+export const TopSide: Story = {
+  render: () => (
+    <div className="flex items-end h-[200px]">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline">Open top</Button>
+        </PopoverTrigger>
+        <PopoverContent side="top" className="w-64">
+          <p className="text-sm">This popover opens above the trigger.</p>
+        </PopoverContent>
+      </Popover>
+    </div>
+  ),
+};
+
+export const LeftSide: Story = {
+  render: () => (
+    <div className="flex justify-end">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline">Open left</Button>
+        </PopoverTrigger>
+        <PopoverContent side="left" className="w-64">
+          <p className="text-sm">This popover opens to the left of the trigger.</p>
+        </PopoverContent>
+      </Popover>
+    </div>
+  ),
+};
+
+export const AlignStart: Story = {
+  render: () => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">Align start</Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64">
+        <p className="text-sm">This popover is aligned to the start of the trigger.</p>
+      </PopoverContent>
+    </Popover>
+  ),
+};

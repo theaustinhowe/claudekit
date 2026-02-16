@@ -1,28 +1,22 @@
 "use client";
 
+import { useIsMobile } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
+import { Button } from "@devkit/ui/components/button";
+import { CollapsibleSidebar, SidebarLogo } from "@devkit/ui/components/collapsible-sidebar";
+import { NavLink } from "@devkit/ui/components/nav-link";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import {
-  Archive,
-  ChevronLeft,
-  ChevronRight,
-  CircleDot,
-  FolderTree,
-  LayoutDashboard,
-  Search,
-  Settings,
-} from "lucide-react";
+import { Archive, CircleDot, FolderTree, LayoutDashboard, Menu, MoreHorizontal, Search, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { RepoSelector } from "@/components/repo/repo-selector";
 import { useJobs } from "@/hooks/use-jobs";
 
-const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
-
 interface NavItem {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   href: string;
 }
@@ -36,145 +30,224 @@ const navItems: NavItem[] = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
-interface SidebarProps {
-  className?: string;
-}
+const bottomNavItems = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: CircleDot, label: "Issues", href: "/issues" },
+  { icon: Search, label: "Research", href: "/research" },
+  { icon: FolderTree, label: "Workspaces", href: "/worktrees" },
+];
 
-export function Sidebar({ className }: SidebarProps) {
-  const pathname = usePathname();
+/* ---------- Shared nav for mobile sheet ---------- */
+
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { data: jobsData } = useJobs();
-  const [collapsed, setCollapsed] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Count jobs blocked on user (needs_info)
   const blockedOnYouCount = jobsData?.data?.filter((job) => job.status === "needs_info").length ?? 0;
 
-  // Load collapsed state from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (stored !== null) {
-      setCollapsed(stored === "true");
-    }
-  }, []);
+  return (
+    <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
+      {navItems.map((item) => {
+        const showBlockedBadge = item.href === "/" && blockedOnYouCount > 0;
 
-  // Save collapsed state to localStorage
-  const toggleCollapsed = () => {
-    const newValue = !collapsed;
-    setCollapsed(newValue);
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(newValue));
-  };
+        return (
+          <NavLink
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            )}
+            activeClassName="bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+          >
+            <item.icon className="h-5 w-5 shrink-0" />
+            <span>{item.label}</span>
+            {showBlockedBadge && <BlockedBadge count={blockedOnYouCount} />}
+          </NavLink>
+        );
+      })}
+    </nav>
+  );
+}
+
+/* ---------- Mobile components ---------- */
+
+export function MobileMenuButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button variant="ghost" size="icon" className="md:hidden" onClick={onClick}>
+      <Menu className="h-5 w-5" />
+      <span className="sr-only">Open menu</span>
+    </Button>
+  );
+}
+
+export function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-60 p-0">
+        <SheetHeader className="h-14 flex flex-row items-center px-4 border-b">
+          <Link href="/" onClick={() => onOpenChange(false)} className="flex items-center gap-1.5">
+            <Image src="/icon.png" alt="GoGo" width={28} height={28} className="h-7 w-7 rounded-md" />
+            <SheetTitle className="text-sm font-semibold">GoGo</SheetTitle>
+          </Link>
+        </SheetHeader>
+        <div className="border-b p-3">
+          <RepoSelector collapsed={false} />
+        </div>
+        <SidebarNav onNavigate={() => onOpenChange(false)} />
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+export function MobileBottomNav() {
+  const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <aside
-        className={cn(
-          "relative z-20 flex h-full flex-col bg-card/50 backdrop-blur-sm border-r transition-all duration-base",
-          collapsed ? "w-16" : "w-60",
-          className,
-        )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* Collapse nub on right edge */}
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              toggleCollapsed();
-            }
-          }}
-          className={cn(
-            "absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2",
-            "h-6 w-6 rounded-full bg-primary text-primary-foreground shadow-sm",
-            "flex items-center justify-center cursor-pointer",
-            "transition-opacity duration-200 hover:bg-primary/80",
-            "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus-visible:opacity-100",
-            isHovered ? "opacity-100" : "opacity-0",
-          )}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-        </button>
+    <>
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border bg-background/95 backdrop-blur-xs safe-bottom">
+        <nav className="flex items-center justify-around h-14 px-1">
+          {bottomNavItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
 
-        {/* Logo/Brand */}
-        <Link href="/" className="h-14 flex items-center justify-center border-b overflow-hidden">
-          {collapsed ? (
-            <Image src="/icon.png" alt="GoGo" width={32} height={32} className="w-8 h-8 rounded-lg" />
-          ) : (
-            <Image src="/logo.png" alt="GoGo" width={200} height={64} className="h-12 w-auto" />
-          )}
-        </Link>
-
-        {/* Repository Selector */}
-        <div className={cn("border-b", collapsed ? "p-2" : "p-3")}>
-          <RepoSelector collapsed={collapsed} />
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-2">
-          {navItems.map((item) => {
-            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            const Icon = item.icon;
-            // Show blocked-on-you badge on Dashboard
-            const showBlockedBadge = item.href === "/" && blockedOnYouCount > 0;
-
-            const button = (
+            return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                  collapsed && "justify-center px-2",
+                  "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <div className="relative shrink-0">
-                  <Icon className="h-5 w-5" />
-                  {showBlockedBadge && collapsed && (
-                    <span className="absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white px-0.5">
-                      {blockedOnYouCount}
-                    </span>
-                  )}
-                </div>
-                {!collapsed && (
-                  <>
-                    <span>{item.label}</span>
-                    {showBlockedBadge && (
-                      <span className="ml-auto flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-orange-900/50 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
-                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500" />
-                        </span>
-                        {blockedOnYouCount}
-                      </span>
-                    )}
-                  </>
-                )}
+                <item.icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-none">{item.label}</span>
               </Link>
             );
-
-            if (collapsed) {
-              return (
-                <Tooltip key={item.href}>
-                  <TooltipTrigger asChild>{button}</TooltipTrigger>
-                  <TooltipContent side="right">
-                    <p>
-                      {item.label}
-                      {showBlockedBadge && ` (${blockedOnYouCount} blocked on you)`}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return button;
           })}
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors text-muted-foreground"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            <span className="text-[10px] font-medium leading-none">More</span>
+          </button>
         </nav>
-      </aside>
-    </TooltipProvider>
+      </div>
+      <MobileSidebar open={moreOpen} onOpenChange={setMoreOpen} />
+    </>
+  );
+}
+
+/* ---------- Desktop nav item ---------- */
+
+function DesktopNavItem({
+  item,
+  collapsed,
+  blockedOnYouCount,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  blockedOnYouCount: number;
+}) {
+  const showBlockedBadge = item.href === "/" && blockedOnYouCount > 0;
+
+  const link = (
+    <NavLink
+      href={item.href}
+      className={cn(
+        "flex items-center rounded-md transition-colors",
+        "hover:bg-accent group relative",
+        collapsed ? "justify-center w-10 h-10 mx-auto" : "gap-3 px-3 py-2",
+        "text-muted-foreground hover:text-accent-foreground",
+      )}
+      activeClassName="bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+    >
+      <div className="relative shrink-0">
+        <item.icon className="h-5 w-5" />
+        {showBlockedBadge && collapsed && (
+          <span className="absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white px-0.5">
+            {blockedOnYouCount}
+          </span>
+        )}
+      </div>
+      {!collapsed && <span className="whitespace-nowrap overflow-hidden text-sm font-medium">{item.label}</span>}
+      {!collapsed && showBlockedBadge && <BlockedBadge count={blockedOnYouCount} />}
+    </NavLink>
+  );
+
+  if (!collapsed) return link;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right">
+        {item.label}
+        {showBlockedBadge && ` (${blockedOnYouCount} blocked on you)`}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/* ---------- Desktop sidebar ---------- */
+
+export function AppSidebar() {
+  const isMobile = useIsMobile();
+  const { data: jobsData } = useJobs();
+  const blockedOnYouCount = jobsData?.data?.filter((job) => job.status === "needs_info").length ?? 0;
+
+  if (isMobile) return null;
+
+  return (
+    <CollapsibleSidebar expandedWidth={240} toggleTooltip className="h-screen sticky top-0 left-0">
+      {({ collapsed }) => (
+        <>
+          {/* Logo */}
+          <Link
+            href="/"
+            className="h-14 flex items-center justify-center border-b border-sidebar-border overflow-hidden"
+          >
+            <SidebarLogo
+              collapsed={collapsed}
+              icon={<Image src="/icon.png" alt="GoGo" width={32} height={32} className="w-8 h-8 rounded-lg" />}
+              wordmark={<Image src="/logo.png" alt="GoGo" width={200} height={64} className="h-12 w-auto" />}
+            />
+          </Link>
+
+          {/* Repository Selector */}
+          <div className={cn("border-b", collapsed ? "p-2" : "p-3")}>
+            <RepoSelector collapsed={collapsed} />
+          </div>
+
+          {/* Navigation */}
+          <TooltipProvider delayDuration={0}>
+            <nav className="flex-1 space-y-1 p-2">
+              {navItems.map((item) => (
+                <DesktopNavItem
+                  key={item.href}
+                  item={item}
+                  collapsed={collapsed}
+                  blockedOnYouCount={blockedOnYouCount}
+                />
+              ))}
+            </nav>
+          </TooltipProvider>
+        </>
+      )}
+    </CollapsibleSidebar>
+  );
+}
+
+/* ---------- Blocked badge ---------- */
+
+function BlockedBadge({ count }: { count: number }) {
+  return (
+    <span className="ml-auto flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-orange-900/50 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500" />
+      </span>
+      {count}
+    </span>
   );
 }

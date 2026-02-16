@@ -27,3 +27,17 @@ export const WithLabel: Story = {
 export const Disabled: Story = {
   args: { disabled: true, placeholder: "Disabled" },
 };
+
+export const WithPlaceholder: Story = {
+  args: { placeholder: "Enter your bio here. Tell us about yourself..." },
+};
+
+export const WithMaxLength: Story = {
+  render: () => (
+    <div className="grid w-full gap-1.5">
+      <Label htmlFor="limited">Comment (max 280 characters)</Label>
+      <Textarea id="limited" maxLength={280} placeholder="Write a comment..." />
+      <p className="text-xs text-muted-foreground">Maximum 280 characters.</p>
+    </div>
+  ),
+};

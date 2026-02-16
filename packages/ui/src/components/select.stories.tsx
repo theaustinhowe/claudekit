@@ -29,3 +29,44 @@ export const Default: Story = {
     </Select>
   ),
 };
+
+export const WithGroups: Story = {
+  render: () => (
+    <Select>
+      <SelectTrigger className="w-[220px]">
+        <SelectValue placeholder="Select a timezone" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>North America</SelectLabel>
+          <SelectItem value="est">Eastern (EST)</SelectItem>
+          <SelectItem value="cst">Central (CST)</SelectItem>
+          <SelectItem value="pst">Pacific (PST)</SelectItem>
+        </SelectGroup>
+        <SelectGroup>
+          <SelectLabel>Europe</SelectLabel>
+          <SelectItem value="gmt">Greenwich (GMT)</SelectItem>
+          <SelectItem value="cet">Central European (CET)</SelectItem>
+          <SelectItem value="eet">Eastern European (EET)</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  ),
+};
+
+export const Disabled: Story = {
+  render: () => (
+    <Select disabled>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Select a fruit" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Fruits</SelectLabel>
+          <SelectItem value="apple">Apple</SelectItem>
+          <SelectItem value="banana">Banana</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  ),
+};

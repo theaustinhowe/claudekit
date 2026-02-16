@@ -36,3 +36,25 @@ export const Default: Story = {
     );
   },
 };
+
+export const WithInitialPath: Story = {
+  render: () => {
+    const [value, setValue] = useState("/Users/demo/Documents/work");
+    return (
+      <div className="w-[400px]">
+        <DirectoryPicker value={value} onChange={setValue} browse={mockBrowse} />
+      </div>
+    );
+  },
+};
+
+export const WithPlaceholder: Story = {
+  render: () => {
+    const [value, setValue] = useState("");
+    return (
+      <div className="w-[400px]">
+        <DirectoryPicker value={value} onChange={setValue} browse={mockBrowse} placeholder="Choose a directory..." />
+      </div>
+    );
+  },
+};

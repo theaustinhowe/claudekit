@@ -62,3 +62,87 @@ export const Default: Story = {
     </Tabs>
   ),
 };
+
+export const ManyTabs: Story = {
+  render: () => (
+    <Tabs defaultValue="overview" className="w-[500px]">
+      <TabsList>
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        <TabsTrigger value="reports">Reports</TabsTrigger>
+        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
+      </TabsList>
+      <TabsContent value="overview">
+        <Card>
+          <CardHeader>
+            <CardTitle>Overview</CardTitle>
+            <CardDescription>View a summary of your account activity.</CardDescription>
+          </CardHeader>
+        </Card>
+      </TabsContent>
+      <TabsContent value="analytics">
+        <Card>
+          <CardHeader>
+            <CardTitle>Analytics</CardTitle>
+            <CardDescription>View your analytics data.</CardDescription>
+          </CardHeader>
+        </Card>
+      </TabsContent>
+      <TabsContent value="reports">
+        <Card>
+          <CardHeader>
+            <CardTitle>Reports</CardTitle>
+            <CardDescription>Generate and view reports.</CardDescription>
+          </CardHeader>
+        </Card>
+      </TabsContent>
+      <TabsContent value="notifications">
+        <Card>
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>Manage your notification preferences.</CardDescription>
+          </CardHeader>
+        </Card>
+      </TabsContent>
+      <TabsContent value="settings">
+        <Card>
+          <CardHeader>
+            <CardTitle>Settings</CardTitle>
+            <CardDescription>Configure your account settings.</CardDescription>
+          </CardHeader>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  ),
+};
+
+export const WithDisabledTab: Story = {
+  render: () => (
+    <Tabs defaultValue="general" className="w-[400px]">
+      <TabsList>
+        <TabsTrigger value="general">General</TabsTrigger>
+        <TabsTrigger value="billing" disabled>
+          Billing
+        </TabsTrigger>
+        <TabsTrigger value="team">Team</TabsTrigger>
+      </TabsList>
+      <TabsContent value="general">
+        <Card>
+          <CardHeader>
+            <CardTitle>General</CardTitle>
+            <CardDescription>General account settings.</CardDescription>
+          </CardHeader>
+        </Card>
+      </TabsContent>
+      <TabsContent value="team">
+        <Card>
+          <CardHeader>
+            <CardTitle>Team</CardTitle>
+            <CardDescription>Manage your team members.</CardDescription>
+          </CardHeader>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  ),
+};

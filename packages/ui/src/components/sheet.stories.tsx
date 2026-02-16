@@ -55,3 +55,35 @@ export const Left: Story = {
     </Sheet>
   ),
 };
+
+export const Top: Story = {
+  render: () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Top</Button>
+      </SheetTrigger>
+      <SheetContent side="top">
+        <SheetHeader>
+          <SheetTitle>Notification</SheetTitle>
+          <SheetDescription>You have 3 unread messages.</SheetDescription>
+        </SheetHeader>
+      </SheetContent>
+    </Sheet>
+  ),
+};
+
+export const Bottom: Story = {
+  render: () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Bottom</Button>
+      </SheetTrigger>
+      <SheetContent side="bottom">
+        <SheetHeader>
+          <SheetTitle>Cookie Preferences</SheetTitle>
+          <SheetDescription>Manage your cookie settings here.</SheetDescription>
+        </SheetHeader>
+      </SheetContent>
+    </Sheet>
+  ),
+};
