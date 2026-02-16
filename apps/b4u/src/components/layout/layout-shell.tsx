@@ -1,8 +1,10 @@
 "use client";
 
-import { AppShell } from "@devkit/ui/components/app-shell";
-import { AppHeader } from "./app-header";
-import { AppSidebar } from "./app-sidebar";
+import { AppLayout } from "@devkit/ui/components/shared-layout";
+import { useMemo } from "react";
+import { PhaseStepper } from "./app-header";
+import { SessionList } from "./app-sidebar";
+import { b4uLayoutConfig } from "./layout-config";
 
 interface LayoutShellProps {
   children: React.ReactNode;
@@ -12,13 +14,24 @@ interface LayoutShellProps {
 }
 
 export function LayoutShell({ children, onSelectRun, onDeleteRun, onNewThread }: LayoutShellProps) {
+  const SidebarContent = useMemo(
+    () =>
+      function B4USidebar({ collapsed }: { collapsed: boolean }) {
+        return (
+          <SessionList
+            collapsed={collapsed}
+            onSelectRun={onSelectRun}
+            onDeleteRun={onDeleteRun}
+            onNewThread={onNewThread}
+          />
+        );
+      },
+    [onSelectRun, onDeleteRun, onNewThread],
+  );
+
   return (
-    <AppShell
-      className="h-dvh overflow-hidden"
-      sidebar={<AppSidebar onSelectRun={onSelectRun} onDeleteRun={onDeleteRun} onNewThread={onNewThread} />}
-      header={<AppHeader />}
-    >
-      <div className="flex-1 overflow-hidden flex flex-col h-full">{children}</div>
-    </AppShell>
+    <AppLayout config={b4uLayoutConfig} sidebarContent={SidebarContent} contentBanner={<PhaseStepper />}>
+      {children}
+    </AppLayout>
   );
 }

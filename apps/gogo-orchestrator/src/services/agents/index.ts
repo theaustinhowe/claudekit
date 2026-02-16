@@ -6,5 +6,14 @@ agentRegistry.register(claudeCodeRunner);
 
 export { KNOWN_AGENTS } from "./known-agents.js";
 export { agentRegistry } from "./registry.js";
-// Re-export everything
-export * from "./types.js";
+export type {
+  AgentCallbacks,
+  AgentCapabilities,
+  AgentConfig,
+  AgentInfo,
+  AgentJobContext,
+  AgentRunner,
+  AgentSession,
+  AgentSignal,
+  AgentStartResult,
+} from "./types.js";

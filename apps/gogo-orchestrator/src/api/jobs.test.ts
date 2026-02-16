@@ -10,7 +10,6 @@ vi.mock("@devkit/duckdb", () => ({
   queryOne: vi.fn(),
   execute: vi.fn(),
   withTransaction: vi.fn(),
-  buildUpdate: vi.fn(),
   buildWhere: vi.fn(),
   buildInClause: vi.fn(),
   checkpoint: vi.fn(),
@@ -67,7 +66,7 @@ vi.mock("../services/state-machine.js", () => ({
   applyActionAtomic: vi.fn(),
 }));
 
-import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
+import { buildInClause, execute, queryAll, queryOne } from "@devkit/duckdb";
 import { mapJob } from "../db/schema.js";
 import { startAgent } from "../services/agent-executor.js";
 import { startJobRun } from "../services/agent-runner.js";
@@ -431,41 +430,6 @@ describe("jobs API", () => {
         thresholdMinutes: 60,
         count: 1,
       });
-    });
-  });
-
-  describe("PATCH /:id (legacy update)", () => {
-    it("should update job fields", async () => {
-      const updatedJob = { id: "job-1", status: "paused" };
-
-      vi.mocked(buildUpdate).mockReturnValue({
-        sql: "UPDATE jobs SET status = ? WHERE id = ?",
-        params: ["paused", "job-1"],
-      });
-      vi.mocked(queryOne).mockResolvedValue(updatedJob);
-
-      const handler = routes.find((r) => r.method === "PATCH" && r.path === "/:id")?.handler;
-      const result = await handler?.({ params: { id: "job-1" }, body: { status: "paused" } }, createMockReply());
-
-      expect(result).toEqual({ data: updatedJob });
-      expect(broadcast).toHaveBeenCalledWith({
-        type: "job:updated",
-        payload: updatedJob,
-      });
-    });
-
-    it("should return 404 when job not found", async () => {
-      vi.mocked(buildUpdate).mockReturnValue({
-        sql: "UPDATE jobs SET status = ? WHERE id = ?",
-        params: ["paused", "nonexistent"],
-      });
-      vi.mocked(queryOne).mockResolvedValue(undefined);
-
-      const handler = routes.find((r) => r.method === "PATCH" && r.path === "/:id")?.handler;
-      const reply = createMockReply();
-      await handler?.({ params: { id: "nonexistent" }, body: { status: "paused" } }, reply);
-
-      expect(reply._statusCode).toBe(404);
     });
   });
 });

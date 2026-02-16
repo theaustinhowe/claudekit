@@ -180,13 +180,5 @@ export function createServiceLogger(logger: DevkitLogger, service: string): Devk
   return logger.child({ service });
 }
 
-export function createAppLogger(config: LoggerConfig) {
-  const logger = createLogger(config);
-  return {
-    logger,
-    createServiceLogger: (service: string) => createServiceLogger(logger, service),
-  };
-}
-
 export type { LogEntry, LogFilter } from "./query";
 export { filterLogEntries, formatLogEntry, nameToLevel, parseSince, pinoLevelToName, readLogEntries } from "./query";

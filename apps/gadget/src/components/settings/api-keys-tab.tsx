@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { writeEnvKey } from "@/lib/actions/env-keys";
 
 const KEY_HELP: Record<string, { title: string; steps: string[]; url: string; urlLabel: string }> = {
-  GITHUB_TOKEN: {
+  GITHUB_PERSONAL_ACCESS_TOKEN: {
     title: "Create a GitHub Personal Access Token",
     steps: [
       'Give the token a descriptive name (e.g. "Devkit")',
@@ -30,30 +30,6 @@ const KEY_HELP: Record<string, { title: string; steps: string[]; url: string; ur
     ],
     url: "https://github.com/settings/tokens/new?scopes=repo,workflow",
     urlLabel: "Create Token on GitHub",
-  },
-  ANTHROPIC_API_KEY: {
-    title: "Create an Anthropic API Key",
-    steps: [
-      "Go to the Anthropic Console",
-      "Navigate to Settings > API Keys",
-      'Click "Create Key"',
-      'Give it a name (e.g. "Gadget Generator")',
-      "Copy the key (it won't be shown again)",
-    ],
-    url: "https://console.anthropic.com/settings/keys",
-    urlLabel: "Open Anthropic Console",
-  },
-  OPENAI_API_KEY: {
-    title: "Create an OpenAI API Key",
-    steps: [
-      "Go to the OpenAI Platform",
-      "Navigate to API Keys",
-      'Click "Create new secret key"',
-      'Give it a name (e.g. "Gadget Generator")',
-      "Copy the key (it won't be shown again)",
-    ],
-    url: "https://platform.openai.com/api-keys",
-    urlLabel: "Open OpenAI Platform",
   },
 };
 

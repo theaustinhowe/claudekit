@@ -56,14 +56,13 @@ All variables are defined in `.env.local` (gitignored). Only `MCP_API_TOKEN` is 
 | Variable | Purpose |
 |----------|---------|
 | `DB_PATH` | Override database location (default: `~/.gadget/data.duckdb`) |
-| `ANTHROPIC_API_KEY` | Anthropic API key for AI-powered project generation |
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub API access for repo sync and concept discovery |
 
 ### Optional — MCP Server Integrations
 
 These are only needed if you configure the corresponding MCP server integrations within the app:
 
-`BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `EXA_API_KEY`, `TAVILY_API_KEY`, `NOTION_API_KEY`, `GOOGLE_MAPS_API_KEY`, `RESEND_API_KEY`, `AXIOM_API_TOKEN`, `RAYGUN_API_KEY`, `STRIPE_API_KEY`, `OPENAI_API_KEY`, `REPLICATE_API_TOKEN`, `GITLAB_TOKEN`, `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID`, `SENTRY_AUTH_TOKEN`, `LINEAR_API_KEY`, `SUPABASE_ACCESS_TOKEN`
+`BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `EXA_API_KEY`, `TAVILY_API_KEY`, `NOTION_API_KEY`, `GOOGLE_MAPS_API_KEY`, `RESEND_API_KEY`, `AXIOM_API_TOKEN`, `RAYGUN_API_KEY`, `STRIPE_API_KEY`, `REPLICATE_API_TOKEN`, `GITLAB_TOKEN`, `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID`, `SENTRY_AUTH_TOKEN`, `LINEAR_API_KEY`, `SUPABASE_ACCESS_TOKEN`
 
 ## Scripts Reference
 

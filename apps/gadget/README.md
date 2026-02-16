@@ -96,7 +96,6 @@ cp .env.local.example .env.local
 |---|---|---|
 | `MCP_API_TOKEN` | Bearer token for MCP API endpoints | — |
 | `DB_PATH` | Override database file location | `~/.gadget/data.duckdb` |
-| `ANTHROPIC_API_KEY` | Anthropic API key for project generator and design chat | — |
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub API access for repo metadata sync | — |
 
 Additional optional API keys for MCP server integrations (Brave, Firecrawl, Exa, Tavily, Notion, Stripe, Sentry, Linear, etc.) are listed in `.env.local.example`.

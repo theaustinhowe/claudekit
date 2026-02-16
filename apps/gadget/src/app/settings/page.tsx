@@ -19,12 +19,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   const servers = getCuratedMcpServers();
   const serverKeys: ServerKeyGroup[] = [
-    {
-      name: "AI Providers",
-      description: "API keys for the Project Generator AI features",
-      keys: ["ANTHROPIC_API_KEY", "OPENAI_API_KEY"],
-      tags: ["generator"],
-    },
     ...servers
       .filter((s) => s.env && Object.keys(s.env).length > 0)
       .map((s) => ({

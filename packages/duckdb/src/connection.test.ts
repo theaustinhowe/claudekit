@@ -1,10 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("node:fs", () => ({
-  mkdirSync: vi.fn(),
-  existsSync: vi.fn(),
-  unlinkSync: vi.fn(),
-}));
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs")>();
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      mkdirSync: vi.fn(),
+      existsSync: vi.fn(),
+      unlinkSync: vi.fn(),
+    },
+    mkdirSync: vi.fn(),
+    existsSync: vi.fn(),
+    unlinkSync: vi.fn(),
+  };
+});
 
 vi.mock("@duckdb/node-api", () => ({
   DuckDBInstance: {

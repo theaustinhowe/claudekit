@@ -1,3 +1,4 @@
-import { createAppLogger } from "@devkit/logger";
+import { createServiceLogger as createChild, createLogger } from "@devkit/logger";
 
-export const { logger, createServiceLogger } = createAppLogger({ app: "gadget" });
+export const logger = createLogger({ app: "gadget" });
+export const createServiceLogger = (service: string) => createChild(logger, service);

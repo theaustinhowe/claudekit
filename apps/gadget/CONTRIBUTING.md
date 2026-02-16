@@ -60,7 +60,6 @@ Copy `.env.local.example` to `.env.local` and configure as needed:
 |---|---|---|---|
 | `MCP_API_TOKEN` | For MCP access | Bearer token for MCP API endpoints | — |
 | `DB_PATH` | No | Override database file location | `~/.gadget/data.duckdb` |
-| `ANTHROPIC_API_KEY` | For AI features | Powers project generator and design chat | — |
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | For GitHub sync | GitHub API access for repo metadata and concept scanning | — |
 
 Additional optional API keys for MCP server integrations (Brave, Firecrawl, Notion, Sentry, Linear, Slack, etc.) are listed in `.env.local.example`. These are only needed if you configure the corresponding MCP server integrations.

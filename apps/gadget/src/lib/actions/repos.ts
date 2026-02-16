@@ -191,7 +191,7 @@ async function getDefaultPat(): Promise<string | null> {
     if (!fallback) {
       const { readEnvLocal } = await import("@/lib/actions/env-keys");
       const env = await readEnvLocal();
-      const token = env.GITHUB_TOKEN ?? env.GITHUB_PERSONAL_ACCESS_TOKEN;
+      const token = env.GITHUB_PERSONAL_ACCESS_TOKEN;
       return token?.length > 0 ? token : null;
     }
     const { getEncryptionKey } = await import("@/lib/actions/settings");

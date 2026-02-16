@@ -7,11 +7,15 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./components/shared-layout": "./src/components/shared-layout/index.ts",
     "./components/*": "./src/components/*.tsx",
     "./styles/*": "./src/styles/*"
   },
   "typesVersions": {
     "*": {
+      "components/shared-layout": [
+        "src/components/shared-layout/index.ts"
+      ],
       "components/*": [
         "src/components/*.tsx"
       ]
@@ -38,6 +42,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "peerDependencies": {
+    "@devkit/claude-usage": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "motion": "^12.0.0",
     "next": "^15.0.0 || ^16.0.0",
@@ -47,6 +52,9 @@
     "sonner": "^2.0.0"
   },
   "peerDependenciesMeta": {
+    "@devkit/claude-usage": {
+      "optional": true
+    },
     "@devkit/hooks": {
       "optional": true
     },
@@ -64,6 +72,7 @@
     }
   },
   "devDependencies": {
+    "@devkit/claude-usage": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "motion": "^12.0.0",
     "next": "^16.0.0",

@@ -80,7 +80,7 @@ export async function getConfiguredEnvKeyNames(): Promise<string[]> {
 export async function hasGitHubPat(): Promise<boolean> {
   // Check .env.local first (fast, no DB)
   const env = await readEnvLocal();
-  const token = env.GITHUB_TOKEN ?? env.GITHUB_PERSONAL_ACCESS_TOKEN;
+  const token = env.GITHUB_PERSONAL_ACCESS_TOKEN;
   if (token?.length > 0) return true;
 
   // Fall back to github_accounts table

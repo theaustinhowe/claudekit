@@ -164,7 +164,6 @@ function detectClaudeMetadata(): Record<string, string | null> {
 
   // Read config files for install method, auth, and plan info
   const home = homedir();
-  const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
 
   let authMethod: string | null = null;
   let planType: string | null = null;
@@ -202,10 +201,6 @@ function detectClaudeMetadata(): Record<string, string | null> {
     } else if (binPath.includes("node_modules") || binPath.includes("npm") || binPath.includes("pnpm")) {
       installMethod = "npm";
     }
-  }
-
-  if (!authMethod) {
-    authMethod = hasApiKey ? "api-key" : null;
   }
 
   meta.installMethod = installMethod;

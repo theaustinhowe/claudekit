@@ -21,7 +21,6 @@ pnpm knip         # Detect unused exports, dependencies, and files
 See `.env.local.example`. Key variables:
 - `MCP_API_TOKEN` — required for MCP programmatic access (Bearer token auth)
 - `DATABASE_PATH` — override database location (default: `~/.gadget/data.duckdb`)
-- `ANTHROPIC_API_KEY` — for AI provider (Project Generator)
 - `GITHUB_PERSONAL_ACCESS_TOKEN` — for GitHub API integration
 - Additional optional keys for MCP server integrations (Brave, Firecrawl, Exa, Tavily, Notion, Stripe, OpenAI, Replicate, etc.)
 

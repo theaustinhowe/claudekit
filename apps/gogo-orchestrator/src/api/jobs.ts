@@ -1,4 +1,4 @@
-import { buildInClause, buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
+import { buildInClause, execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { getDb } from "../db/index.js";
@@ -578,43 +578,5 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       const message = error instanceof Error ? error.message : "Failed to check for response";
       return reply.status(500).send({ error: message });
     }
-  });
-
-  // Update job (legacy PATCH - keep for backwards compatibility)
-  // SECURITY: Only allow explicit allowlisted fields - never spread raw request.body
-  fastify.patch<{
-    Params: { id: string };
-    Body: { status?: string; pauseReason?: string };
-  }>("/:id", async (request, reply) => {
-    const updateData: Record<string, unknown> = {};
-    if (typeof request.body?.status === "string") {
-      updateData.status = request.body.status;
-    }
-    if (typeof request.body?.pauseReason === "string") {
-      updateData.pause_reason = request.body.pauseReason;
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      return reply.status(400).send({ error: "No valid fields to update" });
-    }
-
-    const conn = await getDb();
-    const update = buildUpdate("jobs", request.params.id, updateData);
-    if (!update) {
-      return reply.status(400).send({ error: "No valid fields to update" });
-    }
-
-    const updated = await queryOne<DbJob>(conn, `${update.sql} RETURNING *`, update.params);
-
-    if (!updated) {
-      return reply.status(404).send({ error: "Job not found" });
-    }
-
-    const mapped = mapJob(updated);
-
-    // Broadcast update
-    broadcast({ type: "job:updated", payload: mapped });
-
-    return { data: mapped };
   });
 };

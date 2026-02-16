@@ -18,7 +18,7 @@ export function getCuratedMcpServers(): McpServerListEntry[] {
       description: "Interact with GitHub repositories, issues, and pull requests",
       command: "npx",
       args: ["-y", "@modelcontextprotocol/server-github"],
-      env: { GITHUB_TOKEN: "" },
+      env: { GITHUB_PERSONAL_ACCESS_TOKEN: "" },
       tags: ["git", "collaboration"],
     },
     {
@@ -280,14 +280,6 @@ export function getCuratedMcpServers(): McpServerListEntry[] {
       tags: ["serverless", "functions"],
     },
     // AI-specific
-    {
-      name: "openai",
-      description: "OpenAI API access (completions, embeddings)",
-      command: "npx",
-      args: ["-y", "@openai/mcp"],
-      env: { OPENAI_API_KEY: "" },
-      tags: ["ai", "llm"],
-    },
     {
       name: "replicate",
       description: "Run ML models via Replicate",

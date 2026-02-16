@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@devkit/ui";
-import { CollapsibleSidebar, SidebarLogo } from "@devkit/ui/components/collapsible-sidebar";
 import { Clock, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -16,12 +15,6 @@ interface RunEntry {
   completedAt: string | null;
   hasError: boolean;
   errorMessage: string | null;
-}
-
-interface AppSidebarProps {
-  onSelectRun?: (runId: string) => void;
-  onDeleteRun?: (runId: string) => void;
-  onNewThread?: () => void;
 }
 
 const SESSION_TYPE_PHASE: Record<string, number> = {
@@ -205,11 +198,20 @@ function RunCard({
   );
 }
 
-export function AppSidebar({ onSelectRun, onDeleteRun, onNewThread }: AppSidebarProps) {
+export function SessionList({
+  collapsed,
+  onSelectRun,
+  onDeleteRun,
+  onNewThread,
+}: {
+  collapsed: boolean;
+  onSelectRun?: (runId: string) => void;
+  onDeleteRun?: (runId: string) => void;
+  onNewThread?: () => void;
+}) {
   const [runs, setRuns] = useState<RunEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch history
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
@@ -241,98 +243,69 @@ export function AppSidebar({ onSelectRun, onDeleteRun, onNewThread }: AppSidebar
   );
 
   return (
-    <CollapsibleSidebar
-      expandedWidth={260}
-      storageKey="b4u-sidebar-collapsed"
-      toggleClassName="bg-primary text-primary-foreground hover:bg-primary/80"
-      className="h-full shrink-0"
-    >
-      {({ collapsed }) => (
-        <>
-          {/* Logo + New Thread */}
-          <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border overflow-hidden shrink-0">
-            <SidebarLogo
-              collapsed={collapsed}
-              icon={
-                <div className="w-10 h-10 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary">
-                  B4U
-                </div>
-              }
-              wordmark={
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary">
-                    B4U
-                  </div>
-                  <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">B4U</span>
-                </div>
-              }
-            />
-
-            {!collapsed && onNewThread && (
-              <button
-                type="button"
-                onClick={onNewThread}
-                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground border border-sidebar-border rounded-md hover:text-primary hover:border-primary/50 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                New
-              </button>
-            )}
-          </div>
-
-          {/* Session list */}
-          <div className="flex-1 overflow-y-auto p-2 min-h-0 scrollbar-none">
-            {!collapsed && (
-              <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2 block">
-                History
-              </span>
-            )}
-
-            {loading ? (
-              <div className="flex items-center justify-center py-8 gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse" />
-                {!collapsed && <span className="text-xs text-muted-foreground">Loading...</span>}
-              </div>
-            ) : runs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 pt-16">
-                <Clock className="w-6 h-6 text-muted-foreground/40" />
-                {!collapsed && (
-                  <>
-                    <span className="text-xs text-muted-foreground">No sessions yet</span>
-                    <span className="text-2xs text-muted-foreground/70">Select a project to get started</span>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className={cn("flex flex-col gap-1.5", collapsed && "items-center")}>
-                {runs.map((run, idx) => (
-                  <RunCard
-                    key={run.runId ?? `legacy-${idx}`}
-                    run={run}
-                    collapsed={collapsed}
-                    onSelect={onSelectRun}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Collapsed new thread button */}
-          {collapsed && onNewThread && (
-            <div className="p-2 border-t border-sidebar-border">
-              <button
-                type="button"
-                onClick={onNewThread}
-                className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
-                title="New thread"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* New thread button */}
+      {onNewThread && (
+        <div className={cn("px-2 pt-2", collapsed && "flex justify-center")}>
+          {collapsed ? (
+            <button
+              type="button"
+              onClick={onNewThread}
+              className="w-10 h-10 flex items-center justify-center rounded-md border border-sidebar-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+              title="New thread"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onNewThread}
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground border border-sidebar-border rounded-md hover:text-primary hover:border-primary/50 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New
+            </button>
           )}
-        </>
+        </div>
       )}
-    </CollapsibleSidebar>
+
+      {/* Session list */}
+      <div className="flex-1 overflow-y-auto p-2 min-h-0 scrollbar-none">
+        {!collapsed && (
+          <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2 block">
+            History
+          </span>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8 gap-2">
+            <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse" />
+            {!collapsed && <span className="text-xs text-muted-foreground">Loading...</span>}
+          </div>
+        ) : runs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 pt-16">
+            <Clock className="w-6 h-6 text-muted-foreground/40" />
+            {!collapsed && (
+              <>
+                <span className="text-xs text-muted-foreground">No sessions yet</span>
+                <span className="text-2xs text-muted-foreground/70">Select a project to get started</span>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className={cn("flex flex-col gap-1.5", collapsed && "items-center")}>
+            {runs.map((run, idx) => (
+              <RunCard
+                key={run.runId ?? `legacy-${idx}`}
+                run={run}
+                collapsed={collapsed}
+                onSelect={onSelectRun}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
