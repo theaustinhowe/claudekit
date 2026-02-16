@@ -196,6 +196,7 @@ describe("discoverRepos", () => {
         return [makeDirent("level2", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
     const repos = discoverRepos({ roots: ["/projects"], maxDepth: 1 });
@@ -208,6 +209,7 @@ describe("discoverRepos", () => {
       return path === "/home/user/projects";
     });
 
+    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     mockReaddirSync.mockReturnValue([] as any);
 
     const repos = discoverRepos({ roots: ["~/projects"] });
@@ -231,6 +233,7 @@ describe("discoverRepos", () => {
         return [makeDirent(".git", true)] as unknown as fs.Dirent[];
       }
       return [] as unknown as fs.Dirent[];
+      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
     mockReadFileSync.mockReturnValue(JSON.stringify({}));
