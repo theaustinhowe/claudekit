@@ -164,12 +164,20 @@ export async function syncPRComments(repoId: string, prNumber: number) {
 
   const prId = `${repoId}#${prNumber}`;
 
-  // Fetch all review comments using pagination
+  // Check last comment fetch time for incremental sync
+  const lastFetch = await queryOne<{ last_fetched: string }>(
+    db,
+    "SELECT MAX(fetched_at) as last_fetched FROM pr_comments WHERE pr_id = ?",
+    [prId],
+  );
+
+  // Fetch review comments, incrementally if we have prior data
   const comments = await octokit.paginate(octokit.rest.pulls.listReviewComments, {
     owner: repo.owner,
     repo: repo.name,
     pull_number: prNumber,
     per_page: 100,
+    ...(lastFetch?.last_fetched ? { since: lastFetch.last_fetched } : {}),
   });
 
   for (const comment of comments) {

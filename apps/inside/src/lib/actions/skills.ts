@@ -246,6 +246,34 @@ export async function getAnalysisHistory(repoId: string) {
   return result;
 }
 
+export interface SkillTrendPoint {
+  analysisDate: string;
+  skills: { name: string; frequency: number; severity: string }[];
+}
+
+export async function getSkillTrends(repoId: string): Promise<SkillTrendPoint[]> {
+  const db = await getDb();
+  const analyses = await queryAll<{ id: string; created_at: string }>(
+    db,
+    "SELECT id, created_at FROM skill_analyses WHERE repo_id = ? ORDER BY created_at ASC",
+    [repoId],
+  );
+
+  const result: SkillTrendPoint[] = [];
+  for (const analysis of analyses) {
+    const skills = await queryAll<{ name: string; frequency: number; severity: string }>(
+      db,
+      "SELECT name, frequency, severity FROM skills WHERE analysis_id = ? ORDER BY frequency DESC",
+      [analysis.id],
+    );
+    result.push({
+      analysisDate: analysis.created_at,
+      skills,
+    });
+  }
+  return result;
+}
+
 export interface ComparisonSkill {
   name: string;
   status: "new" | "resolved" | "improved" | "worsened" | "unchanged";

@@ -3,9 +3,12 @@
 import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Card, CardContent } from "@devkit/ui/components/card";
-import { MessageSquare, Users } from "lucide-react";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { FileCode, MessageSquare, Users } from "lucide-react";
+import { useState, useTransition } from "react";
+import { getReviewerComments, getReviewerFileStats } from "@/lib/actions/reviewers";
 import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
-import type { ReviewerStats } from "@/lib/types";
+import type { ReviewerComment, ReviewerStats } from "@/lib/types";
 
 function SeverityBar({ counts }: { counts: Record<string, number> }) {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -27,7 +30,6 @@ function SeverityBar({ counts }: { counts: Record<string, number> }) {
           />
         );
       })}
-      {/* unknown severity */}
       {counts.unknown ? (
         <div
           className="h-full bg-muted-foreground/30"
@@ -39,7 +41,21 @@ function SeverityBar({ counts }: { counts: Record<string, number> }) {
   );
 }
 
-function ReviewerCard({ stats }: { stats: ReviewerStats }) {
+function SeverityBadge({ severity }: { severity: string | null }) {
+  if (!severity) return null;
+  const colorMap: Record<string, string> = {
+    blocking: "bg-status-error/15 text-status-error",
+    suggestion: "bg-status-warning/15 text-status-warning",
+    nit: "bg-status-success/15 text-status-success",
+  };
+  return (
+    <Badge variant="outline" className={cn("text-[10px] border-none", colorMap[severity] ?? "")}>
+      {SEVERITY_LABELS[severity] || severity}
+    </Badge>
+  );
+}
+
+function ReviewerCard({ stats, onClick }: { stats: ReviewerStats; onClick: () => void }) {
   const initials = stats.reviewer
     .split(/[\s-]+/)
     .map((w) => w[0])
@@ -52,7 +68,7 @@ function ReviewerCard({ stats }: { stats: ReviewerStats }) {
     .slice(0, 3);
 
   return (
-    <Card>
+    <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center gap-3">
           {stats.reviewerAvatar ? (
@@ -105,12 +121,102 @@ function ReviewerCard({ stats }: { stats: ReviewerStats }) {
   );
 }
 
+function ReviewerDrawer({
+  comments,
+  fileStats,
+  loading,
+}: {
+  comments: ReviewerComment[];
+  fileStats: { filePath: string; count: number }[];
+  loading: boolean;
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Most commented files */}
+      {fileStats.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+            <FileCode className="h-4 w-4" /> Most Commented Files
+          </h4>
+          <div className="space-y-1.5">
+            {fileStats.map(({ filePath, count }) => (
+              <div key={filePath} className="flex items-center justify-between text-xs">
+                <code className="font-mono text-[11px] text-muted-foreground truncate max-w-[80%]">{filePath}</code>
+                <span className="text-muted-foreground tabular-nums">{Number(count)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Comment timeline */}
+      <div>
+        <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+          <MessageSquare className="h-4 w-4" /> Comments ({comments.length})
+        </h4>
+        {loading ? (
+          <p className="text-sm text-muted-foreground animate-pulse">Loading comments...</p>
+        ) : comments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No comments found.</p>
+        ) : (
+          <div className="space-y-3">
+            {comments.map((comment) => (
+              <div key={comment.id} className="border rounded-lg p-3 space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-medium">
+                    #{comment.prNumber} {comment.prTitle}
+                  </span>
+                  <SeverityBadge severity={comment.severity} />
+                  {comment.category && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {comment.category}
+                    </Badge>
+                  )}
+                </div>
+                {comment.filePath && (
+                  <code className="text-[11px] font-mono text-muted-foreground block">
+                    {comment.filePath}
+                    {comment.lineNumber ? `:${comment.lineNumber}` : ""}
+                  </code>
+                )}
+                <p className="text-sm text-muted-foreground line-clamp-3">{comment.body}</p>
+                {comment.createdAt && (
+                  <p className="text-[10px] text-muted-foreground">
+                    {new Date(comment.createdAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface InsightsClientProps {
   repoId: string;
   reviewerStats: ReviewerStats[];
 }
 
-export function InsightsClient({ reviewerStats }: InsightsClientProps) {
+export function InsightsClient({ repoId, reviewerStats }: InsightsClientProps) {
+  const [selectedReviewer, setSelectedReviewer] = useState<ReviewerStats | null>(null);
+  const [reviewerComments, setReviewerComments] = useState<ReviewerComment[]>([]);
+  const [fileStats, setFileStats] = useState<{ filePath: string; count: number }[]>([]);
+  const [isPending, startTransition] = useTransition();
+
+  const handleReviewerClick = (stats: ReviewerStats) => {
+    setSelectedReviewer(stats);
+    startTransition(async () => {
+      const [comments, files] = await Promise.all([
+        getReviewerComments(repoId, stats.reviewer),
+        getReviewerFileStats(repoId, stats.reviewer),
+      ]);
+      setReviewerComments(comments);
+      setFileStats(files);
+    });
+  };
+
   if (reviewerStats.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -136,9 +242,22 @@ export function InsightsClient({ reviewerStats }: InsightsClientProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {reviewerStats.map((stats) => (
-          <ReviewerCard key={stats.reviewer} stats={stats} />
+          <ReviewerCard key={stats.reviewer} stats={stats} onClick={() => handleReviewerClick(stats)} />
         ))}
       </div>
+
+      <Sheet open={!!selectedReviewer} onOpenChange={(open) => !open && setSelectedReviewer(null)}>
+        <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{selectedReviewer?.reviewer}</SheetTitle>
+          </SheetHeader>
+          <SheetBody>
+            {selectedReviewer && (
+              <ReviewerDrawer comments={reviewerComments} fileStats={fileStats} loading={isPending} />
+            )}
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

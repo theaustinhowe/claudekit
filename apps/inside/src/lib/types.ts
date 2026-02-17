@@ -78,6 +78,19 @@ export interface ReviewerStats {
   categoryCounts: Record<string, number>;
 }
 
+/** Single comment from a reviewer for the deep-dive view */
+export interface ReviewerComment {
+  id: string;
+  body: string;
+  filePath: string | null;
+  lineNumber: number | null;
+  severity: string | null;
+  category: string | null;
+  createdAt: string | null;
+  prNumber: number;
+  prTitle: string;
+}
+
 /** Skill with related comments hydrated */
 export interface SkillWithComments extends Skill {
   comments: {

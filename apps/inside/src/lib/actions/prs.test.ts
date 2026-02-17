@@ -7,7 +7,14 @@ vi.mock("@/lib/db", () => ({
 }));
 
 import { getDb, queryAll, queryOne } from "@/lib/db";
-import { getDashboardStats, getWeeklyPRCounts } from "./prs";
+import {
+  getDashboardStats,
+  getLargePRs,
+  getPRComments,
+  getPRsWithComments,
+  getRecentPRs,
+  getWeeklyPRCounts,
+} from "./prs";
 
 const mockGetDb = vi.mocked(getDb);
 const mockQueryAll = vi.mocked(queryAll);
@@ -66,6 +73,92 @@ describe("prs actions", () => {
 
       const result = await getWeeklyPRCounts("owner/repo");
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("getRecentPRs", () => {
+    it("returns PRs with comment counts and feedback categories", async () => {
+      mockQueryAll
+        .mockResolvedValueOnce([{ id: "repo1#1", number: 1, title: "PR One", comment_count: 3 }])
+        .mockResolvedValueOnce([{ category: "Error Handling" }, { category: "Testing" }]);
+
+      const result = await getRecentPRs("repo1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].commentCount).toBe(3);
+      expect(result[0].feedbackCategories).toEqual(["Error Handling", "Testing"]);
+    });
+
+    it("returns empty array when no PRs", async () => {
+      mockQueryAll.mockResolvedValue([]);
+
+      const result = await getRecentPRs("repo1");
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("getPRsWithComments", () => {
+    it("returns only PRs that have comments", async () => {
+      mockQueryAll
+        .mockResolvedValueOnce([{ id: "repo1#2", number: 2, title: "PR Two", comment_count: 5 }])
+        .mockResolvedValueOnce([{ category: "Naming" }]);
+
+      const result = await getPRsWithComments("repo1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].commentCount).toBe(5);
+      expect(result[0].feedbackCategories).toEqual(["Naming"]);
+    });
+  });
+
+  describe("getLargePRs", () => {
+    it("returns only L/XL PRs with empty feedbackCategories", async () => {
+      mockQueryAll.mockResolvedValue([
+        {
+          id: "repo1#3",
+          number: 3,
+          title: "Large PR",
+          size: "L",
+          lines_added: 800,
+          lines_deleted: 200,
+          comment_count: 2,
+        },
+      ]);
+
+      const result = await getLargePRs("repo1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].commentCount).toBe(2);
+      expect(result[0].feedbackCategories).toEqual([]);
+    });
+  });
+
+  describe("getPRComments", () => {
+    it("returns comments for given PR", async () => {
+      const comments = [
+        {
+          id: "c1",
+          pr_id: "repo1#1",
+          reviewer: "alice",
+          reviewer_avatar: null,
+          body: "Fix",
+          file_path: "src/a.ts",
+          line_number: 10,
+          severity: "blocking",
+          category: "Error Handling",
+          created_at: "2025-01-01",
+        },
+      ];
+      mockQueryAll.mockResolvedValue(comments);
+
+      const result = await getPRComments("repo1#1");
+
+      expect(mockQueryAll).toHaveBeenCalledWith(
+        {},
+        expect.stringContaining("SELECT * FROM pr_comments WHERE pr_id = ?"),
+        ["repo1#1"],
+      );
+      expect(result).toEqual(comments);
     });
   });
 });

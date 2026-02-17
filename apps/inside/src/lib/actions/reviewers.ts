@@ -1,7 +1,7 @@
 "use server";
 
 import { getDb, queryAll } from "@/lib/db";
-import type { ReviewerStats } from "@/lib/types";
+import type { ReviewerComment, ReviewerStats } from "@/lib/types";
 
 export async function getReviewerStats(repoId: string): Promise<ReviewerStats[]> {
   const db = await getDb();
@@ -62,4 +62,44 @@ export async function getReviewerStats(repoId: string): Promise<ReviewerStats[]>
   }
 
   return result;
+}
+
+export async function getReviewerComments(repoId: string, reviewer: string): Promise<ReviewerComment[]> {
+  const db = await getDb();
+  return queryAll<ReviewerComment>(
+    db,
+    `SELECT
+       c.id,
+       c.body,
+       c.file_path as filePath,
+       c.line_number as lineNumber,
+       c.severity,
+       c.category,
+       c.created_at as createdAt,
+       p.number as prNumber,
+       p.title as prTitle
+     FROM pr_comments c
+     JOIN prs p ON c.pr_id = p.id
+     WHERE p.repo_id = ? AND c.reviewer = ?
+     ORDER BY c.created_at DESC`,
+    [repoId, reviewer],
+  );
+}
+
+export async function getReviewerFileStats(
+  repoId: string,
+  reviewer: string,
+): Promise<{ filePath: string; count: number }[]> {
+  const db = await getDb();
+  return queryAll<{ filePath: string; count: number }>(
+    db,
+    `SELECT c.file_path as filePath, COUNT(*) as count
+     FROM pr_comments c
+     JOIN prs p ON c.pr_id = p.id
+     WHERE p.repo_id = ? AND c.reviewer = ? AND c.file_path IS NOT NULL
+     GROUP BY c.file_path
+     ORDER BY count DESC
+     LIMIT 10`,
+    [repoId, reviewer],
+  );
 }
