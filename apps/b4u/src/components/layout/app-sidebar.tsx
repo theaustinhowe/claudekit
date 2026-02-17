@@ -120,38 +120,62 @@ function RunCard({
   const [hovered, setHovered] = useState(false);
   const variant = statusVariant(run);
 
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
   if (collapsed) {
     return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className={cn(
-              "w-10 h-10 rounded-md border flex items-center justify-center text-2xs font-bold transition-colors",
-              "border-border hover:border-primary/50 hover:bg-accent",
-              VARIANT_COLORS[variant],
-            )}
-            onClick={() => run.runId && onSelect?.(run.runId)}
+      // biome-ignore lint/a11y/noStaticElementInteractions: hover wrapper for popover trigger, interactive button is inside
+      <div onMouseEnter={() => setPopoverOpen(true)} onMouseLeave={() => setPopoverOpen(false)}>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "w-10 h-10 rounded-md border flex items-center justify-center text-2xs font-bold transition-colors",
+                "border-border hover:border-primary/50 hover:bg-accent",
+                VARIANT_COLORS[variant],
+              )}
+              onClick={() => run.runId && onSelect?.(run.runId)}
+            >
+              {run.projectName.charAt(0).toUpperCase()}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            className="w-56 p-3"
+            onMouseEnter={() => setPopoverOpen(true)}
+            onMouseLeave={() => setPopoverOpen(false)}
           >
-            {run.projectName.charAt(0).toUpperCase()}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent side="right" className="w-56 p-3">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-foreground truncate">{run.projectName}</span>
-              <StatusPill run={run} />
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-foreground truncate">{run.projectName}</span>
+                <StatusPill run={run} />
+              </div>
+              <span className="text-xs text-muted-foreground">{phaseLabel(run)}</span>
+              {relativeTime(run.startedAt) && (
+                <span className="text-xs text-muted-foreground">{relativeTime(run.startedAt)}</span>
+              )}
+              {run.hasError && run.errorMessage && (
+                <span className="text-xs text-destructive/80 truncate">{run.errorMessage}</span>
+              )}
+              {run.runId && onDelete && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (run.runId) onDelete(run.runId);
+                    setPopoverOpen(false);
+                  }}
+                  className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Delete
+                </button>
+              )}
             </div>
-            <span className="text-xs text-muted-foreground">{phaseLabel(run)}</span>
-            {relativeTime(run.startedAt) && (
-              <span className="text-xs text-muted-foreground">{relativeTime(run.startedAt)}</span>
-            )}
-            {run.hasError && run.errorMessage && (
-              <span className="text-xs text-destructive/80 truncate">{run.errorMessage}</span>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
+          </PopoverContent>
+        </Popover>
+      </div>
     );
   }
 
@@ -167,7 +191,7 @@ function RunCard({
       role="button"
       tabIndex={0}
       className={cn(
-        "relative flex flex-col gap-1 p-3 pl-4 rounded-md border cursor-pointer transition-all overflow-hidden",
+        "relative flex rounded-md border cursor-pointer transition-all overflow-hidden",
         hovered ? "bg-accent border-border" : "bg-card border-border",
       )}
     >
@@ -182,37 +206,44 @@ function RunCard({
         )}
       />
 
-      {/* Delete button */}
+      {/* Content */}
+      <div className="flex-1 flex flex-col gap-1 p-3 pl-4 min-w-0">
+        {/* Line 1 */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[13px] font-medium text-foreground truncate min-w-0">{run.projectName}</span>
+          <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
+            {relativeTime(run.startedAt)}
+          </span>
+        </div>
+
+        {/* Line 2 */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground truncate min-w-0">
+            {phaseLabel(run)} &middot; {run.sessionCount} step{run.sessionCount !== 1 ? "s" : ""}
+          </span>
+          <StatusPill run={run} />
+        </div>
+
+        {/* Error */}
+        {run.hasError && run.errorMessage && (
+          <span className="text-xs text-destructive/80 truncate">{run.errorMessage}</span>
+        )}
+      </div>
+
+      {/* Delete button column */}
       {hovered && run.runId && onDelete && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (run.runId) onDelete(run.runId);
-          }}
-          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-sm border border-border bg-card hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors z-10"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      )}
-
-      {/* Line 1 */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[13px] font-medium text-foreground truncate min-w-0">{run.projectName}</span>
-        <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">{relativeTime(run.startedAt)}</span>
-      </div>
-
-      {/* Line 2 */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-muted-foreground truncate min-w-0">
-          {phaseLabel(run)} &middot; {run.sessionCount} step{run.sessionCount !== 1 ? "s" : ""}
-        </span>
-        <StatusPill run={run} />
-      </div>
-
-      {/* Error */}
-      {run.hasError && run.errorMessage && (
-        <span className="text-xs text-destructive/80 truncate">{run.errorMessage}</span>
+        <div className="flex items-center pr-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (run.runId) onDelete(run.runId);
+            }}
+            className="w-6 h-6 flex items-center justify-center rounded-sm border border-border bg-card hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
     </div>
   );

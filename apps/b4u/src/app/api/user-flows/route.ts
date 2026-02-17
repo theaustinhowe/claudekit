@@ -2,16 +2,38 @@ import { type NextRequest, NextResponse } from "next/server";
 import { execute, getDb, queryAll } from "@/lib/db";
 import { parseBody, userFlowsArraySchema } from "@/lib/validations";
 
+function normalizeSteps(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
+  if (raw && typeof raw === "object" && "toArray" in raw && typeof (raw as { toArray: unknown }).toArray === "function")
+    return (raw as { toArray: () => unknown[] }).toArray().map(String);
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    } catch {
+      // DuckDB stringified format: "[Step 1, Step 2]"
+      const inner = raw.replace(/^\[/, "").replace(/\]$/, "").trim();
+      if (inner) return inner.split(",").map((s) => s.trim());
+    }
+  }
+  return [];
+}
+
 export async function GET() {
   try {
     const conn = await getDb();
     const rows = await queryAll<{
       id: string;
       name: string;
-      steps: string[];
+      steps: unknown;
     }>(conn, "SELECT id, name, steps FROM user_flows");
 
-    return NextResponse.json(rows);
+    const normalized = rows.map((r) => ({
+      ...r,
+      steps: normalizeSteps(r.steps),
+    }));
+
+    return NextResponse.json(normalized);
   } catch (error) {
     console.error("Failed to fetch user flows:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

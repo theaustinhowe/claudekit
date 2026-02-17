@@ -554,15 +554,17 @@ export function Phase2Outline() {
                         className="flex-1 text-left bg-transparent border-none p-0 cursor-pointer"
                         onClick={() => setEditingFlow(flow.id)}
                       >
-                        <div className="text-xs font-medium mb-2 text-foreground">{flow.name}</div>
-                        <div className="flex items-center gap-1 flex-wrap">
+                        <div className="text-2xs font-medium mb-1 text-foreground">{flow.name}</div>
+                        <div className="flex items-center gap-0.5 flex-wrap">
                           {flow.steps.map((step, si) => (
                             // biome-ignore lint/suspicious/noArrayIndexKey: flow steps are plain strings with no stable key
-                            <div key={si} className="flex items-center gap-1">
-                              <span className="text-2xs px-1.5 py-0.5 bg-muted border border-border rounded-sm text-primary">
+                            <div key={si} className="flex items-center gap-0.5">
+                              <span className="text-[9px] leading-tight px-1 py-px bg-muted border border-border rounded-sm text-primary">
                                 {step}
                               </span>
-                              {si < flow.steps.length - 1 && <span className="text-2xs text-muted-foreground">→</span>}
+                              {si < flow.steps.length - 1 && (
+                                <span className="text-[9px] text-muted-foreground">→</span>
+                              )}
                             </div>
                           ))}
                         </div>
