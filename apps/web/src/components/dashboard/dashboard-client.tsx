@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Cpu,
   ExternalLink,
+  GitPullRequest,
   Monitor,
   Rocket,
   RotateCw,
@@ -45,6 +46,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Rocket: <Rocket className="h-5 w-5" />,
   Cpu: <Cpu className="h-5 w-5" />,
   Video: <Video className="h-5 w-5" />,
+  GitPullRequest: <GitPullRequest className="h-5 w-5" />,
   BookOpen: <BookOpen className="h-5 w-5" />,
   Monitor: <Monitor className="h-5 w-5" />,
 };
@@ -54,6 +56,7 @@ const ACCENT_COLORS: Record<string, string> = {
   "gogo-web": "border-l-blue-500",
   "gogo-orchestrator": "border-l-cyan-500",
   b4u: "border-l-amber-500",
+  inside: "border-l-rose-500",
   storybook: "border-l-pink-500",
   web: "border-l-emerald-500",
 };
@@ -190,6 +193,7 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                 <AppCardSkeleton index={3} />
                 <AppCardSkeleton index={4} />
                 <AppCardSkeleton index={5} />
+                <AppCardSkeleton index={6} />
               </>
             ) : (
               apps.map((app) => {

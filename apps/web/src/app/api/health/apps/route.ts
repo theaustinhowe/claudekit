@@ -26,13 +26,6 @@ const APP_DEFINITIONS = [
     icon: "Rocket",
   },
   {
-    id: "gogo-orchestrator",
-    name: "GoGo Orchestrator",
-    description: "Backend orchestrator for GoGo job execution",
-    port: 2201,
-    icon: "Cpu",
-  },
-  {
     id: "b4u",
     name: "B4U",
     description: "Automated repo walkthrough video generator",
@@ -40,11 +33,25 @@ const APP_DEFINITIONS = [
     icon: "Video",
   },
   {
+    id: "inside",
+    name: "Inside",
+    description: "GitHub PR analysis, skill building, and comment resolution",
+    port: 2400,
+    icon: "GitPullRequest",
+  },
+  {
     id: "storybook",
     name: "Storybook",
     description: "Interactive component library and documentation",
     port: 6006,
     icon: "BookOpen",
+  },
+  {
+    id: "gogo-orchestrator",
+    name: "GoGo Orchestrator",
+    description: "Backend orchestrator for GoGo job execution",
+    port: 2201,
+    icon: "Cpu",
   },
   {
     id: "web",
