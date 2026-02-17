@@ -1,5 +1,6 @@
 import type { AppLayoutConfig, NavGroup } from "@devkit/ui/components/shared-layout";
-import { Brain, GitBranch, LayoutDashboard, MessageSquareCode, Settings } from "lucide-react";
+import { Brain, GitBranch, LayoutDashboard, MessageSquareCode, Settings, Users } from "lucide-react";
+import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 
 const navGroups: NavGroup[] = [
@@ -12,6 +13,7 @@ const navGroups: NavGroup[] = [
       { label: "Skill Builder", href: "/skills", icon: Brain },
       { label: "PR Splitter", href: "/splitter", icon: GitBranch },
       { label: "Comment Resolver", href: "/resolver", icon: MessageSquareCode },
+      { label: "Reviewer Insights", href: "/insights", icon: Users },
     ],
   },
 ];
@@ -19,19 +21,8 @@ const navGroups: NavGroup[] = [
 export const insideLayoutConfig: AppLayoutConfig = {
   appId: "inside",
   logo: {
-    icon: (
-      <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-        <span className="text-sm font-bold text-primary-foreground">IN</span>
-      </div>
-    ),
-    wordmark: (
-      <div className="flex items-center gap-2">
-        <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-          <span className="text-sm font-bold text-primary-foreground">IN</span>
-        </div>
-        <span className="text-lg font-bold text-gradient">Inside</span>
-      </div>
-    ),
+    icon: <Image src="/favicon-32x32.png" alt="Inside" width={32} height={32} className="w-8 h-8" />,
+    wordmark: <Image src="/logo.png" alt="Inside" width={887} height={617} className="h-10 w-auto" />,
   },
   nav: navGroups,
   bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],

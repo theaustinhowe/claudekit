@@ -118,6 +118,16 @@ export interface PRWithComments extends PR {
   feedbackCategories: string[];
 }
 
+/** Reviewer aggregate stats */
+export interface ReviewerStats {
+  reviewer: string;
+  reviewerAvatar: string | null;
+  totalComments: number;
+  prsReviewed: number;
+  severityCounts: Record<string, number>;
+  categoryCounts: Record<string, number>;
+}
+
 /** Skill with related comments hydrated */
 export interface SkillWithComments extends Skill {
   comments: {

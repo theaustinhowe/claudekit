@@ -4,9 +4,13 @@ import crypto from "node:crypto";
 import { runClaude } from "@devkit/claude-runner";
 import { fetchFileContent } from "@/lib/actions/github";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
+import { createServiceLogger } from "@/lib/logger";
 import { buildCommentFixPrompt } from "@/lib/prompts";
 
+const log = createServiceLogger("resolver");
+
 export async function startCommentFixes(commentIds: string[]) {
+  log.info({ count: commentIds.length }, "Starting comment fix generation");
   const db = await getDb();
 
   // Fetch comments with context
@@ -74,6 +78,7 @@ export async function startCommentFixes(commentIds: string[]) {
     fixDiff: string;
   }>;
 
+  log.info({ fixCount: fixes.length }, "Fixes generated, persisting");
   // Persist fixes
   for (const fix of fixes) {
     const fixId = crypto.randomUUID();

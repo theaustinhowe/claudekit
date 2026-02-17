@@ -4,8 +4,12 @@ import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
-import { AlertTriangle, Brain, GitBranch, Settings, TrendingDown } from "lucide-react";
+import { AlertTriangle, Brain, Clock, GitBranch, RefreshCw, Settings, TrendingDown } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { syncAllCommentsForRepo, syncPRs } from "@/lib/actions/github";
 import { SIZE_CLASSES, STATUS_COLORS } from "@/lib/constants";
 import type { DashboardStats, PRWithComments } from "@/lib/types";
 
@@ -111,14 +115,63 @@ function PRRow({ pr }: { pr: PRWithComments }) {
   );
 }
 
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours < 1) return "just now";
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function SyncBadge({ lastSyncedAt, repoId }: { lastSyncedAt: string | null; repoId?: string }) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const isStale = lastSyncedAt ? Date.now() - new Date(lastSyncedAt).getTime() > 24 * 60 * 60 * 1000 : true;
+
+  const handleResync = () => {
+    if (!repoId) return;
+    startTransition(async () => {
+      try {
+        await syncPRs(repoId);
+        await syncAllCommentsForRepo(repoId);
+        router.refresh();
+        toast.success("Sync complete");
+      } catch (err) {
+        toast.error("Sync failed", { description: err instanceof Error ? err.message : "Unknown error" });
+      }
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Badge
+        variant={isStale ? "destructive" : "secondary"}
+        className={cn("text-xs gap-1", isStale && "bg-status-warning/15 text-status-warning border-status-warning/30")}
+      >
+        <Clock className="h-3 w-3" />
+        {lastSyncedAt ? `Synced ${formatTimeAgo(lastSyncedAt)}` : "Never synced"}
+      </Badge>
+      {repoId && (
+        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleResync} disabled={isPending}>
+          <RefreshCw className={cn("h-3.5 w-3.5", isPending && "animate-spin")} />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 interface DashboardClientProps {
   prs: PRWithComments[];
   stats: DashboardStats;
   hasRepo: boolean;
   sparklineData: number[];
+  lastSyncedAt: string | null;
+  repoId: string | null;
 }
 
-export function DashboardClient({ prs, stats, hasRepo, sparklineData }: DashboardClientProps) {
+export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSyncedAt, repoId }: DashboardClientProps) {
   if (!hasRepo) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -141,9 +194,12 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData }: Dashboar
 
   return (
     <div className="p-6 max-w-[1200px] mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Overview of recent PR activity and insights</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Overview of recent PR activity and insights</p>
+        </div>
+        <SyncBadge lastSyncedAt={lastSyncedAt} repoId={repoId ?? undefined} />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

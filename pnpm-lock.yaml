@@ -44,6 +44,9 @@ importers:
       '@devkit/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@devkit/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       '@duckdb/node-api':
         specifier: 1.4.4-r.1
         version: 1.4.4-r.1
@@ -196,6 +199,9 @@ importers:
       '@devkit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
+      '@devkit/github':
+        specifier: workspace:*
+        version: link:../../packages/github
       '@devkit/gogo-shared':
         specifier: workspace:*
         version: link:../../packages/gogo-shared
@@ -336,6 +342,9 @@ importers:
       '@devkit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
+      '@devkit/github':
+        specifier: workspace:*
+        version: link:../../packages/github
       '@devkit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
@@ -376,12 +385,15 @@ importers:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zod:
-        specifier: ^3.25.67
-        version: 3.25.76
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.1.18
+      '@tailwindcss/typography':
+        specifier: ^0.5.19
+        version: 0.5.19(tailwindcss@4.1.18)
       '@types/node':
         specifier: ^25.2.3
         version: 25.2.3
@@ -516,6 +528,22 @@ importers:
       '@duckdb/node-api':
         specifier: 1.4.4-r.1
         version: 1.4.4-r.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.11
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@22.19.11)(jiti@2.6.1)(jsdom@25.0.0)(lightningcss@1.30.2)(tsx@4.21.0)
+
+  packages/github:
+    dependencies:
+      octokit:
+        specifier: ^4.1.2
+        version: 4.1.4
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
@@ -709,6 +737,22 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)(jsdom@25.0.0)(lightningcss@1.30.2)(tsx@4.21.0)
+
+  packages/validation:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.11
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@22.19.11)(jiti@2.6.1)(jsdom@25.0.0)(lightningcss@1.30.2)(tsx@4.21.0)
 
 packages:
 
@@ -4086,9 +4130,6 @@ packages:
     resolution: {integrity: sha512-pM/SU9d3YAggzi6MtR4h7ruuQlqKtad8e9S0fmxcMi+ueAK5Korys/aWcV9LIIHTVbj01NdzxcnXSN+O74ZIVA==}
     peerDependencies:
       zod: ^3.25 || ^4
-
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
@@ -7704,8 +7745,6 @@ snapshots:
   zod-to-json-schema@3.25.1(zod@4.3.6):
     dependencies:
       zod: 4.3.6
-
-  zod@3.25.76: {}
 
   zod@4.3.6: {}
 

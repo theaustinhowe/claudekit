@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./components/shared-layout": "./src/components/shared-layout/index.ts",
     "./components/*": "./src/components/*.tsx",
+    "./next-config": "./src/next-config.ts",
     "./styles/*": "./src/styles/*"
   },
   "typesVersions": {
@@ -18,6 +19,9 @@
       ],
       "components/*": [
         "src/components/*.tsx"
+      ],
+      "next-config": [
+        "src/next-config.ts"
       ]
     }
   },

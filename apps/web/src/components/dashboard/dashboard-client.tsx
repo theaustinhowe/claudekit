@@ -19,6 +19,7 @@ import {
   Video,
   Wrench,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
@@ -31,6 +32,7 @@ interface AppInfo {
   url: string;
   status: "running" | "stopped";
   icon: string;
+  favicon?: string;
 }
 
 interface LogFileInfo {
@@ -230,7 +232,11 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-primary">{ICON_MAP[app.icon]}</span>
+                              {app.favicon ? (
+                                <Image src={app.favicon} alt="" width={20} height={20} className="rounded" />
+                              ) : (
+                                <span className="text-primary">{ICON_MAP[app.icon]}</span>
+                              )}
                               <CardTitle className="text-base">{app.name}</CardTitle>
                             </div>
                             <Badge variant="outline" className="font-mono text-xs">

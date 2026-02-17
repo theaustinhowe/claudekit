@@ -4,10 +4,14 @@ import crypto from "node:crypto";
 import { runClaude } from "@devkit/claude-runner";
 import { getSetting } from "@/lib/actions/settings";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
+import { createServiceLogger } from "@/lib/logger";
 import { buildSkillAnalysisPrompt } from "@/lib/prompts";
 import type { Skill, SkillWithComments } from "@/lib/types";
 
+const log = createServiceLogger("skills");
+
 export async function startSkillAnalysis(repoId: string, prNumbers: number[]) {
+  log.info({ repoId, prNumbers }, "Starting skill analysis");
   const db = await getDb();
   const analysisId = crypto.randomUUID();
 
@@ -62,6 +66,7 @@ export async function startSkillAnalysis(repoId: string, prNumbers: number[]) {
   });
 
   const prompt = buildSkillAnalysisPrompt(enrichedComments);
+  log.info({ commentCount: enrichedComments.length }, "Calling Claude for skill analysis");
 
   // Call Claude
   const result = await runClaude({
@@ -133,6 +138,7 @@ export async function startSkillAnalysis(repoId: string, prNumbers: number[]) {
     }
   }
 
+  log.info({ analysisId, skillCount: skillsData.length }, "Skill analysis complete");
   return analysisId;
 }
 
@@ -198,4 +204,106 @@ export async function markSkillAddressed(skillId: string, addressed: boolean) {
 export async function updateSkillActionItem(skillId: string, actionItem: string) {
   const db = await getDb();
   await execute(db, "UPDATE skills SET action_item = ? WHERE id = ?", [actionItem, skillId]);
+}
+
+export async function getAnalysisHistory(repoId: string) {
+  const db = await getDb();
+  const analyses = await queryAll<{
+    id: string;
+    pr_numbers: string;
+    created_at: string;
+  }>(db, "SELECT id, pr_numbers, created_at FROM skill_analyses WHERE repo_id = ? ORDER BY created_at DESC", [repoId]);
+
+  const result: {
+    id: string;
+    prNumbers: number[];
+    createdAt: string;
+    skillCount: number;
+    topSkills: string[];
+  }[] = [];
+
+  for (const analysis of analyses) {
+    const skills = await queryAll<{ name: string }>(
+      db,
+      "SELECT name FROM skills WHERE analysis_id = ? ORDER BY frequency DESC LIMIT 3",
+      [analysis.id],
+    );
+    const totalSkills = await queryOne<{ count: number }>(
+      db,
+      "SELECT COUNT(*) as count FROM skills WHERE analysis_id = ?",
+      [analysis.id],
+    );
+
+    result.push({
+      id: analysis.id,
+      prNumbers: JSON.parse(analysis.pr_numbers),
+      createdAt: analysis.created_at,
+      skillCount: Number(totalSkills?.count ?? 0),
+      topSkills: skills.map((s) => s.name),
+    });
+  }
+
+  return result;
+}
+
+export interface ComparisonSkill {
+  name: string;
+  status: "new" | "resolved" | "improved" | "worsened" | "unchanged";
+  frequencyA: number | null;
+  frequencyB: number | null;
+  severityA: string | null;
+  severityB: string | null;
+}
+
+export async function compareAnalyses(idA: string, idB: string): Promise<ComparisonSkill[]> {
+  const db = await getDb();
+
+  const skillsA = await queryAll<{ name: string; frequency: number; severity: string }>(
+    db,
+    "SELECT name, frequency, severity FROM skills WHERE analysis_id = ?",
+    [idA],
+  );
+  const skillsB = await queryAll<{ name: string; frequency: number; severity: string }>(
+    db,
+    "SELECT name, frequency, severity FROM skills WHERE analysis_id = ?",
+    [idB],
+  );
+
+  const mapA = new Map(skillsA.map((s) => [s.name, s]));
+  const mapB = new Map(skillsB.map((s) => [s.name, s]));
+  const allNames = new Set([...mapA.keys(), ...mapB.keys()]);
+
+  const result: ComparisonSkill[] = [];
+  for (const name of allNames) {
+    const a = mapA.get(name);
+    const b = mapB.get(name);
+
+    let status: ComparisonSkill["status"];
+    if (!a && b) {
+      status = "new";
+    } else if (a && !b) {
+      status = "resolved";
+    } else if (a && b) {
+      if (b.frequency < a.frequency) status = "improved";
+      else if (b.frequency > a.frequency) status = "worsened";
+      else status = "unchanged";
+    } else {
+      continue;
+    }
+
+    result.push({
+      name,
+      status,
+      frequencyA: a?.frequency ?? null,
+      frequencyB: b?.frequency ?? null,
+      severityA: a?.severity ?? null,
+      severityB: b?.severity ?? null,
+    });
+  }
+
+  // Sort: worsened first, then new, then unchanged, then improved, then resolved
+  const order = { worsened: 0, new: 1, unchanged: 2, improved: 3, resolved: 4 };
+  result.sort((a, b) => order[a.status] - order[b.status]);
+
+  return result;
 }

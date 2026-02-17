@@ -1,32 +1,12 @@
 import type { Policy } from "@/lib/types";
 
-export function generateId(): string {
-  return crypto.randomUUID();
-}
-
-export function nowTimestamp(): string {
-  return new Date().toISOString();
-}
+export { formatElapsed, generateId, nowTimestamp, parseGitHubUrl, timeAgo } from "@devkit/ui";
 
 export function expandTilde(filepath: string): string {
   if (filepath.startsWith("~/") || filepath === "~") {
     return filepath.replace("~", process.env.HOME || "");
   }
   return filepath;
-}
-
-export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
-  const match = url.match(/github\.com[/:]([^/]+)\/([^/.#?]+)/);
-  if (!match) return null;
-  return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
-}
-
-function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 export function parsePolicy(row: Record<string, unknown>): Policy {
@@ -40,8 +20,6 @@ export function parsePolicy(row: Record<string, unknown>): Policy {
     repo_types: JSON.parse((row.repo_types as string) || "[]"),
   } as Policy;
 }
-
-export { formatElapsed } from "@devkit/ui";
 
 export function formatNumber(n: number): string {
   return n.toLocaleString();
@@ -67,16 +45,4 @@ export async function removeDirectory(dirPath: string): Promise<void> {
   } catch {
     fs.rmSync(dirPath, { recursive: true, force: true });
   }
-}
-
-export function timeAgo(date: string | Date): string {
-  const now = new Date();
-  const then = new Date(date);
-  const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
-
-  if (seconds < 60) return "just now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return formatDate(date);
 }

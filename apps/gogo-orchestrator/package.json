@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@devkit/duckdb": "workspace:*",
+    "@devkit/github": "workspace:*",
     "@devkit/gogo-shared": "workspace:*",
     "@devkit/logger": "workspace:*",
     "@duckdb/node-api": "1.4.4-r.1",

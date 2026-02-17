@@ -8,6 +8,7 @@ interface AppInfo {
   url: string;
   status: "running" | "stopped";
   icon: string;
+  favicon?: string;
 }
 
 const APP_DEFINITIONS = [
@@ -17,6 +18,7 @@ const APP_DEFINITIONS = [
     description: "Repository auditor, AI integrations, project scaffolding",
     port: 2100,
     icon: "Wrench",
+    favicon: "/app-icons/gadget.png",
   },
   {
     id: "gogo-web",
@@ -24,6 +26,7 @@ const APP_DEFINITIONS = [
     description: "Job orchestration dashboard for multi-repo AI agents",
     port: 2200,
     icon: "Rocket",
+    favicon: "/app-icons/gogo-web.png",
   },
   {
     id: "b4u",
@@ -31,6 +34,7 @@ const APP_DEFINITIONS = [
     description: "Automated repo walkthrough video generator",
     port: 2300,
     icon: "Video",
+    favicon: "/app-icons/b4u.png",
   },
   {
     id: "inside",
@@ -38,6 +42,7 @@ const APP_DEFINITIONS = [
     description: "GitHub PR analysis, skill building, and comment resolution",
     port: 2400,
     icon: "GitPullRequest",
+    favicon: "/app-icons/inside.png",
   },
   {
     id: "storybook",
@@ -59,6 +64,7 @@ const APP_DEFINITIONS = [
     description: "Devkit dashboard, app health monitor, and log viewer",
     port: 2000,
     icon: "Monitor",
+    favicon: "/app-icons/web.png",
   },
 ];
 

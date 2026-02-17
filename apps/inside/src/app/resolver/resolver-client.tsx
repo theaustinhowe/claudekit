@@ -7,13 +7,14 @@ import { Card, CardContent } from "@devkit/ui/components/card";
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Progress } from "@devkit/ui/components/progress";
 import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Check, CheckCircle2, ChevronDown, ChevronRight, MessageSquare, Zap } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, MessageSquare, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getPRComments } from "@/lib/actions/prs";
 import { getCommentFixes, resolveAllFixes, resolveCommentFix, startCommentFixes } from "@/lib/actions/resolver";
 import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
+import { exportFixesToMarkdown } from "@/lib/export";
 import type { CommentStatus, PRWithComments } from "@/lib/types";
 
 type Phase = "select-pr" | "select-comments" | "fixing" | "results";
@@ -225,6 +226,17 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
                 <CheckCircle2 className="h-4 w-4 mr-1" /> Resolve All
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const md = exportFixesToMarkdown(fixes, fixedComments);
+                navigator.clipboard.writeText(md);
+                toast.success("Copied to clipboard");
+              }}
+            >
+              <ClipboardCopy className="h-4 w-4 mr-1" /> Copy as Markdown
+            </Button>
             <Button
               variant="outline"
               size="sm"

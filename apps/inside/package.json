@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@devkit/claude-runner": "workspace:*",
+    "@devkit/github": "workspace:*",
     "@devkit/claude-usage": "workspace:*",
     "@devkit/duckdb": "workspace:*",
     "@devkit/hooks": "workspace:*",
@@ -32,10 +33,11 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sonner": "^2.0.7",
-    "zod": "^3.25.67"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^25.2.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

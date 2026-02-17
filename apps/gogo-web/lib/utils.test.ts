@@ -11,14 +11,14 @@ describe("formatLastChecked", () => {
     vi.useRealTimers();
   });
 
-  it("returns seconds ago for recent dates", () => {
+  it('returns "just now" for recent dates under 60 seconds', () => {
     const thirtySecondsAgo = new Date("2024-06-15T11:59:30Z");
-    expect(formatLastChecked(thirtySecondsAgo)).toBe("30s ago");
+    expect(formatLastChecked(thirtySecondsAgo)).toBe("just now");
   });
 
-  it("returns 0s ago for the current time", () => {
+  it('returns "just now" for the current time', () => {
     const now = new Date("2024-06-15T12:00:00Z");
-    expect(formatLastChecked(now)).toBe("0s ago");
+    expect(formatLastChecked(now)).toBe("just now");
   });
 
   it("returns minutes ago for dates within the hour", () => {
@@ -26,21 +26,19 @@ describe("formatLastChecked", () => {
     expect(formatLastChecked(fiveMinutesAgo)).toBe("5m ago");
   });
 
-  it("returns locale time string for dates older than 1 hour", () => {
+  it("returns hours ago for dates older than 1 hour", () => {
     const twoHoursAgo = new Date("2024-06-15T10:00:00Z");
-    const result = formatLastChecked(twoHoursAgo);
-    expect(result).not.toContain("ago");
-    expect(result).toBe(twoHoursAgo.toLocaleTimeString());
+    expect(formatLastChecked(twoHoursAgo)).toBe("2h ago");
   });
 
   it("accepts a string date", () => {
     const result = formatLastChecked("2024-06-15T11:59:45Z");
-    expect(result).toBe("15s ago");
+    expect(result).toBe("just now");
   });
 
-  it("returns 59s ago at the boundary before 1 minute", () => {
+  it('returns "just now" at the boundary before 1 minute', () => {
     const fiftyNineSecondsAgo = new Date("2024-06-15T11:59:01Z");
-    expect(formatLastChecked(fiftyNineSecondsAgo)).toBe("59s ago");
+    expect(formatLastChecked(fiftyNineSecondsAgo)).toBe("just now");
   });
 
   it("returns 1m ago at exactly 60 seconds", () => {
@@ -53,9 +51,18 @@ describe("formatLastChecked", () => {
     expect(formatLastChecked(fiftyNineMinutesAgo)).toBe("59m ago");
   });
 
-  it("returns locale time at exactly 1 hour", () => {
+  it("returns hours ago at exactly 1 hour", () => {
     const oneHourAgo = new Date("2024-06-15T11:00:00Z");
-    const result = formatLastChecked(oneHourAgo);
-    expect(result).toBe(oneHourAgo.toLocaleTimeString());
+    expect(formatLastChecked(oneHourAgo)).toBe("1h ago");
+  });
+
+  it("returns days ago for dates older than 24 hours", () => {
+    const twoDaysAgo = new Date("2024-06-13T12:00:00Z");
+    expect(formatLastChecked(twoDaysAgo)).toBe("2d ago");
+  });
+
+  it("returns formatted date for dates older than 7 days", () => {
+    const twoWeeksAgo = new Date("2024-06-01T12:00:00Z");
+    expect(formatLastChecked(twoWeeksAgo)).toBe("Jun 1, 2024");
   });
 });

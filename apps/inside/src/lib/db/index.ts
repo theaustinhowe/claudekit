@@ -19,4 +19,4 @@ const db = createDatabase({
 
 export const getDb = db.getDb;
 
-export { buildUpdate, execute, parseJsonField, queryAll, queryOne, withTransaction } from "@devkit/duckdb";
+export { buildUpdate, checkpoint, execute, parseJsonField, queryAll, queryOne, withTransaction } from "@devkit/duckdb";

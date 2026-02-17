@@ -1,22 +1,12 @@
 import type { AppLayoutConfig } from "@devkit/ui/components/shared-layout";
+import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 
 export const b4uLayoutConfig: AppLayoutConfig = {
   appId: "b4u",
   logo: {
-    icon: (
-      <div className="w-10 h-10 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary">
-        B4U
-      </div>
-    ),
-    wordmark: (
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 flex items-center justify-center text-2xs font-bold rounded-md bg-primary/10 text-primary">
-          B4U
-        </div>
-        <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">B4U</span>
-      </div>
-    ),
+    icon: <Image src="/favicon-32x32.png" alt="B4U" width={32} height={32} className="w-8 h-8" />,
+    wordmark: <Image src="/logo.png" alt="B4U" width={859} height={529} className="h-10 w-auto" />,
   },
   nav: [],
   claudeUsage: {

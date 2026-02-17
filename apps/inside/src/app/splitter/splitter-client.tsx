@@ -6,7 +6,7 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Progress } from "@devkit/ui/components/progress";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { ArrowDown, Check, Scissors } from "lucide-react";
+import { ArrowDown, Check, ClipboardCopy, Scissors } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -15,6 +15,7 @@ import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
 import { SubPRCard } from "@/components/splitter/sub-pr-card";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "@/lib/actions/splitter";
 import { SIZE_CLASSES, SUB_PR_COLORS } from "@/lib/constants";
+import { exportSplitPlanToMarkdown } from "@/lib/export";
 import type { PRWithComments, SubPR } from "@/lib/types";
 
 type Phase = "select" | "analyzing" | "results";
@@ -196,16 +197,29 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
               #{plan.prNumber} &mdash; {plan.prTitle}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setPhase("select");
-              setSelectedPR(null);
-              setPlan(null);
-            }}
-          >
-            Analyze Another
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const md = exportSplitPlanToMarkdown(plan);
+                navigator.clipboard.writeText(md);
+                toast.success("Copied to clipboard");
+              }}
+            >
+              <ClipboardCopy className="h-4 w-4 mr-2" />
+              Copy as Markdown
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPhase("select");
+                setSelectedPR(null);
+                setPlan(null);
+              }}
+            >
+              Analyze Another
+            </Button>
+          </div>
         </div>
 
         <Card>

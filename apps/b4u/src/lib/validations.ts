@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+export type { ParseResult } from "@devkit/validation";
+export { parseBody } from "@devkit/validation";
+
 // --- Route validation ---
 
 const routeEntrySchema = z.object({
@@ -60,28 +63,3 @@ export const voiceoverScriptsSchema = z.record(
   z.string().min(1),
   z.array(z.string().max(5000, "Paragraph must be under 5000 characters")),
 );
-
-// --- Helpers ---
-
-type ParseResult<T> = { ok: true; data: T } | { ok: false; error: string; status: number };
-
-/** Parse request body with a Zod schema. Returns { ok, data } or { ok, error, status }. */
-export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Promise<ParseResult<T>> {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return { ok: false, error: "Invalid JSON in request body", status: 400 };
-  }
-
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    const messages = result.error.issues
-      .map((i) => `${i.path.join(".")}: ${i.message}`)
-      .slice(0, 5)
-      .join("; ");
-    return { ok: false, error: `Validation failed: ${messages}`, status: 422 };
-  }
-
-  return { ok: true, data: result.data };
-}

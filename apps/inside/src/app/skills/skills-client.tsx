@@ -6,15 +6,22 @@ import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Progress } from "@devkit/ui/components/progress";
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Slider } from "@devkit/ui/components/slider";
-import { Brain, Check, Filter } from "lucide-react";
+import { Brain, Check, Filter, GitCompareArrows, History } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { AnalysisComparison } from "@/components/skills/analysis-comparison";
+import { AnalysisHistory } from "@/components/skills/analysis-history";
 import { SkillCard } from "@/components/skills/skill-card";
 import { SkillDetailDrawer } from "@/components/skills/skill-detail-drawer";
+import type { ComparisonSkill } from "@/lib/actions/skills";
 import { getSkillsForAnalysis, startSkillAnalysis } from "@/lib/actions/skills";
 import type { PRWithComments, SkillWithComments } from "@/lib/types";
+
+// Dynamic imports to avoid linter type-only import optimization
+const loadHistory = () => import("@/lib/actions/skills").then((m) => m.getAnalysisHistory);
+const loadCompare = () => import("@/lib/actions/skills").then((m) => m.compareAnalyses);
 
 type Phase = "select" | "analyzing" | "results";
 
@@ -24,6 +31,14 @@ const analysisSteps = [
   "Identifying skill gaps\u2026",
   "Building improvement plan\u2026",
 ];
+
+interface AnalysisHistoryEntry {
+  id: string;
+  prNumbers: number[];
+  createdAt: string;
+  skillCount: number;
+  topSkills: string[];
+}
 
 interface SkillsClientProps {
   repoId: string;
@@ -47,6 +62,12 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
   const [progress, setProgress] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [selectedSkill, setSelectedSkill] = useState<SkillWithComments | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<AnalysisHistoryEntry[]>([]);
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | undefined>(undefined);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<[string | null, string | null]>([null, null]);
+  const [comparison, setComparison] = useState<ComparisonSkill[]>([]);
 
   const filtered = prsWithComments.filter((p) => p.commentCount >= minComments);
 
@@ -141,16 +162,114 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
               Based on analysis of {skills.length > 0 ? skills[0]?.totalPRs : selected.size} pull requests
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setPhase("select");
-              setSelected(new Set());
-            }}
-          >
-            New Analysis
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowHistory(!showHistory);
+                if (!showHistory && history.length === 0) {
+                  startTransition(async () => {
+                    const fn = await loadHistory();
+                    const data = await fn(repoId);
+                    setHistory(data);
+                  });
+                }
+              }}
+            >
+              <History className="h-4 w-4 mr-2" />
+              {showHistory ? "Hide History" : "History"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPhase("select");
+                setSelected(new Set());
+              }}
+            >
+              New Analysis
+            </Button>
+          </div>
         </div>
+
+        {showHistory && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold">Analysis History</h3>
+                {history.length >= 2 && (
+                  <Button
+                    variant={compareMode ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => {
+                      setCompareMode(!compareMode);
+                      setCompareIds([null, null]);
+                      setComparison([]);
+                    }}
+                  >
+                    <GitCompareArrows className="h-3 w-3 mr-1" />
+                    {compareMode ? "Exit Compare" : "Compare"}
+                  </Button>
+                )}
+              </div>
+              {isPending && history.length === 0 ? (
+                <p className="text-sm text-muted-foreground animate-pulse">Loading history...</p>
+              ) : compareMode ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">Before (A)</p>
+                      <AnalysisHistory
+                        history={history}
+                        selectedId={compareIds[0] ?? undefined}
+                        onSelect={(id) => setCompareIds(([_, b]) => [id, b])}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">After (B)</p>
+                      <AnalysisHistory
+                        history={history}
+                        selectedId={compareIds[1] ?? undefined}
+                        onSelect={(id) => setCompareIds(([a]) => [a, id])}
+                      />
+                    </div>
+                  </div>
+                  {compareIds[0] && compareIds[1] && (
+                    <Button
+                      className="w-full"
+                      size="sm"
+                      disabled={isPending}
+                      onClick={() => {
+                        const [idA, idB] = compareIds;
+                        if (!idA || !idB) return;
+                        startTransition(async () => {
+                          const fn = await loadCompare();
+                          const result = await fn(idA, idB);
+                          setComparison(result);
+                        });
+                      }}
+                    >
+                      Compare Analyses
+                    </Button>
+                  )}
+                  {comparison.length > 0 && <AnalysisComparison comparison={comparison} />}
+                </div>
+              ) : (
+                <AnalysisHistory
+                  history={history}
+                  selectedId={selectedAnalysisId}
+                  onSelect={(analysisId) => {
+                    setSelectedAnalysisId(analysisId);
+                    startTransition(async () => {
+                      const results = await getSkillsForAnalysis(analysisId);
+                      setSkills(results);
+                    });
+                  }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {skills.map((skill, i) => (

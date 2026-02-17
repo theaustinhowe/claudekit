@@ -1,10 +1,16 @@
 "use server";
 
+import { getSetting } from "@/lib/actions/settings";
+import { classifyComment } from "@/lib/comment-classifier";
 import { classifyPRSize } from "@/lib/constants";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { getOctokit } from "@/lib/github";
+import { createServiceLogger } from "@/lib/logger";
+
+const log = createServiceLogger("github");
 
 export async function syncRepo(owner: string, name: string) {
+  log.info({ owner, name }, "Syncing repo");
   const octokit = getOctokit();
   const { data: repo } = await octokit.rest.repos.get({ owner, repo: name });
 
@@ -21,6 +27,7 @@ export async function syncRepo(owner: string, name: string) {
     [id, owner, name, repo.full_name, repo.default_branch || "main"],
   );
 
+  log.info({ repoId: id }, "Repo synced");
   return { id, fullName: repo.full_name, defaultBranch: repo.default_branch || "main" };
 }
 
@@ -28,21 +35,31 @@ export async function syncPRs(repoId: string) {
   const octokit = getOctokit();
   const db = await getDb();
 
-  const repo = await queryOne<{ owner: string; name: string }>(db, "SELECT owner, name FROM repos WHERE id = ?", [
-    repoId,
-  ]);
+  const repo = await queryOne<{ owner: string; name: string; last_synced_at: string | null }>(
+    db,
+    "SELECT owner, name, last_synced_at FROM repos WHERE id = ?",
+    [repoId],
+  );
   if (!repo) throw new Error(`Repo not found: ${repoId}`);
 
-  const { data: pulls } = await octokit.rest.pulls.list({
+  const maxPRsSetting = await getSetting("max_sync_prs");
+  const maxPRs = maxPRsSetting ? Number.parseInt(maxPRsSetting, 10) : 200;
+
+  // Use pagination to fetch all PRs up to maxPRs
+  const pulls = await octokit.paginate(octokit.rest.pulls.list, {
     owner: repo.owner,
     repo: repo.name,
     state: "all",
     sort: "updated",
     direction: "desc",
-    per_page: 50,
+    per_page: 100,
+    ...(repo.last_synced_at ? { since: repo.last_synced_at } : {}),
   });
 
-  for (const pr of pulls) {
+  const limitedPulls = pulls.slice(0, maxPRs);
+  log.info({ repoId, fetched: pulls.length, processing: limitedPulls.length }, "Paginated PR fetch complete");
+
+  for (const pr of limitedPulls) {
     const prAny = pr as Record<string, unknown>;
     const linesAdded = (prAny.additions as number) ?? 0;
     const linesDeleted = (prAny.deletions as number) ?? 0;
@@ -94,7 +111,8 @@ export async function syncPRs(repoId: string) {
   // Update last_synced_at
   await execute(db, "UPDATE repos SET last_synced_at = current_timestamp WHERE id = ?", [repoId]);
 
-  return pulls.length;
+  log.info({ repoId, count: limitedPulls.length }, "PRs synced");
+  return limitedPulls.length;
 }
 
 export async function syncPRReviews(repoId: string, prNumber: number) {
@@ -146,8 +164,8 @@ export async function syncPRComments(repoId: string, prNumber: number) {
 
   const prId = `${repoId}#${prNumber}`;
 
-  // Fetch review comments (inline code comments)
-  const { data: comments } = await octokit.rest.pulls.listReviewComments({
+  // Fetch all review comments using pagination
+  const comments = await octokit.paginate(octokit.rest.pulls.listReviewComments, {
     owner: repo.owner,
     repo: repo.name,
     pull_number: prNumber,
@@ -156,12 +174,15 @@ export async function syncPRComments(repoId: string, prNumber: number) {
 
   for (const comment of comments) {
     const id = `comment-${comment.id}`;
+    const { severity, category } = classifyComment(comment.body);
     await execute(
       db,
-      `INSERT INTO pr_comments (id, pr_id, github_id, reviewer, reviewer_avatar, body, file_path, line_number, created_at, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp)
+      `INSERT INTO pr_comments (id, pr_id, github_id, reviewer, reviewer_avatar, body, file_path, line_number, severity, category, created_at, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp)
        ON CONFLICT (id) DO UPDATE SET
          body = excluded.body,
+         severity = COALESCE(pr_comments.severity, excluded.severity),
+         category = COALESCE(pr_comments.category, excluded.category),
          fetched_at = current_timestamp`,
       [
         id,
@@ -172,11 +193,14 @@ export async function syncPRComments(repoId: string, prNumber: number) {
         comment.body,
         comment.path ?? null,
         comment.line ?? comment.original_line ?? null,
+        severity,
+        category,
         comment.created_at,
       ],
     );
   }
 
+  log.info({ repoId, prNumber, count: comments.length }, "PR comments synced");
   return comments.length;
 }
 
@@ -184,12 +208,14 @@ export async function syncAllCommentsForRepo(repoId: string) {
   const db = await getDb();
   const prs = await queryAll<{ number: number }>(db, "SELECT number FROM prs WHERE repo_id = ?", [repoId]);
 
+  log.info({ repoId, prCount: prs.length }, "Syncing all comments for repo");
   let totalComments = 0;
   for (const pr of prs) {
     const commentCount = await syncPRComments(repoId, pr.number);
     await syncPRReviews(repoId, pr.number);
     totalComments += commentCount;
   }
+  log.info({ repoId, totalComments }, "All comments synced");
   return totalComments;
 }
 
@@ -235,6 +261,7 @@ export async function getConnectedRepos() {
 }
 
 export async function removeRepo(repoId: string) {
+  log.info({ repoId }, "Removing repo and all associated data");
   const db = await getDb();
   // Cascade delete in order
   await execute(

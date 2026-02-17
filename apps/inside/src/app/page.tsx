@@ -23,5 +23,14 @@ export default async function DashboardPage() {
     ]);
   }
 
-  return <DashboardClient prs={prs} stats={stats} hasRepo={!!activeRepo} sparklineData={sparklineData} />;
+  return (
+    <DashboardClient
+      prs={prs}
+      stats={stats}
+      hasRepo={!!activeRepo}
+      sparklineData={sparklineData}
+      lastSyncedAt={activeRepo?.last_synced_at ?? null}
+      repoId={activeRepo?.id ?? null}
+    />
+  );
 }

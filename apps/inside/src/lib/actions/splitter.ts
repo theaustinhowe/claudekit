@@ -4,9 +4,13 @@ import crypto from "node:crypto";
 import { runClaude } from "@devkit/claude-runner";
 import { fetchPRDiff } from "@/lib/actions/github";
 import { execute, getDb, queryOne } from "@/lib/db";
+import { createServiceLogger } from "@/lib/logger";
 import { buildSplitPlanPrompt } from "@/lib/prompts";
 
+const log = createServiceLogger("splitter");
+
 export async function startSplitAnalysis(prId: string) {
+  log.info({ prId }, "Starting split analysis");
   const db = await getDb();
 
   const pr = await queryOne<{
@@ -62,6 +66,7 @@ export async function startSplitAnalysis(prId: string) {
     [planId, prId, totalLines, JSON.stringify(subPRs)],
   );
 
+  log.info({ planId, prId, subPRCount: subPRs.length }, "Split analysis complete");
   return planId;
 }
 
