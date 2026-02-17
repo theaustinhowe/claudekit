@@ -7,7 +7,7 @@ import type { FileTreeNode } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
 function TreeNode({ node, depth = 0 }: { node: FileTreeNode; depth?: number }) {
-  const [expanded, setExpanded] = useState(depth < 2);
+  const [expanded, setExpanded] = useState(depth === 0);
   const isDir = node.type === "directory";
   const hasChildren = isDir && node.children && node.children.length > 0;
 

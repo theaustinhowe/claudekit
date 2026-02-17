@@ -9,6 +9,7 @@ export function useStateSync() {
   const lastJsonRef = useRef<string>("");
   const pendingPayloadRef = useRef<string | null>(null);
   const runIdRef = useRef<string | null>(null);
+  const prevRunIdRef = useRef<string | null>(null);
 
   // Keep runId in a ref so event listeners always see the latest value
   runIdRef.current = state.runId;
@@ -41,6 +42,27 @@ export function useStateSync() {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [flushBeacon]);
+
+  // Flush pending state when switching runs
+  useEffect(() => {
+    if (prevRunIdRef.current && prevRunIdRef.current !== state.runId) {
+      const payload = pendingPayloadRef.current;
+      if (payload) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon(`/api/runs/${prevRunIdRef.current}/state`, blob);
+        pendingPayloadRef.current = null;
+        lastJsonRef.current = "";
+      }
+    }
+    prevRunIdRef.current = state.runId;
+  }, [state.runId]);
+
+  // Flush on unmount
+  useEffect(() => {
+    return () => {
+      flushBeacon();
     };
   }, [flushBeacon]);
 

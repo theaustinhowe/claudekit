@@ -125,7 +125,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
       projectName,
       currentPhase,
       phaseStatuses,
-      messages: [],
+      messages: [
+        {
+          id: `restored-${runId}`,
+          role: "system",
+          content: `Restored run for ${projectName}. Chat history is unavailable for this run.`,
+          timestamp: Date.now(),
+        },
+      ],
     });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to fetch run" }, { status: 500 });

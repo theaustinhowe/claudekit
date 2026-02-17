@@ -59,7 +59,7 @@ export function RightPanel() {
         {phaseLabel ? `Now showing: ${phaseLabel}` : ""}
       </div>
       <ErrorBoundary
-        key={content ?? "empty"}
+        key={`${content ?? "empty"}-${state.panelRefreshKey}`}
         fallbackLabel={content ? `Phase ${content} encountered an error` : undefined}
       >
         {phaseContent}

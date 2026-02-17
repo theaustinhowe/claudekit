@@ -84,8 +84,8 @@ async function savePhaseData(phase: number, data: Record<string, unknown>): Prom
         await execute(
           conn,
           `INSERT INTO project_summary (id, name, framework, directories, auth, database_info)
-          VALUES (1, ?, ?, ?, ?, ?)`,
-          [s.name || "", s.framework || "", dirs, s.auth || "", s.database_info || ""],
+          VALUES (1, ?, ?, ?::VARCHAR[], ?, ?)`,
+          [s.name || "", s.framework || "", JSON.stringify(dirs), s.auth || "", s.database_info || ""],
         );
       }
       // Update routes
@@ -128,8 +128,8 @@ async function savePhaseData(phase: number, data: Record<string, unknown>): Prom
           await execute(
             conn,
             `INSERT INTO user_flows (id, name, steps)
-            VALUES (?, ?, ?)`,
-            [String(flow.id || ""), String(flow.name || ""), steps],
+            VALUES (?, ?, ?::VARCHAR[])`,
+            [String(flow.id || ""), String(flow.name || ""), JSON.stringify(steps)],
           );
         }
       }

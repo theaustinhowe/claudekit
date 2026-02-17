@@ -79,6 +79,63 @@ describe("createEditContentRunner", () => {
     vi.mocked(runClaude).mockResolvedValue({ stdout, stderr: "", exitCode: 0 });
   }
 
+  it("serializes directories with JSON.stringify and VARCHAR[] cast in phase 2", async () => {
+    vi.mocked(queryAll)
+      .mockResolvedValueOnce([{ name: "App", framework: "Next.js" }])
+      .mockResolvedValueOnce([{ path: "/", title: "Home" }]);
+    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+
+    const updatedData = {
+      summary: { name: "App", framework: "Next.js", auth: "None", database_info: "None" },
+      directories: ["src/app", "src/lib"],
+      routes: [],
+    };
+    vi.mocked(runClaude).mockResolvedValue({
+      stdout: JSON.stringify(updatedData),
+      stderr: "",
+      exitCode: 0,
+    });
+
+    const runner = createEditContentRunner(2, "edit dirs");
+    await runner(makeCtx());
+
+    const { execute } = await import("@/lib/db");
+    const summaryInsert = vi
+      .mocked(execute)
+      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO project_summary"));
+    expect(summaryInsert).toBeDefined();
+    expect(summaryInsert![1]).toContain("?::VARCHAR[]");
+    expect(summaryInsert![2]).toContain(JSON.stringify(["src/app", "src/lib"]));
+  });
+
+  it("serializes steps with JSON.stringify and VARCHAR[] cast in phase 3", async () => {
+    vi.mocked(queryAll)
+      .mockResolvedValueOnce([{ path: "/", title: "Home", auth_required: false, description: "Main" }])
+      .mockResolvedValueOnce([{ id: "f1", name: "Flow", steps: ["step1", "step2"] }]);
+    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+
+    const updatedData = {
+      routes: [{ path: "/", title: "Home", auth_required: false, description: "Main" }],
+      flows: [{ id: "f1", name: "Flow", steps: ["step1", "step2", "step3"] }],
+    };
+    vi.mocked(runClaude).mockResolvedValue({
+      stdout: JSON.stringify(updatedData),
+      stderr: "",
+      exitCode: 0,
+    });
+
+    const runner = createEditContentRunner(3, "add step");
+    await runner(makeCtx());
+
+    const { execute } = await import("@/lib/db");
+    const flowInsert = vi
+      .mocked(execute)
+      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO user_flows"));
+    expect(flowInsert).toBeDefined();
+    expect(flowInsert![1]).toContain("?::VARCHAR[]");
+    expect(flowInsert![2]).toContain(JSON.stringify(["step1", "step2", "step3"]));
+  });
+
   it("loads phase 3 data (routes + flows) and edits it", async () => {
     vi.mocked(queryAll)
       .mockResolvedValueOnce([

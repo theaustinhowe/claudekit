@@ -62,6 +62,56 @@ describe("GET /api/runs/[runId]", () => {
     expect(data.projectName).toBe("test");
   });
 
+  it("returns messages from run_state when they exist", async () => {
+    const storedMessages = [
+      { id: "m1", role: "user", content: "Hello", timestamp: 1000 },
+      { id: "m2", role: "ai", content: "Hi!", timestamp: 1001 },
+    ];
+    mockQueryAll
+      .mockResolvedValueOnce([
+        {
+          messages_json: JSON.stringify(storedMessages),
+          current_phase: 2,
+          phase_statuses_json:
+            '{"1":"completed","2":"active","3":"locked","4":"locked","5":"locked","6":"locked","7":"locked"}',
+          project_path: "/projects/my-app",
+          project_name: "my-app",
+        },
+      ] as never)
+      .mockResolvedValueOnce([] as never);
+
+    const response = await GET(new Request("http://localhost"), makeParams("run-1"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.messages).toEqual(storedMessages);
+    expect(data.messages).toHaveLength(2);
+  });
+
+  it("returns system message for legacy fallback (no run_state)", async () => {
+    mockQueryAll
+      .mockResolvedValueOnce([] as never) // no run_state
+      .mockResolvedValueOnce([
+        {
+          id: "s1",
+          session_type: "analyze-project",
+          status: "done",
+          project_path: "/projects/test",
+          created_at: "2024-01-01",
+        },
+      ] as never);
+
+    const response = await GET(new Request("http://localhost"), makeParams("run-1"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.messages).toHaveLength(1);
+    expect(data.messages[0].role).toBe("system");
+    expect(data.messages[0].content).toContain("Restored run");
+    expect(data.messages[0].content).toContain("test");
+    expect(data.messages[0].id).toBe("restored-run-1");
+  });
+
   it("returns 404 when run not found", async () => {
     mockQueryAll.mockResolvedValue([] as never);
 

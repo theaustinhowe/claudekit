@@ -90,6 +90,33 @@ describe("createAnalyzeProjectRunner", () => {
     );
   });
 
+  it("serializes directories as JSON with VARCHAR[] cast", async () => {
+    const analysis = {
+      name: "MyApp",
+      framework: "Next.js",
+      directories: ["src/app", "src/components"],
+      auth: "None",
+      database: "None",
+    };
+    vi.mocked(runClaude).mockResolvedValue({
+      stdout: JSON.stringify(analysis),
+      stderr: "",
+      exitCode: 0,
+    });
+
+    const runner = createAnalyzeProjectRunner("/project");
+    await runner(makeCtx());
+
+    // Verify the INSERT uses ?::VARCHAR[] cast
+    const insertCall = vi
+      .mocked(execute)
+      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO project_summary"));
+    expect(insertCall).toBeDefined();
+    expect(insertCall![1]).toContain("?::VARCHAR[]");
+    // Verify directories are JSON.stringify'd
+    expect(insertCall![2]).toContain(JSON.stringify(["src/app", "src/components"]));
+  });
+
   it("extracts JSON from markdown-wrapped output", async () => {
     vi.mocked(runClaude).mockResolvedValue({
       stdout: '```json\n{"name": "Wrapped"}\n```',

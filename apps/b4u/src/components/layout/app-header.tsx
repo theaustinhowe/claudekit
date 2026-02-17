@@ -16,14 +16,6 @@ export function PhaseStepper() {
 
   return (
     <div className="flex items-center h-12 px-6 gap-3">
-      {/* Project name badge */}
-      {state.projectName && (
-        <div className="hidden md:flex items-center gap-1.5 mr-2 px-3 py-1.5 text-2xs bg-card border border-border rounded-lg text-muted-foreground">
-          <span className="text-muted-foreground/60">project</span>
-          <span className="text-primary font-medium">{state.projectName}</span>
-        </div>
-      )}
-
       {/* Phase stepper */}
       <nav aria-label="Phase progress" className="flex items-center gap-0.5 ml-auto overflow-x-auto scrollbar-none">
         {phases.map((phase, i) => {

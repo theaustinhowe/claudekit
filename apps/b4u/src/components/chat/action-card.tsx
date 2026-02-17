@@ -40,7 +40,12 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
             <div className="text-muted-foreground/70">Framework</div>
             <div className="text-muted-foreground">{card.data.framework}</div>
             <div className="text-muted-foreground/70">Directories</div>
-            <div className="text-muted-foreground">{card.data.directories.join(", ")}</div>
+            <div className="text-muted-foreground">
+              {(Array.isArray(card.data.directories)
+                ? card.data.directories
+                : String(card.data.directories).split(",")
+              ).join(", ")}
+            </div>
             <div className="text-muted-foreground/70">Auth</div>
             <div className="text-muted-foreground">{card.data.auth}</div>
             <div className="text-muted-foreground/70">Database</div>
@@ -59,13 +64,14 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
                 <span>✓</span>
                 <span>Approved</span>
               </div>
-              <Tooltip label="Go back and re-edit this step" position="top">
+              <Tooltip label="Go Back" position="top">
                 <button
                   type="button"
                   onClick={() => controller.handleGoBackToPhase(card.phase)}
-                  className="px-2.5 py-2 text-xs transition-colors text-muted-foreground border border-border rounded-md hover:border-primary hover:text-primary"
+                  className="flex items-center gap-1.5 px-2.5 py-2 text-xs transition-colors text-muted-foreground border border-border rounded-md hover:border-primary hover:text-primary"
                 >
-                  ↩
+                  <Undo2 className="w-3.5 h-3.5" />
+                  Go Back
                 </button>
               </Tooltip>
             </div>

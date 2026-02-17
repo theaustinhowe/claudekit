@@ -27,6 +27,15 @@ function AppShell() {
         const res = await fetch(`/api/runs/${runId}`);
         if (!res.ok) return false;
         const data = await res.json();
+        const messages = (data.messages || []) as ChatMessage[];
+        if (messages.length === 0) {
+          messages.push({
+            id: `restored-${data.runId}`,
+            role: "system",
+            content: `Restored run for ${data.projectName || "project"}. Chat history was not available for this run.`,
+            timestamp: Date.now(),
+          });
+        }
         dispatch({
           type: "RESTORE_RUN",
           runId: data.runId,
@@ -34,7 +43,7 @@ function AppShell() {
           projectName: data.projectName,
           currentPhase: data.currentPhase as Phase,
           phaseStatuses: data.phaseStatuses as Record<Phase, PhaseStatus>,
-          messages: (data.messages || []) as ChatMessage[],
+          messages,
         });
         return true;
       } catch {

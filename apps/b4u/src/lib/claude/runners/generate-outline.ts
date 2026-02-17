@@ -109,8 +109,8 @@ export function createGenerateOutlineRunner(): SessionRunner {
         await execute(
           conn,
           `INSERT INTO user_flows (id, name, steps)
-          VALUES (?, ?, ?)`,
-          [flow.id || "", flow.name || "", steps],
+          VALUES (?, ?, ?::VARCHAR[])`,
+          [flow.id || "", flow.name || "", JSON.stringify(steps)],
         );
       }
     }

@@ -247,6 +247,7 @@ export function usePhaseController() {
             }
 
             const outlineResult = await runSessionPhase("/api/analyze/outline", null, "Generating app outline...");
+            dispatch({ type: "REFRESH_PANEL" });
 
             // Build context summary from result data
             const routeCount = (outlineResult as { routeCount?: number })?.routeCount ?? "several";
@@ -269,6 +270,7 @@ export function usePhaseController() {
             dispatch({ type: "SET_RIGHT_PANEL", phase: 3 });
 
             const dataPlanResult = await runSessionPhase("/api/analyze/data-plan", null, "Generating data plan...");
+            dispatch({ type: "REFRESH_PANEL" });
 
             const entityCount = (dataPlanResult as { entityCount?: number })?.entityCount ?? "several";
             const authCount = (dataPlanResult as { authCount?: number })?.authCount ?? "some";
@@ -294,6 +296,7 @@ export function usePhaseController() {
               null,
               "Generating demo scripts and voiceover text...",
             );
+            dispatch({ type: "REFRESH_PANEL" });
 
             const scriptFlowCount = (scriptsResult as { flowCount?: number })?.flowCount ?? "multiple";
             const totalSteps = (scriptsResult as { totalSteps?: number })?.totalSteps ?? "several";
@@ -556,6 +559,7 @@ export function usePhaseController() {
           { phase, editRequest: request },
           `Applying edits to ${PHASE_LABELS[phase]}...`,
         );
+        dispatch({ type: "REFRESH_PANEL" });
 
         await addAIMessage(
           `I've updated the ${PHASE_LABELS[phase]} based on your feedback. Review the changes on the right. Ready to approve?`,

@@ -62,11 +62,11 @@ export function createAnalyzeProjectRunner(projectPath: string): SessionRunner {
     await execute(
       conn,
       `INSERT INTO project_summary (id, name, framework, directories, auth, database_info, project_path)
-      VALUES (1, ?, ?, ?, ?, ?, ?)`,
+      VALUES (1, ?, ?, ?::VARCHAR[], ?, ?, ?)`,
       [
         analysis.name || "",
         analysis.framework || "",
-        dirs,
+        JSON.stringify(dirs),
         analysis.auth || "None",
         analysis.database || "None",
         projectPath,

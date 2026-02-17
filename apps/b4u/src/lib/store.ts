@@ -17,6 +17,7 @@ interface AppState {
   fileBrowserOpen: boolean;
   historySidebarOpen: boolean;
   runId: string | null;
+  panelRefreshKey: number;
 }
 
 export const initialState: AppState = {
@@ -40,6 +41,7 @@ export const initialState: AppState = {
   fileBrowserOpen: false,
   historySidebarOpen: false,
   runId: null,
+  panelRefreshKey: 0,
 };
 
 type AppAction =
@@ -68,6 +70,7 @@ type AppAction =
       phaseStatuses: Record<Phase, PhaseStatus>;
       messages: ChatMessage[];
     }
+  | { type: "REFRESH_PANEL" }
   | { type: "RESET_STATE" };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -192,6 +195,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         editMode: null,
         activeSessionId: null,
       };
+
+    case "REFRESH_PANEL":
+      return { ...state, panelRefreshKey: state.panelRefreshKey + 1 };
 
     case "RESET_STATE":
       return { ...initialState };
