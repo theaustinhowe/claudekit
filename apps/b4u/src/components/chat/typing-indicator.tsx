@@ -1,10 +1,12 @@
 "use client";
 
+import { Bot } from "lucide-react";
+
 export function TypingIndicator() {
   return (
     <div className="flex gap-2 animate-fade-in">
-      <div className="w-[28px] h-[28px] shrink-0 flex items-center justify-center text-2xs font-bold bg-primary/10 text-primary rounded-full">
-        B4U
+      <div className="w-[28px] h-[28px] shrink-0 flex items-center justify-center bg-primary/10 text-primary rounded-full">
+        <Bot size={16} />
       </div>
       <div className="px-3 py-2 flex items-center gap-1 bg-card border border-border rounded-lg">
         <span

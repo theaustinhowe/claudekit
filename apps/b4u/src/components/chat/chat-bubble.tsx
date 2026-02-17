@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@devkit/ui";
+import { Bot } from "lucide-react";
 import type { ChatMessage } from "@/lib/types";
 import { ActionCardRenderer } from "./action-card";
 
@@ -32,8 +33,8 @@ export function ChatBubble({ message, index }: ChatBubbleProps) {
     >
       {/* AI avatar */}
       {isAI && (
-        <div className="w-[28px] h-[28px] shrink-0 flex items-center justify-center text-2xs font-bold mt-0.5 bg-primary/10 text-primary rounded-full">
-          B4U
+        <div className="w-[28px] h-[28px] shrink-0 flex items-center justify-center mt-0.5 bg-primary/10 text-primary rounded-full">
+          <Bot size={16} />
         </div>
       )}
 

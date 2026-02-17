@@ -21,7 +21,10 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
         <div className="px-4 py-3.5 bg-muted border border-border rounded-lg space-y-2">
           <div className="text-sm font-medium">Select Project Folder</div>
           <div className="text-2xs text-muted-foreground/70">Choose a local web app directory to scan</div>
-          <B4UDirectoryPicker value="" onChange={(path) => controller.handleFolderSelected(path)} />
+          <B4UDirectoryPicker
+            value={process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? ""}
+            onChange={(path) => controller.handleFolderSelected(path)}
+          />
         </div>
       );
 
