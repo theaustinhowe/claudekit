@@ -383,8 +383,9 @@ export function usePhaseController() {
             break;
         }
       } catch (err) {
+        dispatch({ type: "RESTART_FROM_PHASE", phase });
         const msg = err instanceof Error ? err.message : "Something went wrong";
-        await addAIMessage(`An error occurred: ${msg}. You can try approving again or edit the previous step.`, {
+        await addAIMessage(`An error occurred: ${msg}`, {
           type: "approve",
           phase,
           label: "Retry",

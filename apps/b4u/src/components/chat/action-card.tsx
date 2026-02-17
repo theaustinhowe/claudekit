@@ -1,5 +1,6 @@
 "use client";
 
+import { Undo2 } from "lucide-react";
 import { SessionProgressCard } from "@/components/chat/session-progress-card";
 import { B4UDirectoryPicker } from "@/components/ui/directory-picker-wrapper";
 import { Tooltip } from "@/components/ui/tooltip";

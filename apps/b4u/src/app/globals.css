@@ -140,10 +140,6 @@
 
 /* ─── Base Layer ─── */
 @layer base {
-  html {
-    height: 100%;
-  }
-
   * {
     @apply border-border;
     box-sizing: border-box;
@@ -151,17 +147,11 @@
     padding: 0;
   }
 
+  html,
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-geist), system-ui, sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-variant-numeric: tabular-nums;
-    overflow: hidden;
-    height: 100vh;
     height: 100dvh;
+    overflow: hidden;
   }
 
   button,

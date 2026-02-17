@@ -41,7 +41,7 @@ export function SessionProgressCard({ sessionId, label }: SessionProgressCardPro
 
   return (
     <div
-      className="px-4 py-3.5 bg-muted rounded-lg"
+      className="min-w-[320px] px-4 py-3.5 bg-muted rounded-lg"
       style={{
         border: `1px solid ${isError ? "hsl(var(--destructive))" : isDone ? "hsl(var(--success))" : "hsl(var(--border))"}`,
       }}
@@ -65,6 +65,15 @@ export function SessionProgressCard({ sessionId, label }: SessionProgressCardPro
         <div className="flex items-center gap-1 shrink-0">
           {progress > 0 && isActive && (
             <span className="text-2xs font-medium text-primary">{Math.round(progress)}%</span>
+          )}
+          {isError && (
+            <button
+              type="button"
+              onClick={reconnect}
+              className="text-2xs font-medium px-2 py-0.5 rounded-sm transition-colors text-destructive border border-destructive/30 hover:bg-destructive/10"
+            >
+              Retry
+            </button>
           )}
           <button
             type="button"
