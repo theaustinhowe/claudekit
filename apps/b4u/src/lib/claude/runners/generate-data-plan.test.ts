@@ -67,9 +67,11 @@ describe("createGenerateDataPlanRunner", () => {
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: dataPlan });
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM mock_data_entities");
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM auth_overrides");
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM env_items");
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM mock_data_entities WHERE run_id = ?", [
+      undefined,
+    ]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM auth_overrides WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM env_items WHERE run_id = ?", [undefined]);
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),
       expect.stringContaining("INSERT INTO mock_data_entities"),

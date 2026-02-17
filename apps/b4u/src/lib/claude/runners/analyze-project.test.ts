@@ -61,8 +61,10 @@ describe("createAnalyzeProjectRunner", () => {
 
     expect(result).toEqual({ result: analysis });
     // Clears existing data
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM project_summary");
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes");
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM project_summary WHERE run_id = ?", [
+      undefined,
+    ]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes WHERE run_id = ?", [undefined]);
     // Inserts project summary
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),
@@ -112,9 +114,9 @@ describe("createAnalyzeProjectRunner", () => {
       .mocked(execute)
       .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO project_summary"));
     expect(insertCall).toBeDefined();
-    expect(insertCall![1]).toContain("?::VARCHAR[]");
+    expect(insertCall?.[1]).toContain("?::VARCHAR[]");
     // Verify directories are JSON.stringify'd
-    expect(insertCall![2]).toContain(JSON.stringify(["src/app", "src/components"]));
+    expect(insertCall?.[2]).toContain(JSON.stringify(["src/app", "src/components"]));
   });
 
   it("extracts JSON from markdown-wrapped output", async () => {

@@ -69,8 +69,8 @@ describe("createGenerateOutlineRunner", () => {
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: outline });
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes");
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM user_flows");
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM user_flows WHERE run_id = ?", [undefined]);
 
     // Verify steps INSERT uses ?::VARCHAR[] cast and JSON.stringify
     const flowInsertCall = vi

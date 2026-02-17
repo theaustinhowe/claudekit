@@ -78,9 +78,13 @@ describe("createGenerateScriptsRunner", () => {
 
     expect(result).toEqual({ result: { scripts, voiceover } });
     expect(runClaude).toHaveBeenCalledTimes(2);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts");
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM voiceover_scripts");
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM timeline_markers");
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM voiceover_scripts WHERE run_id = ?", [
+      undefined,
+    ]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM timeline_markers WHERE run_id = ?", [
+      undefined,
+    ]);
   });
 
   it("throws when scripts Claude output has no JSON", async () => {
