@@ -28,7 +28,7 @@ pnpm --filter inside db:reset   # Delete ~/.inside/data.duckdb
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GITHUB_TOKEN` | Yes | GitHub PAT with `repo` scope |
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | Yes | GitHub PAT with `repo` scope |
 | `DATABASE_PATH` | No | Override DB path (default: `~/.inside/data.duckdb`) |
 
 ## Architecture

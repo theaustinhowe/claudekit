@@ -1,6 +1,6 @@
 "use client";
 
-import { Clapperboard, LayoutDashboard, Search, Swords } from "lucide-react";
+import { Clapperboard, Eye, LayoutDashboard, Search, Swords } from "lucide-react";
 import { Fragment } from "react";
 import { cn } from "../../utils";
 import type { DevkitAppLink } from "./types";
@@ -10,6 +10,7 @@ const DEFAULT_APPS: DevkitAppLink[] = [
   { label: "Gadget", port: 2100, icon: Search },
   { label: "GoGo", port: 2200, icon: Swords },
   { label: "B4U", port: 2300, icon: Clapperboard },
+  { label: "Inside", port: 2400, icon: Eye },
 ];
 
 export function SharedFooter({ currentPort }: { currentPort: number }) {

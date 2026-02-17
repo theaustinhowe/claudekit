@@ -20,9 +20,8 @@ import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Input } from "@devkit/ui/components/input";
 import { Slider } from "@devkit/ui/components/slider";
 import { Switch } from "@devkit/ui/components/switch";
-import { Loader2, Monitor, Moon, Sun, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeRepo, syncAllCommentsForRepo, syncPRs, syncRepo } from "@/lib/actions/github";
@@ -45,7 +44,6 @@ interface SettingsClientProps {
 export function SettingsClient({ repos: initialRepos, settings }: SettingsClientProps) {
   const router = useRouter();
   const { theme: colorTheme, setTheme: setColorTheme, themes } = useAppTheme({ storageKey: "inside-theme" });
-  const { theme: mode, setTheme: setMode } = useTheme();
   const [repos, setRepos] = useState(initialRepos);
   const [repoInput, setRepoInput] = useState("");
   const [minSize, setMinSize] = useState(Number(settings.min_split_size) || 400);
@@ -135,12 +133,6 @@ export function SettingsClient({ repos: initialRepos, settings }: SettingsClient
       return next;
     });
   };
-
-  const modeOptions = [
-    { value: "light", icon: Sun, label: "Light" },
-    { value: "dark", icon: Moon, label: "Dark" },
-    { value: "system", icon: Monitor, label: "System" },
-  ];
 
   return (
     <div className="p-6 max-w-[800px] mx-auto space-y-6">
@@ -313,27 +305,6 @@ export function SettingsClient({ repos: initialRepos, settings }: SettingsClient
           <CardTitle className="text-base">Appearance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div>
-            {/* biome-ignore lint/a11y/noLabelWithoutControl: label wraps input component */}
-            <label className="text-sm font-medium mb-3 block">Mode</label>
-            <div className="flex gap-2">
-              {modeOptions.map((opt) => (
-                <button
-                  type="button"
-                  key={opt.value}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors hover:border-primary",
-                    mode === opt.value ? "border-primary bg-primary/5" : "border-border",
-                  )}
-                  onClick={() => setMode(opt.value)}
-                >
-                  <opt.icon className="h-4 w-4" />
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div>
             {/* biome-ignore lint/a11y/noLabelWithoutControl: label wraps input component */}
             <label className="text-sm font-medium mb-3 block">Theme</label>

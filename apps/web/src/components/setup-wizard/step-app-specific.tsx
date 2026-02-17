@@ -3,7 +3,7 @@
 import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { BookOpen, ChevronDown, Cpu, Rocket, Video } from "lucide-react";
+import { BookOpen, ChevronDown, Cpu, GitPullRequest, Rocket, Video } from "lucide-react";
 import type { EnvVariable } from "@/lib/env-parser";
 import { EnvField } from "./env-field";
 
@@ -12,6 +12,7 @@ const APP_ICONS: Record<string, React.ReactNode> = {
   gadget: <Rocket className="h-4 w-4" />,
   "gogo-web": <Cpu className="h-4 w-4" />,
   "gogo-orchestrator": <BookOpen className="h-4 w-4" />,
+  inside: <GitPullRequest className="h-4 w-4" />,
 };
 
 interface StepAppSpecificProps {

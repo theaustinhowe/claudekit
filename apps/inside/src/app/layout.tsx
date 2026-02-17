@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeFOUCScript } from "@devkit/hooks";
 import { Toaster } from "@devkit/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
-import { AppLayout } from "@/components/layout/app-layout";
+import { LayoutShell } from "@/components/layout/layout-shell";
 import { APP_NAME } from "@/lib/constants";
 
 const inter = Inter({
@@ -37,7 +37,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <ThemeFOUCScript />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AppLayout>{children}</AppLayout>
+          <LayoutShell>{children}</LayoutShell>
           <Toaster />
         </ThemeProvider>
       </body>

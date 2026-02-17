@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@devkit/claude-runner": "workspace:*",
+    "@devkit/claude-usage": "workspace:*",
     "@devkit/duckdb": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "@devkit/logger": "workspace:*",
