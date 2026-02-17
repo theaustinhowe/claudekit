@@ -77,7 +77,7 @@ describe("createGenerateOutlineRunner", () => {
       .mocked(execute)
       .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO user_flows"));
     expect(flowInsertCall).toBeDefined();
-    expect(flowInsertCall![1]).toContain("?::VARCHAR[]");
-    expect(flowInsertCall![2]).toContain(JSON.stringify(["step1"]));
+    expect(flowInsertCall?.[1]).toContain("?::VARCHAR[]");
+    expect(flowInsertCall?.[2]).toContain(JSON.stringify(["step1"]));
   });
 });

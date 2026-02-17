@@ -61,8 +61,10 @@ describe("createFinalMergeRunner", () => {
     expect(concatenateVideos).toHaveBeenCalled();
     expect(mergeVideoAudio).not.toHaveBeenCalled(); // no audio
     expect(generateChapters).toHaveBeenCalled();
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM chapter_markers");
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM final_videos");
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM chapter_markers WHERE run_id = ?", [
+      undefined,
+    ]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM final_videos WHERE run_id = ?", [undefined]);
     expect(result.result).toHaveProperty("videoPath");
     expect(result.result).toHaveProperty("chapters");
   });

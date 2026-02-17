@@ -396,7 +396,7 @@ export function usePhaseController() {
 
       busyRef.current = false;
     },
-    [addAIMessage, addMessage, dispatch, runSessionPhase, state.projectPath],
+    [addAIMessage, addMessage, dispatch, runSessionPhase],
   );
 
   // -----------------------------------------------------------------------

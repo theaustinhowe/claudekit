@@ -14,9 +14,11 @@ const MAX_LOG_LINES = 500;
 
 // Cache on globalThis so the Map survives Next.js HMR reloads — prevents orphaned processes
 const GLOBAL_KEY = "__gadget_dev_servers__" as const;
-const servers: Map<string, DevServer> =
-  ((globalThis as Record<string, unknown>)[GLOBAL_KEY] as Map<string, DevServer>) ??
-  ((globalThis as Record<string, unknown>)[GLOBAL_KEY] = new Map<string, DevServer>());
+const globalRecord = globalThis as Record<string, unknown>;
+if (!globalRecord[GLOBAL_KEY]) {
+  globalRecord[GLOBAL_KEY] = new Map<string, DevServer>();
+}
+const servers = globalRecord[GLOBAL_KEY] as Map<string, DevServer>;
 
 function pushLog(server: DevServer, line: string) {
   server.logs.push(line);

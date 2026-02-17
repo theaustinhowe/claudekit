@@ -11,13 +11,7 @@ interface AppShellProps {
   className?: string;
 }
 
-export function AppShell({
-  sidebar,
-  header,
-  footer,
-  children,
-  className,
-}: AppShellProps) {
+export function AppShell({ sidebar, header, footer, children, className }: AppShellProps) {
   return (
     <>
       <div className={cn("flex min-h-screen", className)}>

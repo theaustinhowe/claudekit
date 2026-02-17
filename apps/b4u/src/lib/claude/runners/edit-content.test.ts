@@ -104,8 +104,8 @@ describe("createEditContentRunner", () => {
       .mocked(execute)
       .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO project_summary"));
     expect(summaryInsert).toBeDefined();
-    expect(summaryInsert![1]).toContain("?::VARCHAR[]");
-    expect(summaryInsert![2]).toContain(JSON.stringify(["src/app", "src/lib"]));
+    expect(summaryInsert?.[1]).toContain("?::VARCHAR[]");
+    expect(summaryInsert?.[2]).toContain(JSON.stringify(["src/app", "src/lib"]));
   });
 
   it("serializes steps with JSON.stringify and VARCHAR[] cast in phase 3", async () => {
@@ -132,8 +132,8 @@ describe("createEditContentRunner", () => {
       .mocked(execute)
       .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO user_flows"));
     expect(flowInsert).toBeDefined();
-    expect(flowInsert![1]).toContain("?::VARCHAR[]");
-    expect(flowInsert![2]).toContain(JSON.stringify(["step1", "step2", "step3"]));
+    expect(flowInsert?.[1]).toContain("?::VARCHAR[]");
+    expect(flowInsert?.[2]).toContain(JSON.stringify(["step1", "step2", "step3"]));
   });
 
   it("loads phase 3 data (routes + flows) and edits it", async () => {

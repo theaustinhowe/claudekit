@@ -95,7 +95,7 @@ describe("userFlowsArraySchema", () => {
 
 describe("togglePatchSchema", () => {
   it("accepts valid toggle", () => {
-    const result = togglePatchSchema.safeParse({ id: "seed-db", enabled: true });
+    const result = togglePatchSchema.safeParse({ id: "seed-db", enabled: true, runId: "run-1" });
     expect(result.success).toBe(true);
   });
 

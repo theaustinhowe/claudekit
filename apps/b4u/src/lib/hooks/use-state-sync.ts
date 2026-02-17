@@ -91,6 +91,7 @@ export function useStateSync() {
       .catch(console.error);
   }, [
     state.runId,
+    state.messages,
     state.messages.length,
     state.currentPhase,
     state.phaseStatuses,

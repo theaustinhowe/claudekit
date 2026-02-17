@@ -41,7 +41,7 @@ describe("createVoiceoverAudioRunner", () => {
     expect(generateFlowVoiceover).toHaveBeenCalledWith(
       expect.objectContaining({ flowId: "f1", paragraphs: ["Hello", "World"], voiceId: "voice-1" }),
     );
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM audio_files");
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM audio_files WHERE run_id = ?", [undefined]);
     expect(result).toEqual({
       result: {
         audioFiles: [
