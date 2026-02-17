@@ -91,7 +91,7 @@ export function SettingsClient({
 
   const addRoot = useCallback(async () => {
     try {
-      const created = await createScanRoot("~");
+      const created = await createScanRoot(process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects");
       setRoots((prev) => [...prev, created]);
     } catch {
       toast.error("Failed to add scan root");
@@ -233,7 +233,7 @@ export function SettingsClient({
                         <DirectoryPicker
                           value={root.path}
                           onChange={(val) => updateRoot(root.id, val)}
-                          placeholder="~/path/to/projects"
+                          placeholder={process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects"}
                           className="flex-1"
                         />
                         <TooltipProvider>
