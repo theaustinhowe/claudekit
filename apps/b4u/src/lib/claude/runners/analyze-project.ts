@@ -3,7 +3,7 @@ import type { SessionRunner } from "@devkit/session";
 import { buildAnalyzeProjectPrompt } from "@/lib/claude/prompts/analyze-project";
 import { execute, getDb } from "@/lib/db";
 
-export function createAnalyzeProjectRunner(projectPath: string): SessionRunner {
+export function createAnalyzeProjectRunner(projectPath: string, runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Analyzing project structure...", progress: 10 });
 
@@ -54,16 +54,17 @@ export function createAnalyzeProjectRunner(projectPath: string): SessionRunner {
     const conn = await getDb();
 
     // Clear existing data and save new
-    await execute(conn, "DELETE FROM project_summary");
-    await execute(conn, "DELETE FROM routes");
+    await execute(conn, "DELETE FROM project_summary WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
 
     // Save project summary
     const dirs = analysis.directories || [];
     await execute(
       conn,
-      `INSERT INTO project_summary (id, name, framework, directories, auth, database_info, project_path)
-      VALUES (1, ?, ?, ?::VARCHAR[], ?, ?, ?)`,
+      `INSERT INTO project_summary (id, run_id, name, framework, directories, auth, database_info, project_path)
+      VALUES (1, ?, ?, ?, ?::VARCHAR[], ?, ?, ?)`,
       [
+        runId,
         analysis.name || "",
         analysis.framework || "",
         JSON.stringify(dirs),
@@ -79,18 +80,18 @@ export function createAnalyzeProjectRunner(projectPath: string): SessionRunner {
         const r = analysis.routes[i];
         await execute(
           conn,
-          `INSERT INTO routes (id, path, title, auth_required, description)
-          VALUES (?, ?, ?, ?, ?)`,
-          [i + 1, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
+          `INSERT INTO routes (id, run_id, path, title, auth_required, description)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+          [i + 1, runId, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
         );
       }
     }
 
     // Save file tree if Claude returned one
     if (analysis.fileTree || analysis.file_tree) {
-      await execute(conn, "DELETE FROM file_tree");
+      await execute(conn, "DELETE FROM file_tree WHERE run_id = ?", [runId]);
       const treeJson = JSON.stringify(analysis.fileTree || analysis.file_tree);
-      await execute(conn, "INSERT INTO file_tree (id, tree_json) VALUES (1, ?)", [treeJson]);
+      await execute(conn, "INSERT INTO file_tree (id, run_id, tree_json) VALUES (1, ?, ?)", [runId, treeJson]);
     }
 
     onProgress({ type: "progress", message: "Analysis complete", progress: 100 });

@@ -5,7 +5,7 @@ import { execute, getDb, queryAll } from "@/lib/db";
 import { generateChapters } from "@/lib/video/chapter-generator";
 import { concatenateAudioFiles, concatenateVideos, mergeVideoAudio } from "@/lib/video/ffmpeg-merger";
 
-export function createFinalMergeRunner(): SessionRunner {
+export function createFinalMergeRunner(runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading recordings and audio...", progress: 5 });
 
@@ -17,18 +17,31 @@ export function createFinalMergeRunner(): SessionRunner {
       flow_id: string;
       video_path: string;
       duration_seconds: number;
-    }>(conn, "SELECT * FROM recordings WHERE status = 'done' ORDER BY flow_id");
+    }>(
+      conn,
+      runId
+        ? "SELECT * FROM recordings WHERE status = 'done' AND run_id = ? ORDER BY flow_id"
+        : "SELECT * FROM recordings WHERE status = 'done' ORDER BY flow_id",
+      runId ? [runId] : [],
+    );
 
     const audioFiles = await queryAll<{
       id: string;
       flow_id: string;
       file_path: string;
       duration_seconds: number;
-    }>(conn, "SELECT * FROM audio_files ORDER BY flow_id");
+    }>(
+      conn,
+      runId
+        ? "SELECT * FROM audio_files WHERE run_id = ? ORDER BY flow_id"
+        : "SELECT * FROM audio_files ORDER BY flow_id",
+      runId ? [runId] : [],
+    );
 
     const flowScripts = await queryAll<{ flow_id: string; flow_name: string }>(
       conn,
-      "SELECT * FROM flow_scripts ORDER BY id",
+      runId ? "SELECT * FROM flow_scripts WHERE run_id = ? ORDER BY id" : "SELECT * FROM flow_scripts ORDER BY id",
+      runId ? [runId] : [],
     );
 
     if (recordings.length === 0) throw new Error("No recordings found");
@@ -39,7 +52,10 @@ export function createFinalMergeRunner(): SessionRunner {
     // Get project name
     const projectRows = await queryAll<{ name: string; project_path: string }>(
       conn,
-      "SELECT name, project_path FROM project_summary LIMIT 1",
+      runId
+        ? "SELECT name, project_path FROM project_summary WHERE run_id = ? LIMIT 1"
+        : "SELECT name, project_path FROM project_summary LIMIT 1",
+      runId ? [runId] : [],
     );
     const projectName = projectRows[0]?.name || "project";
     const safeName = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -98,27 +114,27 @@ export function createFinalMergeRunner(): SessionRunner {
     const chapters = generateChapters(recordingInfo);
 
     // Save chapters to DB
-    await execute(conn, "DELETE FROM chapter_markers");
+    await execute(conn, "DELETE FROM chapter_markers WHERE run_id = ?", [runId]);
     for (let i = 0; i < chapters.length; i++) {
       await execute(
         conn,
-        `INSERT INTO chapter_markers (id, flow_name, start_time)
-        VALUES (?, ?, ?)`,
-        [i + 1, chapters[i].flowName, chapters[i].startTime],
+        `INSERT INTO chapter_markers (id, run_id, flow_name, start_time)
+        VALUES (?, ?, ?, ?)`,
+        [i + 1, runId, chapters[i].flowName, chapters[i].startTime],
       );
     }
 
     // Save final video to DB
-    await execute(conn, "DELETE FROM final_videos");
+    await execute(conn, "DELETE FROM final_videos WHERE run_id = ?", [runId]);
     const { statSync } = await import("node:fs");
     const stats = statSync(finalPath);
     const totalDuration = recordingInfo.reduce((sum, r) => sum + r.durationSeconds, 0);
 
     await execute(
       conn,
-      `INSERT INTO final_videos (id, project_path, file_path, duration_seconds, format, size_bytes)
-      VALUES (?, ?, ?, ?, ?, ?)`,
-      ["final-1", projectRows[0]?.project_path || "", finalPath, totalDuration, "mp4", stats.size],
+      `INSERT INTO final_videos (id, run_id, project_path, file_path, duration_seconds, format, size_bytes)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ["final-1", runId, projectRows[0]?.project_path || "", finalPath, totalDuration, "mp4", stats.size],
     );
 
     onProgress({ type: "progress", message: "Video merge complete!", progress: 100 });

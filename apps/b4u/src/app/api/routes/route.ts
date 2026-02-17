@@ -2,7 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { execute, getDb, queryAll } from "@/lib/db";
 import { parseBody, routesArraySchema } from "@/lib/validations";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const runId = request.nextUrl.searchParams.get("runId");
+  if (!runId) return NextResponse.json({ error: "runId is required" }, { status: 400 });
+
   try {
     const conn = await getDb();
     const rows = await queryAll<{
@@ -11,7 +14,7 @@ export async function GET() {
       title: string;
       auth_required: boolean;
       description: string;
-    }>(conn, "SELECT id, path, title, auth_required, description FROM routes ORDER BY id");
+    }>(conn, "SELECT id, path, title, auth_required, description FROM routes WHERE run_id = ? ORDER BY id", [runId]);
 
     const routes = rows.map((r) => ({
       path: r.path,
@@ -28,6 +31,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const runId = request.nextUrl.searchParams.get("runId");
+  if (!runId) return NextResponse.json({ error: "runId is required" }, { status: 400 });
+
   const parsed = await parseBody(request, routesArraySchema);
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: parsed.status });
@@ -36,17 +42,15 @@ export async function PUT(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "DELETE FROM routes");
+    await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
 
     for (let i = 0; i < routes.length; i++) {
       const r = routes[i];
-      await execute(conn, "INSERT INTO routes (id, path, title, auth_required, description) VALUES (?, ?, ?, ?, ?)", [
-        i + 1,
-        r.path,
-        r.title,
-        r.authRequired,
-        r.description,
-      ]);
+      await execute(
+        conn,
+        "INSERT INTO routes (id, run_id, path, title, auth_required, description) VALUES (?, ?, ?, ?, ?, ?)",
+        [i + 1, runId, r.path, r.title, r.authRequired, r.description],
+      );
     }
 
     return NextResponse.json({ success: true });

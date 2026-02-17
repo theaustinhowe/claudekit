@@ -66,6 +66,38 @@ export function useStateSync() {
     };
   }, [flushBeacon]);
 
+  // Eager save when runId is first set (ensures run_state row exists immediately)
+  useEffect(() => {
+    if (!state.runId || state.messages.length === 0) return;
+    if (prevRunIdRef.current === state.runId) return;
+
+    const payload = JSON.stringify({
+      messages: state.messages,
+      currentPhase: state.currentPhase,
+      phaseStatuses: state.phaseStatuses,
+      projectPath: state.projectPath,
+      projectName: state.projectName,
+    });
+
+    fetch(`/api/runs/${state.runId}/state`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+    })
+      .then(() => {
+        lastJsonRef.current = payload;
+        pendingPayloadRef.current = null;
+      })
+      .catch(console.error);
+  }, [
+    state.runId,
+    state.messages.length,
+    state.currentPhase,
+    state.phaseStatuses,
+    state.projectPath,
+    state.projectName,
+  ]);
+
   // Debounced save on state changes
   useEffect(() => {
     if (!state.runId || state.messages.length === 0) return;

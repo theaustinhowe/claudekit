@@ -132,7 +132,7 @@ describe("DELETE /api/runs/[runId]", () => {
 
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
-    expect(mockExecute).toHaveBeenCalledTimes(3); // logs, sessions, run_state
+    expect(mockExecute).toHaveBeenCalledTimes(18); // 15 content tables + logs, sessions, run_state
   });
 
   it("returns 500 on error", async () => {

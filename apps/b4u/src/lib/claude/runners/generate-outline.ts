@@ -3,7 +3,7 @@ import type { SessionRunner } from "@devkit/session";
 import { buildGenerateOutlinePrompt } from "@/lib/claude/prompts/generate-outline";
 import { execute, getDb, queryAll } from "@/lib/db";
 
-export function createGenerateOutlineRunner(): SessionRunner {
+export function createGenerateOutlineRunner(runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading project context...", progress: 10 });
 
@@ -16,7 +16,13 @@ export function createGenerateOutlineRunner(): SessionRunner {
       auth: string;
       database_info: string;
       project_path: string;
-    }>(conn, "SELECT name, framework, auth, database_info, project_path FROM project_summary LIMIT 1");
+    }>(
+      conn,
+      runId
+        ? "SELECT name, framework, auth, database_info, project_path FROM project_summary WHERE run_id = ? LIMIT 1"
+        : "SELECT name, framework, auth, database_info, project_path FROM project_summary LIMIT 1",
+      runId ? [runId] : [],
+    );
 
     if (summaryRows.length === 0) {
       throw new Error("No project summary found. Run analyze-project first.");
@@ -29,7 +35,13 @@ export function createGenerateOutlineRunner(): SessionRunner {
       title: string;
       auth_required: boolean;
       description: string;
-    }>(conn, "SELECT path, title, auth_required, description FROM routes ORDER BY id");
+    }>(
+      conn,
+      runId
+        ? "SELECT path, title, auth_required, description FROM routes WHERE run_id = ? ORDER BY id"
+        : "SELECT path, title, auth_required, description FROM routes ORDER BY id",
+      runId ? [runId] : [],
+    );
 
     const projectContext = {
       name: summary.name,
@@ -86,8 +98,8 @@ export function createGenerateOutlineRunner(): SessionRunner {
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
     // Clear existing data
-    await execute(conn, "DELETE FROM routes");
-    await execute(conn, "DELETE FROM user_flows");
+    await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM user_flows WHERE run_id = ?", [runId]);
 
     // Save updated routes
     if (outline.routes && Array.isArray(outline.routes)) {
@@ -95,9 +107,9 @@ export function createGenerateOutlineRunner(): SessionRunner {
         const r = outline.routes[i];
         await execute(
           conn,
-          `INSERT INTO routes (id, path, title, auth_required, description)
-          VALUES (?, ?, ?, ?, ?)`,
-          [i + 1, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
+          `INSERT INTO routes (id, run_id, path, title, auth_required, description)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+          [i + 1, runId, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
         );
       }
     }
@@ -108,9 +120,9 @@ export function createGenerateOutlineRunner(): SessionRunner {
         const steps = flow.steps || [];
         await execute(
           conn,
-          `INSERT INTO user_flows (id, name, steps)
-          VALUES (?, ?, ?::VARCHAR[])`,
-          [flow.id || "", flow.name || "", JSON.stringify(steps)],
+          `INSERT INTO user_flows (id, run_id, name, steps)
+          VALUES (?, ?, ?, ?::VARCHAR[])`,
+          [flow.id || "", runId, flow.name || "", JSON.stringify(steps)],
         );
       }
     }

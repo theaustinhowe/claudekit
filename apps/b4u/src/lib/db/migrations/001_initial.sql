@@ -1,9 +1,13 @@
 -- B4U Initial Schema
 -- All tables and sequences
 
--- Project summary (singleton)
+-- Sequences (defined before tables that use them)
+CREATE SEQUENCE IF NOT EXISTS session_logs_seq START 1;
+
+-- Project summary (per-run)
 CREATE TABLE IF NOT EXISTS project_summary (
-  id INTEGER PRIMARY KEY DEFAULT 1,
+  id INTEGER DEFAULT 1,
+  run_id VARCHAR,
   name VARCHAR NOT NULL,
   framework VARCHAR NOT NULL,
   directories VARCHAR[] NOT NULL,
@@ -12,60 +16,68 @@ CREATE TABLE IF NOT EXISTS project_summary (
   project_path VARCHAR
 );
 
--- File tree stored as JSON (recursive structure)
+-- File tree stored as JSON (per-run)
 CREATE TABLE IF NOT EXISTS file_tree (
-  id INTEGER PRIMARY KEY DEFAULT 1,
+  id INTEGER DEFAULT 1,
+  run_id VARCHAR,
   tree_json JSON NOT NULL
 );
 
--- Routes
+-- Routes (per-run, id is sequential within a run)
 CREATE TABLE IF NOT EXISTS routes (
-  id INTEGER PRIMARY KEY,
+  id INTEGER NOT NULL,
+  run_id VARCHAR,
   path VARCHAR NOT NULL,
   title VARCHAR NOT NULL,
   auth_required BOOLEAN NOT NULL,
   description VARCHAR NOT NULL
 );
 
--- User flows
+-- User flows (per-run)
 CREATE TABLE IF NOT EXISTS user_flows (
-  id VARCHAR PRIMARY KEY,
+  id VARCHAR NOT NULL,
+  run_id VARCHAR,
   name VARCHAR NOT NULL,
   steps VARCHAR[] NOT NULL
 );
 
--- Mock data entities (metadata about what to seed)
+-- Mock data entities (per-run)
 CREATE TABLE IF NOT EXISTS mock_data_entities (
-  id INTEGER PRIMARY KEY,
+  id INTEGER NOT NULL,
+  run_id VARCHAR,
   name VARCHAR NOT NULL,
   count INTEGER NOT NULL,
   note VARCHAR NOT NULL
 );
 
--- Auth overrides
+-- Auth overrides (per-run)
 CREATE TABLE IF NOT EXISTS auth_overrides (
-  id VARCHAR PRIMARY KEY,
+  id VARCHAR NOT NULL,
+  run_id VARCHAR,
   label VARCHAR NOT NULL,
   enabled BOOLEAN NOT NULL
 );
 
--- Environment items
+-- Environment items (per-run)
 CREATE TABLE IF NOT EXISTS env_items (
-  id VARCHAR PRIMARY KEY,
+  id VARCHAR NOT NULL,
+  run_id VARCHAR,
   label VARCHAR NOT NULL,
   enabled BOOLEAN NOT NULL
 );
 
--- Flow scripts
+-- Flow scripts (per-run)
 CREATE TABLE IF NOT EXISTS flow_scripts (
-  id INTEGER PRIMARY KEY,
+  id INTEGER NOT NULL,
+  run_id VARCHAR,
   flow_id VARCHAR NOT NULL,
   flow_name VARCHAR NOT NULL
 );
 
--- Script steps
+-- Script steps (per-run)
 CREATE TABLE IF NOT EXISTS script_steps (
-  id VARCHAR PRIMARY KEY,
+  id VARCHAR NOT NULL,
+  run_id VARCHAR,
   flow_id VARCHAR NOT NULL,
   step_number INTEGER NOT NULL,
   url VARCHAR NOT NULL,
@@ -74,33 +86,35 @@ CREATE TABLE IF NOT EXISTS script_steps (
   duration VARCHAR NOT NULL
 );
 
--- Voiceover scripts
+-- Voiceover scripts (per-run)
 CREATE TABLE IF NOT EXISTS voiceover_scripts (
   flow_id VARCHAR NOT NULL,
+  run_id VARCHAR,
   paragraph_index INTEGER NOT NULL,
-  text VARCHAR NOT NULL,
-  PRIMARY KEY (flow_id, paragraph_index)
+  text VARCHAR NOT NULL
 );
 
--- Voice options
+-- Voice options (reference/config data, NOT per-run)
 CREATE TABLE IF NOT EXISTS voice_options (
   id VARCHAR PRIMARY KEY,
   name VARCHAR NOT NULL,
   style VARCHAR NOT NULL
 );
 
--- Timeline markers
+-- Timeline markers (per-run)
 CREATE TABLE IF NOT EXISTS timeline_markers (
-  id INTEGER PRIMARY KEY,
+  id INTEGER NOT NULL,
+  run_id VARCHAR,
   flow_id VARCHAR NOT NULL,
   timestamp VARCHAR NOT NULL,
   label VARCHAR NOT NULL,
   paragraph_index INTEGER NOT NULL
 );
 
--- Chapter markers
+-- Chapter markers (per-run)
 CREATE TABLE IF NOT EXISTS chapter_markers (
-  id INTEGER PRIMARY KEY,
+  id INTEGER NOT NULL,
+  run_id VARCHAR,
   flow_name VARCHAR NOT NULL,
   start_time VARCHAR NOT NULL
 );
@@ -115,9 +129,6 @@ CREATE TABLE IF NOT EXISTS run_state (
   project_name VARCHAR,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Sequence for session_logs auto-increment
-CREATE SEQUENCE IF NOT EXISTS session_logs_seq START 1;
 
 -- Sessions (Claude CLI runs)
 CREATE TABLE IF NOT EXISTS sessions (
@@ -146,9 +157,10 @@ CREATE TABLE IF NOT EXISTS session_logs (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Recordings (video captures per flow)
+-- Recordings (per-run)
 CREATE TABLE IF NOT EXISTS recordings (
-  id VARCHAR PRIMARY KEY,
+  id VARCHAR NOT NULL,
+  run_id VARCHAR,
   flow_id VARCHAR NOT NULL,
   flow_name VARCHAR NOT NULL,
   file_path VARCHAR NOT NULL,
@@ -159,9 +171,10 @@ CREATE TABLE IF NOT EXISTS recordings (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Audio files (generated voiceovers)
+-- Audio files (per-run)
 CREATE TABLE IF NOT EXISTS audio_files (
-  id VARCHAR PRIMARY KEY,
+  id VARCHAR NOT NULL,
+  run_id VARCHAR,
   flow_id VARCHAR NOT NULL,
   file_path VARCHAR NOT NULL,
   duration_seconds DECIMAL,
@@ -171,9 +184,10 @@ CREATE TABLE IF NOT EXISTS audio_files (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Final merged videos
+-- Final merged videos (per-run)
 CREATE TABLE IF NOT EXISTS final_videos (
-  id VARCHAR PRIMARY KEY,
+  id VARCHAR NOT NULL,
+  run_id VARCHAR,
   file_path VARCHAR NOT NULL,
   duration_seconds DECIMAL,
   width INTEGER,

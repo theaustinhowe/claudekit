@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase1TreeSkeleton } from "@/components/ui/phase-skeletons";
+import { useApp } from "@/lib/store";
 import type { FileTreeNode } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
@@ -50,7 +51,8 @@ function TreeNode({ node, depth = 0 }: { node: FileTreeNode; depth?: number }) {
 }
 
 export function Phase1Tree() {
-  const { data: fileTree, loading, error, refetch } = useApi<FileTreeNode>("/api/file-tree");
+  const { state } = useApp();
+  const { data: fileTree, loading, error, refetch } = useApi<FileTreeNode>(`/api/file-tree?runId=${state.runId}`);
 
   if (loading) return <Phase1TreeSkeleton />;
   if (error || !fileTree) return <ErrorState message={error || "No file tree data"} onRetry={refetch} />;

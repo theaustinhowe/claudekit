@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     runId: runId || null,
   });
 
-  const runner = createAnalyzeProjectRunner(path);
+  const runner = createAnalyzeProjectRunner(path, runId || undefined);
   await startSession(sessionId, runner);
 
   return NextResponse.json({ sessionId });

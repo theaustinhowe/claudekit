@@ -1,11 +1,12 @@
 import type { SessionRunner } from "@devkit/session";
 import { runRecordingPipeline } from "@/lib/recording/recording-orchestrator";
 
-export function createRecordingRunner(projectPath: string, flowIds?: string[]): SessionRunner {
+export function createRecordingRunner(projectPath: string, flowIds?: string[], runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     const result = await runRecordingPipeline({
       projectPath,
       flowIds,
+      runId,
       onProgress,
       signal,
     });

@@ -4,24 +4,31 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase6VoiceoverSkeleton } from "@/components/ui/phase-skeletons";
 import { Tooltip } from "@/components/ui/tooltip";
+import { useApp } from "@/lib/store";
 import type { FlowScript, TimelineMarker, VoiceOption } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
 export function Phase6Voiceover() {
-  const { data: flowScripts, loading: l1, error: e1, refetch: rf1 } = useApi<FlowScript[]>("/api/flow-scripts");
+  const { state } = useApp();
+  const {
+    data: flowScripts,
+    loading: l1,
+    error: e1,
+    refetch: rf1,
+  } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`);
   const {
     data: voiceoverScripts,
     loading: l2,
     error: e2,
     refetch: rf2,
-  } = useApi<Record<string, string[]>>("/api/voiceover-scripts");
+  } = useApi<Record<string, string[]>>(`/api/voiceover-scripts?runId=${state.runId}`);
   const { data: voiceOptions, loading: l3, error: e3, refetch: rf3 } = useApi<VoiceOption[]>("/api/voice-options");
   const {
     data: timelineMarkers,
     loading: l4,
     error: e4,
     refetch: rf4,
-  } = useApi<Record<string, TimelineMarker[]>>("/api/timeline-markers");
+  } = useApi<Record<string, TimelineMarker[]>>(`/api/timeline-markers?runId=${state.runId}`);
 
   const [activeFlow, setActiveFlow] = useState<string | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<string | null>(null);
@@ -75,27 +82,30 @@ export function Phase6Voiceover() {
     };
   }, []);
 
-  const saveVoiceovers = useCallback(async (scripts: Record<string, string[]>) => {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await fetch("/api/voiceover-scripts", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(scripts),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to save voiceover scripts");
+  const saveVoiceovers = useCallback(
+    async (scripts: Record<string, string[]>) => {
+      setSaving(true);
+      setSaveError(null);
+      try {
+        const res = await fetch(`/api/voiceover-scripts?runId=${state.runId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(scripts),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || "Failed to save voiceover scripts");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to save";
+        setSaveError(msg);
+        console.error("Failed to save voiceover scripts:", err);
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to save";
-      setSaveError(msg);
-      console.error("Failed to save voiceover scripts:", err);
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+    },
+    [state.runId],
+  );
 
   const recalculateMarkers = useCallback((_flowId: string, paragraphs: string[], currentMarkers: TimelineMarker[]) => {
     if (paragraphs.length === 0) return currentMarkers;
@@ -124,20 +134,23 @@ export function Phase6Voiceover() {
     });
   }, []);
 
-  const debouncedSaveMarkers = useCallback((flowId: string, markers: TimelineMarker[]) => {
-    if (markerSaveTimeoutRef.current) clearTimeout(markerSaveTimeoutRef.current);
-    markerSaveTimeoutRef.current = setTimeout(async () => {
-      try {
-        await fetch("/api/timeline-markers", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ [flowId]: markers }),
-        });
-      } catch {
-        // Best effort
-      }
-    }, 1200);
-  }, []);
+  const debouncedSaveMarkers = useCallback(
+    (flowId: string, markers: TimelineMarker[]) => {
+      if (markerSaveTimeoutRef.current) clearTimeout(markerSaveTimeoutRef.current);
+      markerSaveTimeoutRef.current = setTimeout(async () => {
+        try {
+          await fetch(`/api/timeline-markers?runId=${state.runId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ [flowId]: markers }),
+          });
+        } catch {
+          // Best effort
+        }
+      }, 1200);
+    },
+    [state.runId],
+  );
 
   const debouncedSave = useCallback(
     (scripts: Record<string, string[]>) => {

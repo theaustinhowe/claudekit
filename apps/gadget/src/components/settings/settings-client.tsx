@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devk
 import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
-import { FolderOpen, Info, Monitor, Moon, Plus, RotateCcw, Sparkles, Sun, X } from "lucide-react";
+import { FolderOpen, Info, Loader2, Monitor, Moon, Plus, RotateCcw, Sparkles, Square, Sun, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
@@ -27,6 +27,62 @@ interface SettingsClientProps {
   serverKeys: ServerKeyGroup[];
   cleanupFiles: string[];
   initialTab?: string;
+}
+
+function DevServerCleanup() {
+  const [running, setRunning] = useState<number | null>(null);
+  const [killing, setKilling] = useState(false);
+
+  const checkServers = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dev-servers/cleanup");
+      if (res.ok) {
+        const data = await res.json();
+        setRunning(data.servers.length);
+      }
+    } catch {
+      setRunning(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkServers();
+  }, [checkServers]);
+
+  const handleCleanup = useCallback(async () => {
+    setKilling(true);
+    try {
+      const res = await fetch("/api/dev-servers/cleanup", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`Stopped ${data.stopped} dev server${data.stopped !== 1 ? "s" : ""}`);
+        setRunning(0);
+      }
+    } catch {
+      toast.error("Failed to stop dev servers");
+    } finally {
+      setKilling(false);
+    }
+  }, []);
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <Label>Dev Server Cleanup</Label>
+        <p className="text-sm text-muted-foreground">
+          {running === null
+            ? "Check for background dev servers"
+            : running === 0
+              ? "No dev servers running"
+              : `${running} dev server${running !== 1 ? "s" : ""} running`}
+        </p>
+      </div>
+      <Button variant="outline" size="sm" onClick={handleCleanup} disabled={killing || running === 0}>
+        {killing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Square className="w-4 h-4 mr-1.5" />}
+        Stop All
+      </Button>
+    </div>
+  );
 }
 
 export function SettingsClient({
@@ -342,6 +398,9 @@ export function SettingsClient({
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Build</span>
                       <span className="font-mono text-sm">2025.02.10</span>
+                    </div>
+                    <div className="border-t pt-4">
+                      <DevServerCleanup />
                     </div>
                   </CardContent>
                 </Card>

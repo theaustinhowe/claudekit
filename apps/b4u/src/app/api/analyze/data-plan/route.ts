@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     runId: runId || null,
   });
 
-  const runner = createGenerateDataPlanRunner();
+  const runner = createGenerateDataPlanRunner(runId || undefined);
   await startSession(sessionId, runner);
 
   return NextResponse.json({ sessionId });

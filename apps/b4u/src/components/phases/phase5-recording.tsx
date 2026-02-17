@@ -30,8 +30,8 @@ interface Phase5RecordingProps {
 }
 
 export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
-  const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>("/api/flow-scripts");
   const { state } = useApp();
+  const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`);
   const { events, status: streamStatus } = useSessionStream({ sessionId: state.activeSessionId });
   const [recordings, setRecordings] = useState<RecordingStatus[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);

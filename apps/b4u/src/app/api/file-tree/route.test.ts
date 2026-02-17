@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -12,6 +13,10 @@ import { execute, queryAll } from "@/lib/db";
 const mockQueryAll = vi.mocked(queryAll);
 const mockExecute = vi.mocked(execute);
 
+function makeGetRequest(runId: string) {
+  return new NextRequest(`http://localhost/api/file-tree?runId=${runId}`);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -21,17 +26,25 @@ describe("GET /api/file-tree", () => {
     const tree = { name: "root", type: "directory", children: [{ name: "src", type: "directory" }] };
     mockQueryAll.mockResolvedValue([{ tree_json: JSON.stringify(tree) }] as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data).toEqual(tree);
   });
 
+  it("returns 400 when runId is missing", async () => {
+    const response = await GET(new NextRequest("http://localhost/api/file-tree"));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("returns 404 when no file tree exists", async () => {
     mockQueryAll.mockResolvedValue([] as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -41,7 +54,7 @@ describe("GET /api/file-tree", () => {
   it("returns 500 on corrupt JSON in database", async () => {
     mockQueryAll.mockResolvedValue([{ tree_json: "not valid json{{{" }] as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -51,7 +64,7 @@ describe("GET /api/file-tree", () => {
   it("returns 500 on database error", async () => {
     mockQueryAll.mockRejectedValue(new Error("DB connection failed"));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -63,7 +76,7 @@ describe("PUT /api/file-tree", () => {
   it("saves file tree to database", async () => {
     mockExecute.mockResolvedValue(undefined as never);
 
-    const req = new Request("http://localhost/api/file-tree", {
+    const req = new NextRequest("http://localhost/api/file-tree?runId=run-1", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -77,7 +90,7 @@ describe("PUT /api/file-tree", () => {
 
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM file_tree");
+    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM file_tree WHERE run_id = ?", ["run-1"]);
     expect(mockExecute).toHaveBeenCalledWith(
       expect.anything(),
       expect.stringContaining("INSERT INTO file_tree"),
@@ -85,8 +98,22 @@ describe("PUT /api/file-tree", () => {
     );
   });
 
+  it("returns 400 when runId is missing", async () => {
+    const req = new NextRequest("http://localhost/api/file-tree", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tree: [] }),
+    });
+
+    const response = await PUT(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("returns 400 when tree is missing", async () => {
-    const req = new Request("http://localhost/api/file-tree", {
+    const req = new NextRequest("http://localhost/api/file-tree?runId=run-1", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "project" }),
@@ -102,7 +129,7 @@ describe("PUT /api/file-tree", () => {
   it("uses 'root' as default name", async () => {
     mockExecute.mockResolvedValue(undefined as never);
 
-    const req = new Request("http://localhost/api/file-tree", {
+    const req = new NextRequest("http://localhost/api/file-tree?runId=run-1", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tree: [] }),
@@ -115,7 +142,7 @@ describe("PUT /api/file-tree", () => {
   it("returns 500 on database error", async () => {
     mockExecute.mockRejectedValue(new Error("DB error"));
 
-    const req = new Request("http://localhost/api/file-tree", {
+    const req = new NextRequest("http://localhost/api/file-tree?runId=run-1", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tree: [{ name: "x", type: "file" }] }),

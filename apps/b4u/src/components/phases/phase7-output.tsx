@@ -5,6 +5,7 @@ import { ErrorState } from "@/components/ui/api-state";
 import { Phase7OutputSkeleton } from "@/components/ui/phase-skeletons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePhaseController } from "@/lib/phase-controller";
+import { useApp } from "@/lib/store";
 import type { ChapterMarker } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
@@ -14,13 +15,19 @@ interface VideoInfo {
 }
 
 export function Phase7Output() {
+  const { state } = useApp();
   const {
     data: chapterMarkers,
     loading: l1,
     error: e1,
     refetch: rf1,
-  } = useApi<ChapterMarker[]>("/api/chapter-markers");
-  const { data: videoInfo, loading: l2, error: e2, refetch: rf2 } = useApi<VideoInfo>("/api/video/info");
+  } = useApi<ChapterMarker[]>(`/api/chapter-markers?runId=${state.runId}`);
+  const {
+    data: videoInfo,
+    loading: l2,
+    error: e2,
+    refetch: rf2,
+  } = useApi<VideoInfo>(`/api/video/info?runId=${state.runId}`);
   const controller = usePhaseController();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -146,7 +153,7 @@ export function Phase7Output() {
 
   const handleDownloadAudio = useCallback(async () => {
     try {
-      const res = await fetch("/api/voiceover-scripts");
+      const res = await fetch(`/api/voiceover-scripts?runId=${state.runId}`);
       if (!res.ok) return;
       // Trigger audio download — the combined audio is available at the same path as video
       const a = document.createElement("a");
@@ -156,7 +163,7 @@ export function Phase7Output() {
     } catch {
       // ignore download errors
     }
-  }, []);
+  }, [state.runId]);
 
   // Update active chapter based on current time
   useEffect(() => {
@@ -181,7 +188,7 @@ export function Phase7Output() {
 
   const handleDownloadScript = useCallback(async () => {
     try {
-      const res = await fetch("/api/voiceover-scripts");
+      const res = await fetch(`/api/voiceover-scripts?runId=${state.runId}`);
       if (!res.ok) return;
       const scripts: Record<string, string[]> = await res.json();
       const text = Object.entries(scripts)
@@ -196,7 +203,7 @@ export function Phase7Output() {
     } catch {
       // ignore download errors
     }
-  }, []);
+  }, [state.runId]);
 
   if (loading) return <Phase7OutputSkeleton />;
   if (error || !chapterMarkers) {

@@ -2,13 +2,16 @@ import { type NextRequest, NextResponse } from "next/server";
 import { execute, getDb, queryAll } from "@/lib/db";
 import { flowScriptsArraySchema, parseBody } from "@/lib/validations";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const runId = request.nextUrl.searchParams.get("runId");
+  if (!runId) return NextResponse.json({ error: "runId is required" }, { status: 400 });
+
   try {
     const conn = await getDb();
     const flows = await queryAll<{
       flow_id: string;
       flow_name: string;
-    }>(conn, "SELECT flow_id, flow_name FROM flow_scripts ORDER BY id");
+    }>(conn, "SELECT flow_id, flow_name FROM flow_scripts WHERE run_id = ? ORDER BY id", [runId]);
 
     const steps = await queryAll<{
       id: string;
@@ -20,7 +23,8 @@ export async function GET() {
       duration: string;
     }>(
       conn,
-      "SELECT id, flow_id, step_number, url, action, expected_outcome, duration FROM script_steps ORDER BY flow_id, step_number",
+      "SELECT id, flow_id, step_number, url, action, expected_outcome, duration FROM script_steps WHERE run_id = ? ORDER BY flow_id, step_number",
+      [runId],
     );
 
     const result = flows.map((f) => ({
@@ -46,6 +50,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const runId = request.nextUrl.searchParams.get("runId");
+  if (!runId) return NextResponse.json({ error: "runId is required" }, { status: 400 });
+
   const parsed = await parseBody(request, flowScriptsArraySchema);
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: parsed.status });
@@ -54,14 +61,14 @@ export async function PUT(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "DELETE FROM script_steps");
+    await execute(conn, "DELETE FROM script_steps WHERE run_id = ?", [runId]);
 
     for (const flow of flowScripts) {
       for (const step of flow.steps) {
         await execute(
           conn,
-          "INSERT INTO script_steps (id, flow_id, step_number, url, action, expected_outcome, duration) VALUES (?, ?, ?, ?, ?, ?, ?)",
-          [step.id, flow.flowId, step.stepNumber, step.url, step.action, step.expectedOutcome, step.duration],
+          "INSERT INTO script_steps (id, run_id, flow_id, step_number, url, action, expected_outcome, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          [step.id, runId, flow.flowId, step.stepNumber, step.url, step.action, step.expectedOutcome, step.duration],
         );
       }
     }

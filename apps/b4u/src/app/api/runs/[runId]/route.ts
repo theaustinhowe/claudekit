@@ -148,6 +148,30 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   try {
     const conn = await getDb();
+
+    // Clean up content tables scoped by run_id
+    const contentTables = [
+      "project_summary",
+      "file_tree",
+      "routes",
+      "user_flows",
+      "mock_data_entities",
+      "auth_overrides",
+      "env_items",
+      "flow_scripts",
+      "script_steps",
+      "voiceover_scripts",
+      "timeline_markers",
+      "chapter_markers",
+      "recordings",
+      "audio_files",
+      "final_videos",
+    ];
+    for (const table of contentTables) {
+      await execute(conn, `DELETE FROM ${table} WHERE run_id = ?`, [runId]);
+    }
+
+    // Clean up session data
     await execute(conn, "DELETE FROM session_logs WHERE session_id IN (SELECT id FROM sessions WHERE run_id = ?)", [
       runId,
     ]);

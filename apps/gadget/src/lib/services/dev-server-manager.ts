@@ -11,7 +11,12 @@ interface DevServer {
 }
 
 const MAX_LOG_LINES = 500;
-const servers = new Map<string, DevServer>();
+
+// Cache on globalThis so the Map survives Next.js HMR reloads — prevents orphaned processes
+const GLOBAL_KEY = "__gadget_dev_servers__" as const;
+const servers: Map<string, DevServer> =
+  ((globalThis as Record<string, unknown>)[GLOBAL_KEY] as Map<string, DevServer>) ??
+  ((globalThis as Record<string, unknown>)[GLOBAL_KEY] = new Map<string, DevServer>());
 
 function pushLog(server: DevServer, line: string) {
   server.logs.push(line);
@@ -62,7 +67,7 @@ export async function start(projectId: string, projectDir: string, pm: string): 
 
   const server: DevServer = {
     process: child,
-    port,
+    port: 0, // will be set from actual server output
     status: "starting",
     logs: [],
     onLogCallbacks: [],
@@ -73,8 +78,11 @@ export async function start(projectId: string, projectDir: string, pm: string): 
     server.readyResolve = resolve;
   });
 
-  // Ready detection patterns: Next.js "ready in" / "http://localhost:", Vite "Local:"
-  const readyPattern = /http:\/\/localhost:\d+|ready in|Local:/;
+  // Extract actual port from server output (handles Vite ignoring PORT env var)
+  const portPattern = /http:\/\/localhost:(\d+)/;
+  // Ready: require an actual localhost URL so we capture the real port.
+  // Covers Next.js ("http://localhost:3000"), Vite ("Local: http://localhost:5173"), etc.
+  const readyPattern = /http:\/\/localhost:\d+/;
 
   const handleData = (data: Buffer) => {
     const text = data.toString();
@@ -83,6 +91,10 @@ export async function start(projectId: string, projectDir: string, pm: string): 
       if (!trimmed) continue;
       pushLog(server, trimmed);
       if (server.status === "starting" && readyPattern.test(trimmed)) {
+        const portMatch = trimmed.match(portPattern);
+        if (portMatch) {
+          server.port = Number.parseInt(portMatch[1], 10);
+        }
         server.status = "ready";
         server.readyResolve?.();
         server.readyResolve = undefined;
@@ -113,7 +125,7 @@ export async function start(projectId: string, projectDir: string, pm: string): 
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 30_000));
   await Promise.race([readyPromise, timeout]);
 
-  return { port };
+  return { port: server.port };
 }
 
 export function stop(projectId: string): void {
@@ -153,10 +165,25 @@ export function getLogs(projectId: string): string[] {
   return server?.logs ?? [];
 }
 
-function stopAll(): void {
-  for (const [id] of servers) {
+export function listAll(): Array<{ projectId: string; port: number; pid: number }> {
+  const result: Array<{ projectId: string; port: number; pid: number }> = [];
+  for (const [id, server] of servers) {
+    if (server.status === "starting" || server.status === "ready") {
+      result.push({ projectId: id, port: server.port, pid: server.process.pid ?? 0 });
+    }
+  }
+  return result;
+}
+
+export function stopAll(): number {
+  let count = 0;
+  for (const [id, server] of servers) {
+    if (server.status === "starting" || server.status === "ready") {
+      count++;
+    }
     stop(id);
   }
+  return count;
 }
 
 // Clean up on process exit

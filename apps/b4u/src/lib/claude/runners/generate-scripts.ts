@@ -4,7 +4,7 @@ import { buildGenerateScriptsPrompt } from "@/lib/claude/prompts/generate-script
 import { buildGenerateVoiceoverPrompt } from "@/lib/claude/prompts/generate-voiceover";
 import { execute, getDb, queryAll } from "@/lib/db";
 
-export function createGenerateScriptsRunner(): SessionRunner {
+export function createGenerateScriptsRunner(runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading flows and routes...", progress: 10 });
 
@@ -15,7 +15,13 @@ export function createGenerateScriptsRunner(): SessionRunner {
       name: string;
       framework: string;
       project_path: string;
-    }>(conn, "SELECT name, framework, project_path FROM project_summary LIMIT 1");
+    }>(
+      conn,
+      runId
+        ? "SELECT name, framework, project_path FROM project_summary WHERE run_id = ? LIMIT 1"
+        : "SELECT name, framework, project_path FROM project_summary LIMIT 1",
+      runId ? [runId] : [],
+    );
 
     if (summaryRows.length === 0) {
       throw new Error("No project summary found. Run analyze-project first.");
@@ -27,13 +33,25 @@ export function createGenerateScriptsRunner(): SessionRunner {
       path: string;
       title: string;
       description: string;
-    }>(conn, "SELECT path, title, description FROM routes ORDER BY id");
+    }>(
+      conn,
+      runId
+        ? "SELECT path, title, description FROM routes WHERE run_id = ? ORDER BY id"
+        : "SELECT path, title, description FROM routes ORDER BY id",
+      runId ? [runId] : [],
+    );
 
     const flowRows = await queryAll<{
       id: string;
       name: string;
       steps: string[];
-    }>(conn, "SELECT id, name, steps FROM user_flows ORDER BY id");
+    }>(
+      conn,
+      runId
+        ? "SELECT id, name, steps FROM user_flows WHERE run_id = ? ORDER BY id"
+        : "SELECT id, name, steps FROM user_flows ORDER BY id",
+      runId ? [runId] : [],
+    );
 
     if (flowRows.length === 0) {
       throw new Error("No user flows found. Run generate-outline first.");
@@ -87,27 +105,28 @@ export function createGenerateScriptsRunner(): SessionRunner {
     }
 
     // Save scripts to DB
-    await execute(conn, "DELETE FROM flow_scripts");
-    await execute(conn, "DELETE FROM script_steps");
+    await execute(conn, "DELETE FROM flow_scripts WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM script_steps WHERE run_id = ?", [runId]);
 
     if (scripts.scripts && Array.isArray(scripts.scripts)) {
       for (let i = 0; i < scripts.scripts.length; i++) {
         const s = scripts.scripts[i];
         await execute(
           conn,
-          `INSERT INTO flow_scripts (id, flow_id, flow_name)
-          VALUES (?, ?, ?)`,
-          [i + 1, s.flowId || "", s.flowName || ""],
+          `INSERT INTO flow_scripts (id, run_id, flow_id, flow_name)
+          VALUES (?, ?, ?, ?)`,
+          [i + 1, runId, s.flowId || "", s.flowName || ""],
         );
 
         if (s.steps && Array.isArray(s.steps)) {
           for (const step of s.steps) {
             await execute(
               conn,
-              `INSERT INTO script_steps (id, flow_id, step_number, url, action, expected_outcome, duration)
-              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              `INSERT INTO script_steps (id, run_id, flow_id, step_number, url, action, expected_outcome, duration)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 step.id || "",
+                runId,
                 s.flowId || "",
                 step.stepNumber || 0,
                 step.url || "",
@@ -179,9 +198,9 @@ export function createGenerateScriptsRunner(): SessionRunner {
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
     // Save voiceover data
-    await execute(conn, "DELETE FROM voiceover_scripts");
-    await execute(conn, "DELETE FROM timeline_markers");
-    await execute(conn, "DELETE FROM chapter_markers");
+    await execute(conn, "DELETE FROM voiceover_scripts WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM timeline_markers WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM chapter_markers WHERE run_id = ?", [runId]);
 
     // Save voiceover scripts
     if (voiceover.voiceovers) {
@@ -191,9 +210,9 @@ export function createGenerateScriptsRunner(): SessionRunner {
             const text = paragraphs[i] as string;
             await execute(
               conn,
-              `INSERT INTO voiceover_scripts (flow_id, paragraph_index, text)
-              VALUES (?, ?, ?)`,
-              [flowId, i, text],
+              `INSERT INTO voiceover_scripts (run_id, flow_id, paragraph_index, text)
+              VALUES (?, ?, ?, ?)`,
+              [runId, flowId, i, text],
             );
           }
         }
@@ -209,9 +228,9 @@ export function createGenerateScriptsRunner(): SessionRunner {
             const marker = m as { timestamp: string; label: string; paragraphIndex: number };
             await execute(
               conn,
-              `INSERT INTO timeline_markers (id, flow_id, timestamp, label, paragraph_index)
-              VALUES (?, ?, ?, ?, ?)`,
-              [markerId++, flowId, marker.timestamp || "0:00", marker.label || "", marker.paragraphIndex || 0],
+              `INSERT INTO timeline_markers (id, run_id, flow_id, timestamp, label, paragraph_index)
+              VALUES (?, ?, ?, ?, ?, ?)`,
+              [markerId++, runId, flowId, marker.timestamp || "0:00", marker.label || "", marker.paragraphIndex || 0],
             );
           }
         }
@@ -225,9 +244,9 @@ export function createGenerateScriptsRunner(): SessionRunner {
         const s = scripts.scripts[i];
         await execute(
           conn,
-          `INSERT INTO chapter_markers (id, flow_name, start_time)
-          VALUES (?, ?, ?)`,
-          [i + 1, s.flowName || "", cumulativeTime],
+          `INSERT INTO chapter_markers (id, run_id, flow_name, start_time)
+          VALUES (?, ?, ?, ?)`,
+          [i + 1, runId, s.flowName || "", cumulativeTime],
         );
         // Estimate cumulative time from step durations
         const totalSeconds = (s.steps || []).reduce((acc: number, step: { duration: string }) => {

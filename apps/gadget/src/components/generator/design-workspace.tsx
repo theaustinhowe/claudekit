@@ -198,6 +198,10 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
       }
       const data = await res.json();
       setDevServer({ port: data.port, status: "ready" });
+      // No port detected (non-web project) — show terminal instead of blank preview
+      if (!data.port) {
+        setPreviewTab("terminal");
+      }
     } catch {
       setDevServer({ port: 0, status: "error" });
     }
@@ -702,7 +706,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             activeTab={previewTab}
             onTabChange={setPreviewTab}
             showTasksTab={isUpgrading}
-            disableAppTab={isUpgrading}
+            disableAppTab={isUpgrading || !devServer?.port}
             tasksContent={
               isUpgrading ? (
                 upgradeTasks.length === 0 && upgradeInitSessionId ? (

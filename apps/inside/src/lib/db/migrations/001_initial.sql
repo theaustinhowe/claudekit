@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS prs (
   UNIQUE (repo_id, number)
 );
 
+CREATE INDEX IF NOT EXISTS idx_prs_repo_id ON prs(repo_id);
+CREATE INDEX IF NOT EXISTS idx_prs_repo_updated ON prs(repo_id, github_updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_prs_repo_size_state ON prs(repo_id, size, state);
+
 -- Cached review comments
 CREATE TABLE IF NOT EXISTS pr_comments (
   id VARCHAR PRIMARY KEY,
@@ -47,6 +51,9 @@ CREATE TABLE IF NOT EXISTS pr_comments (
   fetched_at TIMESTAMP DEFAULT current_timestamp
 );
 
+CREATE INDEX IF NOT EXISTS idx_pr_comments_pr_id ON pr_comments(pr_id);
+CREATE INDEX IF NOT EXISTS idx_pr_comments_reviewer ON pr_comments(reviewer);
+
 -- Skill analysis results
 CREATE TABLE IF NOT EXISTS skill_analyses (
   id VARCHAR PRIMARY KEY,
@@ -54,6 +61,8 @@ CREATE TABLE IF NOT EXISTS skill_analyses (
   pr_numbers TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT current_timestamp
 );
+
+CREATE INDEX IF NOT EXISTS idx_skill_analyses_repo_id ON skill_analyses(repo_id);
 
 CREATE TABLE IF NOT EXISTS skills (
   id VARCHAR PRIMARY KEY,
@@ -70,11 +79,16 @@ CREATE TABLE IF NOT EXISTS skills (
   addressed BOOLEAN DEFAULT false
 );
 
+CREATE INDEX IF NOT EXISTS idx_skills_analysis_id ON skills(analysis_id);
+
 CREATE TABLE IF NOT EXISTS skill_comments (
   id VARCHAR PRIMARY KEY,
   skill_id VARCHAR NOT NULL REFERENCES skills(id),
   comment_id VARCHAR NOT NULL REFERENCES pr_comments(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_skill_comments_skill_id ON skill_comments(skill_id);
+CREATE INDEX IF NOT EXISTS idx_skill_comments_comment_id ON skill_comments(comment_id);
 
 -- Split plan results
 CREATE TABLE IF NOT EXISTS split_plans (
@@ -85,6 +99,8 @@ CREATE TABLE IF NOT EXISTS split_plans (
   created_at TIMESTAMP DEFAULT current_timestamp
 );
 
+CREATE INDEX IF NOT EXISTS idx_split_plans_pr_id ON split_plans(pr_id);
+
 -- Comment fix results
 CREATE TABLE IF NOT EXISTS comment_fixes (
   id VARCHAR PRIMARY KEY,
@@ -94,6 +110,8 @@ CREATE TABLE IF NOT EXISTS comment_fixes (
   status VARCHAR DEFAULT 'open',
   created_at TIMESTAMP DEFAULT current_timestamp
 );
+
+CREATE INDEX IF NOT EXISTS idx_comment_fixes_comment_id ON comment_fixes(comment_id);
 
 -- User settings
 CREATE TABLE IF NOT EXISTS settings (

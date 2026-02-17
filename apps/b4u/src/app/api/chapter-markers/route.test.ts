@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -10,6 +11,10 @@ import { queryAll } from "@/lib/db";
 
 const mockQueryAll = vi.mocked(queryAll);
 
+function makeGetRequest(runId: string) {
+  return new NextRequest(`http://localhost/api/chapter-markers?runId=${runId}`);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -21,7 +26,7 @@ describe("GET /api/chapter-markers", () => {
       { flow_name: "Dashboard Flow", start_time: "00:02:30" },
     ] as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -31,10 +36,18 @@ describe("GET /api/chapter-markers", () => {
     ]);
   });
 
+  it("returns 400 when runId is missing", async () => {
+    const response = await GET(new NextRequest("http://localhost/api/chapter-markers"));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("returns 500 on database error", async () => {
     mockQueryAll.mockRejectedValue(new Error("DB error"));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(500);

@@ -21,7 +21,12 @@ describe("POST /api/video/merge", () => {
   it("creates a final-merge session", async () => {
     mockCreateSession.mockResolvedValue("session-merge");
 
-    const response = await POST();
+    const req = new Request("http://localhost/api/video/merge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ runId: "run-1" }),
+    });
+    const response = await POST(req);
     const data = await response.json();
 
     expect(response.status).toBe(200);

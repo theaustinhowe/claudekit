@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase2OutlineSkeleton } from "@/components/ui/phase-skeletons";
+import { useApp } from "@/lib/store";
 import type { RouteEntry, UserFlow } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
@@ -19,18 +20,19 @@ function validateRoute(route: RouteEntry): Record<string, string> {
 }
 
 export function Phase2Outline() {
+  const { state } = useApp();
   const {
     data: apiRoutes,
     loading: loadingRoutes,
     error: errorRoutes,
     refetch: refetchRoutes,
-  } = useApi<RouteEntry[]>("/api/routes");
+  } = useApi<RouteEntry[]>(`/api/routes?runId=${state.runId}`);
   const {
     data: apiFlows,
     loading: loadingFlows,
     error: errorFlows,
     refetch: refetchFlows,
-  } = useApi<UserFlow[]>("/api/user-flows");
+  } = useApi<UserFlow[]>(`/api/user-flows?runId=${state.runId}`);
 
   const [routes, setRoutes] = useState<RouteEntry[]>([]);
   const [flows, setFlows] = useState<UserFlow[]>([]);
@@ -59,49 +61,55 @@ export function Phase2Outline() {
   const loading = loadingRoutes || loadingFlows;
   const error = errorRoutes || errorFlows;
 
-  const saveRoutes = useCallback(async (updated: RouteEntry[]) => {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await fetch("/api/routes", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to save routes");
+  const saveRoutes = useCallback(
+    async (updated: RouteEntry[]) => {
+      setSaving(true);
+      setSaveError(null);
+      try {
+        const res = await fetch(`/api/routes?runId=${state.runId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || "Failed to save routes");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to save routes";
+        setSaveError(msg);
+        console.error("Failed to save routes:", err);
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to save routes";
-      setSaveError(msg);
-      console.error("Failed to save routes:", err);
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+    },
+    [state.runId],
+  );
 
-  const saveFlows = useCallback(async (updated: UserFlow[]) => {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await fetch("/api/user-flows", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to save flows");
+  const saveFlows = useCallback(
+    async (updated: UserFlow[]) => {
+      setSaving(true);
+      setSaveError(null);
+      try {
+        const res = await fetch(`/api/user-flows?runId=${state.runId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || "Failed to save flows");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to save flows";
+        setSaveError(msg);
+        console.error("Failed to save flows:", err);
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to save flows";
-      setSaveError(msg);
-      console.error("Failed to save flows:", err);
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+    },
+    [state.runId],
+  );
 
   const updateRoute = (index: number, field: keyof RouteEntry, value: string | boolean) => {
     const updatedRoute = { ...routes[index], [field]: value };

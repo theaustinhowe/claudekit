@@ -9,15 +9,25 @@ import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
 
 export function Phase3DataPlan() {
-  const { dispatch } = useApp();
+  const { state, dispatch } = useApp();
   const {
     data: apiEntities,
     loading: l1,
     error: e1,
     refetch: r1,
-  } = useApi<MockDataEntity[]>("/api/mock-data-entities");
-  const { data: apiAuth, loading: l2, error: e2, refetch: r2 } = useApi<AuthOverride[]>("/api/auth-overrides");
-  const { data: apiEnv, loading: l3, error: e3, refetch: r3 } = useApi<EnvItem[]>("/api/env-config");
+  } = useApi<MockDataEntity[]>(`/api/mock-data-entities?runId=${state.runId}`);
+  const {
+    data: apiAuth,
+    loading: l2,
+    error: e2,
+    refetch: r2,
+  } = useApi<AuthOverride[]>(`/api/auth-overrides?runId=${state.runId}`);
+  const {
+    data: apiEnv,
+    loading: l3,
+    error: e3,
+    refetch: r3,
+  } = useApi<EnvItem[]>(`/api/env-config?runId=${state.runId}`);
 
   const [authOverrides, setAuthOverrides] = useState<AuthOverride[]>([]);
   const [envItems, setEnvItems] = useState<EnvItem[]>([]);
@@ -43,29 +53,35 @@ export function Phase3DataPlan() {
   const loading = l1 || l2 || l3;
   const error = e1 || e2 || e3;
 
-  const persistAuthToggle = useCallback(async (id: string, enabled: boolean) => {
-    try {
-      await fetch("/api/auth-overrides", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, enabled }),
-      });
-    } catch (err) {
-      console.error("Failed to persist auth override:", err);
-    }
-  }, []);
+  const persistAuthToggle = useCallback(
+    async (id: string, enabled: boolean) => {
+      try {
+        await fetch("/api/auth-overrides", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, enabled, runId: state.runId }),
+        });
+      } catch (err) {
+        console.error("Failed to persist auth override:", err);
+      }
+    },
+    [state.runId],
+  );
 
-  const persistEnvToggle = useCallback(async (id: string, enabled: boolean) => {
-    try {
-      await fetch("/api/env-config", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, enabled }),
-      });
-    } catch (err) {
-      console.error("Failed to persist env config:", err);
-    }
-  }, []);
+  const persistEnvToggle = useCallback(
+    async (id: string, enabled: boolean) => {
+      try {
+        await fetch("/api/env-config", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, enabled, runId: state.runId }),
+        });
+      } catch (err) {
+        console.error("Failed to persist env config:", err);
+      }
+    },
+    [state.runId],
+  );
 
   if (loading) return <Phase3DataPlanSkeleton />;
   if (error || !apiEntities)

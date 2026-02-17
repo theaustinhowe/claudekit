@@ -176,7 +176,7 @@ export function usePhaseController() {
           fetch("/api/file-tree", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tree: scan.tree, name: scan.name }),
+            body: JSON.stringify({ tree: scan.tree, name: scan.name, runId }),
           }).catch(() => {});
         }
       } catch {
@@ -235,7 +235,6 @@ export function usePhaseController() {
               undefined,
               600,
             );
-            dispatch({ type: "SET_RIGHT_PANEL", phase: 2 });
 
             // Deep analysis — maps routes, auth, database, etc. from source code
             const projectPath = stateRef.current.projectPath;
@@ -247,7 +246,7 @@ export function usePhaseController() {
             }
 
             const outlineResult = await runSessionPhase("/api/analyze/outline", null, "Generating app outline...");
-            dispatch({ type: "REFRESH_PANEL" });
+            dispatch({ type: "SET_RIGHT_PANEL", phase: 2 });
 
             // Build context summary from result data
             const routeCount = (outlineResult as { routeCount?: number })?.routeCount ?? "several";
@@ -267,10 +266,9 @@ export function usePhaseController() {
               undefined,
               600,
             );
-            dispatch({ type: "SET_RIGHT_PANEL", phase: 3 });
 
             const dataPlanResult = await runSessionPhase("/api/analyze/data-plan", null, "Generating data plan...");
-            dispatch({ type: "REFRESH_PANEL" });
+            dispatch({ type: "SET_RIGHT_PANEL", phase: 3 });
 
             const entityCount = (dataPlanResult as { entityCount?: number })?.entityCount ?? "several";
             const authCount = (dataPlanResult as { authCount?: number })?.authCount ?? "some";
@@ -289,14 +287,13 @@ export function usePhaseController() {
               undefined,
               600,
             );
-            dispatch({ type: "SET_RIGHT_PANEL", phase: 4 });
 
             const scriptsResult = await runSessionPhase(
               "/api/analyze/scripts",
               null,
               "Generating demo scripts and voiceover text...",
             );
-            dispatch({ type: "REFRESH_PANEL" });
+            dispatch({ type: "SET_RIGHT_PANEL", phase: 4 });
 
             const scriptFlowCount = (scriptsResult as { flowCount?: number })?.flowCount ?? "multiple";
             const totalSteps = (scriptsResult as { totalSteps?: number })?.totalSteps ?? "several";
@@ -322,7 +319,7 @@ export function usePhaseController() {
             );
             dispatch({ type: "SET_RIGHT_PANEL", phase: 5 });
 
-            const projectPath = state.projectPath;
+            const projectPath = stateRef.current.projectPath;
             await runSessionPhase("/api/recording/start", { projectPath }, "Recording flows...");
 
             await addAIMessage(
@@ -345,6 +342,7 @@ export function usePhaseController() {
               undefined,
               600,
             );
+            // Panel shows data from earlier phases (scripts, voiceover) — safe to show immediately
             dispatch({ type: "SET_RIGHT_PANEL", phase: 6 });
             await addAIMessage(
               "The voiceover script is ready on the right, synced to the video timeline. Pick a voice and preview the audio.",
@@ -362,7 +360,6 @@ export function usePhaseController() {
           // Phase 7 — Final Merge
           case 7: {
             await addAIMessage("Generating voiceover audio...", undefined, 400);
-            dispatch({ type: "SET_RIGHT_PANEL", phase: 7 });
 
             // Generate audio first
             await runSessionPhase(
@@ -373,6 +370,8 @@ export function usePhaseController() {
 
             // Then merge video + audio
             await runSessionPhase("/api/video/merge", null, "Merging video and audio...");
+
+            dispatch({ type: "SET_RIGHT_PANEL", phase: 7 });
 
             await addAIMessage(
               "Your feature walkthrough is ready! You can play it on the right, jump to specific chapters, or download in various formats.",

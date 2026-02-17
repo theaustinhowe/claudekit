@@ -35,6 +35,7 @@ export const userFlowsArraySchema = z.array(userFlowSchema).max(20, "Maximum 20 
 export const togglePatchSchema = z.object({
   id: z.string().min(1, "ID is required").max(100),
   enabled: z.boolean(),
+  runId: z.string().min(1, "runId is required"),
 });
 
 // --- Flow scripts validation ---

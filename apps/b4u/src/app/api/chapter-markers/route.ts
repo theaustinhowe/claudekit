@@ -1,13 +1,16 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getDb, queryAll } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const runId = request.nextUrl.searchParams.get("runId");
+  if (!runId) return NextResponse.json({ error: "runId is required" }, { status: 400 });
+
   try {
     const conn = await getDb();
     const rows = await queryAll<{
       flow_name: string;
       start_time: string;
-    }>(conn, "SELECT flow_name, start_time FROM chapter_markers ORDER BY id");
+    }>(conn, "SELECT flow_name, start_time FROM chapter_markers WHERE run_id = ? ORDER BY id", [runId]);
 
     const markers = rows.map((r) => ({
       flowName: r.flow_name,

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     runId: runId || null,
   });
 
-  const runner = createGenerateOutlineRunner();
+  const runner = createGenerateOutlineRunner(runId || undefined);
   await startSession(sessionId, runner);
 
   return NextResponse.json({ sessionId });

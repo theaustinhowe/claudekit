@@ -16,6 +16,8 @@ import {
   VOICEOVER_SCRIPTS,
 } from "../src/lib/mock-data";
 
+const SEED_RUN_ID = "__seed__";
+
 const SCHEMA_SQL = fs.readFileSync(
   path.join(new URL(".", import.meta.url).pathname, "../src/lib/db/migrations/001_initial.sql"),
   "utf-8",
@@ -38,23 +40,39 @@ async function seed() {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  // Delete existing DB file so we start fresh
-  if (fs.existsSync(DB_PATH)) {
-    fs.unlinkSync(DB_PATH);
-    console.log(`Removed existing database: ${DB_PATH}`);
-  }
-
   const instance = await DuckDBInstance.create(DB_PATH);
   const conn = await instance.connect();
 
   console.log("Creating schema...");
   await conn.run(SCHEMA_SQL);
 
+  // --- Clean existing seed data ---
+  console.log("Cleaning existing seed data...");
+  for (const table of [
+    "session_logs",
+    "sessions",
+    "timeline_markers",
+    "chapter_markers",
+    "voiceover_scripts",
+    "script_steps",
+    "flow_scripts",
+    "env_items",
+    "auth_overrides",
+    "mock_data_entities",
+    "user_flows",
+    "routes",
+    "file_tree",
+    "project_summary",
+  ]) {
+    await conn.run(`DELETE FROM ${table} WHERE run_id = '${SEED_RUN_ID}'`);
+  }
+  await conn.run("DELETE FROM voice_options");
+
   // --- Project Summary ---
   console.log("Seeding project_summary...");
   await conn.run(`
-    INSERT INTO project_summary (id, name, framework, directories, auth, database_info)
-    VALUES (1, '${escapeStr(PROJECT_SUMMARY.name)}', '${escapeStr(PROJECT_SUMMARY.framework)}',
+    INSERT INTO project_summary (id, run_id, name, framework, directories, auth, database_info)
+    VALUES (1, '${SEED_RUN_ID}', '${escapeStr(PROJECT_SUMMARY.name)}', '${escapeStr(PROJECT_SUMMARY.framework)}',
       ${arrayLiteral(PROJECT_SUMMARY.directories)},
       '${escapeStr(PROJECT_SUMMARY.auth)}', '${escapeStr(PROJECT_SUMMARY.database)}')
   `);
@@ -62,8 +80,8 @@ async function seed() {
   // --- File Tree (stored as JSON) ---
   console.log("Seeding file_tree...");
   await conn.run(`
-    INSERT INTO file_tree (id, tree_json)
-    VALUES (1, '${escapeStr(JSON.stringify(FILE_TREE))}')
+    INSERT INTO file_tree (id, run_id, tree_json)
+    VALUES (1, '${SEED_RUN_ID}', '${escapeStr(JSON.stringify(FILE_TREE))}')
   `);
 
   // --- Routes ---
@@ -71,8 +89,8 @@ async function seed() {
   for (let i = 0; i < ROUTES.length; i++) {
     const r = ROUTES[i];
     await conn.run(`
-      INSERT INTO routes (id, path, title, auth_required, description)
-      VALUES (${i + 1}, '${escapeStr(r.path)}', '${escapeStr(r.title)}', ${r.authRequired}, '${escapeStr(r.description)}')
+      INSERT INTO routes (id, run_id, path, title, auth_required, description)
+      VALUES (${i + 1}, '${SEED_RUN_ID}', '${escapeStr(r.path)}', '${escapeStr(r.title)}', ${r.authRequired}, '${escapeStr(r.description)}')
     `);
   }
 
@@ -80,8 +98,8 @@ async function seed() {
   console.log("Seeding user_flows...");
   for (const f of USER_FLOWS) {
     await conn.run(`
-      INSERT INTO user_flows (id, name, steps)
-      VALUES ('${escapeStr(f.id)}', '${escapeStr(f.name)}', ${arrayLiteral(f.steps)})
+      INSERT INTO user_flows (id, run_id, name, steps)
+      VALUES ('${escapeStr(f.id)}', '${SEED_RUN_ID}', '${escapeStr(f.name)}', ${arrayLiteral(f.steps)})
     `);
   }
 
@@ -90,8 +108,8 @@ async function seed() {
   for (let i = 0; i < MOCK_DATA_ENTITIES.length; i++) {
     const e = MOCK_DATA_ENTITIES[i];
     await conn.run(`
-      INSERT INTO mock_data_entities (id, name, count, note)
-      VALUES (${i + 1}, '${escapeStr(e.name)}', ${e.count}, '${escapeStr(e.note)}')
+      INSERT INTO mock_data_entities (id, run_id, name, count, note)
+      VALUES (${i + 1}, '${SEED_RUN_ID}', '${escapeStr(e.name)}', ${e.count}, '${escapeStr(e.note)}')
     `);
   }
 
@@ -99,8 +117,8 @@ async function seed() {
   console.log("Seeding auth_overrides...");
   for (const a of AUTH_OVERRIDES) {
     await conn.run(`
-      INSERT INTO auth_overrides (id, label, enabled)
-      VALUES ('${escapeStr(a.id)}', '${escapeStr(a.label)}', ${a.enabled})
+      INSERT INTO auth_overrides (id, run_id, label, enabled)
+      VALUES ('${escapeStr(a.id)}', '${SEED_RUN_ID}', '${escapeStr(a.label)}', ${a.enabled})
     `);
   }
 
@@ -108,8 +126,8 @@ async function seed() {
   console.log("Seeding env_items...");
   for (const e of ENV_ITEMS) {
     await conn.run(`
-      INSERT INTO env_items (id, label, enabled)
-      VALUES ('${escapeStr(e.id)}', '${escapeStr(e.label)}', ${e.enabled})
+      INSERT INTO env_items (id, run_id, label, enabled)
+      VALUES ('${escapeStr(e.id)}', '${SEED_RUN_ID}', '${escapeStr(e.label)}', ${e.enabled})
     `);
   }
 
@@ -118,13 +136,13 @@ async function seed() {
   for (let i = 0; i < FLOW_SCRIPTS.length; i++) {
     const fs = FLOW_SCRIPTS[i];
     await conn.run(`
-      INSERT INTO flow_scripts (id, flow_id, flow_name)
-      VALUES (${i + 1}, '${escapeStr(fs.flowId)}', '${escapeStr(fs.flowName)}')
+      INSERT INTO flow_scripts (id, run_id, flow_id, flow_name)
+      VALUES (${i + 1}, '${SEED_RUN_ID}', '${escapeStr(fs.flowId)}', '${escapeStr(fs.flowName)}')
     `);
     for (const step of fs.steps) {
       await conn.run(`
-        INSERT INTO script_steps (id, flow_id, step_number, url, action, expected_outcome, duration)
-        VALUES ('${escapeStr(step.id)}', '${escapeStr(fs.flowId)}', ${step.stepNumber},
+        INSERT INTO script_steps (id, run_id, flow_id, step_number, url, action, expected_outcome, duration)
+        VALUES ('${escapeStr(step.id)}', '${SEED_RUN_ID}', '${escapeStr(fs.flowId)}', ${step.stepNumber},
           '${escapeStr(step.url)}', '${escapeStr(step.action)}',
           '${escapeStr(step.expectedOutcome)}', '${escapeStr(step.duration)}')
       `);
@@ -136,8 +154,8 @@ async function seed() {
   for (const [flowId, paragraphs] of Object.entries(VOICEOVER_SCRIPTS)) {
     for (let i = 0; i < paragraphs.length; i++) {
       await conn.run(`
-        INSERT INTO voiceover_scripts (flow_id, paragraph_index, text)
-        VALUES ('${escapeStr(flowId)}', ${i}, '${escapeStr(paragraphs[i])}')
+        INSERT INTO voiceover_scripts (run_id, flow_id, paragraph_index, text)
+        VALUES ('${SEED_RUN_ID}', '${escapeStr(flowId)}', ${i}, '${escapeStr(paragraphs[i])}')
       `);
     }
   }
@@ -157,8 +175,8 @@ async function seed() {
   for (const [flowId, markers] of Object.entries(TIMELINE_MARKERS)) {
     for (const m of markers) {
       await conn.run(`
-        INSERT INTO timeline_markers (id, flow_id, timestamp, label, paragraph_index)
-        VALUES (${tmId++}, '${escapeStr(flowId)}', '${escapeStr(m.timestamp)}',
+        INSERT INTO timeline_markers (id, run_id, flow_id, timestamp, label, paragraph_index)
+        VALUES (${tmId++}, '${SEED_RUN_ID}', '${escapeStr(flowId)}', '${escapeStr(m.timestamp)}',
           '${escapeStr(m.label)}', ${m.paragraphIndex})
       `);
     }
@@ -169,8 +187,8 @@ async function seed() {
   for (let i = 0; i < CHAPTER_MARKERS.length; i++) {
     const c = CHAPTER_MARKERS[i];
     await conn.run(`
-      INSERT INTO chapter_markers (id, flow_name, start_time)
-      VALUES (${i + 1}, '${escapeStr(c.flowName)}', '${escapeStr(c.startTime)}')
+      INSERT INTO chapter_markers (id, run_id, flow_name, start_time)
+      VALUES (${i + 1}, '${SEED_RUN_ID}', '${escapeStr(c.flowName)}', '${escapeStr(c.startTime)}')
     `);
   }
 

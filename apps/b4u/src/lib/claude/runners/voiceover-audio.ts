@@ -2,7 +2,7 @@ import type { SessionRunner } from "@devkit/session";
 import { generateFlowVoiceover } from "@/lib/audio/voiceover-generator";
 import { execute, getDb, queryAll } from "@/lib/db";
 
-export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0): SessionRunner {
+export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0, runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading voiceover scripts...", progress: 5 });
 
@@ -11,7 +11,10 @@ export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0)
     // Load voiceover scripts from DB
     const rows = await queryAll<{ flow_id: string; paragraph_index: number; text: string }>(
       conn,
-      "SELECT * FROM voiceover_scripts ORDER BY flow_id, paragraph_index",
+      runId
+        ? "SELECT * FROM voiceover_scripts WHERE run_id = ? ORDER BY flow_id, paragraph_index"
+        : "SELECT * FROM voiceover_scripts ORDER BY flow_id, paragraph_index",
+      runId ? [runId] : [],
     );
 
     // Group by flow
@@ -25,7 +28,7 @@ export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0)
     const results: Array<{ flowId: string; filePath: string; duration: number }> = [];
 
     // Clear existing audio files
-    await execute(conn, "DELETE FROM audio_files");
+    await execute(conn, "DELETE FROM audio_files WHERE run_id = ?", [runId]);
 
     for (let i = 0; i < flows.length; i++) {
       if (signal.aborted) throw new DOMException("Aborted", "AbortError");
@@ -59,9 +62,9 @@ export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0)
       // Save to DB
       await execute(
         conn,
-        `INSERT INTO audio_files (id, flow_id, voice_id, file_path, duration_seconds)
-        VALUES (?, ?, ?, ?, ?)`,
-        [`audio-${flowId}`, flowId, voiceId, result.filePath, result.durationEstimate],
+        `INSERT INTO audio_files (id, run_id, flow_id, voice_id, file_path, duration_seconds)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [`audio-${flowId}`, runId, flowId, voiceId, result.filePath, result.durationEstimate],
       );
     }
 

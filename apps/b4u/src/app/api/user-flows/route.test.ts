@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -18,6 +19,10 @@ const mockQueryAll = vi.mocked(queryAll);
 const mockExecute = vi.mocked(execute);
 const mockParseBody = vi.mocked(parseBody);
 
+function makeGetRequest(runId: string) {
+  return new NextRequest(`http://localhost/api/user-flows?runId=${runId}`);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -27,17 +32,25 @@ describe("GET /api/user-flows", () => {
     const flows = [{ id: "flow-1", name: "Login Flow", steps: ["Go to login", "Enter credentials"] }];
     mockQueryAll.mockResolvedValue(flows as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data).toEqual(flows);
   });
 
+  it("returns 400 when runId is missing", async () => {
+    const response = await GET(new NextRequest("http://localhost/api/user-flows"));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("returns 500 on database error", async () => {
     mockQueryAll.mockRejectedValue(new Error("DB error"));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -51,22 +64,34 @@ describe("PUT /api/user-flows", () => {
     mockParseBody.mockResolvedValue({ ok: true, data: flows } as never);
     mockExecute.mockResolvedValue(undefined as never);
 
-    const req = new Request("http://localhost/api/user-flows", {
+    const req = new NextRequest("http://localhost/api/user-flows?runId=run-1", {
       method: "PUT",
       body: JSON.stringify(flows),
     });
-    const response = await PUT(req as never);
+    const response = await PUT(req);
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
   });
 
+  it("returns 400 when runId is missing", async () => {
+    const req = new NextRequest("http://localhost/api/user-flows", {
+      method: "PUT",
+      body: JSON.stringify([]),
+    });
+    const response = await PUT(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("returns validation error", async () => {
     mockParseBody.mockResolvedValue({ ok: false, error: "Invalid", status: 422 } as never);
 
-    const req = new Request("http://localhost/api/user-flows", { method: "PUT", body: "{}" });
-    const response = await PUT(req as never);
+    const req = new NextRequest("http://localhost/api/user-flows?runId=run-1", { method: "PUT", body: "{}" });
+    const response = await PUT(req);
 
     expect(response.status).toBe(422);
   });

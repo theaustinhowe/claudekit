@@ -10,6 +10,7 @@ import { recordFlow } from "./playwright-runner";
 interface OrchestratorOptions {
   projectPath: string;
   flowIds?: string[];
+  runId?: string;
   onProgress: (event: SessionEvent) => void;
   signal: AbortSignal;
 }
@@ -17,7 +18,7 @@ interface OrchestratorOptions {
 export async function runRecordingPipeline(
   options: OrchestratorOptions,
 ): Promise<{ recordings: Array<{ flowId: string; videoPath: string; duration: number }> }> {
-  const { projectPath, flowIds, onProgress, signal } = options;
+  const { projectPath, flowIds, runId, onProgress, signal } = options;
   const outputDir = join(process.cwd(), "data", "recordings");
   await mkdir(outputDir, { recursive: true });
 
@@ -28,7 +29,10 @@ export async function runRecordingPipeline(
 
   const flowScriptRows = await queryAll<{ flow_id: string; flow_name: string }>(
     conn,
-    "SELECT flow_id, flow_name FROM flow_scripts",
+    runId
+      ? "SELECT flow_id, flow_name FROM flow_scripts WHERE run_id = ?"
+      : "SELECT flow_id, flow_name FROM flow_scripts",
+    runId ? [runId] : [],
   );
   const stepRows = await queryAll<{
     flow_id: string;
@@ -38,7 +42,13 @@ export async function runRecordingPipeline(
     action: string;
     expected_outcome: string;
     duration: string;
-  }>(conn, "SELECT * FROM script_steps ORDER BY flow_id, step_number");
+  }>(
+    conn,
+    runId
+      ? "SELECT * FROM script_steps WHERE run_id = ? ORDER BY flow_id, step_number"
+      : "SELECT * FROM script_steps ORDER BY flow_id, step_number",
+    runId ? [runId] : [],
+  );
 
   // Build flow scripts
   let scripts: FlowScript[] = flowScriptRows.map((f) => ({
@@ -66,13 +76,19 @@ export async function runRecordingPipeline(
   // 2. Load data plan for env overrides
   const entities = await queryAll<{ name: string; count: number; note: string }>(
     conn,
-    "SELECT * FROM mock_data_entities",
+    runId ? "SELECT * FROM mock_data_entities WHERE run_id = ?" : "SELECT * FROM mock_data_entities",
+    runId ? [runId] : [],
   );
   const authOverrides = await queryAll<{ id: string; label: string; enabled: boolean }>(
     conn,
-    "SELECT * FROM auth_overrides",
+    runId ? "SELECT * FROM auth_overrides WHERE run_id = ?" : "SELECT * FROM auth_overrides",
+    runId ? [runId] : [],
   );
-  const envItems = await queryAll<{ id: string; label: string; enabled: boolean }>(conn, "SELECT * FROM env_items");
+  const envItems = await queryAll<{ id: string; label: string; enabled: boolean }>(
+    conn,
+    runId ? "SELECT * FROM env_items WHERE run_id = ?" : "SELECT * FROM env_items",
+    runId ? [runId] : [],
+  );
 
   // 3. Inject env overrides
   onProgress({ type: "progress", message: "Configuring environment...", progress: 10 });
@@ -126,9 +142,9 @@ export async function runRecordingPipeline(
       // Save recording to DB
       await execute(
         conn,
-        `INSERT INTO recordings (id, flow_id, project_path, video_path, duration_seconds, status)
-        VALUES (?, ?, ?, ?, ?, ?)`,
-        [`rec-${script.flowId}`, script.flowId, projectPath, result.videoPath, result.durationSeconds, "done"],
+        `INSERT INTO recordings (id, run_id, flow_id, project_path, video_path, duration_seconds, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [`rec-${script.flowId}`, runId, script.flowId, projectPath, result.videoPath, result.durationSeconds, "done"],
       );
 
       onProgress({

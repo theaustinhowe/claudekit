@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase4ScriptsSkeleton } from "@/components/ui/phase-skeletons";
+import { useApp } from "@/lib/store";
 import type { FlowScript, ScriptStep } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
 
 export function Phase4Scripts() {
-  const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>("/api/flow-scripts");
+  const { state } = useApp();
+  const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [scripts, setScripts] = useState<FlowScript[]>([]);
   const [saving, setSaving] = useState(false);
@@ -25,21 +27,24 @@ export function Phase4Scripts() {
     }
   }, [flowScripts, activeTab]);
 
-  const saveScripts = useCallback(async (updated: FlowScript[]) => {
-    setSaving(true);
-    try {
-      const res = await fetch("/api/flow-scripts", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      if (!res.ok) throw new Error("Failed to save scripts");
-    } catch (err) {
-      console.error("Failed to save scripts:", err);
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+  const saveScripts = useCallback(
+    async (updated: FlowScript[]) => {
+      setSaving(true);
+      try {
+        const res = await fetch(`/api/flow-scripts?runId=${state.runId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        });
+        if (!res.ok) throw new Error("Failed to save scripts");
+      } catch (err) {
+        console.error("Failed to save scripts:", err);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [state.runId],
+  );
 
   const updateStep = useCallback(
     (stepId: string, field: keyof ScriptStep, value: string) => {

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       metadata: { phase, editRequest },
     });
 
-    const runner = createEditContentRunner(phase, editRequest);
+    const runner = createEditContentRunner(phase, editRequest, runId || undefined);
     startSession(sessionId, runner);
 
     return NextResponse.json({ sessionId });

@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -12,6 +13,18 @@ import { execute, queryAll } from "@/lib/db";
 const mockQueryAll = vi.mocked(queryAll);
 const mockExecute = vi.mocked(execute);
 
+function makeGetRequest(runId: string) {
+  return new NextRequest(`http://localhost/api/timeline-markers?runId=${runId}`);
+}
+
+function makePutRequest(body: unknown, runId = "run-1") {
+  return new NextRequest(`http://localhost/api/timeline-markers?runId=${runId}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -24,7 +37,7 @@ describe("GET /api/timeline-markers", () => {
       { flow_id: "flow-2", timestamp: "00:01:00", label: "Settings", paragraph_index: 0 },
     ] as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -33,10 +46,18 @@ describe("GET /api/timeline-markers", () => {
     expect(data["flow-1"][0]).toEqual({ timestamp: "00:00:05", label: "Login", paragraphIndex: 0 });
   });
 
+  it("returns 400 when runId is missing", async () => {
+    const response = await GET(new NextRequest("http://localhost/api/timeline-markers"));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("returns 500 on database error", async () => {
     mockQueryAll.mockRejectedValue(new Error("DB error"));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -46,21 +67,13 @@ describe("GET /api/timeline-markers", () => {
   it("returns empty object when no markers exist", async () => {
     mockQueryAll.mockResolvedValue([] as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data).toEqual({});
   });
 });
-
-function makeRequest(body: unknown) {
-  return new Request("http://localhost/api/timeline-markers", {
-    method: "PUT",
-    body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
-  });
-}
 
 describe("PUT /api/timeline-markers", () => {
   it("saves markers for a single flow", async () => {
@@ -73,7 +86,7 @@ describe("PUT /api/timeline-markers", () => {
       ],
     };
 
-    const response = await PUT(makeRequest(body));
+    const response = await PUT(makePutRequest(body));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -81,16 +94,19 @@ describe("PUT /api/timeline-markers", () => {
 
     // 1 delete + 2 inserts
     expect(mockExecute).toHaveBeenCalledTimes(3);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ?", ["flow-1"]);
+    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
+      "flow-1",
+      "run-1",
+    ]);
     expect(mockExecute).toHaveBeenCalledWith(
       {},
-      "INSERT INTO timeline_markers (flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?)",
-      ["flow-1", "00:00:05", "Login", 0],
+      "INSERT INTO timeline_markers (run_id, flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?, ?)",
+      ["run-1", "flow-1", "00:00:05", "Login", 0],
     );
     expect(mockExecute).toHaveBeenCalledWith(
       {},
-      "INSERT INTO timeline_markers (flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?)",
-      ["flow-1", "00:00:15", "Dashboard", 1],
+      "INSERT INTO timeline_markers (run_id, flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?, ?)",
+      ["run-1", "flow-1", "00:00:15", "Dashboard", 1],
     );
   });
 
@@ -105,7 +121,7 @@ describe("PUT /api/timeline-markers", () => {
       ],
     };
 
-    const response = await PUT(makeRequest(body));
+    const response = await PUT(makePutRequest(body));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -113,8 +129,14 @@ describe("PUT /api/timeline-markers", () => {
 
     // 2 deletes + 3 inserts
     expect(mockExecute).toHaveBeenCalledTimes(5);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ?", ["flow-1"]);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ?", ["flow-2"]);
+    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
+      "flow-1",
+      "run-1",
+    ]);
+    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
+      "flow-2",
+      "run-1",
+    ]);
   });
 
   it("handles empty markers array for a flow", async () => {
@@ -124,7 +146,7 @@ describe("PUT /api/timeline-markers", () => {
       "flow-1": [],
     };
 
-    const response = await PUT(makeRequest(body));
+    const response = await PUT(makePutRequest(body));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -132,11 +154,28 @@ describe("PUT /api/timeline-markers", () => {
 
     // Only 1 delete, no inserts
     expect(mockExecute).toHaveBeenCalledTimes(1);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ?", ["flow-1"]);
+    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
+      "flow-1",
+      "run-1",
+    ]);
+  });
+
+  it("returns 400 when runId is missing", async () => {
+    const req = new NextRequest("http://localhost/api/timeline-markers", {
+      method: "PUT",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const response = await PUT(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
   });
 
   it("returns 500 when request body is invalid", async () => {
-    const request = new Request("http://localhost/api/timeline-markers", {
+    const request = new NextRequest("http://localhost/api/timeline-markers?runId=run-1", {
       method: "PUT",
       body: "not valid json",
       headers: { "Content-Type": "application/json" },
@@ -156,7 +195,7 @@ describe("PUT /api/timeline-markers", () => {
       "flow-1": [{ timestamp: "00:00:05", label: "Login", paragraphIndex: 0 }],
     };
 
-    const response = await PUT(makeRequest(body));
+    const response = await PUT(makePutRequest(body));
     const data = await response.json();
 
     expect(response.status).toBe(500);

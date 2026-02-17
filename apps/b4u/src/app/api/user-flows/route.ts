@@ -19,14 +19,17 @@ function normalizeSteps(raw: unknown): string[] {
   return [];
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const runId = request.nextUrl.searchParams.get("runId");
+  if (!runId) return NextResponse.json({ error: "runId is required" }, { status: 400 });
+
   try {
     const conn = await getDb();
     const rows = await queryAll<{
       id: string;
       name: string;
       steps: unknown;
-    }>(conn, "SELECT id, name, steps FROM user_flows");
+    }>(conn, "SELECT id, name, steps FROM user_flows WHERE run_id = ?", [runId]);
 
     const normalized = rows.map((r) => ({
       ...r,
@@ -41,6 +44,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const runId = request.nextUrl.searchParams.get("runId");
+  if (!runId) return NextResponse.json({ error: "runId is required" }, { status: 400 });
+
   const parsed = await parseBody(request, userFlowsArraySchema);
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: parsed.status });
@@ -49,11 +55,12 @@ export async function PUT(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "DELETE FROM user_flows");
+    await execute(conn, "DELETE FROM user_flows WHERE run_id = ?", [runId]);
 
     for (const flow of flows) {
-      await execute(conn, "INSERT INTO user_flows (id, name, steps) VALUES (?, ?, ?::VARCHAR[])", [
+      await execute(conn, "INSERT INTO user_flows (id, run_id, name, steps) VALUES (?, ?, ?, ?::VARCHAR[])", [
         flow.id,
+        runId,
         flow.name,
         JSON.stringify(flow.steps),
       ]);

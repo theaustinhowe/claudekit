@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -18,6 +19,10 @@ const mockQueryAll = vi.mocked(queryAll);
 const mockExecute = vi.mocked(execute);
 const mockParseBody = vi.mocked(parseBody);
 
+function makeGetRequest(runId: string) {
+  return new NextRequest(`http://localhost/api/routes?runId=${runId}`);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -29,7 +34,7 @@ describe("GET /api/routes", () => {
       { id: 2, path: "/dashboard", title: "Dashboard", auth_required: true, description: "Main dashboard" },
     ] as never);
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -39,10 +44,18 @@ describe("GET /api/routes", () => {
     ]);
   });
 
+  it("returns 400 when runId is missing", async () => {
+    const response = await GET(new NextRequest("http://localhost/api/routes"));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("returns 500 on database error", async () => {
     mockQueryAll.mockRejectedValue(new Error("DB error"));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -56,26 +69,38 @@ describe("PUT /api/routes", () => {
     mockParseBody.mockResolvedValue({ ok: true, data: routes } as never);
     mockExecute.mockResolvedValue(undefined as never);
 
-    const req = new Request("http://localhost/api/routes", {
+    const req = new NextRequest("http://localhost/api/routes?runId=run-1", {
       method: "PUT",
       body: JSON.stringify(routes),
     });
-    const response = await PUT(req as never);
+    const response = await PUT(req);
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes");
+    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes WHERE run_id = ?", ["run-1"]);
+  });
+
+  it("returns 400 when runId is missing", async () => {
+    const req = new NextRequest("http://localhost/api/routes", {
+      method: "PUT",
+      body: JSON.stringify([]),
+    });
+    const response = await PUT(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
   });
 
   it("returns validation error", async () => {
     mockParseBody.mockResolvedValue({ ok: false, error: "Invalid data", status: 422 } as never);
 
-    const req = new Request("http://localhost/api/routes", {
+    const req = new NextRequest("http://localhost/api/routes?runId=run-1", {
       method: "PUT",
       body: "{}",
     });
-    const response = await PUT(req as never);
+    const response = await PUT(req);
     const data = await response.json();
 
     expect(response.status).toBe(422);
