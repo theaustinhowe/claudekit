@@ -106,13 +106,3 @@ export async function updateSubPRDescription(planId: string, subPRIndex: number,
     await execute(db, "UPDATE split_plans SET sub_prs = ? WHERE id = ?", [JSON.stringify(subPRs), planId]);
   }
 }
-
-export async function getSplitPlansForPR(prId: string) {
-  const db = await getDb();
-  return queryOne<{
-    id: string;
-    total_lines: number;
-    sub_prs: string;
-    created_at: string;
-  }>(db, "SELECT * FROM split_plans WHERE pr_id = ? ORDER BY created_at DESC LIMIT 1", [prId]);
-}

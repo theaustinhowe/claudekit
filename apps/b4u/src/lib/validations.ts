@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-export type { ParseResult } from "@devkit/validation";
 export { parseBody } from "@devkit/validation";
 
 // --- Route validation ---

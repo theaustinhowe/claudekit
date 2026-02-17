@@ -63,24 +63,3 @@ export async function getReviewerStats(repoId: string): Promise<ReviewerStats[]>
 
   return result;
 }
-
-export async function getReviewerTopComments(repoId: string, reviewer: string) {
-  const db = await getDb();
-  return queryAll<{
-    body: string;
-    file_path: string | null;
-    severity: string | null;
-    category: string | null;
-    pr_number: number;
-    pr_title: string;
-  }>(
-    db,
-    `SELECT c.body, c.file_path, c.severity, c.category, p.number as pr_number, p.title as pr_title
-     FROM pr_comments c
-     JOIN prs p ON c.pr_id = p.id
-     WHERE p.repo_id = ? AND c.reviewer = ?
-     ORDER BY c.created_at DESC
-     LIMIT 10`,
-    [repoId, reviewer],
-  );
-}

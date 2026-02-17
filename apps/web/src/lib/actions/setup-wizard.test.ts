@@ -84,7 +84,7 @@ describe("loadSetupData", () => {
     await expect(loadSetupData()).rejects.toThrow("Could not find monorepo root");
   });
 
-  it("reads all 5 .env.example files from ENV_FILES config", async () => {
+  it("reads all 6 .env.example files from ENV_FILES config", async () => {
     setupWorkspaceRoot();
     mockParseEnvExample.mockReturnValue([]);
     mockDeduplicateVariables.mockReturnValue({ sharedVariables: [], appVariables: {} });
@@ -97,6 +97,7 @@ describe("loadSetupData", () => {
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gadget/.env.local.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gogo-web/.env.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gogo-orchestrator/.env.example`);
+    expect(readPaths).toContain(`${FAKE_ROOT}/apps/inside/.env.example`);
   });
 
   it("passes each file content to parseEnvExample", async () => {
@@ -116,7 +117,7 @@ describe("loadSetupData", () => {
     await loadSetupData();
 
     expect(mockParseEnvExample).toHaveBeenCalledWith(exampleContent);
-    expect(mockParseEnvExample).toHaveBeenCalledTimes(5);
+    expect(mockParseEnvExample).toHaveBeenCalledTimes(6);
   });
 
   it("skips missing .env.example files silently", async () => {

@@ -1,16 +1,5 @@
 "use client";
 
-export function LoadingState({ label = "Loading..." }: { label?: string }) {
-  return (
-    <div className="h-full flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin mx-auto mb-2" />
-        <div className="text-xs text-muted-foreground">{label}</div>
-      </div>
-    </div>
-  );
-}
-
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="h-full flex items-center justify-center p-4">

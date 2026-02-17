@@ -115,7 +115,7 @@ export async function syncPRs(repoId: string) {
   return limitedPulls.length;
 }
 
-export async function syncPRReviews(repoId: string, prNumber: number) {
+async function syncPRReviews(repoId: string, prNumber: number) {
   const octokit = getOctokit();
   const db = await getDb();
 

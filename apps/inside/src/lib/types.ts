@@ -1,19 +1,8 @@
 export type PRSize = "S" | "M" | "L" | "XL";
-export type ReviewStatus = "Approved" | "Changes Requested" | "Pending" | "Merged" | "Draft";
 export type SkillTrend = "Improving" | "Needs attention" | "New pattern" | "Flat";
 export type Severity = "blocking" | "suggestion" | "nit";
 export type RiskLevel = "Low" | "Medium" | "High";
 export type CommentStatus = "open" | "fixing" | "fixed" | "resolved";
-
-export interface Repo {
-  id: string;
-  owner: string;
-  name: string;
-  fullName: string;
-  defaultBranch: string;
-  lastSyncedAt: string | null;
-  createdAt: string;
-}
 
 export interface PR {
   id: string;
@@ -35,28 +24,6 @@ export interface PR {
   fetchedAt: string;
 }
 
-export interface PRComment {
-  id: string;
-  prId: string;
-  githubId: number | null;
-  reviewer: string;
-  reviewerAvatar: string | null;
-  body: string;
-  filePath: string | null;
-  lineNumber: number | null;
-  severity: Severity | null;
-  category: string | null;
-  createdAt: string | null;
-  fetchedAt: string;
-}
-
-export interface SkillAnalysis {
-  id: string;
-  repoId: string;
-  prNumbers: string;
-  createdAt: string;
-}
-
 export interface Skill {
   id: string;
   analysisId: string;
@@ -72,14 +39,6 @@ export interface Skill {
   addressed: boolean;
 }
 
-export interface SplitPlan {
-  id: string;
-  prId: string;
-  totalLines: number | null;
-  subPRs: string;
-  createdAt: string;
-}
-
 export interface SubPR {
   id: string;
   index: number;
@@ -93,15 +52,6 @@ export interface SubPR {
   riskNote: string;
   description: string;
   checklist: string[];
-}
-
-export interface CommentFix {
-  id: string;
-  commentId: string;
-  suggestedFix: string | null;
-  fixDiff: string | null;
-  status: string;
-  createdAt: string;
 }
 
 /** Dashboard aggregate stats */

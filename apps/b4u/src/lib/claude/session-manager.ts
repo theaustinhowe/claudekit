@@ -122,8 +122,3 @@ export async function getRecoverableSessions(runId?: string): Promise<Recoverabl
     createdAt: r.created_at,
   }));
 }
-
-export async function getSessionStatus(sessionId: string): Promise<SessionRow | null> {
-  const conn = await getDb();
-  return (await queryOne<SessionRow>(conn, "SELECT * FROM sessions WHERE id = ? LIMIT 1", [sessionId])) ?? null;
-}
