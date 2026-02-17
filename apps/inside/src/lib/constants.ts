@@ -25,6 +25,7 @@ export const STATUS_COLORS: Record<string, string> = {
   "Changes Requested": "bg-status-warning/15 text-status-warning",
   Pending: "bg-muted text-muted-foreground",
   Merged: "bg-primary/15 text-primary",
+  Draft: "bg-muted text-muted-foreground",
 };
 
 export const SEVERITY_COLORS: Record<string, string> = {

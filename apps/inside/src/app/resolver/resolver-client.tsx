@@ -6,9 +6,11 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Progress } from "@devkit/ui/components/progress";
+import { Skeleton } from "@devkit/ui/components/skeleton";
 import { Check, CheckCircle2, ChevronDown, ChevronRight, MessageSquare, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { getPRComments } from "@/lib/actions/prs";
 import { getCommentFixes, resolveAllFixes, resolveCommentFix, startCommentFixes } from "@/lib/actions/resolver";
 import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
@@ -132,8 +134,13 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
               return next;
             });
             setPhase("results");
+            toast.success("Fixes generated", {
+              description: `${fixResults.length} fix${fixResults.length !== 1 ? "es" : ""} ready for review`,
+            });
           } catch (err) {
-            console.error("Fix generation failed:", err);
+            toast.error("Fix generation failed", {
+              description: err instanceof Error ? err.message : "Unknown error",
+            });
             setPhase("select-comments");
           }
         });
@@ -369,10 +376,22 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
 
         <Card>
           <CardContent className="p-2 space-y-1">
-            {comments.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">
-                {isPending ? "Loading comments..." : "No review comments found for this PR."}
+            {isPending && comments.length === 0 ? (
+              <div className="p-3 space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders
+                  <div key={i} className="flex items-start gap-3 px-3 py-3">
+                    <Skeleton className="h-4 w-4 mt-0.5 rounded" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-48" />
+                    </div>
+                  </div>
+                ))}
               </div>
+            ) : comments.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">No review comments found for this PR.</div>
             ) : (
               comments.map((comment) => (
                 // biome-ignore lint/a11y/noLabelWithoutControl: label wraps input component

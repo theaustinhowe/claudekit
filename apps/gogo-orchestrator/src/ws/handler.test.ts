@@ -184,7 +184,8 @@ describe("ws/handler", () => {
 
       // Let the real schema validate — `{ invalid: true }` will fail validation
       // producing a real ZodError that z.treeifyError() can handle
-      const { WsClientMessageSchema: realSchema } = await import("@devkit/gogo-shared");
+      const { WsClientMessageSchema: realSchema } =
+        await vi.importActual<typeof import("../schemas/index.js")>("../schemas/index.js");
       vi.mocked(schema.safeParse).mockImplementation((data) => realSchema.safeParse(data) as never);
 
       socket._trigger("message", Buffer.from(JSON.stringify({ invalid: true })));

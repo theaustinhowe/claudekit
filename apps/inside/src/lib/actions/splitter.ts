@@ -89,6 +89,19 @@ export async function getSplitPlan(planId: string) {
   };
 }
 
+export async function updateSubPRDescription(planId: string, subPRIndex: number, description: string) {
+  const db = await getDb();
+  const plan = await queryOne<{ sub_prs: string }>(db, "SELECT sub_prs FROM split_plans WHERE id = ?", [planId]);
+  if (!plan) throw new Error("Plan not found");
+
+  const subPRs = JSON.parse(plan.sub_prs);
+  const target = subPRs.find((sp: { index: number }) => sp.index === subPRIndex);
+  if (target) {
+    target.description = description;
+    await execute(db, "UPDATE split_plans SET sub_prs = ? WHERE id = ?", [JSON.stringify(subPRs), planId]);
+  }
+}
+
 export async function getSplitPlansForPR(prId: string) {
   const db = await getDb();
   return queryOne<{

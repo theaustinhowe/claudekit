@@ -1,2 +1,2 @@
 export type { BrowseResult, DirectoryEntry, FileContent, FileTreeEntry } from "./types";
-export { cn, formatBytes, IMAGE_EXTENSIONS } from "./utils";
+export { cn, formatBytes, formatElapsed, IMAGE_EXTENSIONS } from "./utils";

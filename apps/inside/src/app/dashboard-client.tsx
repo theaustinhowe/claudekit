@@ -9,20 +9,20 @@ import Link from "next/link";
 import { SIZE_CLASSES, STATUS_COLORS } from "@/lib/constants";
 import type { DashboardStats, PRWithComments } from "@/lib/types";
 
-function Sparkline() {
-  const points = [4, 7, 5, 9, 6, 8, 11, 9, 12, 10];
-  const max = Math.max(...points);
+function Sparkline({ data }: { data: number[] }) {
+  const points = data.length > 0 ? data : [0];
+  const max = Math.max(...points, 1);
   const w = 80;
   const h = 28;
   const d = points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${(i / (points.length - 1)) * w},${h - (p / max) * h}`)
+    .map((p, i) => `${i === 0 ? "M" : "L"}${(i / Math.max(points.length - 1, 1)) * w},${h - (p / max) * h}`)
     .join(" ");
   return (
     <svg width={w} height={h} className="mt-1" aria-hidden="true">
       <defs>
         <linearGradient id="sparkGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="hsl(var(--gradient-start))" />
-          <stop offset="100%" stopColor="hsl(var(--gradient-to))" />
+          <stop offset="100%" stopColor="hsl(var(--gradient-end))" />
         </linearGradient>
       </defs>
       <path d={d} fill="none" stroke="url(#sparkGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -115,9 +115,10 @@ interface DashboardClientProps {
   prs: PRWithComments[];
   stats: DashboardStats;
   hasRepo: boolean;
+  sparklineData: number[];
 }
 
-export function DashboardClient({ prs, stats, hasRepo }: DashboardClientProps) {
+export function DashboardClient({ prs, stats, hasRepo, sparklineData }: DashboardClientProps) {
   if (!hasRepo) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -147,7 +148,7 @@ export function DashboardClient({ prs, stats, hasRepo }: DashboardClientProps) {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="PRs Analyzed" value={stats.totalPRs}>
-          <Sparkline />
+          <Sparkline data={sparklineData} />
         </StatCard>
         <StatCard label="Avg PR Size" value={stats.avgLinesChanged ? `${stats.avgLinesChanged} lines` : "--"}>
           {stats.avgLinesChanged > 0 && (

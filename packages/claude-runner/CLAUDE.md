@@ -15,8 +15,6 @@ Shared Claude CLI runner for spawning Claude Code processes with stream-json out
   - `signal`: AbortSignal for cancellation
   - `spawnHealthTimeoutMs`: warn if no output within timeout (default: 30s)
 
-- `parseStreamJsonEvent(evt, cwd)` — standalone event parser, reusable by any transport
-
 - `isClaudeCliAvailable()` — checks if `claude` binary is on PATH
 
 ## Usage Pattern

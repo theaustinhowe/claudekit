@@ -41,12 +41,7 @@ export function parsePolicy(row: Record<string, unknown>): Policy {
   } as Policy;
 }
 
-export function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m === 0) return `${s}s`;
-  return `${m}m ${s}s`;
-}
+export { formatElapsed } from "@devkit/ui";
 
 export function formatNumber(n: number): string {
   return n.toLocaleString();

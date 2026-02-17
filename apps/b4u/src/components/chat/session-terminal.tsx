@@ -1,6 +1,7 @@
 "use client";
 
 import { useAutoScroll } from "@devkit/hooks";
+import { formatElapsed } from "@devkit/ui";
 import { useCallback, useState } from "react";
 
 interface LogEntry {
@@ -20,13 +21,6 @@ interface SessionTerminalProps {
   onRetry?: () => void;
   minimized: boolean;
   onToggleMinimize: () => void;
-}
-
-function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m === 0) return `${s}s`;
-  return `${m}m ${s}s`;
 }
 
 function StatusIndicator({ status }: { status: SessionTerminalProps["status"] }) {

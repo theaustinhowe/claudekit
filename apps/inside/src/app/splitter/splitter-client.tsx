@@ -5,12 +5,15 @@ import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Progress } from "@devkit/ui/components/progress";
+import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { ArrowDown, Check, Scissors } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
 import { SubPRCard } from "@/components/splitter/sub-pr-card";
-import { getSplitPlan, startSplitAnalysis } from "@/lib/actions/splitter";
+import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "@/lib/actions/splitter";
 import { SIZE_CLASSES, SUB_PR_COLORS } from "@/lib/constants";
 import type { PRWithComments, SubPR } from "@/lib/types";
 
@@ -37,10 +40,12 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
   const [phase, setPhase] = useState<Phase>("select");
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [planId, setPlanId] = useState<string | null>(null);
   const [plan, setPlan] = useState<{ prNumber: number; prTitle: string; totalLines: number; subPRs: SubPR[] } | null>(
     null,
   );
   const [isPending, startTransition] = useTransition();
+  const [selectedFile, setSelectedFile] = useState<{ path: string; subPRTitle: string } | null>(null);
 
   const handleSelect = (pr: PRWithComments) => {
     setSelectedPR(pr.id);
@@ -63,8 +68,9 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
         clearInterval(interval);
         startTransition(async () => {
           try {
-            const planId = await startSplitAnalysis(selectedPR);
-            const result = await getSplitPlan(planId);
+            const newPlanId = await startSplitAnalysis(selectedPR);
+            setPlanId(newPlanId);
+            const result = await getSplitPlan(newPlanId);
             if (result) {
               setPlan({
                 prNumber: result.prNumber,
@@ -73,11 +79,17 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
                 subPRs: result.subPRs,
               });
               setPhase("results");
+              toast.success("Split plan ready", {
+                description: `Generated ${result.subPRs.length} sub-PRs`,
+              });
             } else {
+              toast.error("No split plan generated");
               setPhase("select");
             }
           } catch (err) {
-            console.error("Split analysis failed:", err);
+            toast.error("Split analysis failed", {
+              description: err instanceof Error ? err.message : "Unknown error",
+            });
             setPhase("select");
           }
         });
@@ -197,11 +209,11 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
         </div>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 pb-8">
             <p className="text-xs text-muted-foreground mb-2">
               Line distribution across {plan.subPRs.length} sub-PRs ({plan.totalLines} total lines)
             </p>
-            <div className="flex h-6 rounded-lg overflow-hidden">
+            <div className="flex h-6 rounded-lg overflow-hidden relative">
               {plan.subPRs.map((sp: SubPR, i: number) => (
                 <div
                   key={sp.id ?? i}
@@ -234,10 +246,36 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
                   <ArrowDown className="h-4 w-4 text-muted-foreground" />
                 </div>
               )}
-              <SubPRCard subPR={sp} color={SUB_PR_COLORS[i % SUB_PR_COLORS.length]} />
+              <SubPRCard
+                subPR={sp}
+                color={SUB_PR_COLORS[i % SUB_PR_COLORS.length]}
+                onFileClick={(path) => setSelectedFile({ path, subPRTitle: sp.title })}
+                onDescriptionChange={(desc) => {
+                  if (planId) updateSubPRDescription(planId, sp.index, desc);
+                }}
+              />
             </motion.div>
           ))}
         </div>
+
+        <Sheet open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
+          <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>File Preview</SheetTitle>
+              <SheetDescription className="font-mono text-xs">{selectedFile?.path}</SheetDescription>
+            </SheetHeader>
+            <SheetBody>
+              {selectedFile && (
+                <DiffPreviewDrawer
+                  data={{
+                    filePath: selectedFile.path,
+                    subPRTitle: selectedFile.subPRTitle,
+                  }}
+                />
+              )}
+            </SheetBody>
+          </SheetContent>
+        </Sheet>
       </div>
     );
   }

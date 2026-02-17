@@ -4,12 +4,15 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Progress } from "@devkit/ui/components/progress";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Slider } from "@devkit/ui/components/slider";
 import { Brain, Check, Filter } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { SkillCard } from "@/components/skills/skill-card";
+import { SkillDetailDrawer } from "@/components/skills/skill-detail-drawer";
 import { getSkillsForAnalysis, startSkillAnalysis } from "@/lib/actions/skills";
 import type { PRWithComments, SkillWithComments } from "@/lib/types";
 
@@ -43,6 +46,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const [selectedSkill, setSelectedSkill] = useState<SkillWithComments | null>(null);
 
   const filtered = prsWithComments.filter((p) => p.commentCount >= minComments);
 
@@ -80,8 +84,13 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
             const results = await getSkillsForAnalysis(analysisId);
             setSkills(results);
             setPhase("results");
+            toast.success("Skill analysis complete", {
+              description: `Found ${results.length} skill pattern${results.length !== 1 ? "s" : ""}`,
+            });
           } catch (err) {
-            console.error("Analysis failed:", err);
+            toast.error("Skill analysis failed", {
+              description: err instanceof Error ? err.message : "Unknown error",
+            });
             setPhase("select");
           }
         });
@@ -151,7 +160,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <SkillCard skill={skill} />
+              <SkillCard skill={skill} onClick={() => setSelectedSkill(skill)} />
             </motion.div>
           ))}
         </div>
@@ -161,6 +170,15 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
             No skill patterns found. Try selecting more PRs with review comments.
           </div>
         )}
+
+        <Sheet open={!!selectedSkill} onOpenChange={(open) => !open && setSelectedSkill(null)}>
+          <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{selectedSkill?.name}</SheetTitle>
+            </SheetHeader>
+            <SheetBody>{selectedSkill && <SkillDetailDrawer skill={selectedSkill} />}</SheetBody>
+          </SheetContent>
+        </Sheet>
       </div>
     );
   }

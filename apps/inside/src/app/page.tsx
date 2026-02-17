@@ -1,5 +1,5 @@
 import { getConnectedRepos } from "@/lib/actions/github";
-import { getDashboardStats, getRecentPRs } from "@/lib/actions/prs";
+import { getDashboardStats, getRecentPRs, getWeeklyPRCounts } from "@/lib/actions/prs";
 import { DashboardClient } from "./dashboard-client";
 
 export default async function DashboardPage() {
@@ -13,10 +13,15 @@ export default async function DashboardPage() {
     topSkillGap: null,
     splittablePRs: 0,
   };
+  let sparklineData: number[] = [];
 
   if (activeRepo) {
-    [prs, stats] = await Promise.all([getRecentPRs(activeRepo.id), getDashboardStats(activeRepo.id)]);
+    [prs, stats, sparklineData] = await Promise.all([
+      getRecentPRs(activeRepo.id),
+      getDashboardStats(activeRepo.id),
+      getWeeklyPRCounts(activeRepo.id),
+    ]);
   }
 
-  return <DashboardClient prs={prs} stats={stats} hasRepo={!!activeRepo} />;
+  return <DashboardClient prs={prs} stats={stats} hasRepo={!!activeRepo} sparklineData={sparklineData} />;
 }

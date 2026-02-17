@@ -2,6 +2,7 @@
 
 import crypto from "node:crypto";
 import { runClaude } from "@devkit/claude-runner";
+import { getSetting } from "@/lib/actions/settings";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { buildSkillAnalysisPrompt } from "@/lib/prompts";
 import type { Skill, SkillWithComments } from "@/lib/types";
@@ -31,6 +32,14 @@ export async function startSkillAnalysis(repoId: string, prNumbers: number[]) {
     throw new Error("No comments found for selected PRs");
   }
 
+  // Apply settings filters
+  const ignoreBots = await getSetting("ignore_bots");
+  const filteredComments = ignoreBots !== "false" ? comments.filter((c) => !c.reviewer.includes("[bot]")) : comments;
+
+  if (filteredComments.length === 0) {
+    throw new Error("No comments remain after filtering bots");
+  }
+
   // Get PR titles for context
   const prs = await queryAll<{ id: string; number: number; title: string }>(
     db,
@@ -39,7 +48,7 @@ export async function startSkillAnalysis(repoId: string, prNumbers: number[]) {
   );
   const prMap = new Map(prs.map((p) => [p.id, p]));
 
-  const enrichedComments = comments.map((c) => {
+  const enrichedComments = filteredComments.map((c) => {
     const pr = prMap.get(c.pr_id);
     return {
       id: c.id,
@@ -184,4 +193,9 @@ export async function getSkillsForAnalysis(analysisId: string): Promise<SkillWit
 export async function markSkillAddressed(skillId: string, addressed: boolean) {
   const db = await getDb();
   await execute(db, "UPDATE skills SET addressed = ? WHERE id = ?", [addressed, skillId]);
+}
+
+export async function updateSkillActionItem(skillId: string, actionItem: string) {
+  const db = await getDb();
+  await execute(db, "UPDATE skills SET action_item = ? WHERE id = ?", [actionItem, skillId]);
 }

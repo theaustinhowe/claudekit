@@ -1,5 +1,5 @@
 export type PRSize = "S" | "M" | "L" | "XL";
-export type ReviewStatus = "Approved" | "Changes Requested" | "Pending" | "Merged";
+export type ReviewStatus = "Approved" | "Changes Requested" | "Pending" | "Merged" | "Draft";
 export type SkillTrend = "Improving" | "Needs attention" | "New pattern" | "Flat";
 export type Severity = "blocking" | "suggestion" | "nit";
 export type RiskLevel = "Low" | "Medium" | "High";

@@ -5,8 +5,8 @@ import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Textarea } from "@devkit/ui/components/textarea";
 import { Check, ExternalLink } from "lucide-react";
-import { useState, useTransition } from "react";
-import { markSkillAddressed } from "@/lib/actions/skills";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { markSkillAddressed, updateSkillActionItem } from "@/lib/actions/skills";
 import { SEVERITY_COLORS } from "@/lib/constants";
 import type { SkillWithComments } from "@/lib/types";
 
@@ -14,6 +14,7 @@ export function SkillDetailDrawer({ skill }: { skill: SkillWithComments }) {
   const [actionItem, setActionItem] = useState(skill.actionItem ?? "");
   const [addressed, setAddressed] = useState(skill.addressed);
   const [isPending, startTransition] = useTransition();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const resources = skill.resources ? JSON.parse(skill.resources) : [];
 
@@ -24,6 +25,22 @@ export function SkillDetailDrawer({ skill }: { skill: SkillWithComments }) {
       await markSkillAddressed(skill.id, newValue);
     });
   };
+
+  const handleActionItemChange = (value: string) => {
+    setActionItem(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      startTransition(async () => {
+        await updateSkillActionItem(skill.id, value);
+      });
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -83,7 +100,12 @@ export function SkillDetailDrawer({ skill }: { skill: SkillWithComments }) {
 
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Action Item</h4>
-        <Textarea value={actionItem} onChange={(e) => setActionItem(e.target.value)} className="text-sm" rows={3} />
+        <Textarea
+          value={actionItem}
+          onChange={(e) => handleActionItemChange(e.target.value)}
+          className="text-sm"
+          rows={3}
+        />
       </div>
 
       <Button

@@ -51,8 +51,10 @@ export async function syncPRs(repoId: string) {
     const id = `${repoId}#${pr.number}`;
 
     let reviewStatus = "Pending";
-    if (pr.merged_at) {
+    if (pr.state === "closed" && pr.merged_at) {
       reviewStatus = "Merged";
+    } else if (pr.draft) {
+      reviewStatus = "Draft";
     }
 
     await execute(
@@ -176,6 +178,19 @@ export async function syncPRComments(repoId: string, prNumber: number) {
   }
 
   return comments.length;
+}
+
+export async function syncAllCommentsForRepo(repoId: string) {
+  const db = await getDb();
+  const prs = await queryAll<{ number: number }>(db, "SELECT number FROM prs WHERE repo_id = ?", [repoId]);
+
+  let totalComments = 0;
+  for (const pr of prs) {
+    const commentCount = await syncPRComments(repoId, pr.number);
+    await syncPRReviews(repoId, pr.number);
+    totalComments += commentCount;
+  }
+  return totalComments;
 }
 
 export async function fetchPRDiff(owner: string, repo: string, prNumber: number): Promise<string> {
