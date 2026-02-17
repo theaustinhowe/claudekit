@@ -205,7 +205,8 @@ describe("GET /api/logs/[app]/stream", () => {
     const response = await GET(req, { params });
 
     // Drain initial output
-    const reader = response.body!.getReader();
+    if (!response.body) throw new Error("Expected response body");
+    const reader = response.body.getReader();
     const decoder = new TextDecoder();
     // Read the ": connected" message
     const initial = await reader.read();
@@ -225,7 +226,7 @@ describe("GET /api/logs/[app]/stream", () => {
     mockOpen.mockResolvedValue(watcherFh as never);
 
     // Trigger the watcher callback
-    watchCallback!();
+    watchCallback?.();
 
     // Allow the async watcher callback to complete
     await new Promise((r) => setTimeout(r, 50));
@@ -275,7 +276,7 @@ describe("GET /api/logs/[app]/stream", () => {
     const callsBefore = mockOpen.mock.calls.length;
 
     // Trigger watcher — size unchanged, should early-return
-    watchCallback!();
+    watchCallback?.();
     await new Promise((r) => setTimeout(r, 50));
 
     // open should NOT have been called again (no new data to read)
@@ -307,7 +308,7 @@ describe("GET /api/logs/[app]/stream", () => {
     await drainAvailableChunks(response);
 
     // Should not throw — error is caught silently
-    watchCallback!();
+    watchCallback?.();
     await new Promise((r) => setTimeout(r, 50));
   });
 
@@ -322,7 +323,8 @@ describe("GET /api/logs/[app]/stream", () => {
     const { req, params } = buildRequest("gadget");
     const response = await GET(req, { params });
 
-    const reader = response.body!.getReader();
+    if (!response.body) throw new Error("Expected response body");
+    const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
     // Read initial output (": connected")
@@ -351,7 +353,8 @@ describe("GET /api/logs/[app]/stream", () => {
     const response = await GET(req, { params });
 
     // Read initial data
-    const reader = response.body!.getReader();
+    if (!response.body) throw new Error("Expected response body");
+    const reader = response.body.getReader();
     await reader.read(); // ": connected"
 
     // Cancel the reader which closes the controller
@@ -380,7 +383,7 @@ describe("GET /api/logs/[app]/stream", () => {
     await drainAvailableChunks(response);
 
     // Cancel the stream — should trigger cleanup
-    await response.body!.cancel();
+    await response.body?.cancel();
 
     expect(mockWatcherClose).toHaveBeenCalled();
   });

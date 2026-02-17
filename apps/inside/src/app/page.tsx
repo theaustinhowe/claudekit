@@ -1,0 +1,22 @@
+import { getConnectedRepos } from "@/lib/actions/github";
+import { getDashboardStats, getRecentPRs } from "@/lib/actions/prs";
+import { DashboardClient } from "./dashboard-client";
+
+export default async function DashboardPage() {
+  const repos = await getConnectedRepos();
+  const activeRepo = repos[0] ?? null;
+
+  let prs: Awaited<ReturnType<typeof getRecentPRs>> = [];
+  let stats: Awaited<ReturnType<typeof getDashboardStats>> = {
+    totalPRs: 0,
+    avgLinesChanged: 0,
+    topSkillGap: null,
+    splittablePRs: 0,
+  };
+
+  if (activeRepo) {
+    [prs, stats] = await Promise.all([getRecentPRs(activeRepo.id), getDashboardStats(activeRepo.id)]);
+  }
+
+  return <DashboardClient prs={prs} stats={stats} hasRepo={!!activeRepo} />;
+}

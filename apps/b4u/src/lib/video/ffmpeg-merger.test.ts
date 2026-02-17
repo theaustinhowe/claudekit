@@ -270,9 +270,9 @@ describe("stderr truncation", () => {
     }
 
     expect(caughtError).toBeDefined();
-    expect(caughtError!.message).toContain("ffmpeg exited with code 1");
+    expect(caughtError?.message).toContain("ffmpeg exited with code 1");
     // The full stderr is 1000 chars, but slice(-500) should truncate it
-    const stderrPortion = caughtError!.message.split(": ").slice(1).join(": ");
+    const stderrPortion = (caughtError?.message ?? "").split(": ").slice(1).join(": ");
     expect(stderrPortion.length).toBeLessThanOrEqual(500);
   });
 });

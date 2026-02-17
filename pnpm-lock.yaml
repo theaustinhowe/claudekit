@@ -325,6 +325,88 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@22.19.11)(jiti@2.6.1)(jsdom@25.0.0)(lightningcss@1.30.2)(tsx@4.21.0)
 
+  apps/inside:
+    dependencies:
+      '@devkit/claude-runner':
+        specifier: workspace:*
+        version: link:../../packages/claude-runner
+      '@devkit/duckdb':
+        specifier: workspace:*
+        version: link:../../packages/duckdb
+      '@devkit/hooks':
+        specifier: workspace:*
+        version: link:../../packages/hooks
+      '@devkit/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@devkit/session':
+        specifier: workspace:*
+        version: link:../../packages/session
+      '@devkit/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@duckdb/node-api':
+        specifier: 1.4.4-r.1
+        version: 1.4.4-r.1
+      lucide-react:
+        specifier: ^0.563.0
+        version: 0.563.0(react@19.2.4)
+      motion:
+        specifier: ^12.34.0
+        version: 12.34.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next:
+        specifier: ^16.1.6
+        version: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next-themes:
+        specifier: ^0.4.6
+        version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      octokit:
+        specifier: ^4.1.2
+        version: 4.1.4
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4.1.18
+        version: 4.1.18
+      '@types/node':
+        specifier: ^25.2.3
+        version: 25.2.3
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      postcss-load-config:
+        specifier: ^6.0.1
+        version: 6.0.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)
+      tailwindcss:
+        specifier: ^4.1.18
+        version: 4.1.18
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)(jsdom@25.0.0)(lightningcss@1.30.2)(tsx@4.21.0)
+
   apps/web:
     dependencies:
       '@devkit/hooks':
@@ -4006,6 +4088,9 @@ packages:
     peerDependencies:
       zod: ^3.25 || ^4
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
@@ -7620,6 +7705,8 @@ snapshots:
   zod-to-json-schema@3.25.1(zod@4.3.6):
     dependencies:
       zod: 4.3.6
+
+  zod@3.25.76: {}
 
   zod@4.3.6: {}
 

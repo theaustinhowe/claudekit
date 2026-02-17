@@ -1,0 +1,48 @@
+{
+  "name": "inside",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 2400",
+    "build": "next build",
+    "start": "next start --port 2400",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/",
+    "seed": "tsx src/lib/db/seed.ts",
+    "db:reset": "rm -f ~/.inside/data.duckdb ~/.inside/data.duckdb.wal",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@devkit/claude-runner": "workspace:*",
+    "@devkit/duckdb": "workspace:*",
+    "@devkit/hooks": "workspace:*",
+    "@devkit/logger": "workspace:*",
+    "@devkit/session": "workspace:*",
+    "@devkit/ui": "workspace:*",
+    "@duckdb/node-api": "1.4.4-r.1",
+    "lucide-react": "^0.563.0",
+    "motion": "^12.34.0",
+    "next": "^16.1.6",
+    "next-themes": "^0.4.6",
+    "octokit": "^4.1.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sonner": "^2.0.7",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^25.2.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "postcss": "^8.5.6",
+    "postcss-load-config": "^6.0.1",
+    "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
