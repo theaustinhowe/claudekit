@@ -16,7 +16,10 @@ import {
   VOICEOVER_SCRIPTS,
 } from "../src/lib/mock-data";
 
-const SCHEMA_SQL = fs.readFileSync(path.join(import.meta.dirname, "../src/lib/db/migrations/001_initial.sql"), "utf-8");
+const SCHEMA_SQL = fs.readFileSync(
+  path.join(new URL(".", import.meta.url).pathname, "../src/lib/db/migrations/001_initial.sql"),
+  "utf-8",
+);
 
 const DB_PATH = process.env.DATABASE_PATH || "data/b4u.duckdb";
 
