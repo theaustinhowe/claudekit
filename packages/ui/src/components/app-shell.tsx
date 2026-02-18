@@ -13,15 +13,15 @@ interface AppShellProps {
 
 export function AppShell({ sidebar, header, footer, children, className }: AppShellProps) {
   return (
-    <>
-      <div className={cn("flex min-h-screen", className)}>
+    <div className={cn("flex h-dvh flex-col", className)}>
+      <div className="flex flex-1 min-h-0">
         {sidebar}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-auto">
           {header}
           <main className="flex-1 flex flex-col min-h-0">{children}</main>
         </div>
       </div>
       {footer}
-    </>
+    </div>
   );
 }

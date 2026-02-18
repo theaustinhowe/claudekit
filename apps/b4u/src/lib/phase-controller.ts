@@ -171,13 +171,17 @@ export function usePhaseController() {
           database: scan.database,
         };
 
-        // Persist tree to DB (fire-and-forget)
+        // Persist tree to DB before showing panel (panel fetches it immediately)
         if (scan.tree) {
-          fetch("/api/file-tree", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tree: scan.tree, name: scan.name, runId }),
-          }).catch(() => {});
+          try {
+            await fetch("/api/file-tree", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tree: scan.tree, name: scan.name, runId }),
+            });
+          } catch {
+            // Tree display is non-critical — continue even if save fails
+          }
         }
       } catch {
         projectSummary = {

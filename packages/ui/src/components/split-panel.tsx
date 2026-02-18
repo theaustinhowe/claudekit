@@ -100,7 +100,7 @@ export function SplitPanel({
 
   return (
     <div ref={containerRef} className="flex flex-1 overflow-hidden">
-      <div className="overflow-hidden flex flex-col" style={{ width: `${leftWidth}%` }}>
+      <div className="overflow-hidden min-h-0 flex flex-col" style={{ width: `${leftWidth}%` }}>
         {left}
       </div>
 
