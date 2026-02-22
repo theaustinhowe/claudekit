@@ -402,33 +402,31 @@ describe("detectPhase", () => {
 });
 
 describe("parseStreamJsonLine", () => {
-  const logState = { sequence: 0 };
-
   it("returns unknown for empty line", () => {
-    expect(parseStreamJsonLine("", "job-1", logState)).toEqual({ type: "unknown" });
+    expect(parseStreamJsonLine("")).toEqual({ type: "unknown" });
   });
 
   it("parses error message", () => {
     const line = JSON.stringify({ type: "error", error: { message: "Rate limit exceeded" } });
-    const result = parseStreamJsonLine(line, "job-1", logState);
+    const result = parseStreamJsonLine(line);
     expect(result).toEqual({ type: "error", content: "Rate limit exceeded" });
   });
 
   it("parses session result", () => {
     const line = JSON.stringify({ type: "result", result: { session_id: "sess-123" } });
-    const result = parseStreamJsonLine(line, "job-1", logState);
+    const result = parseStreamJsonLine(line);
     expect(result).toEqual({ type: "session", sessionId: "sess-123" });
   });
 
   it("parses content block delta text", () => {
     const line = JSON.stringify({ type: "content_block_delta", delta: { text: "Hello world" } });
-    const result = parseStreamJsonLine(line, "job-1", logState);
+    const result = parseStreamJsonLine(line);
     expect(result).toEqual({ type: "text", content: "Hello world" });
   });
 
   it("detects signal in delta text", () => {
     const line = JSON.stringify({ type: "content_block_delta", delta: { text: "READY_TO_PR" } });
-    const result = parseStreamJsonLine(line, "job-1", logState);
+    const result = parseStreamJsonLine(line);
     expect(result.type).toBe("signal");
     expect(result.signal).toBe("READY_TO_PR");
   });
@@ -438,7 +436,7 @@ describe("parseStreamJsonLine", () => {
       type: "message",
       message: { content: [{ type: "text", text: "Analyzing code" }] },
     });
-    const result = parseStreamJsonLine(line, "job-1", logState);
+    const result = parseStreamJsonLine(line);
     expect(result).toEqual({ type: "text", content: "Analyzing code" });
   });
 
@@ -447,17 +445,17 @@ describe("parseStreamJsonLine", () => {
       type: "assistant",
       message: { content: [{ type: "tool_use", tool_use: { name: "Read", input: {} } }] },
     });
-    const result = parseStreamJsonLine(line, "job-1", logState);
+    const result = parseStreamJsonLine(line);
     expect(result).toEqual({ type: "tool", content: "Tool: Read" });
   });
 
   it("treats non-JSON as plain text", () => {
-    const result = parseStreamJsonLine("Just plain output", "job-1", logState);
+    const result = parseStreamJsonLine("Just plain output");
     expect(result).toEqual({ type: "text", content: "Just plain output" });
   });
 
   it("detects signal in plain text", () => {
-    const result = parseStreamJsonLine("NEEDS_INFO: How should I handle auth?", "job-1", logState);
+    const result = parseStreamJsonLine("NEEDS_INFO: How should I handle auth?");
     expect(result.type).toBe("signal");
     expect(result.signal).toBe("NEEDS_INFO");
     expect(result.question).toBe("How should I handle auth?");

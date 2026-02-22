@@ -20,6 +20,7 @@
     "@devkit/github": "workspace:*",
     "@devkit/gogo-shared": "workspace:*",
     "@devkit/logger": "workspace:*",
+    "@devkit/session": "workspace:*",
     "@duckdb/node-api": "1.4.4-r.1",
     "@fastify/cors": "^10.0.0",
     "@fastify/websocket": "^11.0.0",

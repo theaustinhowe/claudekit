@@ -110,4 +110,6 @@ export interface SessionManager {
   getLiveSession: (sessionId: string) => LiveSession | undefined;
   setCleanupFn: (sessionId: string, fn: () => Promise<void>) => void;
   setSessionPid: (sessionId: string, pid: number) => Promise<void>;
+  /** Emit an event into a live session from external code (ring buffer + fan-out + log batching). */
+  emitEvent: (sessionId: string, event: SessionEvent) => boolean;
 }

@@ -271,6 +271,13 @@ export function createSessionManager(config: SessionManagerConfig): SessionManag
     }
   }
 
+  function emitEvent(sessionId: string, event: SessionEvent): boolean {
+    const session = getSessions().get(sessionId);
+    if (!session || (session.status !== "running" && session.status !== "pending")) return false;
+    fanOut(session, event);
+    return true;
+  }
+
   return {
     startSession,
     cancelSession,
@@ -278,5 +285,6 @@ export function createSessionManager(config: SessionManagerConfig): SessionManag
     getLiveSession,
     setCleanupFn,
     setSessionPid,
+    emitEvent,
   };
 }

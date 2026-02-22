@@ -2,6 +2,7 @@ import { execute, queryOne } from "@devkit/duckdb";
 import type { JobStatus, LogStream } from "@devkit/gogo-shared";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
+import { emitEvent, getLiveSession } from "../services/session-bridge.js";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";
 import { createServiceLogger } from "./logger.js";
 
@@ -27,7 +28,7 @@ interface JobLogBuffer {
 const FLUSH_INTERVAL_MS = 2000;
 const RING_BUFFER_SIZE = 500;
 
-// In-memory buffers per job
+// In-memory buffers per job (fallback for logs outside active sessions)
 const jobBuffers = new Map<string, JobLogBuffer>();
 let flushTimer: NodeJS.Timeout | null = null;
 
@@ -42,11 +43,29 @@ function getOrCreateBuffer(jobId: string): JobLogBuffer {
 
 /**
  * Emit a log entry for a job and broadcast to WebSocket subscribers.
- * Logs are buffered in memory and batch-inserted to DB every 2 seconds.
- * WebSocket broadcast happens immediately (no latency for live viewers).
+ * If the job has an active session (via @devkit/session), the log is routed
+ * through the session manager's ring buffer + batch flush. Otherwise, it falls
+ * back to the local buffer (for pre-session logs like workspace setup).
+ *
+ * WebSocket broadcast always happens immediately regardless of routing.
  */
 export async function emitLog(jobId: string, stream: LogStream, content: string, state: LogState): Promise<void> {
   const sequence = state.sequence++;
+
+  // Try to route through the session manager if a live session exists
+  const session = getLiveSession(jobId);
+  if (session && (session.status === "running" || session.status === "pending")) {
+    emitEvent(jobId, {
+      type: "log",
+      log: content,
+      logType: stream,
+    });
+    // Still broadcast to WS immediately (session fan-out doesn't know about WS)
+    sendLogToSubscribers(jobId, { stream, content, sequence });
+    return;
+  }
+
+  // Fallback: local ring buffer + pending (for logs outside active sessions)
   const entry: LogEntry = {
     jobId,
     stream,
@@ -116,9 +135,31 @@ async function flushAllPending(): Promise<void> {
 
 /**
  * Get the ring buffer entries for a job (for reconnection replay).
+ * Checks the session's event buffer first, falls back to local buffer.
  * Returns entries with sequence > lastSequence if provided.
  */
 export function getRingBuffer(jobId: string, lastSequence?: number): LogEntry[] {
+  // Check if there's a live session with buffered events
+  const session = getLiveSession(jobId);
+  if (session && session.events.length > 0) {
+    // Convert session events to LogEntry format
+    const sessionEntries: LogEntry[] = session.events
+      .filter((e: { log?: string }) => e.log)
+      .map((e: { log?: string; logType?: string }, i: number) => ({
+        jobId,
+        stream: (e.logType || "system") as LogStream,
+        content: e.log as string,
+        sequence: i,
+        createdAt: new Date(),
+      }));
+
+    if (lastSequence !== undefined) {
+      return sessionEntries.filter((entry) => entry.sequence > lastSequence);
+    }
+    return sessionEntries;
+  }
+
+  // Fall back to local ring buffer
   const buffer = jobBuffers.get(jobId);
   if (!buffer) return [];
 

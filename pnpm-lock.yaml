@@ -211,6 +211,9 @@ importers:
       '@devkit/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@devkit/session':
+        specifier: workspace:*
+        version: link:../../packages/session
       '@duckdb/node-api':
         specifier: 1.4.4-r.1
         version: 1.4.4-r.1

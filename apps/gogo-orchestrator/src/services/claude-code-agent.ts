@@ -1,15 +1,27 @@
-import type { ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { isClaudeCliAvailable as checkClaudeCli, spawnClaude } from "@devkit/claude-runner";
+import type { ClaudeStreamEvent } from "@devkit/claude-runner";
 import { execute, queryOne } from "@devkit/duckdb";
 import type { InjectMode, JobStatus } from "@devkit/gogo-shared";
+import type { SessionRunner } from "@devkit/session";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState, updateJobStatus } from "../utils/job-logging.js";
 import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { AGENT_COMMENT_MARKER, createIssueCommentForRepo, getRepoConfigById } from "./github/index.js";
-import { registerProcess, unregisterProcess } from "./process-manager.js";
+import {
+  cancelSession,
+  createSessionRecord,
+  getActiveSessionCount,
+  getLiveSession,
+  safeTerminateProcess,
+  setCleanupFn,
+  setSessionPid,
+  startSession,
+  trackSession,
+  untrackSession,
+} from "./session-bridge.js";
 import { type ClaudeCodeSettings, getClaudeSettings } from "./settings-helper.js";
 
 const log = createServiceLogger("claude-code-agent");
@@ -42,23 +54,6 @@ export async function getClaudeAvailabilityError(): Promise<string | null> {
   }
   return null;
 }
-
-// Track active Claude processes
-interface ActiveProcess {
-  process: ChildProcess;
-  jobId: string;
-  sessionId: string | null;
-  startTime: number;
-  timeoutId?: NodeJS.Timeout;
-  logState: LogState;
-}
-
-const activeProcesses = new Map<string, ActiveProcess>();
-
-// Stream-JSON message type — uses ClaudeStreamEvent from @devkit/claude-runner
-// for the base shape, with local narrowing in parseStreamJsonLine for
-// domain-specific fields (content_block_delta, result.session_id, etc.)
-import type { ClaudeStreamEvent } from "@devkit/claude-runner";
 
 /**
  * Build the structured prompt for Claude Code
@@ -300,7 +295,7 @@ export function detectPhase(parsed: ParsedLine): { phase: string; progress?: num
 /**
  * Parse a line of stream-json output from Claude CLI
  */
-export function parseStreamJsonLine(line: string, _jobId: string, _logState: LogState): ParsedLine {
+export function parseStreamJsonLine(line: string): ParsedLine {
   if (!line.trim()) {
     return { type: "unknown" };
   }
@@ -354,14 +349,18 @@ export function parseStreamJsonLine(line: string, _jobId: string, _logState: Log
 }
 
 /**
- * Start a Claude Code run for a job
+ * Start a Claude Code run for a job.
+ *
+ * Creates a @devkit/session session and wraps the Claude process as a SessionRunner.
+ * The session manages the ring buffer, batch log flushing, PID tracking, and cleanup.
  */
 export async function startClaudeRun(
   jobId: string,
   resumeWithMessage?: string,
 ): Promise<{ success: boolean; error?: string }> {
-  // Check if already running
-  if (activeProcesses.has(jobId)) {
+  // Check if already running via session
+  const existingSession = getLiveSession(jobId);
+  if (existingSession && (existingSession.status === "running" || existingSession.status === "pending")) {
     return {
       success: false,
       error: "Claude run already in progress for this job",
@@ -390,10 +389,11 @@ export async function startClaudeRun(
     return { success: false, error: "Job does not have a repository ID" };
   }
 
-  // Capture repositoryId for use in closures (TypeScript narrowing doesn't work for closures)
+  // Capture for closures
   const repositoryId = job.repository_id;
+  const worktreePath = job.worktree_path;
 
-  // Get repository config for multi-repo support
+  // Get repository config
   const repoConfig = await getRepoConfigById(repositoryId);
   if (!repoConfig) {
     return { success: false, error: "Repository configuration not found" };
@@ -406,7 +406,8 @@ export async function startClaudeRun(
   }
 
   // Check parallel job limit
-  if (activeProcesses.size >= claudeSettings.max_parallel_jobs) {
+  const activeCount = getActiveSessionCount();
+  if (activeCount >= claudeSettings.max_parallel_jobs) {
     return {
       success: false,
       error: `Max parallel jobs reached (${claudeSettings.max_parallel_jobs})`,
@@ -415,8 +416,8 @@ export async function startClaudeRun(
 
   const logState: LogState = { sequence: 0 };
 
-  // Track the session ID we'll use (either existing or newly generated)
-  let sessionId = job.claude_session_id;
+  // Track the Claude session ID (for resume capability)
+  let claudeSessionId = job.claude_session_id;
   let prompt: string;
 
   // Resume mode or new run
@@ -424,21 +425,23 @@ export async function startClaudeRun(
     prompt = resumeWithMessage;
     await emitLog(jobId, "system", `Resuming Claude session with message: ${resumeWithMessage}`, logState);
   } else {
-    // Generate a new session ID upfront so we can resume later even if paused early
-    sessionId = randomUUID();
+    // Generate a new Claude session ID upfront
+    claudeSessionId = randomUUID();
 
-    // Save the session ID immediately so it's available for resume
+    // Save immediately for resume support
     const now = new Date().toISOString();
-    await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [sessionId, now, jobId]);
+    await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
+      claudeSessionId,
+      now,
+      jobId,
+    ]);
 
-    // Check for pending injection to include in the initial prompt
+    // Consume pending injection
     if (job.pending_injection) {
-      // Clear the pending injection after consuming it
       await execute(conn, "UPDATE jobs SET pending_injection = NULL, updated_at = ? WHERE id = ?", [
         new Date().toISOString(),
         jobId,
       ]);
-
       await emitLog(jobId, "system", `Including pending message: ${job.pending_injection}`, logState);
     }
 
@@ -454,302 +457,360 @@ export async function startClaudeRun(
       repoConfig,
       claudeSettings,
     );
-    await emitLog(jobId, "system", `Starting new Claude Code run (session: ${sessionId})...`, logState);
+    await emitLog(jobId, "system", `Starting new Claude Code run (session: ${claudeSessionId})...`, logState);
   }
 
-  // Spawn Claude process via @devkit/claude-runner
-  const spawnOpts: Parameters<typeof spawnClaude>[0] = {
-    cwd: job.worktree_path,
-    prompt,
-    dangerouslySkipPermissions: true,
-    env: { FORCE_COLOR: "0", NO_COLOR: "1" },
-  };
-  if (resumeWithMessage && job.claude_session_id) {
-    spawnOpts.resume = job.claude_session_id;
-  } else if (sessionId) {
-    spawnOpts.sessionId = sessionId;
-  }
-  const proc = spawnClaude(spawnOpts);
-
-  const claudeProcess = proc.child;
-
-  // Register process for cleanup tracking
-  if (proc.pid) {
-    await registerProcess(jobId, proc.pid);
-    await emitLog(jobId, "system", `Claude process started (PID: ${proc.pid})`, logState);
-  } else {
-    log.error("Failed to spawn claude process - no PID");
-    await emitLog(jobId, "stderr", "Failed to spawn Claude process - no PID assigned", logState);
-    return { success: false, error: "Failed to spawn Claude process" };
-  }
-
-  // Set up timeout
-  const timeoutId = setTimeout(async () => {
-    await stopClaudeRun(jobId, true); // Save session on timeout
-    await emitLog(jobId, "stderr", `Claude run timed out after ${claudeSettings.max_runtime_ms / 1000}s`, logState);
-    await updateJobStatus(jobId, "paused", "running", "Timed out - session saved", {
-      pause_reason: "Execution timeout",
-    });
-  }, claudeSettings.max_runtime_ms);
-
-  // Track the process
-  const activeProcess: ActiveProcess = {
-    process: claudeProcess,
-    jobId,
-    sessionId, // Use the session ID we determined above (either existing or newly generated)
-    startTime: Date.now(),
-    timeoutId,
-    logState,
-  };
-  activeProcesses.set(jobId, activeProcess);
-
-  let planAccumulator = ""; // Accumulate plan content across multiple chunks
-  let isAccumulatingPlan = false; // Flag to indicate we're in plan accumulation mode
-
-  // Handle stdout (stream-json output) via line-buffered handler
-  proc.onRawLine(async (line) => {
-    const parsed = parseStreamJsonLine(line, jobId, logState);
-
-    // Detect phase changes from parsed output
-    const phaseInfo = detectPhase(parsed);
-    if (phaseInfo) {
-      // Update phase in DB (fire-and-forget, non-blocking)
-      execute(conn, "UPDATE jobs SET phase = ?, progress = ?, updated_at = ? WHERE id = ?", [
-        phaseInfo.phase,
-        phaseInfo.progress ?? null,
-        new Date().toISOString(),
-        jobId,
-      ])
-        .then(() =>
-          queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]).then((updated) => {
-            if (updated) {
-              broadcast({ type: "job:updated", payload: updated });
-            }
-          }),
-        )
-        .catch(() => {}); // Ignore phase update errors
-    }
-
-    // If we're accumulating plan content, append all text
-    if (isAccumulatingPlan && parsed.type === "text" && parsed.content) {
-      planAccumulator += `\n${parsed.content}`;
-      await emitLog(jobId, "stdout:content", parsed.content, logState);
-      return;
-    }
-
-    switch (parsed.type) {
-      case "text":
-        if (parsed.content) {
-          await emitLog(jobId, "stdout:content", parsed.content, logState);
-        }
-        break;
-
-      case "tool":
-        if (parsed.content) {
-          await emitLog(jobId, "stdout:tool", parsed.content, logState);
-        }
-        break;
-
-      case "error":
-        if (parsed.content) {
-          await emitLog(jobId, "stderr", parsed.content, logState);
-        }
-        break;
-
-      case "session":
-        if (parsed.sessionId) {
-          activeProcess.sessionId = parsed.sessionId;
-          // Save session ID to database
-          await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
-            parsed.sessionId,
-            new Date().toISOString(),
-            jobId,
-          ]);
-          await emitLog(jobId, "system", `Session ID: ${parsed.sessionId}`, logState);
-        }
-        break;
-
-      case "signal":
-        if (parsed.signal === "PLAN") {
-          await emitLog(jobId, "system", "Agent submitted implementation plan", logState);
-          // Start accumulating plan content
-          isAccumulatingPlan = true;
-          planAccumulator = parsed.planContent || "";
-          if (parsed.content) {
-            await emitLog(jobId, "stdout:content", parsed.content, logState);
-          }
-        } else if (parsed.signal === "READY_TO_PR") {
-          await emitLog(jobId, "system", "Agent signaled READY_TO_PR", logState);
-          // Stop the process gracefully
-          await stopClaudeRun(jobId, true);
-          // Transition to ready_to_pr
-          await updateJobStatus(jobId, "ready_to_pr", "running", "Agent completed work", {
-            claude_session_id: activeProcess.sessionId,
-          });
-        } else if (parsed.signal === "NEEDS_INFO" && parsed.question) {
-          await emitLog(jobId, "system", `Agent needs info: ${parsed.question}`, logState);
-          // For manual jobs (negative issue number), skip GitHub comment
-          if (job.issue_number < 0) {
-            await stopClaudeRun(jobId, true);
-            await updateJobStatus(jobId, "needs_info", "running", parsed.question, {
-              claude_session_id: activeProcess.sessionId,
-              needs_info_question: parsed.question,
-            });
-          } else {
-            // Post question to GitHub
-            try {
-              const commentBody = `${AGENT_COMMENT_MARKER}\n**Agent Question:**\n\n${parsed.question}`;
-              const { id: commentId } = await createIssueCommentForRepo(repositoryId, job.issue_number, commentBody);
-              // Stop the process and transition to needs_info
-              await stopClaudeRun(jobId, true);
-              await updateJobStatus(jobId, "needs_info", "running", parsed.question, {
-                claude_session_id: activeProcess.sessionId,
-                needs_info_question: parsed.question,
-                needs_info_comment_id: commentId,
-                last_checked_comment_id: commentId,
-              });
-            } catch (error) {
-              const err = error as Error;
-              await emitLog(jobId, "stderr", `Failed to post question to GitHub: ${err.message}`, logState);
-            }
-          }
-        }
-        break;
-    }
+  // Create session record in DB
+  await createSessionRecord({
+    id: jobId,
+    sessionType: "claude_run",
+    label: job.issue_title || `Job ${jobId.slice(0, 8)}`,
+    contextType: "job",
+    contextId: jobId,
+    metadata: { claudeSessionId, repositoryId },
   });
 
-  // Handle stderr
-  proc.onStderr(async (content) => {
-    await emitLog(jobId, "stderr", content, logState);
-  });
+  // Build the SessionRunner that wraps the Claude process
+  const runner: SessionRunner = async ({ onProgress, signal }: { onProgress: (event: import("@devkit/session").SessionEvent) => void; signal: AbortSignal; sessionId: string }) => {
+    return new Promise<{ result?: Record<string, unknown> }>((resolve, reject) => {
+      // Spawn Claude process
+      const spawnOpts: Parameters<typeof spawnClaude>[0] = {
+        cwd: worktreePath,
+        prompt,
+        dangerouslySkipPermissions: true,
+        env: { FORCE_COLOR: "0", NO_COLOR: "1" },
+      };
+      if (resumeWithMessage && job.claude_session_id) {
+        spawnOpts.resume = job.claude_session_id;
+      } else if (claudeSessionId) {
+        spawnOpts.sessionId = claudeSessionId;
+      }
+      const proc = spawnClaude(spawnOpts);
 
-  // Handle process exit
-  proc.onExit(async (code) => {
-    clearTimeout(timeoutId);
-    const trackedProc = activeProcesses.get(jobId);
-    activeProcesses.delete(jobId);
-
-    // Unregister process from cleanup tracking
-    await unregisterProcess(jobId);
-
-    // Check if job is still in running or planning state (signals may have transitioned it)
-    const currentJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
-    if (!currentJob) return;
-
-    // Handle accumulated plan content on process exit
-    if (isAccumulatingPlan && planAccumulator.trim() && currentJob.status === "planning") {
-      const planContent = planAccumulator.trim();
-      await emitLog(jobId, "system", "Plan accumulation complete, transitioning to awaiting approval", logState);
-
-      // For GitHub-backed jobs, post plan as issue comment
-      let planCommentId: number | null = null;
-      if (job.issue_number > 0) {
-        try {
-          const commentBody = `${AGENT_COMMENT_MARKER}\n📋 **Implementation Plan:**\n\n${planContent}\n\n---\n_Reply with **approve**, **lgtm**, or **looks good** to approve this plan, or provide feedback to request changes._`;
-          const { id: commentId } = await createIssueCommentForRepo(repositoryId, job.issue_number, commentBody);
-          planCommentId = commentId;
-        } catch (error) {
-          const err = error as Error;
-          await emitLog(jobId, "stderr", `Failed to post plan to GitHub: ${err.message}`, logState);
-        }
+      // Track PID via session manager
+      if (proc.pid) {
+        setSessionPid(jobId, proc.pid);
+        // Also update jobs table for stale-job-monitor compatibility
+        execute(conn, "UPDATE jobs SET process_pid = ?, process_started_at = ?, updated_at = ? WHERE id = ?", [
+          proc.pid,
+          new Date().toISOString(),
+          new Date().toISOString(),
+          jobId,
+        ]).catch(() => {});
+        emitLog(jobId, "system", `Claude process started (PID: ${proc.pid})`, logState);
+      } else {
+        log.error("Failed to spawn claude process - no PID");
+        reject(new Error("Failed to spawn Claude process - no PID assigned"));
+        return;
       }
 
-      await updateJobStatus(jobId, "awaiting_plan_approval", "planning", "Plan submitted for review", {
-        plan_content: planContent,
-        plan_comment_id: planCommentId,
-        last_checked_plan_comment_id: planCommentId,
-        claude_session_id: trackedProc?.sessionId,
+      // Register cleanup function (kills process on cancel)
+      setCleanupFn(jobId, async () => {
+        if (proc.pid) {
+          await safeTerminateProcess(proc.pid);
+        }
+        // Clear PID from jobs table
+        execute(conn, "UPDATE jobs SET process_pid = NULL, process_started_at = NULL, updated_at = ? WHERE id = ?", [
+          new Date().toISOString(),
+          jobId,
+        ]).catch(() => {});
       });
-      return;
-    }
 
-    if (currentJob.status !== "running" && currentJob.status !== "planning") {
-      return; // Already transitioned
-    }
+      // Set up timeout
+      const timeoutId = setTimeout(async () => {
+        proc.child.kill("SIGTERM");
+        await emitLog(
+          jobId,
+          "stderr",
+          `Claude run timed out after ${claudeSettings.max_runtime_ms / 1000}s`,
+          logState,
+        );
+        await updateJobStatus(jobId, "paused", "running", "Timed out - session saved", {
+          pause_reason: "Execution timeout",
+        });
+      }, claudeSettings.max_runtime_ms);
 
-    if (code === 0) {
-      await emitLog(jobId, "system", "Claude process exited successfully", logState);
-    } else if (code !== null) {
-      await emitLog(jobId, "stderr", `Claude process exited with code ${code}`, logState);
-      await updateJobStatus(jobId, "failed", currentJob.status as JobStatus, `Claude exited with code ${code}`, {
-        failure_reason: `Process exit code: ${code}`,
-        claude_session_id: trackedProc?.sessionId,
+      let currentClaudeSessionId = claudeSessionId;
+      let planAccumulator = "";
+      let isAccumulatingPlan = false;
+      let hasResolved = false;
+
+      const resolveOnce = (result: Record<string, unknown>) => {
+        if (hasResolved) return;
+        hasResolved = true;
+        clearTimeout(timeoutId);
+        resolve({ result });
+      };
+
+      // Handle abort signal (cancellation)
+      signal.addEventListener("abort", () => {
+        clearTimeout(timeoutId);
+        proc.child.kill("SIGTERM");
+        // Force kill after 5s if still running
+        setTimeout(() => {
+          try {
+            proc.child.kill("SIGKILL");
+          } catch {
+            // Already dead
+          }
+        }, 5000);
       });
-    }
-  });
 
-  // Handle process error
-  proc.onError(async (error) => {
-    log.error({ err: error, jobId }, "Process error for job");
-    clearTimeout(timeoutId);
-    activeProcesses.delete(jobId);
+      // Handle stdout via line-buffered handler
+      proc.onRawLine(async (line) => {
+        if (hasResolved) return;
+        const parsed = parseStreamJsonLine(line);
 
-    // Unregister process from cleanup tracking
-    await unregisterProcess(jobId);
+        // Detect phase changes
+        const phaseInfo = detectPhase(parsed);
+        if (phaseInfo) {
+          onProgress({
+            type: "progress",
+            phase: phaseInfo.phase,
+            progress: phaseInfo.progress,
+          });
+          // Also update jobs table for WS broadcast
+          execute(conn, "UPDATE jobs SET phase = ?, progress = ?, updated_at = ? WHERE id = ?", [
+            phaseInfo.phase,
+            phaseInfo.progress ?? null,
+            new Date().toISOString(),
+            jobId,
+          ])
+            .then(() =>
+              queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]).then((updated) => {
+                if (updated) broadcast({ type: "job:updated", payload: updated });
+              }),
+            )
+            .catch(() => {});
+        }
 
-    await emitLog(jobId, "stderr", `Failed to spawn Claude: ${error.message}`, logState);
-    const fromStatus = job.status as JobStatus;
-    await updateJobStatus(jobId, "failed", fromStatus, `Spawn error: ${error.message}`, {
-      failure_reason: error.message,
+        // Plan accumulation
+        if (isAccumulatingPlan && parsed.type === "text" && parsed.content) {
+          planAccumulator += `\n${parsed.content}`;
+          await emitLog(jobId, "stdout:content", parsed.content, logState);
+          return;
+        }
+
+        switch (parsed.type) {
+          case "text":
+            if (parsed.content) {
+              await emitLog(jobId, "stdout:content", parsed.content, logState);
+            }
+            break;
+
+          case "tool":
+            if (parsed.content) {
+              await emitLog(jobId, "stdout:tool", parsed.content, logState);
+            }
+            break;
+
+          case "error":
+            if (parsed.content) {
+              await emitLog(jobId, "stderr", parsed.content, logState);
+            }
+            break;
+
+          case "session":
+            if (parsed.sessionId) {
+              currentClaudeSessionId = parsed.sessionId;
+              await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
+                parsed.sessionId,
+                new Date().toISOString(),
+                jobId,
+              ]);
+              await emitLog(jobId, "system", `Session ID: ${parsed.sessionId}`, logState);
+            }
+            break;
+
+          case "signal":
+            if (parsed.signal === "PLAN") {
+              await emitLog(jobId, "system", "Agent submitted implementation plan", logState);
+              isAccumulatingPlan = true;
+              planAccumulator = parsed.planContent || "";
+              if (parsed.content) {
+                await emitLog(jobId, "stdout:content", parsed.content, logState);
+              }
+            } else if (parsed.signal === "READY_TO_PR") {
+              await emitLog(jobId, "system", "Agent signaled READY_TO_PR", logState);
+              // Stop the process gracefully
+              proc.child.kill("SIGTERM");
+              // Transition to ready_to_pr
+              await updateJobStatus(jobId, "ready_to_pr", "running", "Agent completed work", {
+                claude_session_id: currentClaudeSessionId,
+              });
+              resolveOnce({ signal: "ready_to_pr" });
+            } else if (parsed.signal === "NEEDS_INFO" && parsed.question) {
+              await emitLog(jobId, "system", `Agent needs info: ${parsed.question}`, logState);
+              proc.child.kill("SIGTERM");
+
+              if (job.issue_number < 0) {
+                await updateJobStatus(jobId, "needs_info", "running", parsed.question, {
+                  claude_session_id: currentClaudeSessionId,
+                  needs_info_question: parsed.question,
+                });
+              } else {
+                try {
+                  const commentBody = `${AGENT_COMMENT_MARKER}\n**Agent Question:**\n\n${parsed.question}`;
+                  const { id: commentId } = await createIssueCommentForRepo(
+                    repositoryId,
+                    job.issue_number,
+                    commentBody,
+                  );
+                  await updateJobStatus(jobId, "needs_info", "running", parsed.question, {
+                    claude_session_id: currentClaudeSessionId,
+                    needs_info_question: parsed.question,
+                    needs_info_comment_id: commentId,
+                    last_checked_comment_id: commentId,
+                  });
+                } catch (error) {
+                  const err = error as Error;
+                  await emitLog(jobId, "stderr", `Failed to post question to GitHub: ${err.message}`, logState);
+                }
+              }
+              resolveOnce({ signal: "needs_info", question: parsed.question });
+            }
+            break;
+        }
+      });
+
+      // Handle stderr
+      proc.onStderr(async (content) => {
+        await emitLog(jobId, "stderr", content, logState);
+      });
+
+      // Handle process exit
+      proc.onExit(async (code) => {
+        clearTimeout(timeoutId);
+
+        // Clear PID from jobs table
+        execute(conn, "UPDATE jobs SET process_pid = NULL, process_started_at = NULL, updated_at = ? WHERE id = ?", [
+          new Date().toISOString(),
+          jobId,
+        ]).catch(() => {});
+
+        // Check if job is still in running or planning state
+        const currentJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
+        if (!currentJob) {
+          resolveOnce({});
+          return;
+        }
+
+        // Handle accumulated plan content on process exit
+        if (isAccumulatingPlan && planAccumulator.trim() && currentJob.status === "planning") {
+          const planContent = planAccumulator.trim();
+          await emitLog(
+            jobId,
+            "system",
+            "Plan accumulation complete, transitioning to awaiting approval",
+            logState,
+          );
+
+          // Post plan as issue comment for GitHub-backed jobs
+          let planCommentId: number | null = null;
+          if (job.issue_number > 0) {
+            try {
+              const commentBody = `${AGENT_COMMENT_MARKER}\n📋 **Implementation Plan:**\n\n${planContent}\n\n---\n_Reply with **approve**, **lgtm**, or **looks good** to approve this plan, or provide feedback to request changes._`;
+              const { id: commentId } = await createIssueCommentForRepo(repositoryId, job.issue_number, commentBody);
+              planCommentId = commentId;
+            } catch (error) {
+              const err = error as Error;
+              await emitLog(jobId, "stderr", `Failed to post plan to GitHub: ${err.message}`, logState);
+            }
+          }
+
+          await updateJobStatus(jobId, "awaiting_plan_approval", "planning", "Plan submitted for review", {
+            plan_content: planContent,
+            plan_comment_id: planCommentId,
+            last_checked_plan_comment_id: planCommentId,
+            claude_session_id: currentClaudeSessionId,
+          });
+          resolveOnce({ signal: "plan", planContent });
+          return;
+        }
+
+        if (currentJob.status !== "running" && currentJob.status !== "planning") {
+          resolveOnce({});
+          return;
+        }
+
+        if (code === 0) {
+          await emitLog(jobId, "system", "Claude process exited successfully", logState);
+        } else if (code !== null) {
+          await emitLog(jobId, "stderr", `Claude process exited with code ${code}`, logState);
+          await updateJobStatus(
+            jobId,
+            "failed",
+            currentJob.status as JobStatus,
+            `Claude exited with code ${code}`,
+            {
+              failure_reason: `Process exit code: ${code}`,
+              claude_session_id: currentClaudeSessionId,
+            },
+          );
+        }
+        resolveOnce({ exitCode: code });
+      });
+
+      // Handle process error
+      proc.onError(async (error) => {
+        log.error({ err: error, jobId }, "Process error for job");
+        clearTimeout(timeoutId);
+        await emitLog(jobId, "stderr", `Failed to spawn Claude: ${error.message}`, logState);
+        const fromStatus = job.status as JobStatus;
+        await updateJobStatus(jobId, "failed", fromStatus, `Spawn error: ${error.message}`, {
+          failure_reason: error.message,
+        });
+        resolveOnce({ error: error.message });
+      });
     });
-  });
+  };
+
+  // Start the session (runner executes in background)
+  try {
+    trackSession(jobId);
+    const liveSession = await startSession(jobId, runner);
+    // Untrack when session completes
+    liveSession.completionPromise.finally(() => {
+      untrackSession(jobId);
+    });
+  } catch (error) {
+    untrackSession(jobId);
+    const err = error as Error;
+    log.error({ err, jobId }, "Failed to start session");
+    return { success: false, error: `Failed to start session: ${err.message}` };
+  }
 
   return { success: true };
 }
 
 /**
- * Stop a running Claude process
+ * Stop a running Claude process via session cancellation
  */
 export async function stopClaudeRun(jobId: string, saveSession = false): Promise<boolean> {
-  const proc = activeProcesses.get(jobId);
-  if (!proc) return false;
-
-  // Clear timeout
-  if (proc.timeoutId) {
-    clearTimeout(proc.timeoutId);
-  }
-
-  // Save session ID if requested
-  if (saveSession && proc.sessionId) {
+  // Save Claude session ID if requested
+  if (saveSession) {
     const conn = await getDb();
-    await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
-      proc.sessionId,
-      new Date().toISOString(),
-      jobId,
-    ]);
+    const job = await queryOne<DbJob>(conn, "SELECT claude_session_id FROM jobs WHERE id = ?", [jobId]);
+    if (job?.claude_session_id) {
+      await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
+        job.claude_session_id,
+        new Date().toISOString(),
+        jobId,
+      ]);
+    }
   }
 
-  // Send SIGTERM
-  proc.process.kill("SIGTERM");
-
-  // Wait for graceful shutdown, then SIGKILL
-  return new Promise((resolve) => {
-    const killTimeout = setTimeout(() => {
-      if (activeProcesses.has(jobId)) {
-        proc.process.kill("SIGKILL");
-        activeProcesses.delete(jobId);
-      }
-      // Unregister process from cleanup tracking
-      unregisterProcess(jobId).catch(() => {}); // Ignore errors on force kill
-      resolve(true);
-    }, 5000);
-
-    proc.process.once("close", () => {
-      clearTimeout(killTimeout);
-      activeProcesses.delete(jobId);
-      resolve(true);
-    });
-  });
+  return cancelSession(jobId);
 }
 
 /**
  * Pause a Claude run (saves session for later resume)
  */
 export async function pauseClaudeRun(jobId: string): Promise<boolean> {
-  const proc = activeProcesses.get(jobId);
-  if (!proc) return false;
+  const session = getLiveSession(jobId);
+  if (!session) return false;
 
-  await emitLog(jobId, "system", "Pausing Claude run...", proc.logState);
+  await emitLog(jobId, "system", "Pausing Claude run...", { sequence: 0 });
   await stopClaudeRun(jobId, true);
 
   return true;
@@ -772,18 +833,16 @@ export async function resumeClaudeRun(
     return { success: false, error: "No session ID to resume from" };
   }
 
-  // Check for pending injection and use it if no explicit message provided
+  // Check for pending injection
   let message = injectedMessage;
   if (!message && job.pending_injection) {
     message = job.pending_injection;
-    // Clear the pending injection after consuming it
     await execute(conn, "UPDATE jobs SET pending_injection = NULL, updated_at = ? WHERE id = ?", [
       new Date().toISOString(),
       jobId,
     ]);
   }
 
-  // Build resume message
   const resumeMessage = message || "Continue from where you left off.";
 
   return startClaudeRun(jobId, resumeMessage);
@@ -805,13 +864,13 @@ export async function injectMessage(
 
   if (mode === "immediate") {
     // Kill current run and resume with the message
-    if (activeProcesses.has(jobId)) {
+    const session = getLiveSession(jobId);
+    if (session && session.status === "running") {
       await pauseClaudeRun(jobId);
     }
 
     // If job was running or paused with a session, resume with the injection
     if (job.claude_session_id && (job.status === "running" || job.status === "paused")) {
-      // First ensure job is in running state
       if (job.status === "paused") {
         await updateJobStatus(jobId, "running", "paused", "Resuming with injected message");
       }
@@ -841,12 +900,13 @@ export async function injectMessage(
  * Check if a job has an active Claude run
  */
 export function isRunning(jobId: string): boolean {
-  return activeProcesses.has(jobId);
+  const session = getLiveSession(jobId);
+  return session != null && (session.status === "running" || session.status === "pending");
 }
 
 /**
  * Get count of active Claude runs
  */
 export function getActiveRunCount(): number {
-  return activeProcesses.size;
+  return getActiveSessionCount();
 }
