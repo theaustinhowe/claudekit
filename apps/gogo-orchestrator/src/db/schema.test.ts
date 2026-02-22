@@ -18,7 +18,27 @@ vi.mock("@claudekit/duckdb", () => ({
 }));
 
 import { queryOne } from "@claudekit/duckdb";
-import { type DbRepository, mapRepository } from "./schema.js";
+import {
+  type DbIssue,
+  type DbIssueComment,
+  type DbJob,
+  type DbJobEvent,
+  type DbJobLog,
+  type DbRepository,
+  type DbResearchSession,
+  type DbResearchSuggestion,
+  type DbSetting,
+  mapIssue,
+  mapIssueComment,
+  mapJob,
+  mapJobEvent,
+  mapJobLog,
+  mapRepository,
+  mapRepositoryFull,
+  mapResearchSession,
+  mapResearchSuggestion,
+  mapSetting,
+} from "./schema.js";
 
 // Define expected DB row fields (snake_case) for repositories
 const REPOSITORY_FIELDS = [
@@ -319,6 +339,355 @@ describe("Schema validation", () => {
     it("should have correct default for agent provider", () => {
       // The SQL migration defines default 'claude-code' for agent_provider
       expect(REPOSITORY_FIELDS).toContain("agent_provider");
+    });
+  });
+  describe("mapJob", () => {
+    it("maps a job row with all fields", () => {
+      const row: DbJob = {
+        id: "job-1",
+        repository_id: "repo-1",
+        issue_number: 42,
+        issue_url: "https://github.com/owner/repo/issues/42",
+        issue_title: "Fix bug",
+        issue_body: "Details here",
+        status: "queued",
+        branch: "agent/issue-42",
+        worktree_path: "/tmp/wt",
+        pr_number: null,
+        pr_url: null,
+        test_retry_count: 0,
+        last_test_output: null,
+        change_summary: null,
+        pause_reason: null,
+        failure_reason: null,
+        needs_info_question: null,
+        needs_info_comment_id: null,
+        last_checked_comment_id: null,
+        last_checked_pr_review_comment_id: null,
+        claude_session_id: null,
+        inject_mode: "none",
+        pending_injection: null,
+        process_pid: null,
+        process_started_at: "2025-06-01T00:00:00.000Z",
+        agent_type: "claude-code",
+        agent_session_data: null,
+        plan_content: null,
+        plan_comment_id: null,
+        last_checked_plan_comment_id: null,
+        source: "github",
+        phase: null,
+        progress: null,
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapJob(row);
+      expect(mapped.id).toBe("job-1");
+      expect(mapped.repositoryId).toBe("repo-1");
+      expect(mapped.issueNumber).toBe(42);
+      expect(mapped.status).toBe("queued");
+      expect(mapped.processStartedAt).toBeInstanceOf(Date);
+      expect(mapped.createdAt).toBeInstanceOf(Date);
+    });
+
+    it("handles null process_started_at", () => {
+      const row: DbJob = {
+        id: "job-2",
+        repository_id: null,
+        issue_number: 1,
+        issue_url: "",
+        issue_title: "",
+        issue_body: null,
+        status: "queued",
+        branch: null,
+        worktree_path: null,
+        pr_number: null,
+        pr_url: null,
+        test_retry_count: 0,
+        last_test_output: null,
+        change_summary: null,
+        pause_reason: null,
+        failure_reason: null,
+        needs_info_question: null,
+        needs_info_comment_id: null,
+        last_checked_comment_id: null,
+        last_checked_pr_review_comment_id: null,
+        claude_session_id: null,
+        inject_mode: "none",
+        pending_injection: null,
+        process_pid: null,
+        process_started_at: null,
+        agent_type: "claude-code",
+        agent_session_data: null,
+        plan_content: null,
+        plan_comment_id: null,
+        last_checked_plan_comment_id: null,
+        source: "manual",
+        phase: null,
+        progress: null,
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapJob(row);
+      expect(mapped.processStartedAt).toBeNull();
+    });
+  });
+
+  describe("mapJobEvent", () => {
+    it("maps a job event row", () => {
+      const row: DbJobEvent = {
+        id: "evt-1",
+        job_id: "job-1",
+        event_type: "status_change",
+        from_status: "queued",
+        to_status: "running",
+        message: "Job started",
+        metadata: null,
+        created_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapJobEvent(row);
+      expect(mapped.id).toBe("evt-1");
+      expect(mapped.jobId).toBe("job-1");
+      expect(mapped.eventType).toBe("status_change");
+      expect(mapped.fromStatus).toBe("queued");
+      expect(mapped.toStatus).toBe("running");
+      expect(mapped.createdAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("mapJobLog", () => {
+    it("maps a job log row", () => {
+      const row: DbJobLog = {
+        id: "log-1",
+        job_id: "job-1",
+        stream: "stdout",
+        content: "Hello world",
+        sequence: 1,
+        created_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapJobLog(row);
+      expect(mapped.id).toBe("log-1");
+      expect(mapped.jobId).toBe("job-1");
+      expect(mapped.stream).toBe("stdout");
+      expect(mapped.content).toBe("Hello world");
+      expect(mapped.sequence).toBe(1);
+      expect(mapped.createdAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("mapIssue", () => {
+    it("maps an issue row with dates", () => {
+      const row: DbIssue = {
+        id: "issue-1",
+        repository_id: "repo-1",
+        number: 10,
+        title: "Bug report",
+        body: "Found a bug",
+        state: "open",
+        html_url: "https://github.com/owner/repo/issues/10",
+        author_login: "alice",
+        author_avatar_url: "https://avatars.githubusercontent.com/u/1",
+        author_html_url: "https://github.com/alice",
+        labels: '["bug"]',
+        github_created_at: "2025-05-01T00:00:00.000Z",
+        github_updated_at: "2025-05-15T00:00:00.000Z",
+        closed_at: "2025-06-01T00:00:00.000Z",
+        last_synced_at: "2025-06-01T00:00:00.000Z",
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapIssue(row);
+      expect(mapped.id).toBe("issue-1");
+      expect(mapped.repositoryId).toBe("repo-1");
+      expect(mapped.number).toBe(10);
+      expect(mapped.githubCreatedAt).toBeInstanceOf(Date);
+      expect(mapped.closedAt).toBeInstanceOf(Date);
+      expect(mapped.createdAt).toBeInstanceOf(Date);
+    });
+
+    it("handles null date fields", () => {
+      const row: DbIssue = {
+        id: "issue-2",
+        repository_id: "repo-1",
+        number: 11,
+        title: "Open issue",
+        body: null,
+        state: "open",
+        html_url: "https://github.com/owner/repo/issues/11",
+        author_login: null,
+        author_avatar_url: null,
+        author_html_url: null,
+        labels: null,
+        github_created_at: null,
+        github_updated_at: null,
+        closed_at: null,
+        last_synced_at: "2025-06-01T00:00:00.000Z",
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapIssue(row);
+      expect(mapped.githubCreatedAt).toBeNull();
+      expect(mapped.githubUpdatedAt).toBeNull();
+      expect(mapped.closedAt).toBeNull();
+    });
+  });
+
+  describe("mapRepositoryFull", () => {
+    it("maps all fields including extended ones", () => {
+      const row: DbRepository = {
+        id: "repo-1",
+        owner: "test-owner",
+        name: "test-repo",
+        display_name: "Test Repo",
+        github_token: "tok",
+        base_branch: "main",
+        trigger_label: "agent",
+        workdir_path: "/tmp",
+        is_active: true,
+        auto_create_jobs: true,
+        remove_label_after_create: false,
+        auto_start_jobs: true,
+        auto_create_pr: true,
+        poll_interval_ms: 60000,
+        test_command: "npm test",
+        agent_provider: "claude-code",
+        branch_pattern: "agent/{number}",
+        auto_cleanup: true,
+        last_issue_sync_at: "2025-06-01T00:00:00.000Z",
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapRepositoryFull(row);
+      expect(mapped.autoStartJobs).toBe(true);
+      expect(mapped.autoCreatePr).toBe(true);
+      expect(mapped.pollIntervalMs).toBe(60000);
+      expect(mapped.testCommand).toBe("npm test");
+      expect(mapped.autoCleanup).toBe(true);
+      expect(mapped.lastIssueSyncAt).toBeInstanceOf(Date);
+    });
+
+    it("handles null last_issue_sync_at", () => {
+      const row: DbRepository = {
+        id: "repo-2",
+        owner: "o",
+        name: "n",
+        display_name: null,
+        github_token: "t",
+        base_branch: "main",
+        trigger_label: "agent",
+        workdir_path: "/tmp",
+        is_active: false,
+        auto_create_jobs: false,
+        remove_label_after_create: false,
+        auto_start_jobs: false,
+        auto_create_pr: false,
+        poll_interval_ms: 30000,
+        test_command: null,
+        agent_provider: "claude-code",
+        branch_pattern: "agent/{number}",
+        auto_cleanup: false,
+        last_issue_sync_at: null,
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapRepositoryFull(row);
+      expect(mapped.lastIssueSyncAt).toBeNull();
+    });
+  });
+
+  describe("mapIssueComment", () => {
+    it("maps an issue comment row", () => {
+      const row: DbIssueComment = {
+        id: "ic-1",
+        repository_id: "repo-1",
+        issue_number: 10,
+        github_comment_id: 12345,
+        body: "Looks good",
+        html_url: "https://github.com/owner/repo/issues/10#issuecomment-12345",
+        author_login: "bob",
+        author_type: "User",
+        author_avatar_url: "https://avatars.githubusercontent.com/u/2",
+        github_created_at: "2025-05-01T00:00:00.000Z",
+        github_updated_at: null,
+        last_synced_at: "2025-06-01T00:00:00.000Z",
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapIssueComment(row);
+      expect(mapped.id).toBe("ic-1");
+      expect(mapped.issueNumber).toBe(10);
+      expect(mapped.githubCommentId).toBe(12345);
+      expect(mapped.githubCreatedAt).toBeInstanceOf(Date);
+      expect(mapped.githubUpdatedAt).toBeNull();
+    });
+  });
+
+  describe("mapSetting", () => {
+    it("maps a setting row", () => {
+      const row: DbSetting = {
+        key: "claude_config",
+        value: '{"model":"opus"}',
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapSetting(row);
+      expect(mapped.key).toBe("claude_config");
+      expect(mapped.updatedAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("mapResearchSession", () => {
+    it("maps a research session row", () => {
+      const row: DbResearchSession = {
+        id: "rs-1",
+        repository_id: "repo-1",
+        status: "completed",
+        focus_areas: '["performance","security"]',
+        claude_session_id: "cs-1",
+        process_pid: 1234,
+        output: "Research findings",
+        created_at: "2025-06-01T00:00:00.000Z",
+        updated_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapResearchSession(row);
+      expect(mapped.id).toBe("rs-1");
+      expect(mapped.repositoryId).toBe("repo-1");
+      expect(mapped.status).toBe("completed");
+      expect(mapped.claudeSessionId).toBe("cs-1");
+      expect(mapped.createdAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("mapResearchSuggestion", () => {
+    it("maps a research suggestion row", () => {
+      const row: DbResearchSuggestion = {
+        id: "sug-1",
+        session_id: "rs-1",
+        category: "performance",
+        severity: "medium",
+        title: "Optimize query",
+        description: "N+1 query detected",
+        file_paths: '["src/db/index.ts"]',
+        converted_to: null,
+        converted_id: null,
+        created_at: "2025-06-01T00:00:00.000Z",
+      };
+
+      const mapped = mapResearchSuggestion(row);
+      expect(mapped.id).toBe("sug-1");
+      expect(mapped.sessionId).toBe("rs-1");
+      expect(mapped.category).toBe("performance");
+      expect(mapped.title).toBe("Optimize query");
+      expect(mapped.createdAt).toBeInstanceOf(Date);
     });
   });
 });

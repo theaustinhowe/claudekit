@@ -16,25 +16,18 @@ vi.mock("@/lib/logger", () => ({
   }),
 }));
 
-vi.mock("@/lib/actions/settings", () => ({
-  getSetting: vi.fn().mockResolvedValue(null),
+vi.mock("@/lib/services/session-manager", () => ({
+  createSession: vi.fn().mockResolvedValue("mock-session-id"),
+  startSession: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@claudekit/claude-runner", () => ({
-  runClaude: vi.fn(),
+vi.mock("@/lib/services/session-runners/skill-analysis", () => ({
+  createSkillAnalysisRunner: vi.fn().mockReturnValue(vi.fn()),
 }));
 
-vi.mock("@/lib/prompts", () => ({
-  buildSkillAnalysisPrompt: vi.fn().mockReturnValue("mock-prompt"),
-}));
-
-vi.mock("node:crypto", () => ({
-  default: { randomUUID: vi.fn().mockReturnValue("mock-uuid") },
-}));
-
-import { runClaude } from "@claudekit/claude-runner";
-import { getSetting } from "@/lib/actions/settings";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
+import { createSession, startSession } from "@/lib/services/session-manager";
+import { createSkillAnalysisRunner } from "@/lib/services/session-runners/skill-analysis";
 import {
   compareAnalyses,
   getAnalysisHistory,
@@ -49,8 +42,9 @@ const mockGetDb = vi.mocked(getDb);
 const mockExecute = vi.mocked(execute);
 const mockQueryAll = vi.mocked(queryAll);
 const mockQueryOne = vi.mocked(queryOne);
-const mockRunClaude = vi.mocked(runClaude);
-const mockGetSetting = vi.mocked(getSetting);
+const mockCreateSession = vi.mocked(createSession);
+const mockStartSession = vi.mocked(startSession);
+const mockCreateSkillAnalysisRunner = vi.mocked(createSkillAnalysisRunner);
 
 describe("skills actions", () => {
   beforeEach(() => {
@@ -237,60 +231,22 @@ describe("skills actions", () => {
   });
 
   describe("startSkillAnalysis", () => {
-    it("happy path: queries comments, filters bots, calls Claude, persists", async () => {
-      // comments query
-      mockQueryAll.mockResolvedValueOnce([
-        { id: "c1", reviewer: "alice", body: "Fix this", file_path: "src/a.ts", line_number: 1, pr_id: "repo1#1" },
-      ]);
-      // prs query
-      mockQueryAll.mockResolvedValueOnce([{ id: "repo1#1", number: 1, title: "PR One" }]);
-      // getSetting for ignore_bots
-      mockGetSetting.mockResolvedValue(null);
-      // runClaude response
-      mockRunClaude.mockResolvedValue({
-        stdout:
-          '[{"name":"Testing","severity":"suggestion","frequency":1,"trend":"New pattern","topExample":"Fix this","description":"desc","commentIds":["c1"],"resources":[],"actionItem":"Write tests"}]',
-        exitCode: 0,
-      } as never);
-      // queryOne for comment exists check
-      mockQueryOne.mockResolvedValue({ 1: 1 });
+    it("creates a session and starts it with the skill analysis runner", async () => {
+      const mockRunner = vi.fn();
+      mockCreateSkillAnalysisRunner.mockReturnValue(mockRunner);
 
-      const result = await startSkillAnalysis("repo1", [1]);
+      const result = await startSkillAnalysis("repo1", [1, 2]);
 
-      expect(result).toBe("mock-uuid");
-      // Should insert analysis + skill (with comment_ids JSON column)
-      expect(mockExecute).toHaveBeenCalledWith(
-        {},
-        expect.stringContaining("INSERT INTO skill_analyses"),
-        expect.any(Array),
-      );
-      expect(mockExecute).toHaveBeenCalledWith(
-        {},
-        expect.stringContaining("INSERT INTO skills"),
-        expect.arrayContaining([JSON.stringify(["c1"])]),
-      );
-    });
-
-    it("throws when no comments found", async () => {
-      mockQueryAll.mockResolvedValueOnce([]);
-
-      await expect(startSkillAnalysis("repo1", [1])).rejects.toThrow("No comments found for selected PRs");
-    });
-
-    it("throws when no comments remain after bot filtering", async () => {
-      mockQueryAll.mockResolvedValueOnce([
-        {
-          id: "c1",
-          reviewer: "dependabot[bot]",
-          body: "Bump deps",
-          file_path: null,
-          line_number: null,
-          pr_id: "repo1#1",
-        },
-      ]);
-      mockGetSetting.mockResolvedValue(null); // ignore_bots defaults to true
-
-      await expect(startSkillAnalysis("repo1", [1])).rejects.toThrow("No comments remain after filtering bots");
+      expect(mockCreateSession).toHaveBeenCalledWith({
+        sessionType: "skill_analysis",
+        label: "Skill analysis (2 PRs)",
+        contextType: "repo",
+        contextId: "repo1",
+        metadata: { repoId: "repo1", prNumbers: [1, 2] },
+      });
+      expect(mockCreateSkillAnalysisRunner).toHaveBeenCalledWith({ repoId: "repo1", prNumbers: [1, 2] });
+      expect(mockStartSession).toHaveBeenCalledWith("mock-session-id", mockRunner);
+      expect(result).toBe("mock-session-id");
     });
   });
 });

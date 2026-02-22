@@ -35,11 +35,11 @@ export async function PUT(request: NextRequest) {
     const treeData = { name: name || "root", type: "directory", children: tree };
     const conn = await getDb();
     await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'file_tree'", [runId]);
-    await execute(
-      conn,
-      "INSERT INTO run_content (id, run_id, content_type, data_json) VALUES (?, ?, 'file_tree', ?)",
-      [crypto.randomUUID(), runId, JSON.stringify(treeData)],
-    );
+    await execute(conn, "INSERT INTO run_content (id, run_id, content_type, data_json) VALUES (?, ?, 'file_tree', ?)", [
+      crypto.randomUUID(),
+      runId,
+      JSON.stringify(treeData),
+    ]);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Failed to save file tree:", error);

@@ -13,14 +13,26 @@ vi.mock("@/lib/actions/settings", () => ({
 }));
 vi.mock("@/lib/services/claude-config", () => ({
   readSettingsJson: vi.fn(),
+  readSharedSettingsJson: vi.fn(),
   readClaudeMd: vi.fn(),
+  readRulesFiles: vi.fn(),
   writeSettingsJson: vi.fn(),
+  writeSharedSettingsJson: vi.fn(),
   writeClaudeMd: vi.fn(),
+  writeRuleFile: vi.fn(),
+  deleteRuleFile: vi.fn(),
 }));
 
 import { getSetting, setSetting } from "@/lib/actions/settings";
 import { queryOne } from "@/lib/db";
-import { readClaudeMd, readSettingsJson, writeClaudeMd, writeSettingsJson } from "@/lib/services/claude-config";
+import {
+  readClaudeMd,
+  readRulesFiles,
+  readSettingsJson,
+  readSharedSettingsJson,
+  writeClaudeMd,
+  writeSettingsJson,
+} from "@/lib/services/claude-config";
 import {
   getClaudeConfig,
   getDefaultClaudeSettings,
@@ -31,7 +43,9 @@ import {
 
 const mockQueryOne = vi.mocked(queryOne);
 const mockReadSettingsJson = vi.mocked(readSettingsJson);
+const mockReadSharedSettingsJson = vi.mocked(readSharedSettingsJson);
 const mockReadClaudeMd = vi.mocked(readClaudeMd);
+const mockReadRulesFiles = vi.mocked(readRulesFiles);
 const mockWriteSettingsJson = vi.mocked(writeSettingsJson);
 const mockWriteClaudeMd = vi.mocked(writeClaudeMd);
 const mockGetSetting = vi.mocked(getSetting);
@@ -45,11 +59,15 @@ describe("getClaudeConfig", () => {
   it("returns config for a valid repo", async () => {
     mockQueryOne.mockResolvedValue({ local_path: "~/project" });
     mockReadSettingsJson.mockResolvedValue({ content: '{"key":"val"}', parsed: { key: "val" } });
+    mockReadSharedSettingsJson.mockResolvedValue({ content: '{"shared":true}', parsed: { shared: true } });
     mockReadClaudeMd.mockResolvedValue("# CLAUDE.md content");
+    mockReadRulesFiles.mockResolvedValue([{ name: "rule1.md", content: "# Rule 1" }]);
 
     const result = await getClaudeConfig("repo-1");
     expect(result.settingsJson).toBe('{"key":"val"}');
+    expect(result.sharedSettingsJson).toBe('{"shared":true}');
     expect(result.claudeMd).toBe("# CLAUDE.md content");
+    expect(result.rules).toEqual([{ name: "rule1.md", content: "# Rule 1" }]);
     expect(result.repoPath).toBe("/home/user/project");
   });
 
@@ -58,18 +76,24 @@ describe("getClaudeConfig", () => {
 
     const result = await getClaudeConfig("nonexistent");
     expect(result.settingsJson).toBeNull();
+    expect(result.sharedSettingsJson).toBeNull();
     expect(result.claudeMd).toBeNull();
+    expect(result.rules).toEqual([]);
     expect(result.repoPath).toBe("");
   });
 
   it("handles null settings", async () => {
     mockQueryOne.mockResolvedValue({ local_path: "/project" });
     mockReadSettingsJson.mockResolvedValue(null);
+    mockReadSharedSettingsJson.mockResolvedValue(null);
     mockReadClaudeMd.mockResolvedValue(null);
+    mockReadRulesFiles.mockResolvedValue([]);
 
     const result = await getClaudeConfig("repo-1");
     expect(result.settingsJson).toBeNull();
+    expect(result.sharedSettingsJson).toBeNull();
     expect(result.claudeMd).toBeNull();
+    expect(result.rules).toEqual([]);
   });
 });
 

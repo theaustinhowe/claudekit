@@ -15,32 +15,26 @@ vi.mock("@/lib/logger", () => ({
   }),
 }));
 
-vi.mock("@/lib/actions/github", () => ({
-  fetchPRDiff: vi.fn(),
+vi.mock("@/lib/services/session-manager", () => ({
+  createSession: vi.fn().mockResolvedValue("mock-session-id"),
+  startSession: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@claudekit/claude-runner", () => ({
-  runClaude: vi.fn(),
+vi.mock("@/lib/services/session-runners/split-analysis", () => ({
+  createSplitAnalysisRunner: vi.fn().mockReturnValue(vi.fn()),
 }));
 
-vi.mock("@/lib/prompts", () => ({
-  buildSplitPlanPrompt: vi.fn().mockReturnValue("mock-prompt"),
-}));
-
-vi.mock("node:crypto", () => ({
-  default: { randomUUID: vi.fn().mockReturnValue("mock-plan-id") },
-}));
-
-import { runClaude } from "@claudekit/claude-runner";
-import { fetchPRDiff } from "@/lib/actions/github";
 import { execute, getDb, queryOne } from "@/lib/db";
+import { createSession, startSession } from "@/lib/services/session-manager";
+import { createSplitAnalysisRunner } from "@/lib/services/session-runners/split-analysis";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "./splitter";
 
 const mockGetDb = vi.mocked(getDb);
 const mockExecute = vi.mocked(execute);
 const mockQueryOne = vi.mocked(queryOne);
-const mockRunClaude = vi.mocked(runClaude);
-const mockFetchPRDiff = vi.mocked(fetchPRDiff);
+const mockCreateSession = vi.mocked(createSession);
+const mockStartSession = vi.mocked(startSession);
+const mockCreateSplitAnalysisRunner = vi.mocked(createSplitAnalysisRunner);
 
 describe("splitter actions", () => {
   beforeEach(() => {
@@ -107,39 +101,21 @@ describe("splitter actions", () => {
   });
 
   describe("startSplitAnalysis", () => {
-    it("happy path: fetches PR, fetches diff, calls Claude, persists plan", async () => {
-      mockQueryOne
-        .mockResolvedValueOnce({
-          id: "repo1#1",
-          repo_id: "repo1",
-          number: 1,
-          title: "Big PR",
-          files_changed: 10,
-          lines_added: 300,
-          lines_deleted: 200,
-        })
-        .mockResolvedValueOnce({ owner: "owner", name: "repo" });
-      mockFetchPRDiff.mockResolvedValue("diff content");
-      mockRunClaude.mockResolvedValue({
-        stdout: '[{"index": 1, "title": "Part 1"}]',
-        exitCode: 0,
-      } as never);
+    it("creates a session and starts it with the split analysis runner", async () => {
+      const mockRunner = vi.fn();
+      mockCreateSplitAnalysisRunner.mockReturnValue(mockRunner);
 
       const result = await startSplitAnalysis("repo1#1");
 
-      expect(result).toBe("mock-plan-id");
-      expect(mockFetchPRDiff).toHaveBeenCalledWith("owner", "repo", 1);
-      expect(mockExecute).toHaveBeenCalledWith(
-        {},
-        expect.stringContaining("INSERT INTO split_plans"),
-        expect.arrayContaining(["mock-plan-id", "repo1#1", 500]),
-      );
-    });
-
-    it("throws when PR not found", async () => {
-      mockQueryOne.mockResolvedValue(undefined);
-
-      await expect(startSplitAnalysis("nonexistent")).rejects.toThrow("PR not found");
+      expect(mockCreateSession).toHaveBeenCalledWith({
+        sessionType: "split_analysis",
+        label: "Split analysis for repo1#1",
+        contextId: "repo1#1",
+        metadata: { prId: "repo1#1" },
+      });
+      expect(mockCreateSplitAnalysisRunner).toHaveBeenCalledWith({ prId: "repo1#1" });
+      expect(mockStartSession).toHaveBeenCalledWith("mock-session-id", mockRunner);
+      expect(result).toBe("mock-session-id");
     });
   });
 });

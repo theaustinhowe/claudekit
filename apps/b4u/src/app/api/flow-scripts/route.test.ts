@@ -94,9 +94,7 @@ describe("PUT /api/flow-scripts", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts WHERE run_id = ?", [
-      "run-1",
-    ]);
+    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts WHERE run_id = ?", ["run-1"]);
   });
 
   it("returns 400 when runId is missing", async () => {

@@ -250,7 +250,13 @@ async function savePhaseData(phase: number, data: Record<string, unknown>, runId
             conn,
             `INSERT INTO flow_scripts (id, run_id, flow_id, flow_name, steps_json)
             VALUES (?, ?, ?, ?, ?)`,
-            [crypto.randomUUID(), runId, String(s.flow_id || ""), String(s.flow_name || ""), JSON.stringify(s.steps || [])],
+            [
+              crypto.randomUUID(),
+              runId,
+              String(s.flow_id || ""),
+              String(s.flow_name || ""),
+              JSON.stringify(s.steps || []),
+            ],
           );
         }
       }

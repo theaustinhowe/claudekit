@@ -16,33 +16,26 @@ vi.mock("@/lib/logger", () => ({
   }),
 }));
 
-vi.mock("@/lib/actions/github", () => ({
-  fetchFileContent: vi.fn(),
+vi.mock("@/lib/services/session-manager", () => ({
+  createSession: vi.fn().mockResolvedValue("mock-session-id"),
+  startSession: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@claudekit/claude-runner", () => ({
-  runClaude: vi.fn(),
+vi.mock("@/lib/services/session-runners/comment-fix", () => ({
+  createCommentFixRunner: vi.fn().mockReturnValue(vi.fn()),
 }));
 
-vi.mock("@/lib/prompts", () => ({
-  buildCommentFixPrompt: vi.fn().mockReturnValue("mock-prompt"),
-}));
-
-vi.mock("node:crypto", () => ({
-  default: { randomUUID: vi.fn().mockReturnValue("mock-fix-id") },
-}));
-
-import { runClaude } from "@claudekit/claude-runner";
-import { fetchFileContent } from "@/lib/actions/github";
-import { execute, getDb, queryAll, queryOne } from "@/lib/db";
+import { execute, getDb, queryAll } from "@/lib/db";
+import { createSession, startSession } from "@/lib/services/session-manager";
+import { createCommentFixRunner } from "@/lib/services/session-runners/comment-fix";
 import { getCommentFixes, resolveAllFixes, resolveCommentFix, startCommentFixes } from "./resolver";
 
 const mockGetDb = vi.mocked(getDb);
 const mockExecute = vi.mocked(execute);
 const mockQueryAll = vi.mocked(queryAll);
-const mockQueryOne = vi.mocked(queryOne);
-const mockRunClaude = vi.mocked(runClaude);
-const mockFetchFileContent = vi.mocked(fetchFileContent);
+const mockCreateSession = vi.mocked(createSession);
+const mockStartSession = vi.mocked(startSession);
+const mockCreateCommentFixRunner = vi.mocked(createCommentFixRunner);
 
 describe("resolver actions", () => {
   beforeEach(() => {
@@ -91,38 +84,32 @@ describe("resolver actions", () => {
   });
 
   describe("startCommentFixes", () => {
-    it("happy path: fetches comments, enriches with file content, calls Claude, persists fixes", async () => {
-      // comments query
-      mockQueryAll.mockResolvedValueOnce([
-        { id: "c1", pr_id: "repo1#1", body: "Fix this", file_path: "src/app.ts", line_number: 10 },
-      ]);
-      // PR query
-      mockQueryOne
-        .mockResolvedValueOnce({ repo_id: "repo1", branch: "feat-branch" })
-        .mockResolvedValueOnce({ owner: "owner", name: "repo" });
-      // fetchFileContent
-      mockFetchFileContent.mockResolvedValue("const x = 1;");
-      // runClaude
-      mockRunClaude.mockResolvedValue({
-        stdout: '[{"commentId":"c1","suggestedFix":"Add error handling","fixDiff":"- old\\n+ new"}]',
-        exitCode: 0,
-      } as never);
+    it("creates a session and starts it with the comment fix runner", async () => {
+      const mockRunner = vi.fn();
+      mockCreateCommentFixRunner.mockReturnValue(mockRunner);
 
       const result = await startCommentFixes(["c1"]);
 
-      expect(result).toEqual(["c1"]);
-      expect(mockFetchFileContent).toHaveBeenCalledWith("owner", "repo", "src/app.ts", "feat-branch");
-      expect(mockExecute).toHaveBeenCalledWith(
-        {},
-        expect.stringContaining("INSERT INTO comment_fixes"),
-        expect.arrayContaining(["mock-fix-id", "c1"]),
-      );
+      expect(mockCreateSession).toHaveBeenCalledWith({
+        sessionType: "comment_fix",
+        label: "Fix 1 comment",
+        metadata: { commentIds: ["c1"] },
+      });
+      expect(mockCreateCommentFixRunner).toHaveBeenCalledWith({ commentIds: ["c1"] });
+      expect(mockStartSession).toHaveBeenCalledWith("mock-session-id", mockRunner);
+      expect(result).toBe("mock-session-id");
     });
 
-    it("throws when no comments found", async () => {
-      mockQueryAll.mockResolvedValueOnce([]);
+    it("uses plural label for multiple comments", async () => {
+      mockCreateCommentFixRunner.mockReturnValue(vi.fn());
 
-      await expect(startCommentFixes(["c1"])).rejects.toThrow("No comments found");
+      await startCommentFixes(["c1", "c2", "c3"]);
+
+      expect(mockCreateSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: "Fix 3 comments",
+        }),
+      );
     });
   });
 });

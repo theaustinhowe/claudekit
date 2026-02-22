@@ -50,10 +50,7 @@ async function loadPhaseContext(phase: Phase): Promise<Record<string, unknown>> 
     case 5:
       return { status: "recording in progress" };
     case 6: {
-      const voiceovers = await queryAll<Record<string, unknown>>(
-        conn,
-        "SELECT flow_id FROM flow_voiceover",
-      );
+      const voiceovers = await queryAll<Record<string, unknown>>(conn, "SELECT flow_id FROM flow_voiceover");
       return { voiceovers };
     }
     case 7:

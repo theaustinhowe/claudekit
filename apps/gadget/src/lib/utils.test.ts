@@ -125,7 +125,7 @@ describe("parsePolicy", () => {
     expect(policy.banned_dependencies).toEqual([]);
     expect(policy.allowed_package_managers).toEqual([]);
     expect(policy.ignore_patterns).toEqual([]);
-    expect(policy.generator_defaults).toEqual({});
+    expect(policy.generator_defaults).toEqual({ features: [] });
     expect(policy.repo_types).toEqual([]);
   });
 });

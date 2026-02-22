@@ -106,9 +106,7 @@ export async function runRecordingPipeline(
   const authOverrides: Array<{ id: string; label: string; enabled: boolean }> = authRow
     ? JSON.parse(authRow.data_json)
     : [];
-  const envItems: Array<{ id: string; label: string; enabled: boolean }> = envRow
-    ? JSON.parse(envRow.data_json)
-    : [];
+  const envItems: Array<{ id: string; label: string; enabled: boolean }> = envRow ? JSON.parse(envRow.data_json) : [];
 
   // 3. Inject env overrides
   onProgress({ type: "progress", message: "Configuring environment...", progress: 10 });

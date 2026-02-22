@@ -38,11 +38,11 @@ export async function PUT(request: NextRequest) {
     const conn = await getDb();
     await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'routes'", [runId]);
 
-    await execute(
-      conn,
-      "INSERT INTO run_content (id, run_id, content_type, data_json) VALUES (?, ?, 'routes', ?)",
-      [crypto.randomUUID(), runId, JSON.stringify(routes)],
-    );
+    await execute(conn, "INSERT INTO run_content (id, run_id, content_type, data_json) VALUES (?, ?, 'routes', ?)", [
+      crypto.randomUUID(),
+      runId,
+      JSON.stringify(routes),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

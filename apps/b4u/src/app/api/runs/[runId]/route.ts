@@ -180,11 +180,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     }
 
     // Clean up session data
-    await execute(
-      conn,
-      "DELETE FROM session_logs WHERE session_id IN (SELECT id FROM sessions WHERE context_id = ?)",
-      [runId],
-    );
+    await execute(conn, "DELETE FROM session_logs WHERE session_id IN (SELECT id FROM sessions WHERE context_id = ?)", [
+      runId,
+    ]);
     await execute(conn, "DELETE FROM sessions WHERE context_id = ?", [runId]);
     await execute(conn, "DELETE FROM run_state WHERE run_id = ?", [runId]);
 

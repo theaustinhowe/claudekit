@@ -193,14 +193,13 @@ export function createGenerateScriptsRunner(runId?: string): SessionRunner {
         const paragraphsArray = Array.isArray(paragraphs) ? paragraphs : [];
 
         // Get timeline markers for this flow
-        const flowMarkers =
-          voiceover.timelineMarkers && voiceover.timelineMarkers[flowId]
-            ? (voiceover.timelineMarkers[flowId] as Array<{
-                timestamp: string;
-                label: string;
-                paragraphIndex: number;
-              }>)
-            : [];
+        const flowMarkers = voiceover.timelineMarkers?.[flowId]
+          ? (voiceover.timelineMarkers[flowId] as Array<{
+              timestamp: string;
+              label: string;
+              paragraphIndex: number;
+            }>)
+          : [];
 
         await execute(
           conn,

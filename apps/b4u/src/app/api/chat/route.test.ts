@@ -115,9 +115,7 @@ describe("POST /api/chat", () => {
   it("phase 4: calls queryAll for scripts and step count from flow_scripts", async () => {
     const mockScripts = [{ flow_name: "Login Flow" }];
     const mockStepsRows = [{ steps_json: JSON.stringify([{ id: "s1" }, { id: "s2" }]) }];
-    mockQueryAll
-      .mockResolvedValueOnce(mockScripts as never)
-      .mockResolvedValueOnce(mockStepsRows as never);
+    mockQueryAll.mockResolvedValueOnce(mockScripts as never).mockResolvedValueOnce(mockStepsRows as never);
     mockQueryOne.mockResolvedValueOnce({ project_path: "/project" } as never);
     mockRunClaude.mockResolvedValue({
       stdout: '{"response":"OK","suggestedAction":null}',

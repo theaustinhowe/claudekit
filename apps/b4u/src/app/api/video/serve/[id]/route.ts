@@ -7,11 +7,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
 
   const conn = await getDb();
-  const rows = await queryAll<{ file_path: string }>(
-    conn,
-    "SELECT file_path FROM final_videos WHERE id = ?",
-    [id],
-  );
+  const rows = await queryAll<{ file_path: string }>(conn, "SELECT file_path FROM final_videos WHERE id = ?", [id]);
 
   if (rows.length === 0) {
     return NextResponse.json({ error: "Video not found" }, { status: 404 });

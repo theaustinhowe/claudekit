@@ -38,5 +38,3 @@ const gadgetSessionConfig: SessionPanelConfig = {
 export function GadgetSessionProvider({ children }: { children: React.ReactNode }) {
   return <SessionProvider config={gadgetSessionConfig}>{children}</SessionProvider>;
 }
-
-export { useSessionPanel as useSessionContext } from "@claudekit/ui/components/session-provider";

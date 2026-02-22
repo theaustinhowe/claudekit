@@ -140,9 +140,7 @@ export function untrackSession(sessionId: string): void {
 // Export session manager methods
 // ---------------------------------------------------------------------------
 
-export const { startSession, cancelSession, subscribe, getLiveSession, setCleanupFn, setSessionPid, emitEvent } =
-  manager;
-export { manager as sessionManager };
+export const { startSession, cancelSession, getLiveSession, setCleanupFn, setSessionPid, emitEvent } = manager;
 
 // ---------------------------------------------------------------------------
 // Process termination utility

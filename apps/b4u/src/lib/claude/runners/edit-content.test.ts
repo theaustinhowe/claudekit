@@ -216,7 +216,11 @@ describe("createEditContentRunner", () => {
     const updatedData = {
       flowScripts: [{ flow_id: "f1", flow_name: "Onboarding Updated", steps: [] }],
       voiceovers: [
-        { flow_id: "f1", paragraphs: ["Updated voiceover"], markers: [{ timestamp: "0:05", label: "Intro", paragraphIndex: 0 }] },
+        {
+          flow_id: "f1",
+          paragraphs: ["Updated voiceover"],
+          markers: [{ timestamp: "0:05", label: "Intro", paragraphIndex: 0 }],
+        },
       ],
     };
     vi.mocked(runClaude).mockResolvedValue({
