@@ -18,6 +18,7 @@ function createFakeChild() {
   const child = new EventEmitter() as EventEmitter & {
     stdout: EventEmitter;
     stderr: EventEmitter;
+    stdin: { write: MockInstance; end: MockInstance };
     pid: number;
     kill: MockInstance;
   };
