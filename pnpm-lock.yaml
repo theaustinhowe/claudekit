@@ -196,6 +196,9 @@ importers:
 
   apps/gogo-orchestrator:
     dependencies:
+      '@devkit/claude-runner':
+        specifier: workspace:*
+        version: link:../../packages/claude-runner
       '@devkit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb

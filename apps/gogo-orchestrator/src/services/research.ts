@@ -1,8 +1,10 @@
-import { type ChildProcess, execFile, spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { spawnClaude } from "@devkit/claude-runner";
 import { execute, queryAll, queryOne } from "@devkit/duckdb";
 import type { ResearchCategory } from "@devkit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -89,20 +91,6 @@ export async function startResearchSession(
   // Build the research prompt
   const prompt = buildResearchPrompt(focusAreas);
 
-  // Spawn Claude CLI with streaming JSON output
-  const args = [
-    "--output-format",
-    "stream-json",
-    "--session-id",
-    claudeSessionId,
-    "--max-turns",
-    "10",
-    "--verbose",
-    "--dangerously-skip-permissions",
-    "-p",
-    prompt,
-  ];
-
   log.info(
     {
       sessionId: session.id,
@@ -114,17 +102,16 @@ export async function startResearchSession(
     "Starting research session",
   );
 
-  const claudeProcess = spawn("claude", args, {
+  const proc = spawnClaude({
     cwd: worktreePath,
-    env: {
-      ...process.env,
-      FORCE_COLOR: "0",
-      NO_COLOR: "1",
-    },
-    stdio: ["pipe", "pipe", "pipe"],
+    prompt,
+    sessionId: claudeSessionId,
+    maxTurns: 10,
+    dangerouslySkipPermissions: true,
+    env: { FORCE_COLOR: "0", NO_COLOR: "1" },
   });
 
-  activeProcess = claudeProcess;
+  activeProcess = proc.child;
   activeSessionId = session.id;
 
   // Debug log file
@@ -133,7 +120,7 @@ export async function startResearchSession(
   const debugLogPath = join(logDir, `research-${session.id}.log`);
   writeFileSync(
     debugLogPath,
-    `=== Research session ${session.id} started at ${new Date().toISOString()} ===\ncwd: ${worktreePath}\nargs: ${JSON.stringify(args)}\n`,
+    `=== Research session ${session.id} started at ${new Date().toISOString()} ===\ncwd: ${worktreePath}\n`,
   );
   const appendLog = (label: string, content: string) => {
     try {
@@ -141,14 +128,9 @@ export async function startResearchSession(
     } catch {}
   };
 
-  // Close stdin — not needed for -p mode
-  if (claudeProcess.stdin) {
-    claudeProcess.stdin.end();
-  }
-
   // Store PID
   await execute(conn, "UPDATE research_sessions SET process_pid = ?, updated_at = ? WHERE id = ?", [
-    claudeProcess.pid ?? null,
+    proc.pid ?? null,
     new Date().toISOString(),
     session.id,
   ]);
@@ -161,53 +143,39 @@ export async function startResearchSession(
 
   // Accumulate text from streaming deltas to detect suggestions in real-time
   let textAccumulator = "";
-  let stdoutBuffer = "";
 
-  claudeProcess.stdout?.on("data", async (data: Buffer) => {
-    const raw = data.toString();
-    appendLog("RAW", raw.slice(0, 500));
-    stdoutBuffer += raw;
+  proc.onRawLine(async (line) => {
+    appendLog("LINE", line.slice(0, 500));
 
-    // Process complete lines (stream-json is newline-delimited)
-    const lines = stdoutBuffer.split("\n");
-    stdoutBuffer = lines.pop() || "";
+    const text = extractText(line);
+    if (text) {
+      textAccumulator += text;
+      appendLog("TEXT", text.slice(0, 300));
 
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      appendLog("LINE", line.slice(0, 500));
+      // Stream text output to connected clients
+      broadcast({
+        type: "research:output",
+        payload: { sessionId: session.id, text },
+      });
 
-      const text = extractText(line);
-      if (text) {
-        textAccumulator += text;
-        appendLog("TEXT", text.slice(0, 300));
+      // Try to extract any complete suggestions from the accumulated text
+      const extracted = extractCompleteSuggestions(textAccumulator);
+      if (extracted.suggestions.length > 0) {
+        textAccumulator = extracted.remaining;
 
-        // Stream text output to connected clients
-        broadcast({
-          type: "research:output",
-          payload: { sessionId: session.id, text },
-        });
-
-        // Try to extract any complete suggestions from the accumulated text
-        const extracted = extractCompleteSuggestions(textAccumulator);
-        if (extracted.suggestions.length > 0) {
-          textAccumulator = extracted.remaining;
-
-          for (const suggestion of extracted.suggestions) {
-            await storeSuggestion(session.id, suggestion);
-          }
+        for (const suggestion of extracted.suggestions) {
+          await storeSuggestion(session.id, suggestion);
         }
       }
     }
   });
 
-  claudeProcess.stderr?.on("data", (data: Buffer) => {
-    const msg = data.toString();
+  proc.onStderr((msg) => {
     appendLog("STDERR", msg);
     log.warn({ sessionId: session.id }, `Research stderr: ${msg}`);
   });
 
-  // Handle spawn errors (e.g. claude CLI not found on PATH)
-  claudeProcess.on("error", async (err) => {
+  proc.onError(async (err) => {
     activeProcess = null;
     activeSessionId = null;
 
@@ -230,7 +198,7 @@ export async function startResearchSession(
     });
   });
 
-  claudeProcess.on("close", async (code) => {
+  proc.onExit(async (code) => {
     appendLog("CLOSE", `exitCode=${code} accumulatorLen=${textAccumulator.length}`);
     activeProcess = null;
     activeSessionId = null;
@@ -246,14 +214,6 @@ export async function startResearchSession(
 
     try {
       const conn = await getDb();
-
-      // Process any remaining buffered output
-      if (stdoutBuffer.trim()) {
-        const text = extractText(stdoutBuffer);
-        if (text) {
-          textAccumulator += text;
-        }
-      }
 
       // Extract any remaining suggestions from the final accumulated text
       const extracted = extractCompleteSuggestions(textAccumulator);

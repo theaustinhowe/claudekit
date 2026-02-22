@@ -80,14 +80,15 @@ describe("runClaude", () => {
     expect(mockedSpawn).toHaveBeenCalledWith(
       "claude",
       [
-        "-p",
-        "--verbose",
         "--output-format",
         "stream-json",
+        "--verbose",
         "--allowedTools",
         "Write",
         "--disallowedTools",
         "Edit,Bash",
+        "-p",
+        "hello",
       ],
       expect.objectContaining({
         cwd: "/my/project",
@@ -126,7 +127,7 @@ describe("runClaude", () => {
     expect(args).not.toContain("--disallowedTools");
   });
 
-  it("writes prompt to stdin and ends it", () => {
+  it("passes prompt via -p flag and closes stdin", () => {
     const child = createFakeChild();
     mockedSpawn.mockReturnValue(child);
 
@@ -136,7 +137,10 @@ describe("runClaude", () => {
       onProgress: vi.fn(),
     });
 
-    expect(child.stdin.write).toHaveBeenCalledWith("Generate code");
+    const args = mockedSpawn.mock.calls[0][1] as string[];
+    expect(args).toContain("-p");
+    expect(args[args.indexOf("-p") + 1]).toBe("Generate code");
+    // stdin is closed (prompt goes via -p flag)
     expect(child.stdin.end).toHaveBeenCalled();
   });
 

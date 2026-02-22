@@ -1,5 +1,6 @@
-import { type ChildProcess, spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { isClaudeCliAvailable as checkClaudeCli, spawnClaude } from "@devkit/claude-runner";
 import { execute, queryOne } from "@devkit/duckdb";
 import type { InjectMode, JobStatus } from "@devkit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -25,13 +26,7 @@ export const CLAUDE_ERRORS = {
  * Check if the Claude CLI is available on the system
  */
 export async function isClaudeCliAvailable(): Promise<boolean> {
-  const { execSync } = await import("node:child_process");
-  try {
-    execSync("which claude", { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
+  return checkClaudeCli();
 }
 
 /**
@@ -60,35 +55,10 @@ interface ActiveProcess {
 
 const activeProcesses = new Map<string, ActiveProcess>();
 
-// Stream-JSON message types from Claude CLI
-interface StreamJsonMessage {
-  type: string;
-  message?: {
-    id?: string;
-    content?: Array<{
-      type: string;
-      text?: string;
-      tool_use?: {
-        name: string;
-        input: unknown;
-      };
-    }>;
-  };
-  content_block?: {
-    type: string;
-    text?: string;
-  };
-  delta?: {
-    type: string;
-    text?: string;
-  };
-  error?: {
-    message: string;
-  };
-  result?: {
-    session_id?: string;
-  };
-}
+// Stream-JSON message type — uses ClaudeStreamEvent from @devkit/claude-runner
+// for the base shape, with local narrowing in parseStreamJsonLine for
+// domain-specific fields (content_block_delta, result.session_id, etc.)
+import type { ClaudeStreamEvent } from "@devkit/claude-runner";
 
 /**
  * Build the structured prompt for Claude Code
@@ -336,7 +306,7 @@ export function parseStreamJsonLine(line: string, _jobId: string, _logState: Log
   }
 
   try {
-    const msg: StreamJsonMessage = JSON.parse(line);
+    const msg: ClaudeStreamEvent = JSON.parse(line);
 
     // Handle different message types
     if (msg.type === "error") {
@@ -445,22 +415,17 @@ export async function startClaudeRun(
 
   const logState: LogState = { sequence: 0 };
 
-  // Build Claude CLI arguments
-  const args = ["--dangerously-skip-permissions", "--output-format", "stream-json", "--verbose"];
-
   // Track the session ID we'll use (either existing or newly generated)
   let sessionId = job.claude_session_id;
+  let prompt: string;
 
   // Resume mode or new run
   if (resumeWithMessage && job.claude_session_id) {
-    args.push("--resume", job.claude_session_id);
-    args.push("-p", resumeWithMessage);
+    prompt = resumeWithMessage;
     await emitLog(jobId, "system", `Resuming Claude session with message: ${resumeWithMessage}`, logState);
   } else {
     // Generate a new session ID upfront so we can resume later even if paused early
-    // The Claude CLI accepts --session-id to specify the session ID for new runs
     sessionId = randomUUID();
-    args.push("--session-id", sessionId);
 
     // Save the session ID immediately so it's available for resume
     const now = new Date().toISOString();
@@ -477,7 +442,7 @@ export async function startClaudeRun(
       await emitLog(jobId, "system", `Including pending message: ${job.pending_injection}`, logState);
     }
 
-    const prompt = buildPrompt(
+    prompt = buildPrompt(
       {
         issueNumber: job.issue_number,
         issueTitle: job.issue_title,
@@ -489,42 +454,33 @@ export async function startClaudeRun(
       repoConfig,
       claudeSettings,
     );
-    args.push("-p", prompt);
     await emitLog(jobId, "system", `Starting new Claude Code run (session: ${sessionId})...`, logState);
   }
 
-  // Spawn Claude process
-  const claudeProcess = spawn("claude", args, {
+  // Spawn Claude process via @devkit/claude-runner
+  const spawnOpts: Parameters<typeof spawnClaude>[0] = {
     cwd: job.worktree_path,
-    env: {
-      ...process.env,
-      // Ensure consistent environment
-      FORCE_COLOR: "0",
-      NO_COLOR: "1",
-    },
-    stdio: ["pipe", "pipe", "pipe"], // Explicitly set stdio
-  });
+    prompt,
+    dangerouslySkipPermissions: true,
+    env: { FORCE_COLOR: "0", NO_COLOR: "1" },
+  };
+  if (resumeWithMessage && job.claude_session_id) {
+    spawnOpts.resume = job.claude_session_id;
+  } else if (sessionId) {
+    spawnOpts.sessionId = sessionId;
+  }
+  const proc = spawnClaude(spawnOpts);
+
+  const claudeProcess = proc.child;
 
   // Register process for cleanup tracking
-  if (claudeProcess.pid) {
-    await registerProcess(jobId, claudeProcess.pid);
-    await emitLog(jobId, "system", `Claude process started (PID: ${claudeProcess.pid})`, logState);
+  if (proc.pid) {
+    await registerProcess(jobId, proc.pid);
+    await emitLog(jobId, "system", `Claude process started (PID: ${proc.pid})`, logState);
   } else {
     log.error("Failed to spawn claude process - no PID");
     await emitLog(jobId, "stderr", "Failed to spawn Claude process - no PID assigned", logState);
     return { success: false, error: "Failed to spawn Claude process" };
-  }
-
-  // Verify stdio streams are available
-  if (!claudeProcess.stdout || !claudeProcess.stderr) {
-    log.error("Process spawned but stdio streams unavailable");
-    await emitLog(jobId, "stderr", "Claude process spawned but stdio streams are not available", logState);
-  }
-
-  // Close stdin - Claude CLI doesn't need interactive input when using -p flag
-  // Some processes wait for stdin EOF before starting
-  if (claudeProcess.stdin) {
-    claudeProcess.stdin.end();
   }
 
   // Set up timeout
@@ -547,157 +503,134 @@ export async function startClaudeRun(
   };
   activeProcesses.set(jobId, activeProcess);
 
-  let stdoutBuffer = "";
   let planAccumulator = ""; // Accumulate plan content across multiple chunks
   let isAccumulatingPlan = false; // Flag to indicate we're in plan accumulation mode
 
-  // Handle stdout (stream-json output)
-  claudeProcess.stdout?.on("data", async (data: Buffer) => {
-    stdoutBuffer += data.toString();
+  // Handle stdout (stream-json output) via line-buffered handler
+  proc.onRawLine(async (line) => {
+    const parsed = parseStreamJsonLine(line, jobId, logState);
 
-    // Process complete lines
-    const lines = stdoutBuffer.split("\n");
-    stdoutBuffer = lines.pop() || ""; // Keep incomplete line in buffer
+    // Detect phase changes from parsed output
+    const phaseInfo = detectPhase(parsed);
+    if (phaseInfo) {
+      // Update phase in DB (fire-and-forget, non-blocking)
+      execute(conn, "UPDATE jobs SET phase = ?, progress = ?, updated_at = ? WHERE id = ?", [
+        phaseInfo.phase,
+        phaseInfo.progress ?? null,
+        new Date().toISOString(),
+        jobId,
+      ])
+        .then(() =>
+          queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]).then((updated) => {
+            if (updated) {
+              broadcast({ type: "job:updated", payload: updated });
+            }
+          }),
+        )
+        .catch(() => {}); // Ignore phase update errors
+    }
 
-    for (const line of lines) {
-      if (!line.trim()) continue;
+    // If we're accumulating plan content, append all text
+    if (isAccumulatingPlan && parsed.type === "text" && parsed.content) {
+      planAccumulator += `\n${parsed.content}`;
+      await emitLog(jobId, "stdout:content", parsed.content, logState);
+      return;
+    }
 
-      const parsed = parseStreamJsonLine(line, jobId, logState);
+    switch (parsed.type) {
+      case "text":
+        if (parsed.content) {
+          await emitLog(jobId, "stdout:content", parsed.content, logState);
+        }
+        break;
 
-      // Detect phase changes from parsed output
-      const phaseInfo = detectPhase(parsed);
-      if (phaseInfo) {
-        // Update phase in DB (fire-and-forget, non-blocking)
-        execute(conn, "UPDATE jobs SET phase = ?, progress = ?, updated_at = ? WHERE id = ?", [
-          phaseInfo.phase,
-          phaseInfo.progress ?? null,
-          new Date().toISOString(),
-          jobId,
-        ])
-          .then(() =>
-            queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]).then((updated) => {
-              if (updated) {
-                broadcast({ type: "job:updated", payload: updated });
-              }
-            }),
-          )
-          .catch(() => {}); // Ignore phase update errors
-      }
+      case "tool":
+        if (parsed.content) {
+          await emitLog(jobId, "stdout:tool", parsed.content, logState);
+        }
+        break;
 
-      // If we're accumulating plan content, append all text
-      if (isAccumulatingPlan && parsed.type === "text" && parsed.content) {
-        planAccumulator += `\n${parsed.content}`;
-        await emitLog(jobId, "stdout:content", parsed.content, logState);
-        continue;
-      }
+      case "error":
+        if (parsed.content) {
+          await emitLog(jobId, "stderr", parsed.content, logState);
+        }
+        break;
 
-      switch (parsed.type) {
-        case "text":
+      case "session":
+        if (parsed.sessionId) {
+          activeProcess.sessionId = parsed.sessionId;
+          // Save session ID to database
+          await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
+            parsed.sessionId,
+            new Date().toISOString(),
+            jobId,
+          ]);
+          await emitLog(jobId, "system", `Session ID: ${parsed.sessionId}`, logState);
+        }
+        break;
+
+      case "signal":
+        if (parsed.signal === "PLAN") {
+          await emitLog(jobId, "system", "Agent submitted implementation plan", logState);
+          // Start accumulating plan content
+          isAccumulatingPlan = true;
+          planAccumulator = parsed.planContent || "";
           if (parsed.content) {
             await emitLog(jobId, "stdout:content", parsed.content, logState);
           }
-          break;
-
-        case "tool":
-          if (parsed.content) {
-            await emitLog(jobId, "stdout:tool", parsed.content, logState);
-          }
-          break;
-
-        case "error":
-          if (parsed.content) {
-            await emitLog(jobId, "stderr", parsed.content, logState);
-          }
-          break;
-
-        case "session":
-          if (parsed.sessionId) {
-            activeProcess.sessionId = parsed.sessionId;
-            // Save session ID to database
-            await execute(conn, "UPDATE jobs SET claude_session_id = ?, updated_at = ? WHERE id = ?", [
-              parsed.sessionId,
-              new Date().toISOString(),
-              jobId,
-            ]);
-            await emitLog(jobId, "system", `Session ID: ${parsed.sessionId}`, logState);
-          }
-          break;
-
-        case "signal":
-          if (parsed.signal === "PLAN") {
-            await emitLog(jobId, "system", "Agent submitted implementation plan", logState);
-            // Start accumulating plan content
-            isAccumulatingPlan = true;
-            planAccumulator = parsed.planContent || "";
-            if (parsed.content) {
-              await emitLog(jobId, "stdout:content", parsed.content, logState);
-            }
-          } else if (parsed.signal === "READY_TO_PR") {
-            await emitLog(jobId, "system", "Agent signaled READY_TO_PR", logState);
-            // Stop the process gracefully
+        } else if (parsed.signal === "READY_TO_PR") {
+          await emitLog(jobId, "system", "Agent signaled READY_TO_PR", logState);
+          // Stop the process gracefully
+          await stopClaudeRun(jobId, true);
+          // Transition to ready_to_pr
+          await updateJobStatus(jobId, "ready_to_pr", "running", "Agent completed work", {
+            claude_session_id: activeProcess.sessionId,
+          });
+        } else if (parsed.signal === "NEEDS_INFO" && parsed.question) {
+          await emitLog(jobId, "system", `Agent needs info: ${parsed.question}`, logState);
+          // For manual jobs (negative issue number), skip GitHub comment
+          if (job.issue_number < 0) {
             await stopClaudeRun(jobId, true);
-            // Transition to ready_to_pr
-            await updateJobStatus(jobId, "ready_to_pr", "running", "Agent completed work", {
+            await updateJobStatus(jobId, "needs_info", "running", parsed.question, {
               claude_session_id: activeProcess.sessionId,
+              needs_info_question: parsed.question,
             });
-          } else if (parsed.signal === "NEEDS_INFO" && parsed.question) {
-            await emitLog(jobId, "system", `Agent needs info: ${parsed.question}`, logState);
-            // For manual jobs (negative issue number), skip GitHub comment
-            if (job.issue_number < 0) {
+          } else {
+            // Post question to GitHub
+            try {
+              const commentBody = `${AGENT_COMMENT_MARKER}\n**Agent Question:**\n\n${parsed.question}`;
+              const { id: commentId } = await createIssueCommentForRepo(repositoryId, job.issue_number, commentBody);
+              // Stop the process and transition to needs_info
               await stopClaudeRun(jobId, true);
               await updateJobStatus(jobId, "needs_info", "running", parsed.question, {
                 claude_session_id: activeProcess.sessionId,
                 needs_info_question: parsed.question,
+                needs_info_comment_id: commentId,
+                last_checked_comment_id: commentId,
               });
-            } else {
-              // Post question to GitHub
-              try {
-                const commentBody = `${AGENT_COMMENT_MARKER}\n**Agent Question:**\n\n${parsed.question}`;
-                const { id: commentId } = await createIssueCommentForRepo(repositoryId, job.issue_number, commentBody);
-                // Stop the process and transition to needs_info
-                await stopClaudeRun(jobId, true);
-                await updateJobStatus(jobId, "needs_info", "running", parsed.question, {
-                  claude_session_id: activeProcess.sessionId,
-                  needs_info_question: parsed.question,
-                  needs_info_comment_id: commentId,
-                  last_checked_comment_id: commentId,
-                });
-              } catch (error) {
-                const err = error as Error;
-                await emitLog(jobId, "stderr", `Failed to post question to GitHub: ${err.message}`, logState);
-              }
+            } catch (error) {
+              const err = error as Error;
+              await emitLog(jobId, "stderr", `Failed to post question to GitHub: ${err.message}`, logState);
             }
           }
-          break;
-      }
+        }
+        break;
     }
   });
 
   // Handle stderr
-  claudeProcess.stderr?.on("data", async (data: Buffer) => {
-    const content = data.toString();
+  proc.onStderr(async (content) => {
     await emitLog(jobId, "stderr", content, logState);
   });
 
   // Handle process exit
-  claudeProcess.on("close", async (code, _signal) => {
+  proc.onExit(async (code) => {
     clearTimeout(timeoutId);
-    const proc = activeProcesses.get(jobId);
+    const trackedProc = activeProcesses.get(jobId);
     activeProcesses.delete(jobId);
 
     // Unregister process from cleanup tracking
     await unregisterProcess(jobId);
-
-    // Process remaining buffer
-    if (stdoutBuffer.trim()) {
-      const parsed = parseStreamJsonLine(stdoutBuffer, jobId, logState);
-      if (parsed.content) {
-        if (isAccumulatingPlan) {
-          planAccumulator += `\n${parsed.content}`;
-        }
-        await emitLog(jobId, "stdout", parsed.content, logState);
-      }
-    }
 
     // Check if job is still in running or planning state (signals may have transitioned it)
     const currentJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
@@ -725,7 +658,7 @@ export async function startClaudeRun(
         plan_content: planContent,
         plan_comment_id: planCommentId,
         last_checked_plan_comment_id: planCommentId,
-        claude_session_id: proc?.sessionId,
+        claude_session_id: trackedProc?.sessionId,
       });
       return;
     }
@@ -740,13 +673,13 @@ export async function startClaudeRun(
       await emitLog(jobId, "stderr", `Claude process exited with code ${code}`, logState);
       await updateJobStatus(jobId, "failed", currentJob.status as JobStatus, `Claude exited with code ${code}`, {
         failure_reason: `Process exit code: ${code}`,
-        claude_session_id: proc?.sessionId,
+        claude_session_id: trackedProc?.sessionId,
       });
     }
   });
 
   // Handle process error
-  claudeProcess.on("error", async (error) => {
+  proc.onError(async (error) => {
     log.error({ err: error, jobId }, "Process error for job");
     clearTimeout(timeoutId);
     activeProcesses.delete(jobId);

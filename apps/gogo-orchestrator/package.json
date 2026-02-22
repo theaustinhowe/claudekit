@@ -15,6 +15,7 @@
     "db:reset": "rm -f data/gogo.duckdb data/gogo.duckdb.wal"
   },
   "dependencies": {
+    "@devkit/claude-runner": "workspace:*",
     "@devkit/duckdb": "workspace:*",
     "@devkit/github": "workspace:*",
     "@devkit/gogo-shared": "workspace:*",
