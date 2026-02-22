@@ -113,7 +113,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, projectName: action.name };
 
     case "SET_RIGHT_PANEL":
-      return { ...state, rightPanelContent: action.phase };
+      return { ...state, rightPanelContent: action.phase, panelRefreshKey: state.panelRefreshKey + 1 };
 
     case "SET_EDIT_MODE":
       return { ...state, editMode: action.phase };

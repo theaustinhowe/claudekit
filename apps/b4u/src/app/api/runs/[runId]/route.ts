@@ -119,20 +119,35 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
       }
     }
 
+    const messages = [
+      {
+        id: `restored-${runId}`,
+        role: "system",
+        content: `Restored run for ${projectName}. Chat history is unavailable for this run.`,
+        timestamp: Date.now(),
+      },
+    ];
+
+    // Backfill run_state so future restorations find persisted state
+    try {
+      await execute(
+        conn,
+        `INSERT INTO run_state (run_id, messages_json, current_phase, phase_statuses_json, project_path, project_name, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT (run_id) DO NOTHING`,
+        [runId, JSON.stringify(messages), currentPhase, JSON.stringify(phaseStatuses), projectPath, projectName],
+      );
+    } catch {
+      /* non-critical — best-effort backfill */
+    }
+
     return NextResponse.json({
       runId,
       projectPath,
       projectName,
       currentPhase,
       phaseStatuses,
-      messages: [
-        {
-          id: `restored-${runId}`,
-          role: "system",
-          content: `Restored run for ${projectName}. Chat history is unavailable for this run.`,
-          timestamp: Date.now(),
-        },
-      ],
+      messages,
     });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to fetch run" }, { status: 500 });

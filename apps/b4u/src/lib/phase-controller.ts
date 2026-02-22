@@ -174,10 +174,10 @@ export function usePhaseController() {
         // Persist tree to DB before showing panel (panel fetches it immediately)
         if (scan.tree) {
           try {
-            await fetch("/api/file-tree", {
+            await fetch(`/api/file-tree?runId=${runId}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ tree: scan.tree, name: scan.name, runId }),
+              body: JSON.stringify({ tree: scan.tree, name: scan.name }),
             });
           } catch {
             // Tree display is non-critical — continue even if save fails
