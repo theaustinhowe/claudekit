@@ -1,6 +1,6 @@
 import { UsageSection } from "@claudekit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavGroup } from "@claudekit/ui/components/shared-layout";
-import { FolderGit2, FolderKanban, Hammer, LayoutDashboard, Puzzle, ScanSearch, Settings, Shield } from "lucide-react";
+import { FolderGit2, Hammer, LayoutDashboard, Puzzle, ScanSearch, Settings, Shield } from "lucide-react";
 import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 
@@ -16,11 +16,8 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Build",
-    items: [
-      { label: "Projects", href: "/projects", icon: FolderKanban },
-      { label: "AI Integrations", href: "/ai-integrations", icon: Puzzle },
-    ],
+    label: "Integrations",
+    items: [{ label: "AI Integrations", href: "/ai-integrations", icon: Puzzle }],
   },
   {
     label: "Setup",
@@ -43,7 +40,6 @@ export const gadgetLayoutConfig: AppLayoutConfig = {
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "New Scan", href: "/scans", icon: ScanSearch },
     { label: "Repos", href: "/repositories", icon: FolderGit2 },
-    { label: "Projects", href: "/projects", icon: FolderKanban },
   ],
   usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
   port: 2100,

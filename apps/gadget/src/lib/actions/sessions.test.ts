@@ -50,8 +50,8 @@ describe("createSessionRecord", () => {
     mockExecute.mockResolvedValue(undefined);
 
     const id = await createSessionRecord({
-      sessionType: "chat",
-      label: "Chat session",
+      sessionType: "scan",
+      label: "Scan session",
       contextType: "repo",
       contextId: "repo-1",
       contextName: "My Repo",

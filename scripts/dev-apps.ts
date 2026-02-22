@@ -15,6 +15,7 @@ export const apps: AppDef[] = [
   { id: "gogo-orchestrator", filter: "gogo-orchestrator", port: 2201 },
   { id: "b4u", filter: "b4u", port: 2300 },
   { id: "inspector", filter: "inspector", port: 2400 },
+  { id: "inside", filter: "inside", port: 2500 },
   { id: "storybook", filter: "@claudekit/ui", port: 6006 },
 ];
 

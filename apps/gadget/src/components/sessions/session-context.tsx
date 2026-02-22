@@ -17,21 +17,15 @@ const gadgetSessionConfig: SessionPanelConfig = {
   typeLabels: SESSION_TYPE_LABELS,
   getContextLink(session: SessionRowBase): string | null {
     if (!session.context_type || !session.context_id) return null;
-    const base =
-      session.context_type === "repo"
-        ? `/repositories/${session.context_id}`
-        : session.context_type === "project"
-          ? `/projects/${session.context_id}`
-          : null;
-    if (!base) return null;
+    if (session.context_type !== "repo") return null;
+    const base = `/repositories/${session.context_id}`;
     const tab = SESSION_TYPE_TAB[session.session_type];
     return tab ? `${base}?tab=${tab}` : base;
   },
   isOnContextPage(session: SessionRowBase): boolean {
     if (!session.context_type || !session.context_id) return false;
     const path = window.location.pathname;
-    const prefix = session.context_type === "project" ? "/projects/" : "/repos/";
-    return path.startsWith(`${prefix}${session.context_id}`);
+    return path.startsWith(`/repos/${session.context_id}`);
   },
 };
 

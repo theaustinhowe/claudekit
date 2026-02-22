@@ -11,7 +11,8 @@ This file provides guidance to Claude Code when working in this monorepo.
 | App | Port | Framework | Description |
 |-----|------|-----------|-------------|
 | `apps/web` | 2000 | Next.js 16 | ClaudeKit dashboard, app health monitor, log viewer |
-| `apps/gadget` | 2100 | Next.js 16 | Repository auditor, AI integrations, project scaffolding |
+| `apps/gadget` | 2100 | Next.js 16 | Repository auditor, AI integrations |
+| `apps/inside` | 2500 | Next.js 16 | Project creation, scaffolding, design workspace |
 | `apps/gogo-web` | 2200 | Next.js 16 | Job orchestration dashboard for multi-repo AI agents |
 | `apps/gogo-orchestrator` | 2201 | Fastify 5 | Backend orchestrator for GoGo job execution |
 | `apps/b4u` | 2300 | Next.js 16 | Automated repo walkthrough video generator |
@@ -42,6 +43,7 @@ pnpm dev:gogo-web     # Just GoGo web dashboard (port 2200)
 pnpm dev:gogo-orch    # Just GoGo orchestrator (port 2201)
 pnpm dev:b4u          # Just B4U (port 2300)
 pnpm dev:inspector    # Just Inspector (port 2400)
+pnpm dev:inside       # Just Inside (port 2500)
 pnpm build            # Build all packages and apps
 pnpm typecheck        # TypeScript check across everything
 pnpm lint             # Biome check
