@@ -26,9 +26,8 @@ describe("createVoiceoverAudioRunner", () => {
 
   it("generates audio for each flow and saves to DB", async () => {
     vi.mocked(queryAll).mockResolvedValue([
-      { flow_id: "f1", paragraph_index: 0, text: "Hello" },
-      { flow_id: "f1", paragraph_index: 1, text: "World" },
-      { flow_id: "f2", paragraph_index: 0, text: "Another flow" },
+      { flow_id: "f1", paragraphs_json: JSON.stringify(["Hello", "World"]) },
+      { flow_id: "f2", paragraphs_json: JSON.stringify(["Another flow"]) },
     ]);
     vi.mocked(generateFlowVoiceover)
       .mockResolvedValueOnce({ flowId: "f1", filePath: "/audio/f1.mp3", durationEstimate: 10 })
@@ -53,8 +52,6 @@ describe("createVoiceoverAudioRunner", () => {
   });
 
   it("throws when aborted mid-generation", async () => {
-    vi.mocked(queryAll).mockResolvedValue([{ flow_id: "f1", paragraph_index: 0, text: "Hello" }]);
-
     const controller = new AbortController();
     // Abort after first generateFlowVoiceover call
     vi.mocked(generateFlowVoiceover).mockImplementation(async () => {
@@ -62,17 +59,14 @@ describe("createVoiceoverAudioRunner", () => {
       return { flowId: "f1", filePath: "/audio/f1.mp3", durationEstimate: 5 };
     });
 
-    const _runner = createVoiceoverAudioRunner("voice-1");
-    // With a single flow, the abort check happens at the top of the loop for the next iteration,
-    // but since there's only one flow, the loop ends. Let's use two flows.
     vi.mocked(queryAll).mockResolvedValue([
-      { flow_id: "f1", paragraph_index: 0, text: "Hello" },
-      { flow_id: "f2", paragraph_index: 0, text: "World" },
+      { flow_id: "f1", paragraphs_json: JSON.stringify(["Hello"]) },
+      { flow_id: "f2", paragraphs_json: JSON.stringify(["World"]) },
     ]);
 
-    const runner2 = createVoiceoverAudioRunner("voice-1");
+    const runner = createVoiceoverAudioRunner("voice-1");
 
-    await expect(runner2({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" })).rejects.toThrow(
+    await expect(runner({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" })).rejects.toThrow(
       "Aborted",
     );
   });

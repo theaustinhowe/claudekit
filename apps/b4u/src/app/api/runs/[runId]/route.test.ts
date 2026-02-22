@@ -50,7 +50,7 @@ describe("GET /api/runs/[runId]", () => {
           id: "s1",
           session_type: "analyze-project",
           status: "done",
-          project_path: "/projects/test",
+          context_name: "/projects/test",
           created_at: "2024-01-01",
         },
       ] as never);
@@ -96,7 +96,7 @@ describe("GET /api/runs/[runId]", () => {
           id: "s1",
           session_type: "analyze-project",
           status: "done",
-          project_path: "/projects/test",
+          context_name: "/projects/test",
           created_at: "2024-01-01",
         },
       ] as never);
@@ -132,7 +132,8 @@ describe("DELETE /api/runs/[runId]", () => {
 
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
-    expect(mockExecute).toHaveBeenCalledTimes(18); // 15 content tables + logs, sessions, run_state
+    // 8 content tables + session_logs + sessions + run_state = 11
+    expect(mockExecute).toHaveBeenCalledTimes(11);
   });
 
   it("returns 500 on error", async () => {

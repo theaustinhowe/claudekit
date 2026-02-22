@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn().mockResolvedValue({}),
-  queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
 }));
 vi.mock("@/lib/validations", () => ({
@@ -12,10 +12,10 @@ vi.mock("@/lib/validations", () => ({
 }));
 
 import { GET, PUT } from "@/app/api/user-flows/route";
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryOne } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
 
-const mockQueryAll = vi.mocked(queryAll);
+const mockQueryOne = vi.mocked(queryOne);
 const mockExecute = vi.mocked(execute);
 const mockParseBody = vi.mocked(parseBody);
 
@@ -30,7 +30,7 @@ beforeEach(() => {
 describe("GET /api/user-flows", () => {
   it("returns user flows", async () => {
     const flows = [{ id: "flow-1", name: "Login Flow", steps: ["Go to login", "Enter credentials"] }];
-    mockQueryAll.mockResolvedValue(flows as never);
+    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(flows) } as never);
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -47,8 +47,18 @@ describe("GET /api/user-flows", () => {
     expect(data.error).toContain("runId is required");
   });
 
+  it("returns empty array when no items exist", async () => {
+    mockQueryOne.mockResolvedValue(null as never);
+
+    const response = await GET(makeGetRequest("run-1"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual([]);
+  });
+
   it("returns 500 on database error", async () => {
-    mockQueryAll.mockRejectedValue(new Error("DB error"));
+    mockQueryOne.mockRejectedValue(new Error("DB error"));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();

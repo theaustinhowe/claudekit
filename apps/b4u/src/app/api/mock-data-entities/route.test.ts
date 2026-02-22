@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn().mockResolvedValue({}),
-  queryAll: vi.fn(),
+  queryOne: vi.fn(),
 }));
 
 import { GET } from "@/app/api/mock-data-entities/route";
-import { queryAll } from "@/lib/db";
+import { queryOne } from "@/lib/db";
 
-const mockQueryAll = vi.mocked(queryAll);
+const mockQueryOne = vi.mocked(queryOne);
 
 function makeGetRequest(runId: string) {
   return new NextRequest(`http://localhost/api/mock-data-entities?runId=${runId}`);
@@ -25,7 +25,7 @@ describe("GET /api/mock-data-entities", () => {
       { name: "User", count: 10, note: "Admin + regular" },
       { name: "Product", count: 50, note: "Various categories" },
     ];
-    mockQueryAll.mockResolvedValue(entities as never);
+    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(entities) } as never);
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -42,8 +42,18 @@ describe("GET /api/mock-data-entities", () => {
     expect(data.error).toContain("runId is required");
   });
 
+  it("returns empty array when no items exist", async () => {
+    mockQueryOne.mockResolvedValue(null as never);
+
+    const response = await GET(makeGetRequest("run-1"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual([]);
+  });
+
   it("returns 500 on database error", async () => {
-    mockQueryAll.mockRejectedValue(new Error("DB error"));
+    mockQueryOne.mockRejectedValue(new Error("DB error"));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();

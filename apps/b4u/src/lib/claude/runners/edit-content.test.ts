@@ -41,11 +41,11 @@ describe("createEditContentRunner", () => {
   });
 
   it("loads phase 2 data and edits it", async () => {
-    // loadPhaseData for phase 2 calls queryAll twice
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js" }]) // summary
-      .mockResolvedValueOnce([{ path: "/", title: "Home" }]); // routes
-    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+    // loadPhaseData for phase 2: queryAll for summary, queryOne for routes from run_content
+    vi.mocked(queryAll).mockResolvedValueOnce([{ name: "App", framework: "Next.js" }]); // summary
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home" }]) }) // routes
+      .mockResolvedValueOnce({ project_path: "/project" }); // project_path
 
     const updatedData = { summary: { name: "NewApp" }, routes: [] };
     vi.mocked(runClaude).mockResolvedValue({
@@ -62,7 +62,9 @@ describe("createEditContentRunner", () => {
 
   it("throws when Claude returns no JSON", async () => {
     vi.mocked(queryAll).mockResolvedValue([{ name: "App" }]);
-    vi.mocked(queryOne).mockResolvedValue({ project_path: "/p" });
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: "[]" }) // routes
+      .mockResolvedValueOnce({ project_path: "/p" }); // project_path
     vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 
     const runner = createEditContentRunner(2, "edit");
@@ -72,18 +74,18 @@ describe("createEditContentRunner", () => {
 
   // Helper to set up phase 2 mocks for reuse across tests
   function setupPhase2Mocks(stdout = '{"summary":{"name":"App"},"routes":[]}') {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js" }])
-      .mockResolvedValueOnce([{ path: "/", title: "Home" }]);
-    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+    vi.mocked(queryAll).mockResolvedValueOnce([{ name: "App", framework: "Next.js" }]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home" }]) }) // routes
+      .mockResolvedValueOnce({ project_path: "/project" }); // project_path
     vi.mocked(runClaude).mockResolvedValue({ stdout, stderr: "", exitCode: 0 });
   }
 
   it("serializes directories with JSON.stringify and VARCHAR[] cast in phase 2", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js" }])
-      .mockResolvedValueOnce([{ path: "/", title: "Home" }]);
-    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+    vi.mocked(queryAll).mockResolvedValueOnce([{ name: "App", framework: "Next.js" }]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home" }]) }) // routes
+      .mockResolvedValueOnce({ project_path: "/project" }); // project_path
 
     const updatedData = {
       summary: { name: "App", framework: "Next.js", auth: "None", database_info: "None" },
@@ -108,11 +110,16 @@ describe("createEditContentRunner", () => {
     expect(summaryInsert?.[2]).toContain(JSON.stringify(["src/app", "src/lib"]));
   });
 
-  it("serializes steps with JSON.stringify and VARCHAR[] cast in phase 3", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ path: "/", title: "Home", auth_required: false, description: "Main" }])
-      .mockResolvedValueOnce([{ id: "f1", name: "Flow", steps: ["step1", "step2"] }]);
-    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+  it("saves routes and flows to run_content in phase 3", async () => {
+    // loadPhaseData for phase 3: queryOne for routes, queryOne for flows from run_content
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({
+        data_json: JSON.stringify([{ path: "/", title: "Home", auth_required: false, description: "Main" }]),
+      }) // routes
+      .mockResolvedValueOnce({
+        data_json: JSON.stringify([{ id: "f1", name: "Flow", steps: ["step1", "step2"] }]),
+      }) // flows
+      .mockResolvedValueOnce({ project_path: "/project" }); // project_path
 
     const updatedData = {
       routes: [{ path: "/", title: "Home", auth_required: false, description: "Main" }],
@@ -128,21 +135,23 @@ describe("createEditContentRunner", () => {
     await runner(makeCtx());
 
     const { execute } = await import("@/lib/db");
-    const flowInsert = vi
+    const flowsInsert = vi
       .mocked(execute)
-      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO user_flows"));
-    expect(flowInsert).toBeDefined();
-    expect(flowInsert?.[1]).toContain("?::VARCHAR[]");
-    expect(flowInsert?.[2]).toContain(JSON.stringify(["step1", "step2", "step3"]));
+      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("'user_flows'"));
+    expect(flowsInsert).toBeDefined();
   });
 
   it("loads phase 3 data (routes + flows) and edits it", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([
-        { path: "/dashboard", title: "Dashboard", auth_required: true, description: "Main page" },
-      ])
-      .mockResolvedValueOnce([{ id: 1, name: "Login Flow", steps: ["visit /login", "enter creds"] }]);
-    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({
+        data_json: JSON.stringify([
+          { path: "/dashboard", title: "Dashboard", auth_required: true, description: "Main page" },
+        ]),
+      }) // routes
+      .mockResolvedValueOnce({
+        data_json: JSON.stringify([{ id: 1, name: "Login Flow", steps: ["visit /login", "enter creds"] }]),
+      }) // flows
+      .mockResolvedValueOnce({ project_path: "/project" }); // project_path
 
     const updatedData = {
       routes: [{ path: "/home", title: "Home" }],
@@ -161,11 +170,11 @@ describe("createEditContentRunner", () => {
   });
 
   it("loads phase 4 data (entities + auth overrides + env items) and edits it", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "User", count: 10, note: "test users" }])
-      .mockResolvedValueOnce([{ id: "ao1", label: "Bypass Auth", enabled: true }])
-      .mockResolvedValueOnce([{ id: "env1", label: "API_KEY", enabled: false }]);
-    vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ name: "User", count: 10, note: "test users" }]) }) // entities
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ id: "ao1", label: "Bypass Auth", enabled: true }]) }) // auth
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ id: "env1", label: "API_KEY", enabled: false }]) }) // env
+      .mockResolvedValueOnce({ project_path: "/project" }); // project_path
 
     const updatedData = {
       entities: [{ name: "User", count: 5, note: "fewer users" }],
@@ -184,39 +193,31 @@ describe("createEditContentRunner", () => {
     expect(result).toEqual({ result: updatedData });
   });
 
-  it("loads phase 5 data (flow scripts, steps, voiceovers, timeline markers) and edits it", async () => {
+  it("loads phase 5 data (flow scripts + voiceovers) and edits it", async () => {
     vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ flow_id: "f1", flow_name: "Onboarding" }])
       .mockResolvedValueOnce([
         {
-          id: "s1",
           flow_id: "f1",
-          step_number: 1,
-          url: "/",
-          action: "click",
-          expected_outcome: "page loads",
-          duration: "3s",
+          flow_name: "Onboarding",
+          steps_json: JSON.stringify([
+            { id: "s1", stepNumber: 1, url: "/", action: "click", expectedOutcome: "page loads", duration: "3s" },
+          ]),
         },
-      ])
-      .mockResolvedValueOnce([{ flow_id: "f1", paragraph_index: 0, text: "Welcome to the app" }])
-      .mockResolvedValueOnce([{ flow_id: "f1", timestamp: "0:00", label: "Start", paragraph_index: 0 }]);
+      ]) // flow_scripts
+      .mockResolvedValueOnce([
+        {
+          flow_id: "f1",
+          paragraphs_json: JSON.stringify(["Welcome to the app"]),
+          markers_json: JSON.stringify([{ timestamp: "0:00", label: "Start", paragraphIndex: 0 }]),
+        },
+      ]); // flow_voiceover
     vi.mocked(queryOne).mockResolvedValue({ project_path: "/project" });
 
     const updatedData = {
-      flowScripts: [{ flow_id: "f1", flow_name: "Onboarding Updated" }],
-      scriptSteps: [
-        {
-          id: "s1",
-          flow_id: "f1",
-          step_number: 1,
-          url: "/home",
-          action: "navigate",
-          expected_outcome: "home loads",
-          duration: "2s",
-        },
+      flowScripts: [{ flow_id: "f1", flow_name: "Onboarding Updated", steps: [] }],
+      voiceovers: [
+        { flow_id: "f1", paragraphs: ["Updated voiceover"], markers: [{ timestamp: "0:05", label: "Intro", paragraphIndex: 0 }] },
       ],
-      voiceovers: [{ flow_id: "f1", paragraph_index: 0, text: "Updated voiceover" }],
-      timelineMarkers: [{ flow_id: "f1", timestamp: "0:05", label: "Intro", paragraph_index: 0 }],
     };
     vi.mocked(runClaude).mockResolvedValue({
       stdout: JSON.stringify(updatedData),

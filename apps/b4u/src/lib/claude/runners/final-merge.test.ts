@@ -48,7 +48,7 @@ describe("createFinalMergeRunner", () => {
 
   it("concatenates videos and generates chapters on success", async () => {
     vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ id: "r1", flow_id: "f1", video_path: "/v1.mp4", duration_seconds: 30 }])
+      .mockResolvedValueOnce([{ id: "r1", flow_id: "f1", file_path: "/v1.mp4", duration_seconds: 30 }])
       .mockResolvedValueOnce([]) // no audio
       .mockResolvedValueOnce([{ flow_id: "f1", flow_name: "Login" }])
       .mockResolvedValueOnce([{ name: "MyApp", project_path: "/project" }]);
@@ -71,7 +71,7 @@ describe("createFinalMergeRunner", () => {
 
   it("merges audio when audio files exist", async () => {
     vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ id: "r1", flow_id: "f1", video_path: "/v1.mp4", duration_seconds: 30 }])
+      .mockResolvedValueOnce([{ id: "r1", flow_id: "f1", file_path: "/v1.mp4", duration_seconds: 30 }])
       .mockResolvedValueOnce([{ id: "a1", flow_id: "f1", file_path: "/a1.mp3", duration_seconds: 25 }])
       .mockResolvedValueOnce([{ flow_id: "f1", flow_name: "Login" }])
       .mockResolvedValueOnce([{ name: "MyApp", project_path: "/project" }]);
@@ -86,7 +86,7 @@ describe("createFinalMergeRunner", () => {
 
   it("throws when aborted", async () => {
     vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ id: "r1", flow_id: "f1", video_path: "/v1.mp4", duration_seconds: 30 }])
+      .mockResolvedValueOnce([{ id: "r1", flow_id: "f1", file_path: "/v1.mp4", duration_seconds: 30 }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ name: "App", project_path: "/p" }]);
