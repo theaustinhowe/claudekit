@@ -1,8 +1,8 @@
-# CLAUDE.md — Inside
+# CLAUDE.md — Inspector
 
 ## Overview
 
-**Inside** is a local-first GitHub PR analysis tool. It connects to GitHub repos via PAT, fetches PRs and review comments, and uses Claude AI to provide:
+**Inspector** is a local-first GitHub PR analysis tool. It connects to GitHub repos via PAT, fetches PRs and review comments, and uses Claude AI to provide:
 
 1. **Dashboard** — PR overview with stats, sizes, review statuses
 2. **Skill Builder** — Categorize review comments into skill patterns for growth
@@ -12,16 +12,16 @@
 
 ## Port
 
-**2400** — `pnpm dev:inside` or `pnpm --filter inside dev`
+**2400** — `pnpm dev:inspector` or `pnpm --filter inspector dev`
 
 ## Commands
 
 ```bash
-pnpm --filter inside dev        # Start dev server on port 2400
-pnpm --filter inside build      # Production build
-pnpm --filter inside typecheck  # TypeScript check
-pnpm --filter inside test       # Run tests
-pnpm --filter inside db:reset   # Delete ~/.inside/data.duckdb
+pnpm --filter inspector dev        # Start dev server on port 2400
+pnpm --filter inspector build      # Production build
+pnpm --filter inspector typecheck  # TypeScript check
+pnpm --filter inspector test       # Run tests
+pnpm --filter inspector db:reset   # Delete ~/.inspector/data.duckdb
 ```
 
 ## Environment Variables
@@ -29,7 +29,7 @@ pnpm --filter inside db:reset   # Delete ~/.inside/data.duckdb
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | Yes | GitHub PAT with `repo` scope |
-| `DATABASE_PATH` | No | Override DB path (default: `~/.inside/data.duckdb`) |
+| `DATABASE_PATH` | No | Override DB path (default: `~/.inspector/data.duckdb`) |
 
 ## Architecture
 
@@ -59,7 +59,7 @@ src/
 
 ## Database
 
-DuckDB at `~/.inside/data.duckdb` with tables:
+DuckDB at `~/.inspector/data.duckdb` with tables:
 - `repos` — Connected GitHub repositories
 - `prs` — Cached pull requests with size classification
 - `pr_comments` — Review comments with AI-classified severity/category

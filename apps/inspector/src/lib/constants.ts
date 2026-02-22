@@ -1,4 +1,4 @@
-export const APP_NAME = "Inside";
+export const APP_NAME = "Inspector";
 
 export const SIZE_THRESHOLDS = {
   S: 100,

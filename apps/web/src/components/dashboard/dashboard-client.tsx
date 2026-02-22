@@ -58,7 +58,7 @@ const ACCENT_COLORS: Record<string, string> = {
   "gogo-web": "border-l-blue-500",
   "gogo-orchestrator": "border-l-cyan-500",
   b4u: "border-l-amber-500",
-  inside: "border-l-rose-500",
+  inspector: "border-l-rose-500",
   storybook: "border-l-pink-500",
   web: "border-l-emerald-500",
 };

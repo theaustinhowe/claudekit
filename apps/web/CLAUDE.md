@@ -6,7 +6,7 @@ Next.js 16 app serving as the devkit landing page and control center.
 
 ## Features
 
-- Dashboard with health status for all devkit apps (Gadget, GoGo Web, GoGo Orchestrator, B4U, Inside)
+- Dashboard with health status for all devkit apps (Gadget, GoGo Web, GoGo Orchestrator, B4U, Inspector)
 - Live app status polling (running/stopped indicators)
 - Log file listing with links to per-app log viewer
 - Per-app log viewer with virtual scrolling (@tanstack/react-virtual)

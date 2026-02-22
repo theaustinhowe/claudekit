@@ -43,7 +43,7 @@ interface SettingsClientProps {
 
 export function SettingsClient({ repos: initialRepos, settings }: SettingsClientProps) {
   const router = useRouter();
-  const { theme: colorTheme, setTheme: setColorTheme, themes } = useAppTheme({ storageKey: "inside-theme" });
+  const { theme: colorTheme, setTheme: setColorTheme, themes } = useAppTheme({ storageKey: "inspector-theme" });
   const [repos, setRepos] = useState(initialRepos);
   const [repoInput, setRepoInput] = useState("");
   const [minSize, setMinSize] = useState(Number(settings.min_split_size) || 400);

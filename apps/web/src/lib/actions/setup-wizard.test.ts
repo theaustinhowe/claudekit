@@ -97,7 +97,7 @@ describe("loadSetupData", () => {
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gadget/.env.local.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gogo-web/.env.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gogo-orchestrator/.env.example`);
-    expect(readPaths).toContain(`${FAKE_ROOT}/apps/inside/.env.example`);
+    expect(readPaths).toContain(`${FAKE_ROOT}/apps/inspector/.env.example`);
   });
 
   it("passes each file content to parseEnvExample", async () => {

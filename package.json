@@ -12,7 +12,7 @@
     "dev:gogo-orch": "pnpm --filter gogo-orchestrator dev",
     "dev:web": "pnpm --filter web dev",
     "dev:b4u": "pnpm --filter b4u dev",
-    "dev:inside": "pnpm --filter inside dev",
+    "dev:inspector": "pnpm --filter inspector dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "biome check .",

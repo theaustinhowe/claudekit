@@ -4,7 +4,7 @@ import { basename, join } from "node:path";
 import { Writable } from "node:stream";
 import pino from "pino";
 
-export type AppName = "gadget" | "gogo-web" | "gogo-orchestrator" | "b4u" | "web" | "dev-runner" | "inside";
+export type AppName = "gadget" | "gogo-web" | "gogo-orchestrator" | "b4u" | "web" | "dev-runner" | "inspector";
 
 export interface LoggerConfig {
   app: AppName;

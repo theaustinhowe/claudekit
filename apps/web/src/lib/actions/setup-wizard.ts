@@ -21,7 +21,7 @@ const ENV_FILES = [
     example: "apps/gogo-orchestrator/.env.example",
     local: "apps/gogo-orchestrator/.env.local",
   },
-  { label: "Inside", appId: "inside", example: "apps/inside/.env.example", local: "apps/inside/.env.local" },
+  { label: "Inspector", appId: "inspector", example: "apps/inspector/.env.example", local: "apps/inspector/.env.local" },
 ];
 
 /** Walk up from cwd looking for pnpm-workspace.yaml to find monorepo root. */

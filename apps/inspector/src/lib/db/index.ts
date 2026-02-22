@@ -6,7 +6,7 @@ import { createDatabase, runMigrations } from "@devkit/duckdb";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 
-const DB_DIR = path.join(os.homedir(), ".inside");
+const DB_DIR = path.join(os.homedir(), ".inspector");
 const DB_PATH = process.env.DATABASE_PATH || path.join(DB_DIR, "data.duckdb");
 
 const db = createDatabase({

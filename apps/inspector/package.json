@@ -1,5 +1,5 @@
 {
-  "name": "inside",
+  "name": "inspector",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
     "seed": "tsx src/lib/db/seed.ts",
-    "db:reset": "rm -f ~/.inside/data.duckdb ~/.inside/data.duckdb.wal",
+    "db:reset": "rm -f ~/.inspector/data.duckdb ~/.inspector/data.duckdb.wal",
     "test": "vitest run"
   },
   "dependencies": {

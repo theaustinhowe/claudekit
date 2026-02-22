@@ -19,11 +19,11 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-export const insideLayoutConfig: AppLayoutConfig = {
-  appId: "inside",
+export const inspectorLayoutConfig: AppLayoutConfig = {
+  appId: "inspector",
   logo: {
-    icon: <Image src="/favicon-32x32.png" alt="Inside" width={32} height={32} className="w-8 h-8" />,
-    wordmark: <Image src="/logo.png" alt="Inside" width={887} height={617} className="h-10 w-auto" />,
+    icon: <Image src="/favicon-32x32.png" alt="Inspector" width={32} height={32} className="w-8 h-8" />,
+    wordmark: <Image src="/logo.png" alt="Inspector" width={887} height={617} className="h-10 w-auto" />,
   },
   nav: navGroups,
   bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],

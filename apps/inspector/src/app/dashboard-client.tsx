@@ -406,7 +406,7 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
           <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center mb-6 mx-auto">
             <span className="text-2xl font-bold text-primary-foreground">IN</span>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Welcome to Inside</h1>
+          <h1 className="text-2xl font-bold mb-2">Welcome to Inspector</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Your local-first GitHub PR analysis toolkit. Connect a repository to get started.
           </p>
@@ -434,7 +434,7 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
                 <div>
                   <p className="text-sm font-medium">Sync pull requests</p>
                   <p className="text-xs text-muted-foreground">
-                    Inside will automatically fetch your PRs and review comments from GitHub.
+                    Inspector will automatically fetch your PRs and review comments from GitHub.
                   </p>
                 </div>
               </div>

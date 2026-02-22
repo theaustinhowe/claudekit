@@ -37,12 +37,12 @@ const APP_DEFINITIONS = [
     favicon: "/app-icons/b4u.png",
   },
   {
-    id: "inside",
-    name: "Inside",
+    id: "inspector",
+    name: "Inspector",
     description: "GitHub PR analysis, skill building, and comment resolution",
     port: 2400,
     icon: "GitPullRequest",
-    favicon: "/app-icons/inside.png",
+    favicon: "/app-icons/inspector.png",
   },
   {
     id: "storybook",
