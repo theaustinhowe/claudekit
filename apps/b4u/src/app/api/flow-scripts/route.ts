@@ -11,35 +11,13 @@ export async function GET(request: NextRequest) {
     const flows = await queryAll<{
       flow_id: string;
       flow_name: string;
-    }>(conn, "SELECT flow_id, flow_name FROM flow_scripts WHERE run_id = ? ORDER BY id", [runId]);
-
-    const steps = await queryAll<{
-      id: string;
-      flow_id: string;
-      step_number: number;
-      url: string;
-      action: string;
-      expected_outcome: string;
-      duration: string;
-    }>(
-      conn,
-      "SELECT id, flow_id, step_number, url, action, expected_outcome, duration FROM script_steps WHERE run_id = ? ORDER BY flow_id, step_number",
-      [runId],
-    );
+      steps_json: string;
+    }>(conn, "SELECT flow_id, flow_name, steps_json FROM flow_scripts WHERE run_id = ?", [runId]);
 
     const result = flows.map((f) => ({
       flowId: f.flow_id,
       flowName: f.flow_name,
-      steps: steps
-        .filter((s) => s.flow_id === f.flow_id)
-        .map((s) => ({
-          id: s.id,
-          stepNumber: s.step_number,
-          url: s.url,
-          action: s.action,
-          expectedOutcome: s.expected_outcome,
-          duration: s.duration,
-        })),
+      steps: JSON.parse(f.steps_json),
     }));
 
     return NextResponse.json(result);
@@ -61,16 +39,14 @@ export async function PUT(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "DELETE FROM script_steps WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM flow_scripts WHERE run_id = ?", [runId]);
 
     for (const flow of flowScripts) {
-      for (const step of flow.steps) {
-        await execute(
-          conn,
-          "INSERT INTO script_steps (id, run_id, flow_id, step_number, url, action, expected_outcome, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [step.id, runId, flow.flowId, step.stepNumber, step.url, step.action, step.expectedOutcome, step.duration],
-        );
-      }
+      await execute(
+        conn,
+        "INSERT INTO flow_scripts (id, run_id, flow_id, flow_name, steps_json) VALUES (?, ?, ?, ?, ?)",
+        [crypto.randomUUID(), runId, flow.flowId, flow.flowName, JSON.stringify(flow.steps)],
+      );
     }
 
     return NextResponse.json({ success: true });

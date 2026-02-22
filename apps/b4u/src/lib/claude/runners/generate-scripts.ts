@@ -2,7 +2,7 @@ import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@claudekit/session";
 import { buildGenerateScriptsPrompt } from "@/lib/claude/prompts/generate-scripts";
 import { buildGenerateVoiceoverPrompt } from "@/lib/claude/prompts/generate-voiceover";
-import { execute, getDb, queryAll } from "@/lib/db";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 
 export function createGenerateScriptsRunner(runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
@@ -29,39 +29,47 @@ export function createGenerateScriptsRunner(runId?: string): SessionRunner {
 
     const summary = summaryRows[0];
 
-    const routeRows = await queryAll<{
-      path: string;
-      title: string;
-      description: string;
-    }>(
-      conn,
-      runId
-        ? "SELECT path, title, description FROM routes WHERE run_id = ? ORDER BY id"
-        : "SELECT path, title, description FROM routes ORDER BY id",
-      runId ? [runId] : [],
-    );
+    // Read routes from run_content
+    const routesRow = runId
+      ? await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
+          [runId],
+        )
+      : await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE content_type = 'routes' LIMIT 1",
+        );
 
-    const flowRows = await queryAll<{
-      id: string;
-      name: string;
-      steps: string[];
-    }>(
-      conn,
-      runId
-        ? "SELECT id, name, steps FROM user_flows WHERE run_id = ? ORDER BY id"
-        : "SELECT id, name, steps FROM user_flows ORDER BY id",
-      runId ? [runId] : [],
-    );
+    const routeData: Array<{ path: string; title: string; description: string }> = routesRow
+      ? JSON.parse(routesRow.data_json)
+      : [];
 
-    if (flowRows.length === 0) {
+    // Read user flows from run_content
+    const flowsRow = runId
+      ? await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'user_flows'",
+          [runId],
+        )
+      : await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE content_type = 'user_flows' LIMIT 1",
+        );
+
+    const flowData: Array<{ id: string; name: string; steps: string[] }> = flowsRow
+      ? JSON.parse(flowsRow.data_json)
+      : [];
+
+    if (flowData.length === 0) {
       throw new Error("No user flows found. Run generate-outline first.");
     }
 
     const projectContext = {
       name: summary.name,
       framework: summary.framework,
-      flows: flowRows.map((f) => ({ id: f.id, name: f.name, steps: f.steps })),
-      routes: routeRows.map((r) => ({ path: r.path, title: r.title, description: r.description })),
+      flows: flowData.map((f) => ({ id: f.id, name: f.name, steps: f.steps })),
+      routes: routeData.map((r) => ({ path: r.path, title: r.title, description: r.description })),
     };
 
     const cwd = summary.project_path || process.cwd();
@@ -104,39 +112,17 @@ export function createGenerateScriptsRunner(runId?: string): SessionRunner {
       throw new Error(`Failed to parse scripts: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // Save scripts to DB
+    // Save scripts to DB (flow_scripts with embedded steps_json)
     await execute(conn, "DELETE FROM flow_scripts WHERE run_id = ?", [runId]);
-    await execute(conn, "DELETE FROM script_steps WHERE run_id = ?", [runId]);
 
     if (scripts.scripts && Array.isArray(scripts.scripts)) {
-      for (let i = 0; i < scripts.scripts.length; i++) {
-        const s = scripts.scripts[i];
+      for (const s of scripts.scripts) {
         await execute(
           conn,
-          `INSERT INTO flow_scripts (id, run_id, flow_id, flow_name)
-          VALUES (?, ?, ?, ?)`,
-          [i + 1, runId, s.flowId || "", s.flowName || ""],
+          `INSERT INTO flow_scripts (id, run_id, flow_id, flow_name, steps_json)
+          VALUES (?, ?, ?, ?, ?)`,
+          [crypto.randomUUID(), runId, s.flowId || "", s.flowName || "", JSON.stringify(s.steps || [])],
         );
-
-        if (s.steps && Array.isArray(s.steps)) {
-          for (const step of s.steps) {
-            await execute(
-              conn,
-              `INSERT INTO script_steps (id, run_id, flow_id, step_number, url, action, expected_outcome, duration)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-              [
-                step.id || "",
-                runId,
-                s.flowId || "",
-                step.stepNumber || 0,
-                step.url || "",
-                step.action || "",
-                step.expectedOutcome || "",
-                step.duration || "3s",
-              ],
-            );
-          }
-        }
       }
     }
 
@@ -197,43 +183,31 @@ export function createGenerateScriptsRunner(runId?: string): SessionRunner {
 
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
-    // Save voiceover data
-    await execute(conn, "DELETE FROM voiceover_scripts WHERE run_id = ?", [runId]);
-    await execute(conn, "DELETE FROM timeline_markers WHERE run_id = ?", [runId]);
+    // Save voiceover data to flow_voiceover
+    await execute(conn, "DELETE FROM flow_voiceover WHERE run_id = ?", [runId]);
     await execute(conn, "DELETE FROM chapter_markers WHERE run_id = ?", [runId]);
 
-    // Save voiceover scripts
+    // Build flow_voiceover rows: paragraphs_json and markers_json per flow
     if (voiceover.voiceovers) {
       for (const [flowId, paragraphs] of Object.entries(voiceover.voiceovers)) {
-        if (Array.isArray(paragraphs)) {
-          for (let i = 0; i < paragraphs.length; i++) {
-            const text = paragraphs[i] as string;
-            await execute(
-              conn,
-              `INSERT INTO voiceover_scripts (run_id, flow_id, paragraph_index, text)
-              VALUES (?, ?, ?, ?)`,
-              [runId, flowId, i, text],
-            );
-          }
-        }
-      }
-    }
+        const paragraphsArray = Array.isArray(paragraphs) ? paragraphs : [];
 
-    // Save timeline markers
-    if (voiceover.timelineMarkers) {
-      let markerId = 1;
-      for (const [flowId, markers] of Object.entries(voiceover.timelineMarkers)) {
-        if (Array.isArray(markers)) {
-          for (const m of markers) {
-            const marker = m as { timestamp: string; label: string; paragraphIndex: number };
-            await execute(
-              conn,
-              `INSERT INTO timeline_markers (id, run_id, flow_id, timestamp, label, paragraph_index)
-              VALUES (?, ?, ?, ?, ?, ?)`,
-              [markerId++, runId, flowId, marker.timestamp || "0:00", marker.label || "", marker.paragraphIndex || 0],
-            );
-          }
-        }
+        // Get timeline markers for this flow
+        const flowMarkers =
+          voiceover.timelineMarkers && voiceover.timelineMarkers[flowId]
+            ? (voiceover.timelineMarkers[flowId] as Array<{
+                timestamp: string;
+                label: string;
+                paragraphIndex: number;
+              }>)
+            : [];
+
+        await execute(
+          conn,
+          `INSERT INTO flow_voiceover (id, run_id, flow_id, paragraphs_json, markers_json)
+          VALUES (?, ?, ?, ?, ?)`,
+          [crypto.randomUUID(), runId, flowId, JSON.stringify(paragraphsArray), JSON.stringify(flowMarkers)],
+        );
       }
     }
 

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryAll } from "@claudekit/duckdb";
 import { closeDatabase, getDb } from "../db/index.js";
 import { shutdownLogBuffers } from "../utils/job-logging.js";
@@ -71,8 +72,9 @@ async function handleShutdown(): Promise<void> {
       for (const job of runningJobs) {
         await execute(
           conn,
-          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
           [
+            randomUUID(),
             job.id,
             "state_change",
             "running",

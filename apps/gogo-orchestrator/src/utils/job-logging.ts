@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryOne } from "@claudekit/duckdb";
 import type { JobStatus, LogStream } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -125,8 +126,8 @@ async function flushAllPending(): Promise<void> {
     for (const entry of allPending) {
       await execute(
         conn,
-        "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
-        [entry.jobId, entry.stream, entry.content, entry.sequence, entry.createdAt.toISOString()],
+        "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [randomUUID(), entry.jobId, entry.stream, entry.content, entry.sequence, entry.createdAt.toISOString()],
       );
     }
   } catch (error) {
@@ -216,8 +217,8 @@ export async function updateJobStatus(
 
   await execute(
     conn,
-    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-    [jobId, "state_change", fromStatus, newStatus, message, now],
+    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [randomUUID(), jobId, "state_change", fromStatus, newStatus, message, now],
   );
 
   broadcast({ type: "job:updated", payload: updated });

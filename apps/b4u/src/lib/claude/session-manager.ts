@@ -18,7 +18,7 @@ export async function createSession(opts: {
   const now = new Date().toISOString();
   await execute(
     conn,
-    `INSERT INTO sessions (id, session_type, status, label, project_path, run_id, result_json, created_at)
+    `INSERT INTO sessions (id, session_type, status, label, context_name, context_id, metadata_json, created_at)
      VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)`,
     [
       id,
@@ -100,8 +100,8 @@ interface RecoverableSession {
 export async function getRecoverableSessions(runId?: string): Promise<RecoverableSession[]> {
   const conn = await getDb();
   const query = runId
-    ? "SELECT id, session_type, status, label, run_id, created_at FROM sessions WHERE run_id = ? AND status IN ('running', 'pending', 'error') ORDER BY created_at DESC"
-    : "SELECT id, session_type, status, label, run_id, created_at FROM sessions WHERE status IN ('running', 'pending', 'error') ORDER BY created_at DESC LIMIT 10";
+    ? "SELECT id, session_type, status, label, context_id, created_at FROM sessions WHERE context_id = ? AND status IN ('running', 'pending', 'error') ORDER BY created_at DESC"
+    : "SELECT id, session_type, status, label, context_id, created_at FROM sessions WHERE status IN ('running', 'pending', 'error') ORDER BY created_at DESC LIMIT 10";
   const params = runId ? [runId] : [];
 
   const rows = await queryAll<{
@@ -109,7 +109,7 @@ export async function getRecoverableSessions(runId?: string): Promise<Recoverabl
     session_type: string;
     status: string;
     label: string;
-    run_id: string | null;
+    context_id: string | null;
     created_at: string;
   }>(conn, query, params);
 
@@ -118,7 +118,7 @@ export async function getRecoverableSessions(runId?: string): Promise<Recoverabl
     sessionType: r.session_type,
     status: r.status,
     label: r.label,
-    runId: r.run_id,
+    runId: r.context_id,
     createdAt: r.created_at,
   }));
 }

@@ -4,7 +4,6 @@ vi.mock("@/lib/services/reporter", () => ({
   exportJSON: vi.fn(),
   exportMarkdown: vi.fn(),
   exportPRDescription: vi.fn(),
-  saveReport: vi.fn(),
 }));
 
 import { NextRequest } from "next/server";

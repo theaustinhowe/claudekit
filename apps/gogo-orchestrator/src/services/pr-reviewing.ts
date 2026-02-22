@@ -5,6 +5,7 @@
  * Completes the automation loop: issue -> PR -> review feedback -> done
  */
 
+import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
@@ -114,8 +115,9 @@ async function checkPrStatus(job: JobWithPr): Promise<void> {
     const now = new Date().toISOString();
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
+      "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         job.id,
         "github_sync",
         `PR #${job.pr_number} was merged`,
@@ -136,8 +138,9 @@ async function checkPrStatus(job: JobWithPr): Promise<void> {
     const now = new Date().toISOString();
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
+      "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         job.id,
         "github_sync",
         `PR #${job.pr_number} was closed without merge`,
@@ -207,8 +210,9 @@ async function checkForReviewFeedback(job: JobWithPr): Promise<void> {
   const now = new Date().toISOString();
   await execute(
     conn,
-    "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
+    "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)",
     [
+      randomUUID(),
       job.id,
       "pr_review_feedback",
       feedback,
@@ -327,8 +331,9 @@ async function cleanupWorktreeAfterMerge(job: JobWithPr): Promise<void> {
 
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
+      "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         job.id,
         "auto_cleanup",
         "Worktree automatically cleaned up after PR merge",

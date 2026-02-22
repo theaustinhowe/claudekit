@@ -6,6 +6,7 @@
  * creates job records for them.
  */
 
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
@@ -115,8 +116,9 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
         const now = new Date().toISOString();
         await execute(
           conn,
-          "INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, status, branch, pr_number, pr_url, created_at, updated_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, status, branch, pr_number, pr_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
+            randomUUID(),
             repo.id,
             issue.number,
             issue.title,
@@ -146,8 +148,9 @@ export async function recoverOrphanedPrs(): Promise<RecoveryResult> {
         // Create audit event
         await execute(
           conn,
-          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
           [
+            randomUUID(),
             newJob.id,
             "state_change",
             null,

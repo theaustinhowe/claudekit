@@ -79,17 +79,18 @@ describe("scan runner", () => {
     );
   });
 
-  it("reuses existing scan root IDs", async () => {
+  it("reuses existing scan root IDs in scan_root_ids JSON", async () => {
     vi.mocked(queryOne).mockResolvedValue({ id: "existing-root-id" });
     setupHappyPath();
 
     const runner = createScanRunner({ scanRoots: ["/home/user/projects"] });
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
 
-    expect(execute).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("INSERT INTO scan_root_entries"), [
-      "gen-id",
-      "existing-root-id",
-    ]);
+    expect(execute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining("INSERT INTO scans"),
+      expect.arrayContaining([JSON.stringify(["existing-root-id"])]),
+    );
   });
 
   it("discovers and stores repos", async () => {

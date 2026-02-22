@@ -77,7 +77,15 @@ describe("skills actions", () => {
   describe("getSkillsForAnalysis", () => {
     it("returns skills with joined comments", async () => {
       mockQueryAll
-        .mockResolvedValueOnce([{ id: "s1", analysis_id: "a1", name: "Error Handling", frequency: 3 }])
+        .mockResolvedValueOnce([
+          {
+            id: "s1",
+            analysis_id: "a1",
+            name: "Error Handling",
+            frequency: 3,
+            comment_ids: JSON.stringify(["c1"]),
+          },
+        ])
         .mockResolvedValueOnce([
           {
             id: "c1",
@@ -250,17 +258,16 @@ describe("skills actions", () => {
       const result = await startSkillAnalysis("repo1", [1]);
 
       expect(result).toBe("mock-uuid");
-      // Should insert analysis + skill + skill_comment link
+      // Should insert analysis + skill (with comment_ids JSON column)
       expect(mockExecute).toHaveBeenCalledWith(
         {},
         expect.stringContaining("INSERT INTO skill_analyses"),
         expect.any(Array),
       );
-      expect(mockExecute).toHaveBeenCalledWith({}, expect.stringContaining("INSERT INTO skills"), expect.any(Array));
       expect(mockExecute).toHaveBeenCalledWith(
         {},
-        expect.stringContaining("INSERT INTO skill_comments"),
-        expect.any(Array),
+        expect.stringContaining("INSERT INTO skills"),
+        expect.arrayContaining([JSON.stringify(["c1"])]),
       );
     });
 

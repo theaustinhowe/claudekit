@@ -8,23 +8,18 @@ export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0,
 
     const conn = await getDb();
 
-    // Load voiceover scripts from DB
-    const rows = await queryAll<{ flow_id: string; paragraph_index: number; text: string }>(
+    // Load voiceover data from flow_voiceover
+    const rows = await queryAll<{ flow_id: string; paragraphs_json: string }>(
       conn,
       runId
-        ? "SELECT * FROM voiceover_scripts WHERE run_id = ? ORDER BY flow_id, paragraph_index"
-        : "SELECT * FROM voiceover_scripts ORDER BY flow_id, paragraph_index",
+        ? "SELECT flow_id, paragraphs_json FROM flow_voiceover WHERE run_id = ?"
+        : "SELECT flow_id, paragraphs_json FROM flow_voiceover",
       runId ? [runId] : [],
     );
 
-    // Group by flow
-    const flowMap = new Map<string, string[]>();
-    for (const row of rows) {
-      if (!flowMap.has(row.flow_id)) flowMap.set(row.flow_id, []);
-      flowMap.get(row.flow_id)?.push(row.text);
-    }
+    // Build flow map from paragraphs_json
+    const flows: Array<[string, string[]]> = rows.map((row) => [row.flow_id, JSON.parse(row.paragraphs_json)]);
 
-    const flows = Array.from(flowMap.entries());
     const results: Array<{ flowId: string; filePath: string; duration: number }> = [];
 
     // Clear existing audio files

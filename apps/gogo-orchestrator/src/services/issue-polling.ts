@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
@@ -36,10 +37,11 @@ async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Pro
   const conn = await getDb();
   const now = new Date().toISOString();
 
+  const jobId = randomUUID();
   await execute(
     conn,
-    "INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, status, created_at, updated_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?)",
-    [repositoryId, issue.number, issue.title, issue.html_url, issue.body, "queued", now, now],
+    "INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [jobId, repositoryId, issue.number, issue.title, issue.html_url, issue.body, "queued", now, now],
   );
 
   // Fetch the newly created job
@@ -54,8 +56,8 @@ async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Pro
   // Create job creation event
   await execute(
     conn,
-    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-    [newJob.id, "state_change", null, "queued", "Job auto-created from labeled issue", now],
+    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [randomUUID(), newJob.id, "state_change", null, "queued", "Job auto-created from labeled issue", now],
   );
 
   // Broadcast job created

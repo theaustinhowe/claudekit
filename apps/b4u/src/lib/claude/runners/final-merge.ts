@@ -15,13 +15,13 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
     const recordings = await queryAll<{
       id: string;
       flow_id: string;
-      video_path: string;
+      file_path: string;
       duration_seconds: number;
     }>(
       conn,
       runId
-        ? "SELECT * FROM recordings WHERE status = 'done' AND run_id = ? ORDER BY flow_id"
-        : "SELECT * FROM recordings WHERE status = 'done' ORDER BY flow_id",
+        ? "SELECT id, flow_id, file_path, duration_seconds FROM recordings WHERE status = 'done' AND run_id = ? ORDER BY flow_id"
+        : "SELECT id, flow_id, file_path, duration_seconds FROM recordings WHERE status = 'done' ORDER BY flow_id",
       runId ? [runId] : [],
     );
 
@@ -33,14 +33,16 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
     }>(
       conn,
       runId
-        ? "SELECT * FROM audio_files WHERE run_id = ? ORDER BY flow_id"
-        : "SELECT * FROM audio_files ORDER BY flow_id",
+        ? "SELECT id, flow_id, file_path, duration_seconds FROM audio_files WHERE run_id = ? ORDER BY flow_id"
+        : "SELECT id, flow_id, file_path, duration_seconds FROM audio_files ORDER BY flow_id",
       runId ? [runId] : [],
     );
 
     const flowScripts = await queryAll<{ flow_id: string; flow_name: string }>(
       conn,
-      runId ? "SELECT * FROM flow_scripts WHERE run_id = ? ORDER BY id" : "SELECT * FROM flow_scripts ORDER BY id",
+      runId
+        ? "SELECT flow_id, flow_name FROM flow_scripts WHERE run_id = ?"
+        : "SELECT flow_id, flow_name FROM flow_scripts",
       runId ? [runId] : [],
     );
 
@@ -65,7 +67,7 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
     // 1. Concatenate all flow videos
     onProgress({ type: "progress", message: "Concatenating video clips...", progress: 20 });
 
-    const videoPaths = recordings.map((r) => r.video_path);
+    const videoPaths = recordings.map((r) => r.file_path);
     const concatenatedPath = join(outputDir, `${safeName}-video.mp4`);
     await concatenateVideos(videoPaths, concatenatedPath);
 
@@ -132,9 +134,9 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
 
     await execute(
       conn,
-      `INSERT INTO final_videos (id, run_id, project_path, file_path, duration_seconds, format, size_bytes)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      ["final-1", runId, projectRows[0]?.project_path || "", finalPath, totalDuration, "mp4", stats.size],
+      `INSERT INTO final_videos (id, run_id, file_path, duration_seconds, file_size_bytes, status)
+      VALUES (?, ?, ?, ?, ?, 'done')`,
+      ["final-1", runId, finalPath, totalDuration, stats.size],
     );
 
     onProgress({ type: "progress", message: "Video merge complete!", progress: 100 });

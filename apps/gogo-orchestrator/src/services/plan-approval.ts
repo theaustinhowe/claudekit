@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
@@ -84,8 +85,9 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
 
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         job.id,
         "plan_approved",
         "awaiting_plan_approval",
@@ -122,8 +124,9 @@ async function checkJobForPlanApproval(job: PlanApprovalJob): Promise<void> {
 
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         job.id,
         "state_change",
         "awaiting_plan_approval",

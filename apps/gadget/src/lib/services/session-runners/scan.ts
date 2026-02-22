@@ -20,14 +20,8 @@ export function createScanRunner(metadata: Record<string, unknown>): SessionRunn
     const db = await getDb();
     const scanId = generateId();
 
-    // Create scan record
-    await execute(db, `INSERT INTO scans (id, status, policy_id, started_at) VALUES (?, 'running', ?, ?)`, [
-      scanId,
-      policyId || null,
-      nowTimestamp(),
-    ]);
-
-    // Store scan roots
+    // Store scan roots and collect their IDs
+    const scanRootIds: string[] = [];
     if (scanRoots) {
       for (const root of scanRoots) {
         const existing = await queryOne<{ id: string }>(db, "SELECT id FROM scan_roots WHERE path = ?", [root]);
@@ -35,13 +29,16 @@ export function createScanRunner(metadata: Record<string, unknown>): SessionRunn
         if (!existing) {
           await execute(db, "INSERT INTO scan_roots (id, path) VALUES (?, ?)", [rootId, root]);
         }
-        await execute(
-          db,
-          "INSERT INTO scan_root_entries (scan_id, scan_root_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
-          [scanId, rootId],
-        );
+        scanRootIds.push(rootId);
       }
     }
+
+    // Create scan record with scan_root_ids
+    await execute(
+      db,
+      `INSERT INTO scans (id, status, policy_id, scan_root_ids, started_at) VALUES (?, 'running', ?, ?, ?)`,
+      [scanId, policyId || null, JSON.stringify(scanRootIds), nowTimestamp()],
+    );
 
     try {
       // Phase 1: Discovery

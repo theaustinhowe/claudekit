@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { exportJSON, exportMarkdown, exportPRDescription, saveReport } from "@/lib/services/reporter";
+import { exportJSON, exportMarkdown, exportPRDescription } from "@/lib/services/reporter";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -19,9 +19,6 @@ export async function GET(request: NextRequest) {
       content = await exportJSON(scanId);
       break;
   }
-
-  // Save report
-  await saveReport(scanId, format, content);
 
   if (format === "json") {
     return NextResponse.json(JSON.parse(content));

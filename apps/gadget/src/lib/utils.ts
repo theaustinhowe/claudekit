@@ -9,15 +9,27 @@ export function expandTilde(filepath: string): string {
   return filepath;
 }
 
+function parseField<T>(value: unknown, fallback: T): T {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return value as T;
+}
+
 export function parsePolicy(row: Record<string, unknown>): Policy {
   return {
     ...row,
-    expected_versions: JSON.parse((row.expected_versions as string) || "{}"),
-    banned_dependencies: JSON.parse((row.banned_dependencies as string) || "[]"),
-    allowed_package_managers: JSON.parse((row.allowed_package_managers as string) || "[]"),
-    ignore_patterns: JSON.parse((row.ignore_patterns as string) || "[]"),
-    generator_defaults: JSON.parse((row.generator_defaults as string) || "{}"),
-    repo_types: JSON.parse((row.repo_types as string) || "[]"),
+    expected_versions: parseField(row.expected_versions, {}),
+    banned_dependencies: parseField(row.banned_dependencies, []),
+    allowed_package_managers: parseField(row.allowed_package_managers, []),
+    ignore_patterns: parseField(row.ignore_patterns, []),
+    generator_defaults: parseField(row.generator_defaults, {}),
+    repo_types: parseField(row.repo_types, []),
   } as Policy;
 }
 

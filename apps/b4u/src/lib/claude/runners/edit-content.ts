@@ -13,75 +13,133 @@ const PHASE_DATA_TYPES: Record<number, string> = {
 
 async function loadPhaseData(phase: number, runId?: string): Promise<Record<string, unknown>> {
   const conn = await getDb();
-  const runIdClause = runId ? " WHERE run_id = ?" : "";
-  const runIdParams = runId ? [runId] : [];
   switch (phase) {
     case 2: {
+      const runIdClause = runId ? " WHERE run_id = ?" : "";
+      const runIdParams = runId ? [runId] : [];
       const summary = await queryAll<Record<string, unknown>>(
         conn,
         `SELECT name, framework, auth, database_info, directories FROM project_summary${runIdClause} LIMIT 1`,
         runIdParams,
       );
-      const routes = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT path, title, auth_required, description FROM routes${runIdClause} ORDER BY id`,
-        runIdParams,
-      );
+
+      const routesRow = runId
+        ? await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
+            [runId],
+          )
+        : await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE content_type = 'routes' LIMIT 1",
+          );
+
+      const routes = routesRow ? JSON.parse(routesRow.data_json) : [];
       return { summary: summary[0] || {}, routes };
     }
     case 3: {
-      const routes = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT path, title, auth_required, description FROM routes${runIdClause} ORDER BY id`,
-        runIdParams,
-      );
-      const flows = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT id, name, steps FROM user_flows${runIdClause} ORDER BY id`,
-        runIdParams,
-      );
+      const routesRow = runId
+        ? await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
+            [runId],
+          )
+        : await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE content_type = 'routes' LIMIT 1",
+          );
+
+      const flowsRow = runId
+        ? await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'user_flows'",
+            [runId],
+          )
+        : await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE content_type = 'user_flows' LIMIT 1",
+          );
+
+      const routes = routesRow ? JSON.parse(routesRow.data_json) : [];
+      const flows = flowsRow ? JSON.parse(flowsRow.data_json) : [];
       return { routes, flows };
     }
     case 4: {
-      const entities = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT name, count, note FROM mock_data_entities${runIdClause} ORDER BY id`,
-        runIdParams,
-      );
-      const authOverrides = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT id, label, enabled FROM auth_overrides${runIdClause} ORDER BY id`,
-        runIdParams,
-      );
-      const envItems = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT id, label, enabled FROM env_items${runIdClause} ORDER BY id`,
-        runIdParams,
-      );
+      const entitiesRow = runId
+        ? await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'mock_data_entities'",
+            [runId],
+          )
+        : await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE content_type = 'mock_data_entities' LIMIT 1",
+          );
+
+      const authRow = runId
+        ? await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'auth_overrides'",
+            [runId],
+          )
+        : await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE content_type = 'auth_overrides' LIMIT 1",
+          );
+
+      const envRow = runId
+        ? await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'env_items'",
+            [runId],
+          )
+        : await queryOne<{ data_json: string }>(
+            conn,
+            "SELECT data_json FROM run_content WHERE content_type = 'env_items' LIMIT 1",
+          );
+
+      const entities = entitiesRow ? JSON.parse(entitiesRow.data_json) : [];
+      const authOverrides = authRow ? JSON.parse(authRow.data_json) : [];
+      const envItems = envRow ? JSON.parse(envRow.data_json) : [];
       return { entities, authOverrides, envItems };
     }
     case 5: {
-      const flowScripts = await queryAll<Record<string, unknown>>(
+      const flowScripts = await queryAll<{
+        flow_id: string;
+        flow_name: string;
+        steps_json: string;
+      }>(
         conn,
-        `SELECT flow_id, flow_name FROM flow_scripts${runIdClause} ORDER BY id`,
-        runIdParams,
+        runId
+          ? "SELECT flow_id, flow_name, steps_json FROM flow_scripts WHERE run_id = ?"
+          : "SELECT flow_id, flow_name, steps_json FROM flow_scripts",
+        runId ? [runId] : [],
       );
-      const scriptSteps = await queryAll<Record<string, unknown>>(
+
+      const voiceovers = await queryAll<{
+        flow_id: string;
+        paragraphs_json: string;
+        markers_json: string;
+      }>(
         conn,
-        `SELECT id, flow_id, step_number, url, action, expected_outcome, duration FROM script_steps${runIdClause} ORDER BY flow_id, step_number`,
-        runIdParams,
+        runId
+          ? "SELECT flow_id, paragraphs_json, markers_json FROM flow_voiceover WHERE run_id = ?"
+          : "SELECT flow_id, paragraphs_json, markers_json FROM flow_voiceover",
+        runId ? [runId] : [],
       );
-      const voiceovers = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT flow_id, paragraph_index, text FROM voiceover_scripts${runIdClause} ORDER BY flow_id, paragraph_index`,
-        runIdParams,
-      );
-      const timelineMarkers = await queryAll<Record<string, unknown>>(
-        conn,
-        `SELECT flow_id, timestamp, label, paragraph_index FROM timeline_markers${runIdClause} ORDER BY id`,
-        runIdParams,
-      );
-      return { flowScripts, scriptSteps, voiceovers, timelineMarkers };
+
+      return {
+        flowScripts: flowScripts.map((f) => ({
+          flow_id: f.flow_id,
+          flow_name: f.flow_name,
+          steps: JSON.parse(f.steps_json),
+        })),
+        voiceovers: voiceovers.map((v) => ({
+          flow_id: v.flow_id,
+          paragraphs: JSON.parse(v.paragraphs_json),
+          markers: JSON.parse(v.markers_json),
+        })),
+      };
     }
     default:
       throw new Error(`Unsupported phase for editing: ${phase}`);
@@ -104,162 +162,115 @@ async function savePhaseData(phase: number, data: Record<string, unknown>, runId
           [runId, s.name || "", s.framework || "", JSON.stringify(dirs), s.auth || "", s.database_info || ""],
         );
       }
-      // Update routes
+      // Update routes in run_content
       const routes = data.routes as Array<Record<string, unknown>> | undefined;
       if (routes && Array.isArray(routes)) {
-        await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
-        for (let i = 0; i < routes.length; i++) {
-          const r = routes[i];
-          await execute(
-            conn,
-            `INSERT INTO routes (id, run_id, path, title, auth_required, description)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [i + 1, runId, String(r.path || ""), String(r.title || ""), !!r.auth_required, String(r.description || "")],
-          );
-        }
+        await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'routes'", [runId]);
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'routes', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(routes)],
+        );
       }
       break;
     }
     case 3: {
-      // Update routes
+      // Update routes in run_content
       const routes = data.routes as Array<Record<string, unknown>> | undefined;
       if (routes && Array.isArray(routes)) {
-        await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
-        for (let i = 0; i < routes.length; i++) {
-          const r = routes[i];
-          await execute(
-            conn,
-            `INSERT INTO routes (id, run_id, path, title, auth_required, description)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [i + 1, runId, String(r.path || ""), String(r.title || ""), !!r.auth_required, String(r.description || "")],
-          );
-        }
+        await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'routes'", [runId]);
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'routes', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(routes)],
+        );
       }
-      // Update user flows
+      // Update user flows in run_content
       const flows = data.flows as Array<Record<string, unknown>> | undefined;
       if (flows && Array.isArray(flows)) {
-        await execute(conn, "DELETE FROM user_flows WHERE run_id = ?", [runId]);
-        for (const flow of flows) {
-          const steps = Array.isArray(flow.steps) ? flow.steps : [];
-          await execute(
-            conn,
-            `INSERT INTO user_flows (id, run_id, name, steps)
-            VALUES (?, ?, ?, ?::VARCHAR[])`,
-            [String(flow.id || ""), runId, String(flow.name || ""), JSON.stringify(steps)],
-          );
-        }
+        await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'user_flows'", [runId]);
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'user_flows', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(flows)],
+        );
       }
       break;
     }
     case 4: {
-      // Update entities
+      // Update entities in run_content
       const entities = data.entities as Array<Record<string, unknown>> | undefined;
       if (entities && Array.isArray(entities)) {
-        await execute(conn, "DELETE FROM mock_data_entities WHERE run_id = ?", [runId]);
-        for (let i = 0; i < entities.length; i++) {
-          const e = entities[i];
-          await execute(
-            conn,
-            `INSERT INTO mock_data_entities (id, run_id, name, count, note)
-            VALUES (?, ?, ?, ?, ?)`,
-            [i + 1, runId, String(e.name || ""), Number(e.count) || 5, String(e.note || "")],
-          );
-        }
+        await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'mock_data_entities'", [
+          runId,
+        ]);
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'mock_data_entities', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(entities)],
+        );
       }
-      // Update auth overrides
+      // Update auth overrides in run_content
       const authOverrides = data.authOverrides as Array<Record<string, unknown>> | undefined;
       if (authOverrides && Array.isArray(authOverrides)) {
-        await execute(conn, "DELETE FROM auth_overrides WHERE run_id = ?", [runId]);
-        for (const ao of authOverrides) {
-          await execute(
-            conn,
-            `INSERT INTO auth_overrides (id, run_id, label, enabled)
-            VALUES (?, ?, ?, ?)`,
-            [String(ao.id || ""), runId, String(ao.label || ""), ao.enabled !== false],
-          );
-        }
+        await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'auth_overrides'", [runId]);
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'auth_overrides', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(authOverrides)],
+        );
       }
-      // Update env items
+      // Update env items in run_content
       const envItems = data.envItems as Array<Record<string, unknown>> | undefined;
       if (envItems && Array.isArray(envItems)) {
-        await execute(conn, "DELETE FROM env_items WHERE run_id = ?", [runId]);
-        for (const ei of envItems) {
-          await execute(
-            conn,
-            `INSERT INTO env_items (id, run_id, label, enabled)
-            VALUES (?, ?, ?, ?)`,
-            [String(ei.id || ""), runId, String(ei.label || ""), ei.enabled !== false],
-          );
-        }
+        await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'env_items'", [runId]);
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'env_items', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(envItems)],
+        );
       }
       break;
     }
     case 5: {
-      // Update flow scripts and steps
-      const flowScripts = data.flowScripts as Array<Record<string, unknown>> | undefined;
+      // Update flow scripts with embedded steps
+      const flowScripts = data.flowScripts as
+        | Array<{ flow_id: string; flow_name: string; steps: unknown[] }>
+        | undefined;
       if (flowScripts && Array.isArray(flowScripts)) {
         await execute(conn, "DELETE FROM flow_scripts WHERE run_id = ?", [runId]);
-        for (let i = 0; i < flowScripts.length; i++) {
-          const s = flowScripts[i];
+        for (const s of flowScripts) {
           await execute(
             conn,
-            `INSERT INTO flow_scripts (id, run_id, flow_id, flow_name)
-            VALUES (?, ?, ?, ?)`,
-            [i + 1, runId, String(s.flow_id || ""), String(s.flow_name || "")],
+            `INSERT INTO flow_scripts (id, run_id, flow_id, flow_name, steps_json)
+            VALUES (?, ?, ?, ?, ?)`,
+            [crypto.randomUUID(), runId, String(s.flow_id || ""), String(s.flow_name || ""), JSON.stringify(s.steps || [])],
           );
         }
       }
-      const scriptSteps = data.scriptSteps as Array<Record<string, unknown>> | undefined;
-      if (scriptSteps && Array.isArray(scriptSteps)) {
-        await execute(conn, "DELETE FROM script_steps WHERE run_id = ?", [runId]);
-        for (const step of scriptSteps) {
-          await execute(
-            conn,
-            `INSERT INTO script_steps (id, run_id, flow_id, step_number, url, action, expected_outcome, duration)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              String(step.id || ""),
-              runId,
-              String(step.flow_id || ""),
-              Number(step.step_number) || 0,
-              String(step.url || ""),
-              String(step.action || ""),
-              String(step.expected_outcome || ""),
-              String(step.duration || "3s"),
-            ],
-          );
-        }
-      }
-      // Update voiceovers
-      const voiceovers = data.voiceovers as Array<Record<string, unknown>> | undefined;
+      // Update voiceovers in flow_voiceover
+      const voiceovers = data.voiceovers as
+        | Array<{ flow_id: string; paragraphs: unknown[]; markers: unknown[] }>
+        | undefined;
       if (voiceovers && Array.isArray(voiceovers)) {
-        await execute(conn, "DELETE FROM voiceover_scripts WHERE run_id = ?", [runId]);
+        await execute(conn, "DELETE FROM flow_voiceover WHERE run_id = ?", [runId]);
         for (const v of voiceovers) {
           await execute(
             conn,
-            `INSERT INTO voiceover_scripts (run_id, flow_id, paragraph_index, text)
-            VALUES (?, ?, ?, ?)`,
-            [runId, String(v.flow_id || ""), Number(v.paragraph_index) || 0, String(v.text || "")],
-          );
-        }
-      }
-      // Update timeline markers
-      const timelineMarkers = data.timelineMarkers as Array<Record<string, unknown>> | undefined;
-      if (timelineMarkers && Array.isArray(timelineMarkers)) {
-        await execute(conn, "DELETE FROM timeline_markers WHERE run_id = ?", [runId]);
-        for (let i = 0; i < timelineMarkers.length; i++) {
-          const m = timelineMarkers[i];
-          await execute(
-            conn,
-            `INSERT INTO timeline_markers (id, run_id, flow_id, timestamp, label, paragraph_index)
-            VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO flow_voiceover (id, run_id, flow_id, paragraphs_json, markers_json)
+            VALUES (?, ?, ?, ?, ?)`,
             [
-              i + 1,
+              crypto.randomUUID(),
               runId,
-              String(m.flow_id || ""),
-              String(m.timestamp || "0:00"),
-              String(m.label || ""),
-              Number(m.paragraph_index) || 0,
+              String(v.flow_id || ""),
+              JSON.stringify(v.paragraphs || []),
+              JSON.stringify(v.markers || []),
             ],
           );
         }

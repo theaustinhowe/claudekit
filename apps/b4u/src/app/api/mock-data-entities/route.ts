@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDb, queryAll } from "@/lib/db";
+import { getDb, queryOne } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const runId = request.nextUrl.searchParams.get("runId");
@@ -7,13 +7,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    const rows = await queryAll<{
-      name: string;
-      count: number;
-      note: string;
-    }>(conn, "SELECT name, count, note FROM mock_data_entities WHERE run_id = ? ORDER BY id", [runId]);
+    const row = await queryOne<{ data_json: string }>(
+      conn,
+      "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'mock_data_entities'",
+      [runId],
+    );
 
-    return NextResponse.json(rows);
+    if (!row) return NextResponse.json([]);
+
+    const entities = JSON.parse(row.data_json);
+    return NextResponse.json(entities);
   } catch (error) {
     console.error("Failed to fetch mock data entities:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

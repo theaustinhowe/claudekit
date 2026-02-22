@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { execute, getDb, queryAll } from "@/lib/db";
+import { execute, getDb, queryOne } from "@/lib/db";
 import { parseBody, togglePatchSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
@@ -8,13 +8,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    const rows = await queryAll<{
-      id: string;
-      label: string;
-      enabled: boolean;
-    }>(conn, "SELECT id, label, enabled FROM auth_overrides WHERE run_id = ?", [runId]);
+    const row = await queryOne<{ data_json: string }>(
+      conn,
+      "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'auth_overrides'",
+      [runId],
+    );
 
-    return NextResponse.json(rows);
+    if (!row) return NextResponse.json([]);
+
+    const overrides = JSON.parse(row.data_json);
+    return NextResponse.json(overrides);
   } catch (error) {
     console.error("Failed to fetch auth overrides:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -30,7 +33,20 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "UPDATE auth_overrides SET enabled = ? WHERE id = ? AND run_id = ?", [enabled, id, runId]);
+    const row = await queryOne<{ id: string; data_json: string }>(
+      conn,
+      "SELECT id, data_json FROM run_content WHERE run_id = ? AND content_type = 'auth_overrides'",
+      [runId],
+    );
+
+    if (!row) {
+      return NextResponse.json({ error: "Auth overrides not found" }, { status: 404 });
+    }
+
+    const overrides = JSON.parse(row.data_json) as Array<{ id: string; label: string; enabled: boolean }>;
+    const updated = overrides.map((o) => (o.id === id ? { ...o, enabled } : o));
+
+    await execute(conn, "UPDATE run_content SET data_json = ? WHERE id = ?", [JSON.stringify(updated), row.id]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

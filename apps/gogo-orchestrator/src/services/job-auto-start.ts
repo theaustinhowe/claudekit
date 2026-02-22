@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
@@ -40,8 +41,8 @@ async function transitionToPaused(jobId: string, reason: string, logState: LogSt
   if (updated) {
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-      [jobId, "state_change", "running", "paused", `Agent failed to start: ${reason}`, now],
+      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [randomUUID(), jobId, "state_change", "running", "paused", `Agent failed to start: ${reason}`, now],
     );
 
     broadcast({ type: "job:updated", payload: updated });
@@ -221,8 +222,8 @@ export async function pollQueuedJobs(): Promise<AutoStartResult> {
 
           await execute(
             conn,
-            "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-            [job.id, "state_change", "running", "planning", "Entering planning phase", planNow],
+            "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [randomUUID(), job.id, "state_change", "running", "planning", "Entering planning phase", planNow],
           );
 
           const updatedJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [job.id]);

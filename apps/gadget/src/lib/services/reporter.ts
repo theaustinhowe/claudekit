@@ -1,6 +1,5 @@
-import { execute, getDb, queryAll } from "@/lib/db";
+import { getDb, queryAll } from "@/lib/db";
 import type { Finding, FixAction, Repo } from "@/lib/types";
-import { generateId } from "@/lib/utils";
 
 interface ReportData {
   scanId?: string;
@@ -131,18 +130,4 @@ export async function exportPRDescription(scanId?: string): Promise<string> {
   pr += `- ✅ Changes can be reverted from the Repo Auditor UI\n`;
 
   return pr;
-}
-
-export async function saveReport(scanId: string | undefined, format: string, content: string) {
-  const db = await getDb();
-  const id = generateId();
-  await execute(
-    db,
-    `
-    INSERT INTO reports (id, scan_id, format, content)
-    VALUES (?, ?, ?, ?)
-  `,
-    [id, scanId || null, format, content],
-  );
-  return id;
 }

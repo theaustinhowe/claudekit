@@ -15,6 +15,7 @@
  * - shutdown_initiated: Orchestrator shutdown started
  */
 
+import { randomUUID } from "node:crypto";
 import { execute, queryAll } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbHealthEvent } from "../db/schema.js";
@@ -51,8 +52,8 @@ async function persistEvent(event: HealthEvent): Promise<void> {
   const conn = await getDb();
   await execute(
     conn,
-    "INSERT INTO health_events (id, type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?)",
-    [event.type, event.message, event.metadata ? JSON.stringify(event.metadata) : null, event.timestamp],
+    "INSERT INTO health_events (id, type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?)",
+    [randomUUID(), event.type, event.message, event.metadata ? JSON.stringify(event.metadata) : null, event.timestamp],
   );
 }
 

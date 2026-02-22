@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { execute, getDb, queryAll } from "@/lib/db";
+import { execute, getDb, queryOne } from "@/lib/db";
 import { parseBody, routesArraySchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
@@ -8,21 +8,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    const rows = await queryAll<{
-      id: number;
-      path: string;
-      title: string;
-      auth_required: boolean;
-      description: string;
-    }>(conn, "SELECT id, path, title, auth_required, description FROM routes WHERE run_id = ? ORDER BY id", [runId]);
+    const row = await queryOne<{ data_json: string }>(
+      conn,
+      "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
+      [runId],
+    );
 
-    const routes = rows.map((r) => ({
-      path: r.path,
-      title: r.title,
-      authRequired: r.auth_required,
-      description: r.description,
-    }));
+    if (!row) return NextResponse.json([]);
 
+    const routes = JSON.parse(row.data_json);
     return NextResponse.json(routes);
   } catch (error) {
     console.error("Failed to fetch routes:", error);
@@ -42,16 +36,13 @@ export async function PUT(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'routes'", [runId]);
 
-    for (let i = 0; i < routes.length; i++) {
-      const r = routes[i];
-      await execute(
-        conn,
-        "INSERT INTO routes (id, run_id, path, title, auth_required, description) VALUES (?, ?, ?, ?, ?, ?)",
-        [i + 1, runId, r.path, r.title, r.authRequired, r.description],
-      );
-    }
+    await execute(
+      conn,
+      "INSERT INTO run_content (id, run_id, content_type, data_json) VALUES (?, ?, 'routes', ?)",
+      [crypto.randomUUID(), runId, JSON.stringify(routes)],
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

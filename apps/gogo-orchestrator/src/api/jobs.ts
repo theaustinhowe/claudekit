@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { buildInClause, execute, queryAll, queryOne } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
@@ -133,10 +134,10 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
 
     const newJob = await queryOne<DbJob>(
       conn,
-      `INSERT INTO jobs (issue_number, issue_title, issue_url, issue_body, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO jobs (id, issue_number, issue_title, issue_url, issue_body, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
-      [parsed.data.issueNumber, parsed.data.issueTitle, parsed.data.issueUrl, parsed.data.issueBody ?? null, now, now],
+      [randomUUID(), parsed.data.issueNumber, parsed.data.issueTitle, parsed.data.issueUrl, parsed.data.issueBody ?? null, now, now],
     );
 
     if (!newJob) {
@@ -148,9 +149,9 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     // Create job creation event
     await execute(
       conn,
-      `INSERT INTO job_events (job_id, event_type, from_status, to_status, message, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [mapped.id, "state_change", null, "queued", "Job created", now],
+      `INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [randomUUID(), mapped.id, "state_change", null, "queued", "Job created", now],
     );
 
     // Broadcast job created
@@ -210,10 +211,10 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
 
     const newJob = await queryOne<DbJob>(
       conn,
-      `INSERT INTO jobs (repository_id, issue_number, issue_title, issue_url, issue_body, source, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, source, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
-      [repositoryId, nextNumber, title, "", description ?? null, "manual", now, now],
+      [randomUUID(), repositoryId, nextNumber, title, "", description ?? null, "manual", now, now],
     );
 
     if (!newJob) {

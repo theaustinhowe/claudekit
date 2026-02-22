@@ -134,52 +134,6 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
       );
     }
 
-    // Seed fix packs
-    const fixPacks = [
-      {
-        id: "pack-1",
-        name: "Repo Hygiene Pack",
-        description: "Add essential documentation files",
-        icon: "clipboard-list",
-        filter: { impact: "docs", types: ["README.md", "CONTRIBUTING.md", "LICENSE"] },
-        guardrails: ["Docs-only changes", "No code modifications"],
-      },
-      {
-        id: "pack-2",
-        name: "AI Readiness Pack",
-        description: "Add AI assistant instruction files",
-        icon: "bot",
-        filter: { impact: "docs", types: ["CLAUDE.md", "AGENTS.md", "copilot-instructions.md"] },
-        guardrails: ["Docs-only changes", "Template-based generation"],
-      },
-      {
-        id: "pack-3",
-        name: "Dependency Health Pack",
-        description: "Align versions with policy, replace banned deps",
-        icon: "package",
-        filter: { impact: "dependencies" },
-        guardrails: ["Requires approval", "Creates snapshot before apply"],
-      },
-      {
-        id: "pack-4",
-        name: "Structure Consistency Pack",
-        description: "Normalize configs across repos",
-        icon: "wrench",
-        filter: { impact: "config" },
-        guardrails: ["Config files only", "Preserves custom rules"],
-      },
-    ];
-
-    for (const fp of fixPacks) {
-      await execute(
-        conn,
-        `INSERT INTO fix_packs (id, name, description, icon, action_filter, guardrails, is_builtin)
-         VALUES (?, ?, ?, ?, ?, ?, true)
-         ON CONFLICT DO NOTHING`,
-        [fp.id, fp.name, fp.description, fp.icon, JSON.stringify(fp.filter), JSON.stringify(fp.guardrails)],
-      );
-    }
-
     // Seed templates
     const templates = [
       {

@@ -63,7 +63,7 @@ DuckDB at `~/.inspector/data.duckdb` with tables:
 - `repos` — Connected GitHub repositories
 - `prs` — Cached pull requests with size classification
 - `pr_comments` — Review comments with AI-classified severity/category
-- `skill_analyses` / `skills` / `skill_comments` — Skill analysis results
+- `skill_analyses` / `skills` — Skill analysis results (comment IDs stored as JSON on skills)
 - `split_plans` — PR split plans (sub-PRs stored as JSON)
 - `comment_fixes` — AI-generated fix diffs
 - `settings` — Key-value user preferences

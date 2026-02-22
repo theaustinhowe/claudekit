@@ -135,39 +135,38 @@ export async function deleteGeneratorProject(id: string): Promise<void> {
   const db = await getDb();
   await execute(db, "DELETE FROM project_screenshots WHERE project_id = ?", [id]);
   await execute(db, "DELETE FROM upgrade_tasks WHERE project_id = ?", [id]);
-  await execute(db, "DELETE FROM spec_snapshots WHERE project_id = ?", [id]);
+  await execute(db, "DELETE FROM project_specs WHERE project_id = ?", [id]);
   await execute(db, "DELETE FROM design_messages WHERE project_id = ?", [id]);
-  await execute(db, "DELETE FROM mock_data_sets WHERE project_id = ?", [id]);
-  await execute(db, "DELETE FROM ui_specs WHERE project_id = ?", [id]);
   await execute(db, "DELETE FROM generator_projects WHERE id = ?", [id]);
   deleteScreenshotFiles(id);
 }
 
-// --- UI Specs ---
+// --- Project Specs (replaces ui_specs, mock_data_sets, spec_snapshots) ---
 
 export async function getUiSpec(projectId: string, version?: number): Promise<UiSpec | null> {
   const db = await getDb();
   const row = version
-    ? await queryOne<{ spec_json: string }>(db, "SELECT spec_json FROM ui_specs WHERE project_id = ? AND version = ?", [
-        projectId,
-        version,
-      ])
-    : await queryOne<{ spec_json: string }>(
+    ? await queryOne<{ spec_json: unknown }>(
         db,
-        "SELECT spec_json FROM ui_specs WHERE project_id = ? ORDER BY version DESC LIMIT 1",
+        "SELECT spec_json FROM project_specs WHERE project_id = ? AND version = ?",
+        [projectId, version],
+      )
+    : await queryOne<{ spec_json: unknown }>(
+        db,
+        "SELECT spec_json FROM project_specs WHERE project_id = ? ORDER BY version DESC LIMIT 1",
         [projectId],
       );
-  return row ? JSON.parse(row.spec_json) : null;
+  return row ? parseJsonField(row.spec_json, null) : null;
 }
 
 export async function getMockData(projectId: string, specVersion: number): Promise<MockEntity[]> {
   const db = await getDb();
-  const row = await queryOne<{ entities_json: string }>(
+  const row = await queryOne<{ mock_data_json: unknown }>(
     db,
-    "SELECT entities_json FROM mock_data_sets WHERE project_id = ? AND spec_version = ? ORDER BY created_at DESC LIMIT 1",
+    "SELECT mock_data_json FROM project_specs WHERE project_id = ? AND version = ? ORDER BY created_at DESC LIMIT 1",
     [projectId, specVersion],
   );
-  return row ? JSON.parse(row.entities_json) : [];
+  return row ? parseJsonField(row.mock_data_json, []) : [];
 }
 
 // --- Design Messages ---

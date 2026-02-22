@@ -98,7 +98,6 @@ export async function deleteRepos(ids: string[]): Promise<{ deleted: number }> {
     "apply_runs",
     "concepts",
     "concept_links",
-    "github_metadata",
     "manual_findings",
   ]) {
     await execute(db, `DELETE FROM ${table} WHERE repo_id IN (${placeholders})`, ids);

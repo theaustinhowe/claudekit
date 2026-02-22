@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { buildUpdate, execute, queryOne, withTransaction } from "@claudekit/duckdb";
 import { type JobActionType, type JobEventType, type JobStatus, VALID_TRANSITIONS } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -302,8 +303,8 @@ export async function applyTransitionAtomic(
     const now = new Date().toISOString();
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-      [jobId, validation.eventType, fromStatus, toStatus, message, now],
+      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [randomUUID(), jobId, validation.eventType, fromStatus, toStatus, message, now],
     );
 
     // Re-read updated job
@@ -365,8 +366,9 @@ export async function applyActionAtomic(
     const eventMetadata = metadata || (payload ? payload : null);
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         jobId,
         actionResult.eventType,
         job.status,

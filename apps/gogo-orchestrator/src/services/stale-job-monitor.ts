@@ -7,6 +7,7 @@
  * - If process is alive but silent: emit a system log warning
  */
 
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
@@ -89,8 +90,8 @@ export async function checkStaleJobs(): Promise<{
         const logNow = new Date().toISOString();
         await execute(
           conn,
-          "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
-          [job.id, "system", warningContent, sequence, logNow],
+          "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+          [randomUUID(), job.id, "system", warningContent, sequence, logNow],
         );
         sendLogToSubscribers(job.id, {
           stream: "system",
@@ -117,8 +118,9 @@ export async function checkStaleJobs(): Promise<{
       if (updated) {
         await execute(
           conn,
-          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
           [
+            randomUUID(),
             job.id,
             "state_change",
             "running",

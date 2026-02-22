@@ -151,10 +151,20 @@ export function createSkillAnalysisRunner(metadata: Record<string, unknown>, _co
 
     for (const skill of skillsData) {
       const skillId = crypto.randomUUID();
+
+      // Filter comment IDs to only those that exist in pr_comments
+      const validCommentIds: string[] = [];
+      for (const commentId of skill.commentIds || []) {
+        const exists = await queryOne(db, "SELECT 1 FROM pr_comments WHERE id = ?", [commentId]);
+        if (exists) {
+          validCommentIds.push(commentId);
+        }
+      }
+
       await execute(
         db,
-        `INSERT INTO skills (id, analysis_id, name, frequency, total_prs, trend, severity, top_example, description, resources, action_item, addressed)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false)`,
+        `INSERT INTO skills (id, analysis_id, name, frequency, total_prs, trend, severity, top_example, description, resources, action_item, addressed, comment_ids)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?)`,
         [
           skillId,
           analysisId,
@@ -167,20 +177,9 @@ export function createSkillAnalysisRunner(metadata: Record<string, unknown>, _co
           skill.description,
           JSON.stringify(skill.resources),
           skill.actionItem,
+          JSON.stringify(validCommentIds),
         ],
       );
-
-      for (const commentId of skill.commentIds || []) {
-        const linkId = crypto.randomUUID();
-        const exists = await queryOne(db, "SELECT 1 FROM pr_comments WHERE id = ?", [commentId]);
-        if (exists) {
-          await execute(db, "INSERT INTO skill_comments (id, skill_id, comment_id) VALUES (?, ?, ?)", [
-            linkId,
-            skillId,
-            commentId,
-          ]);
-        }
-      }
     }
 
     onProgress({

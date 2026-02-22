@@ -37,13 +37,18 @@ export async function getSkillAnalyses(repoId: string) {
 
 export async function getSkillsForAnalysis(analysisId: string): Promise<SkillWithComments[]> {
   const db = await getDb();
-  const skills = await queryAll<Skill>(db, "SELECT * FROM skills WHERE analysis_id = ? ORDER BY frequency DESC", [
-    analysisId,
-  ]);
+  const skills = await queryAll<Skill & { comment_ids: string | string[] }>(
+    db,
+    "SELECT * FROM skills WHERE analysis_id = ? ORDER BY frequency DESC",
+    [analysisId],
+  );
 
   const result: SkillWithComments[] = [];
   for (const skill of skills) {
-    const comments = await queryAll<{
+    const commentIds: string[] =
+      typeof skill.comment_ids === "string" ? JSON.parse(skill.comment_ids) : (skill.comment_ids ?? []);
+
+    let comments: {
       id: string;
       body: string;
       reviewer: string;
@@ -52,18 +57,23 @@ export async function getSkillsForAnalysis(analysisId: string): Promise<SkillWit
       line_number: number | null;
       pr_number: number;
       pr_title: string;
-    }>(
-      db,
-      `SELECT c.id, c.body, c.reviewer, c.reviewer_avatar, c.file_path, c.line_number, p.number as pr_number, p.title as pr_title
-       FROM skill_comments sc
-       JOIN pr_comments c ON sc.comment_id = c.id
-       JOIN prs p ON c.pr_id = p.id
-       WHERE sc.skill_id = ?`,
-      [skill.id],
-    );
+    }[] = [];
 
+    if (commentIds.length > 0) {
+      const placeholders = commentIds.map(() => "?").join(",");
+      comments = await queryAll(
+        db,
+        `SELECT c.id, c.body, c.reviewer, c.reviewer_avatar, c.file_path, c.line_number, p.number as pr_number, p.title as pr_title
+         FROM pr_comments c
+         JOIN prs p ON c.pr_id = p.id
+         WHERE c.id IN (${placeholders})`,
+        commentIds,
+      );
+    }
+
+    const { comment_ids: _commentIds, ...skillWithoutCommentIds } = skill;
     result.push({
-      ...skill,
+      ...skillWithoutCommentIds,
       comments: comments.map((c) => ({
         id: c.id,
         prNumber: c.pr_number,

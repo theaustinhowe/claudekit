@@ -7,9 +7,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
 
   const conn = await getDb();
-  const rows = await queryAll<{ file_path: string; format: string }>(
+  const rows = await queryAll<{ file_path: string }>(
     conn,
-    "SELECT file_path, format FROM final_videos WHERE id = ?",
+    "SELECT file_path FROM final_videos WHERE id = ?",
     [id],
   );
 

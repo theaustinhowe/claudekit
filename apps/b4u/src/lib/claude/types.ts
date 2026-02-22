@@ -16,8 +16,9 @@ export interface SessionRow {
   session_type: string;
   status: string;
   label: string;
-  project_path: string | null;
-  run_id: string | null;
+  context_type: string | null;
+  context_id: string | null;
+  context_name: string | null;
   pid: number | null;
   progress: number | null;
   phase: string | null;

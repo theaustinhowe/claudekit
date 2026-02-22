@@ -1,7 +1,7 @@
 import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@claudekit/session";
 import { buildGenerateDataPlanPrompt } from "@/lib/claude/prompts/generate-data-plan";
-import { execute, getDb, queryAll } from "@/lib/db";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 
 export function createGenerateDataPlanRunner(runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
@@ -30,30 +30,37 @@ export function createGenerateDataPlanRunner(runId?: string): SessionRunner {
 
     const summary = summaryRows[0];
 
-    const routeRows = await queryAll<{
-      path: string;
-      title: string;
-    }>(
-      conn,
-      runId
-        ? "SELECT path, title FROM routes WHERE run_id = ? ORDER BY id"
-        : "SELECT path, title FROM routes ORDER BY id",
-      runId ? [runId] : [],
-    );
+    // Read routes from run_content
+    const routesRow = runId
+      ? await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
+          [runId],
+        )
+      : await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE content_type = 'routes' LIMIT 1",
+        );
 
-    const flowRows = await queryAll<{
-      id: string;
-      name: string;
-      steps: string[];
-    }>(
-      conn,
-      runId
-        ? "SELECT id, name, steps FROM user_flows WHERE run_id = ? ORDER BY id"
-        : "SELECT id, name, steps FROM user_flows ORDER BY id",
-      runId ? [runId] : [],
-    );
+    const routeData: Array<{ path: string; title: string }> = routesRow ? JSON.parse(routesRow.data_json) : [];
 
-    if (flowRows.length === 0) {
+    // Read user flows from run_content
+    const flowsRow = runId
+      ? await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'user_flows'",
+          [runId],
+        )
+      : await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE content_type = 'user_flows' LIMIT 1",
+        );
+
+    const flowData: Array<{ id: string; name: string; steps: string[] }> = flowsRow
+      ? JSON.parse(flowsRow.data_json)
+      : [];
+
+    if (flowData.length === 0) {
       throw new Error("No user flows found. Run generate-outline first.");
     }
 
@@ -62,8 +69,8 @@ export function createGenerateDataPlanRunner(runId?: string): SessionRunner {
       framework: summary.framework,
       auth: summary.auth,
       database: summary.database_info,
-      routes: routeRows.map((r) => ({ path: r.path, title: r.title })),
-      flows: flowRows.map((f) => ({ id: f.id, name: f.name, steps: f.steps })),
+      routes: routeData.map((r) => ({ path: r.path, title: r.title })),
+      flows: flowData.map((f) => ({ id: f.id, name: f.name, steps: f.steps })),
     };
 
     onProgress({ type: "progress", message: "Generating data plan...", progress: 30 });
@@ -108,45 +115,40 @@ export function createGenerateDataPlanRunner(runId?: string): SessionRunner {
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
     // Clear existing data
-    await execute(conn, "DELETE FROM mock_data_entities WHERE run_id = ?", [runId]);
-    await execute(conn, "DELETE FROM auth_overrides WHERE run_id = ?", [runId]);
-    await execute(conn, "DELETE FROM env_items WHERE run_id = ?", [runId]);
+    await execute(
+      conn,
+      "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('mock_data_entities', 'auth_overrides', 'env_items')",
+      [runId],
+    );
 
-    // Save mock data entities
+    // Save mock data entities as run_content
     if (dataPlan.entities && Array.isArray(dataPlan.entities)) {
-      for (let i = 0; i < dataPlan.entities.length; i++) {
-        const e = dataPlan.entities[i];
-        await execute(
-          conn,
-          `INSERT INTO mock_data_entities (id, run_id, name, count, note)
-          VALUES (?, ?, ?, ?, ?)`,
-          [i + 1, runId, e.name || "", e.count || 5, e.note || ""],
-        );
-      }
+      await execute(
+        conn,
+        `INSERT INTO run_content (id, run_id, content_type, data_json)
+        VALUES (?, ?, 'mock_data_entities', ?)`,
+        [crypto.randomUUID(), runId, JSON.stringify(dataPlan.entities)],
+      );
     }
 
-    // Save auth overrides
+    // Save auth overrides as run_content
     if (dataPlan.authOverrides && Array.isArray(dataPlan.authOverrides)) {
-      for (const ao of dataPlan.authOverrides) {
-        await execute(
-          conn,
-          `INSERT INTO auth_overrides (id, run_id, label, enabled)
-          VALUES (?, ?, ?, ?)`,
-          [ao.id || "", runId, ao.label || "", ao.enabled !== false],
-        );
-      }
+      await execute(
+        conn,
+        `INSERT INTO run_content (id, run_id, content_type, data_json)
+        VALUES (?, ?, 'auth_overrides', ?)`,
+        [crypto.randomUUID(), runId, JSON.stringify(dataPlan.authOverrides)],
+      );
     }
 
-    // Save env items
+    // Save env items as run_content
     if (dataPlan.envItems && Array.isArray(dataPlan.envItems)) {
-      for (const ei of dataPlan.envItems) {
-        await execute(
-          conn,
-          `INSERT INTO env_items (id, run_id, label, enabled)
-          VALUES (?, ?, ?, ?)`,
-          [ei.id || "", runId, ei.label || "", ei.enabled !== false],
-        );
-      }
+      await execute(
+        conn,
+        `INSERT INTO run_content (id, run_id, content_type, data_json)
+        VALUES (?, ?, 'env_items', ?)`,
+        [crypto.randomUUID(), runId, JSON.stringify(dataPlan.envItems)],
+      );
     }
 
     onProgress({ type: "progress", message: "Data plan complete", progress: 100 });

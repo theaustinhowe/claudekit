@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -465,8 +466,8 @@ export async function resumeAgent(jobId: string, message?: string, agentType?: s
     });
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
-      [jobId, "user_action", currentStatus, "running", message || "Resume requested by user", eventMetadata, transNow],
+      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [randomUUID(), jobId, "user_action", currentStatus, "running", message || "Resume requested by user", eventMetadata, transNow],
     );
 
     const updated = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);

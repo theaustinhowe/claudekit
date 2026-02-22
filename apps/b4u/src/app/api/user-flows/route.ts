@@ -1,23 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { execute, getDb, queryAll } from "@/lib/db";
+import { execute, getDb, queryOne } from "@/lib/db";
 import { parseBody, userFlowsArraySchema } from "@/lib/validations";
-
-function normalizeSteps(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.map(String);
-  if (raw && typeof raw === "object" && "toArray" in raw && typeof (raw as { toArray: unknown }).toArray === "function")
-    return (raw as { toArray: () => unknown[] }).toArray().map(String);
-  if (typeof raw === "string") {
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {
-      // DuckDB stringified format: "[Step 1, Step 2]"
-      const inner = raw.replace(/^\[/, "").replace(/\]$/, "").trim();
-      if (inner) return inner.split(",").map((s) => s.trim());
-    }
-  }
-  return [];
-}
 
 export async function GET(request: NextRequest) {
   const runId = request.nextUrl.searchParams.get("runId");
@@ -25,18 +8,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    const rows = await queryAll<{
-      id: string;
-      name: string;
-      steps: unknown;
-    }>(conn, "SELECT id, name, steps FROM user_flows WHERE run_id = ?", [runId]);
+    const row = await queryOne<{ data_json: string }>(
+      conn,
+      "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'user_flows'",
+      [runId],
+    );
 
-    const normalized = rows.map((r) => ({
-      ...r,
-      steps: normalizeSteps(r.steps),
-    }));
+    if (!row) return NextResponse.json([]);
 
-    return NextResponse.json(normalized);
+    const flows = JSON.parse(row.data_json);
+    return NextResponse.json(flows);
   } catch (error) {
     console.error("Failed to fetch user flows:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -55,16 +36,13 @@ export async function PUT(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "DELETE FROM user_flows WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type = 'user_flows'", [runId]);
 
-    for (const flow of flows) {
-      await execute(conn, "INSERT INTO user_flows (id, run_id, name, steps) VALUES (?, ?, ?, ?::VARCHAR[])", [
-        flow.id,
-        runId,
-        flow.name,
-        JSON.stringify(flow.steps),
-      ]);
-    }
+    await execute(
+      conn,
+      "INSERT INTO run_content (id, run_id, content_type, data_json) VALUES (?, ?, 'user_flows', ?)",
+      [crypto.randomUUID(), runId, JSON.stringify(flows)],
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

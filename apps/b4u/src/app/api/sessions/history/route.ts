@@ -6,8 +6,8 @@ type SessionRow = Record<string, unknown> & {
   session_type: string;
   status: string;
   label: string | null;
-  project_path: string | null;
-  run_id: string | null;
+  context_name: string | null;
+  context_id: string | null;
   started_at: string | null;
   completed_at: string | null;
   created_at: string | null;
@@ -39,8 +39,8 @@ function buildRunEntry(projectPath: string, sessions: SessionRow[]): RunEntry {
   const hasError = sessions.some((s) => s.status === "error" || s.status === "failed");
   const errorSession = sessions.find((s) => s.status === "error" || s.status === "failed");
 
-  // Use the run_id from the first session that has one
-  const runId = sessions.find((s) => s.run_id)?.run_id ?? null;
+  // Use the context_id from the first session that has one
+  const runId = sessions.find((s) => s.context_id)?.context_id ?? null;
 
   return {
     runId,
@@ -62,18 +62,18 @@ export async function GET() {
 
     const rows = await queryAll<SessionRow>(
       conn,
-      `SELECT id, session_type, status, label, project_path, run_id,
+      `SELECT id, session_type, status, label, context_name, context_id,
               started_at, completed_at, created_at, error_message
        FROM sessions
-       WHERE run_id IS NOT NULL
+       WHERE context_id IS NOT NULL
        ORDER BY created_at DESC
        LIMIT 200`,
     );
 
-    // Group sessions by run_id
+    // Group sessions by context_id (run_id)
     const byRunId: Record<string, SessionRow[]> = {};
     for (const row of rows) {
-      const runId = row.run_id ?? "";
+      const runId = row.context_id ?? "";
       if (!byRunId[runId]) byRunId[runId] = [];
       byRunId[runId].push(row);
     }
@@ -85,7 +85,7 @@ export async function GET() {
       const sorted = [...sessions].sort(
         (a, b) => new Date(a.created_at ?? "").getTime() - new Date(b.created_at ?? "").getTime(),
       );
-      const projectPath = sorted[0].project_path || "Unknown";
+      const projectPath = sorted[0].context_name || "Unknown";
       allRuns.push(buildRunEntry(projectPath, sorted));
     }
 

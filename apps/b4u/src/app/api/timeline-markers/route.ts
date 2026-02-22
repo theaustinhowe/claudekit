@@ -9,26 +9,13 @@ export async function GET(request: NextRequest) {
     const conn = await getDb();
     const rows = await queryAll<{
       flow_id: string;
-      timestamp: string;
-      label: string;
-      paragraph_index: number;
-    }>(
-      conn,
-      "SELECT flow_id, timestamp, label, paragraph_index FROM timeline_markers WHERE run_id = ? ORDER BY flow_id, id",
-      [runId],
-    );
+      markers_json: string;
+    }>(conn, "SELECT flow_id, markers_json FROM flow_voiceover WHERE run_id = ?", [runId]);
 
-    // Group by flow_id into Record<string, TimelineMarker[]>
+    // Return as Record<string, TimelineMarker[]> for backward compatibility
     const markers: Record<string, { timestamp: string; label: string; paragraphIndex: number }[]> = {};
     for (const row of rows) {
-      if (!markers[row.flow_id]) {
-        markers[row.flow_id] = [];
-      }
-      markers[row.flow_id].push({
-        timestamp: row.timestamp,
-        label: row.label,
-        paragraphIndex: row.paragraph_index,
-      });
+      markers[row.flow_id] = JSON.parse(row.markers_json);
     }
 
     return NextResponse.json(markers);
@@ -47,15 +34,25 @@ export async function PUT(request: NextRequest) {
     const conn = await getDb();
 
     for (const [flowId, markers] of Object.entries(body)) {
-      // Delete existing markers for this flow and run
-      await execute(conn, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [flowId, runId]);
+      // Check if a flow_voiceover row exists for this flow
+      const existing = await queryAll<{ id: string; paragraphs_json: string }>(
+        conn,
+        "SELECT id, paragraphs_json FROM flow_voiceover WHERE run_id = ? AND flow_id = ?",
+        [runId, flowId],
+      );
 
-      // Insert updated markers
-      for (const marker of markers) {
+      if (existing.length > 0) {
+        // Update existing row, preserve paragraphs
+        await execute(conn, "UPDATE flow_voiceover SET markers_json = ? WHERE id = ?", [
+          JSON.stringify(markers),
+          existing[0].id,
+        ]);
+      } else {
+        // Insert new row with empty paragraphs
         await execute(
           conn,
-          "INSERT INTO timeline_markers (run_id, flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?, ?)",
-          [runId, flowId, marker.timestamp, marker.label, marker.paragraphIndex],
+          "INSERT INTO flow_voiceover (id, run_id, flow_id, paragraphs_json, markers_json) VALUES (?, ?, ?, '[]', ?)",
+          [crypto.randomUUID(), runId, flowId, JSON.stringify(markers)],
         );
       }
     }

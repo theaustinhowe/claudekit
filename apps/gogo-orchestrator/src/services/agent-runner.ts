@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryOne } from "@claudekit/duckdb";
 import type { JobStatus } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -60,8 +61,8 @@ export async function startJobRun(jobId: string): Promise<{ success: boolean; er
   // Record the state transition event
   await execute(
     conn,
-    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-    [jobId, "state_change", "queued", "running", "Starting workspace setup...", now],
+    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [randomUUID(), jobId, "state_change", "queued", "running", "Starting workspace setup...", now],
   );
 
   broadcast({ type: "job:updated", payload: job });
@@ -80,8 +81,8 @@ export async function startJobRun(jobId: string): Promise<{ success: boolean; er
     ]);
     await execute(
       conn,
-      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-      [jobId, "state_change", "running", "failed", reason, failNow],
+      "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [randomUUID(), jobId, "state_change", "running", "failed", reason, failNow],
     );
     const failedJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [jobId]);
     if (failedJob) {

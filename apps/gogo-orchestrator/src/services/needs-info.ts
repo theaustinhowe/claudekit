@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import type { JobStatus } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -157,8 +158,9 @@ async function checkJobForResponse(job: JobWithNeedsInfo): Promise<CheckResponse
   const now = new Date().toISOString();
   await execute(
     conn,
-    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     [
+      randomUUID(),
       job.id,
       "needs_info_response",
       null,

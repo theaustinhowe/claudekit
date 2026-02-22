@@ -10,21 +10,13 @@ export async function GET(request: NextRequest) {
     const conn = await getDb();
     const rows = await queryAll<{
       flow_id: string;
-      paragraph_index: number;
-      text: string;
-    }>(
-      conn,
-      "SELECT flow_id, paragraph_index, text FROM voiceover_scripts WHERE run_id = ? ORDER BY flow_id, paragraph_index",
-      [runId],
-    );
+      paragraphs_json: string;
+    }>(conn, "SELECT flow_id, paragraphs_json FROM flow_voiceover WHERE run_id = ?", [runId]);
 
-    // Group by flow_id into Record<string, string[]>
+    // Return as Record<string, string[]> for backward compatibility
     const scripts: Record<string, string[]> = {};
     for (const row of rows) {
-      if (!scripts[row.flow_id]) {
-        scripts[row.flow_id] = [];
-      }
-      scripts[row.flow_id][row.paragraph_index] = row.text;
+      scripts[row.flow_id] = JSON.parse(row.paragraphs_json);
     }
 
     return NextResponse.json(scripts);
@@ -46,14 +38,27 @@ export async function PUT(request: NextRequest) {
 
   try {
     const conn = await getDb();
-    await execute(conn, "DELETE FROM voiceover_scripts WHERE run_id = ?", [runId]);
 
     for (const [flowId, paragraphs] of Object.entries(scripts)) {
-      for (let i = 0; i < paragraphs.length; i++) {
+      // Check if a flow_voiceover row exists for this flow
+      const existing = await queryAll<{ id: string; markers_json: string }>(
+        conn,
+        "SELECT id, markers_json FROM flow_voiceover WHERE run_id = ? AND flow_id = ?",
+        [runId, flowId],
+      );
+
+      if (existing.length > 0) {
+        // Update existing row, preserve markers
+        await execute(conn, "UPDATE flow_voiceover SET paragraphs_json = ? WHERE id = ?", [
+          JSON.stringify(paragraphs),
+          existing[0].id,
+        ]);
+      } else {
+        // Insert new row
         await execute(
           conn,
-          "INSERT INTO voiceover_scripts (run_id, flow_id, paragraph_index, text) VALUES (?, ?, ?, ?)",
-          [runId, flowId, i, paragraphs[i]],
+          "INSERT INTO flow_voiceover (id, run_id, flow_id, paragraphs_json, markers_json) VALUES (?, ?, ?, ?, '[]')",
+          [crypto.randomUUID(), runId, flowId, JSON.stringify(paragraphs)],
         );
       }
     }

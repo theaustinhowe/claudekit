@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { execute, parseJsonField, queryOne } from "@claudekit/duckdb";
 import type { LogStream } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -22,8 +23,8 @@ async function emitLog(jobId: string, stream: LogStream, content: string, state:
 
   await execute(
     conn,
-    "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
-    [jobId, stream, content, sequence, new Date().toISOString()],
+    "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [randomUUID(), jobId, stream, content, sequence, new Date().toISOString()],
   );
 
   sendLogToSubscribers(jobId, { stream, content, sequence });

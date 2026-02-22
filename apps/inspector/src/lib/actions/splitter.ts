@@ -44,7 +44,7 @@ export async function getSplitPlan(planId: string) {
     ...plan,
     prNumber: pr?.number ?? 0,
     prTitle: pr?.title ?? "",
-    subPRs: JSON.parse(plan.sub_prs),
+    subPRs: typeof plan.sub_prs === "string" ? JSON.parse(plan.sub_prs) : plan.sub_prs,
   };
 }
 
@@ -53,7 +53,7 @@ export async function updateSubPRDescription(planId: string, subPRIndex: number,
   const plan = await queryOne<{ sub_prs: string }>(db, "SELECT sub_prs FROM split_plans WHERE id = ?", [planId]);
   if (!plan) throw new Error("Plan not found");
 
-  const subPRs = JSON.parse(plan.sub_prs);
+  const subPRs = typeof plan.sub_prs === "string" ? JSON.parse(plan.sub_prs) : plan.sub_prs;
   const target = subPRs.find((sp: { index: number }) => sp.index === subPRIndex);
   if (target) {
     target.description = description;

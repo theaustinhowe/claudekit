@@ -277,11 +277,6 @@ export async function removeRepo(repoId: string) {
     "DELETE FROM comment_fixes WHERE comment_id IN (SELECT id FROM pr_comments WHERE pr_id IN (SELECT id FROM prs WHERE repo_id = ?))",
     [repoId],
   );
-  await execute(
-    db,
-    "DELETE FROM skill_comments WHERE skill_id IN (SELECT id FROM skills WHERE analysis_id IN (SELECT id FROM skill_analyses WHERE repo_id = ?))",
-    [repoId],
-  );
   await execute(db, "DELETE FROM skills WHERE analysis_id IN (SELECT id FROM skill_analyses WHERE repo_id = ?)", [
     repoId,
   ]);

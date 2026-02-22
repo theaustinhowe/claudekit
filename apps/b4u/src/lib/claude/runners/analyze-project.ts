@@ -55,7 +55,9 @@ export function createAnalyzeProjectRunner(projectPath: string, runId?: string):
 
     // Clear existing data and save new
     await execute(conn, "DELETE FROM project_summary WHERE run_id = ?", [runId]);
-    await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'file_tree')", [
+      runId,
+    ]);
 
     // Save project summary
     const dirs = analysis.directories || [];
@@ -74,24 +76,25 @@ export function createAnalyzeProjectRunner(projectPath: string, runId?: string):
       ],
     );
 
-    // Save routes if present
+    // Save routes as run_content if present
     if (analysis.routes && Array.isArray(analysis.routes)) {
-      for (let i = 0; i < analysis.routes.length; i++) {
-        const r = analysis.routes[i];
-        await execute(
-          conn,
-          `INSERT INTO routes (id, run_id, path, title, auth_required, description)
-          VALUES (?, ?, ?, ?, ?, ?)`,
-          [i + 1, runId, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
-        );
-      }
+      await execute(
+        conn,
+        `INSERT INTO run_content (id, run_id, content_type, data_json)
+        VALUES (?, ?, 'routes', ?)`,
+        [crypto.randomUUID(), runId, JSON.stringify(analysis.routes)],
+      );
     }
 
-    // Save file tree if Claude returned one
+    // Save file tree as run_content if Claude returned one
     if (analysis.fileTree || analysis.file_tree) {
-      await execute(conn, "DELETE FROM file_tree WHERE run_id = ?", [runId]);
-      const treeJson = JSON.stringify(analysis.fileTree || analysis.file_tree);
-      await execute(conn, "INSERT INTO file_tree (id, run_id, tree_json) VALUES (1, ?, ?)", [runId, treeJson]);
+      const treeData = analysis.fileTree || analysis.file_tree;
+      await execute(
+        conn,
+        `INSERT INTO run_content (id, run_id, content_type, data_json)
+        VALUES (?, ?, 'file_tree', ?)`,
+        [crypto.randomUUID(), runId, JSON.stringify(treeData)],
+      );
     }
 
     onProgress({ type: "progress", message: "Analysis complete", progress: 100 });

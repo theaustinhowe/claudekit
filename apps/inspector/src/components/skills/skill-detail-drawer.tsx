@@ -16,7 +16,11 @@ export function SkillDetailDrawer({ skill }: { skill: SkillWithComments }) {
   const [isPending, startTransition] = useTransition();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const resources = skill.resources ? JSON.parse(skill.resources) : [];
+  const resources: { title: string; url: string }[] = skill.resources
+    ? typeof skill.resources === "string"
+      ? JSON.parse(skill.resources)
+      : skill.resources
+    : [];
 
   const handleToggleAddressed = () => {
     const newValue = !addressed;

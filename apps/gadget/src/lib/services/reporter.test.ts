@@ -4,17 +4,12 @@ vi.mock("@/lib/db", () => ({
   getDb: vi.fn(() => ({})),
   queryAll: vi.fn(),
   queryOne: vi.fn(),
-  execute: vi.fn(),
-}));
-vi.mock("@/lib/utils", () => ({
-  generateId: vi.fn(() => "mock-id"),
 }));
 
-import { execute, queryAll } from "@/lib/db";
-import { exportJSON, exportMarkdown, exportPRDescription, saveReport } from "./reporter";
+import { queryAll } from "@/lib/db";
+import { exportJSON, exportMarkdown, exportPRDescription } from "./reporter";
 
 const mockQueryAll = vi.mocked(queryAll);
-const mockExecute = vi.mocked(execute);
 
 const repos = [
   {
@@ -165,33 +160,5 @@ describe("exportPRDescription", () => {
     const pr = await exportPRDescription();
     expect(pr).toContain("- Remove moment");
     expect(pr).not.toContain("(my-app)");
-  });
-});
-
-describe("saveReport", () => {
-  it("inserts a report record into the database", async () => {
-    mockExecute.mockResolvedValue(undefined);
-
-    const id = await saveReport("scan1", "json", '{"data": true}');
-    expect(id).toBe("mock-id");
-    expect(mockExecute).toHaveBeenCalledOnce();
-    expect(mockExecute).toHaveBeenCalledWith({}, expect.stringContaining("INSERT INTO reports"), [
-      "mock-id",
-      "scan1",
-      "json",
-      '{"data": true}',
-    ]);
-  });
-
-  it("handles undefined scanId", async () => {
-    mockExecute.mockResolvedValue(undefined);
-
-    await saveReport(undefined, "markdown", "# Report");
-    expect(mockExecute).toHaveBeenCalledWith({}, expect.stringContaining("INSERT INTO reports"), [
-      "mock-id",
-      null,
-      "markdown",
-      "# Report",
-    ]);
   });
 });

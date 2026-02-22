@@ -180,8 +180,8 @@ describe("deleteGeneratorProject", () => {
     mockExecute.mockResolvedValue(undefined);
 
     await deleteGeneratorProject("proj-1");
-    // Should delete from 6 related tables + the project itself
-    expect(mockExecute).toHaveBeenCalledTimes(7);
+    // Should delete from 4 related tables + the project itself
+    expect(mockExecute).toHaveBeenCalledTimes(5);
     expect(mockDeleteScreenshotFiles).toHaveBeenCalledWith("proj-1");
   });
 });
@@ -194,8 +194,8 @@ describe("getUiSpec", () => {
     expect(result).toEqual({ pages: [] });
   });
 
-  it("returns specific version", async () => {
-    mockQueryOne.mockResolvedValue({ spec_json: '{"version":2}' });
+  it("returns spec from native JSON column", async () => {
+    mockQueryOne.mockResolvedValue({ spec_json: { version: 2 } });
 
     const result = await getUiSpec("proj-1", 2);
     expect(result).toEqual({ version: 2 });
@@ -211,7 +211,14 @@ describe("getUiSpec", () => {
 
 describe("getMockData", () => {
   it("returns parsed mock entities", async () => {
-    mockQueryOne.mockResolvedValue({ entities_json: '[{"name":"User"}]' });
+    mockQueryOne.mockResolvedValue({ mock_data_json: '[{"name":"User"}]' });
+
+    const result = await getMockData("proj-1", 1);
+    expect(result).toEqual([{ name: "User" }]);
+  });
+
+  it("returns mock entities from native JSON column", async () => {
+    mockQueryOne.mockResolvedValue({ mock_data_json: [{ name: "User" }] });
 
     const result = await getMockData("proj-1", 1);
     expect(result).toEqual([{ name: "User" }]);

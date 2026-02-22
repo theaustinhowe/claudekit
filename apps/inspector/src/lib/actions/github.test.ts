@@ -210,10 +210,10 @@ describe("github actions", () => {
     it("deletes repo and all cascaded data", async () => {
       await removeRepo("owner/repo");
 
-      // Should delete in order: fixes, skill_comments, skills, analyses, plans, comments, prs, repo
-      expect(mockExecute).toHaveBeenCalledTimes(8);
+      // Should delete in order: fixes, skills, analyses, plans, comments, prs, repo
+      expect(mockExecute).toHaveBeenCalledTimes(7);
       // Last call should be the repos delete
-      const lastCall = mockExecute.mock.calls[7];
+      const lastCall = mockExecute.mock.calls[6];
       expect(lastCall[1]).toContain("DELETE FROM repos");
     });
   });

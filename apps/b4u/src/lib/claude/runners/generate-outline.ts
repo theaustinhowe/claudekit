@@ -1,7 +1,7 @@
 import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@claudekit/session";
 import { buildGenerateOutlinePrompt } from "@/lib/claude/prompts/generate-outline";
-import { execute, getDb, queryAll } from "@/lib/db";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 
 export function createGenerateOutlineRunner(runId?: string): SessionRunner {
   return async ({ onProgress, signal }) => {
@@ -30,18 +30,21 @@ export function createGenerateOutlineRunner(runId?: string): SessionRunner {
 
     const summary = summaryRows[0];
 
-    const routeRows = await queryAll<{
-      path: string;
-      title: string;
-      auth_required: boolean;
-      description: string;
-    }>(
-      conn,
-      runId
-        ? "SELECT path, title, auth_required, description FROM routes WHERE run_id = ? ORDER BY id"
-        : "SELECT path, title, auth_required, description FROM routes ORDER BY id",
-      runId ? [runId] : [],
-    );
+    // Read routes from run_content
+    const routesRow = runId
+      ? await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
+          [runId],
+        )
+      : await queryOne<{ data_json: string }>(
+          conn,
+          "SELECT data_json FROM run_content WHERE content_type = 'routes' LIMIT 1",
+        );
+
+    const routeRows: Array<{ path: string; title: string; authRequired: boolean; description: string }> = routesRow
+      ? JSON.parse(routesRow.data_json)
+      : [];
 
     const projectContext = {
       name: summary.name,
@@ -51,7 +54,7 @@ export function createGenerateOutlineRunner(runId?: string): SessionRunner {
       routes: routeRows.map((r) => ({
         path: r.path,
         title: r.title,
-        authRequired: r.auth_required,
+        authRequired: r.authRequired,
         description: r.description,
       })),
     };
@@ -98,33 +101,28 @@ export function createGenerateOutlineRunner(runId?: string): SessionRunner {
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
     // Clear existing data
-    await execute(conn, "DELETE FROM routes WHERE run_id = ?", [runId]);
-    await execute(conn, "DELETE FROM user_flows WHERE run_id = ?", [runId]);
+    await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'user_flows')", [
+      runId,
+    ]);
 
-    // Save updated routes
+    // Save updated routes as run_content
     if (outline.routes && Array.isArray(outline.routes)) {
-      for (let i = 0; i < outline.routes.length; i++) {
-        const r = outline.routes[i];
-        await execute(
-          conn,
-          `INSERT INTO routes (id, run_id, path, title, auth_required, description)
-          VALUES (?, ?, ?, ?, ?, ?)`,
-          [i + 1, runId, r.path || "", r.title || "", !!r.authRequired, r.description || ""],
-        );
-      }
+      await execute(
+        conn,
+        `INSERT INTO run_content (id, run_id, content_type, data_json)
+        VALUES (?, ?, 'routes', ?)`,
+        [crypto.randomUUID(), runId, JSON.stringify(outline.routes)],
+      );
     }
 
-    // Save user flows
+    // Save user flows as run_content
     if (outline.flows && Array.isArray(outline.flows)) {
-      for (const flow of outline.flows) {
-        const steps = flow.steps || [];
-        await execute(
-          conn,
-          `INSERT INTO user_flows (id, run_id, name, steps)
-          VALUES (?, ?, ?, ?::VARCHAR[])`,
-          [flow.id || "", runId, flow.name || "", JSON.stringify(steps)],
-        );
-      }
+      await execute(
+        conn,
+        `INSERT INTO run_content (id, run_id, content_type, data_json)
+        VALUES (?, ?, 'user_flows', ?)`,
+        [crypto.randomUUID(), runId, JSON.stringify(outline.flows)],
+      );
     }
 
     onProgress({ type: "progress", message: "Outline complete", progress: 100 });

@@ -9,6 +9,7 @@ const rootEnvLocal = resolve(rootDir, ".env.local");
 if (existsSync(rootEnv)) config({ path: rootEnv, override: false });
 if (existsSync(rootEnvLocal)) config({ path: rootEnvLocal, override: false });
 
+import { randomUUID } from "node:crypto";
 import { execute, queryAll } from "@claudekit/duckdb";
 import { getDb } from "./db/index.js";
 import { createServer } from "./server.js";
@@ -95,8 +96,9 @@ async function main() {
     for (const job of jobsToPause) {
       await execute(
         conn,
-        "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         [
+          randomUUID(),
           job.id,
           "state_change",
           job.status,

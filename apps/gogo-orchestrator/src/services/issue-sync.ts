@@ -5,6 +5,7 @@
  * Uses incremental sync via GitHub's `since` parameter to minimize API calls.
  */
 
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbRepository } from "../db/schema.js";
@@ -51,8 +52,9 @@ async function upsertIssue(repositoryId: string, ghIssue: GitHubIssue): Promise<
   } else {
     await execute(
       conn,
-      "INSERT INTO issues (id, repository_id, number, title, body, state, html_url, author_login, author_avatar_url, author_html_url, labels, github_created_at, github_updated_at, closed_at, last_synced_at, created_at, updated_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO issues (id, repository_id, number, title, body, state, html_url, author_login, author_avatar_url, author_html_url, labels, github_created_at, github_updated_at, closed_at, last_synced_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         repositoryId,
         ghIssue.number,
         ghIssue.title,
@@ -112,8 +114,9 @@ async function detectIssueEditForJob(repositoryId: string, ghIssue: GitHubIssue)
       const now = new Date().toISOString();
       await execute(
         conn,
-        "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
+        "INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)",
         [
+          randomUUID(),
           job.id,
           "github_sync",
           "Issue was edited after job creation - requirements may have changed",
@@ -172,8 +175,9 @@ async function upsertComment(repositoryId: string, issueNumber: number, ghCommen
   } else {
     await execute(
       conn,
-      "INSERT INTO issue_comments (id, repository_id, issue_number, github_comment_id, body, html_url, author_login, author_type, author_avatar_url, github_created_at, github_updated_at, last_synced_at, created_at, updated_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO issue_comments (id, repository_id, issue_number, github_comment_id, body, html_url, author_login, author_type, author_avatar_url, github_created_at, github_updated_at, last_synced_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
+        randomUUID(),
         repositoryId,
         issueNumber,
         ghComment.id,

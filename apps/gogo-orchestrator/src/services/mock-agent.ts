@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryOne } from "@claudekit/duckdb";
 import type { JobStatus, LogStream } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
@@ -77,8 +78,8 @@ async function updateJobStatus(jobId: string, newStatus: JobStatus, fromStatus: 
   // Create state change event
   await execute(
     conn,
-    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)",
-    [jobId, "state_change", fromStatus, newStatus, `Mock agent transitioned job to ${newStatus}`, now],
+    "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [randomUUID(), jobId, "state_change", fromStatus, newStatus, `Mock agent transitioned job to ${newStatus}`, now],
   );
 
   // Broadcast job update to all clients
@@ -93,8 +94,8 @@ async function emitLog(jobId: string, stream: LogStream, content: string, sequen
   // Insert log into database
   await execute(
     conn,
-    "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)",
-    [jobId, stream, content, sequence, new Date().toISOString()],
+    "INSERT INTO job_logs (id, job_id, stream, content, sequence, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [randomUUID(), jobId, stream, content, sequence, new Date().toISOString()],
   );
 
   // Send to WebSocket subscribers

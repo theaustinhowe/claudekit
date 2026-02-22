@@ -12,26 +12,47 @@ async function loadPhaseContext(phase: Phase): Promise<Record<string, unknown>> 
       return { summary: summary || {} };
     }
     case 2: {
-      const routes = await queryAll<Record<string, unknown>>(conn, "SELECT path, title FROM routes ORDER BY id");
-      const flows = await queryAll<Record<string, unknown>>(conn, "SELECT name FROM user_flows ORDER BY id");
+      const routesRow = await queryOne<{ data_json: string }>(
+        conn,
+        "SELECT data_json FROM run_content WHERE content_type = 'routes' LIMIT 1",
+      );
+      const routes = routesRow ? JSON.parse(routesRow.data_json) : [];
+
+      const flowsRow = await queryOne<{ data_json: string }>(
+        conn,
+        "SELECT data_json FROM run_content WHERE content_type = 'user_flows' LIMIT 1",
+      );
+      const flows = flowsRow ? JSON.parse(flowsRow.data_json) : [];
+
       return { routes, flows };
     }
     case 3: {
-      const entities = await queryAll<Record<string, unknown>>(conn, "SELECT name, count FROM mock_data_entities");
-      const auth = await queryAll<Record<string, unknown>>(conn, "SELECT label, enabled FROM auth_overrides");
-      return { entities, authOverrides: auth };
+      const entitiesRow = await queryOne<{ data_json: string }>(
+        conn,
+        "SELECT data_json FROM run_content WHERE content_type = 'mock_data_entities' LIMIT 1",
+      );
+      const entities = entitiesRow ? JSON.parse(entitiesRow.data_json) : [];
+
+      const authRow = await queryOne<{ data_json: string }>(
+        conn,
+        "SELECT data_json FROM run_content WHERE content_type = 'auth_overrides' LIMIT 1",
+      );
+      const authOverrides = authRow ? JSON.parse(authRow.data_json) : [];
+
+      return { entities, authOverrides };
     }
     case 4: {
       const scripts = await queryAll<Record<string, unknown>>(conn, "SELECT flow_name FROM flow_scripts");
-      const steps = await queryAll<Record<string, unknown>>(conn, "SELECT COUNT(*) as total FROM script_steps");
-      return { scripts, totalSteps: (steps[0] as { total: number })?.total ?? 0 };
+      const scriptRows = await queryAll<{ steps_json: string }>(conn, "SELECT steps_json FROM flow_scripts");
+      const totalSteps = scriptRows.reduce((acc, row) => acc + JSON.parse(row.steps_json).length, 0);
+      return { scripts, totalSteps };
     }
     case 5:
       return { status: "recording in progress" };
     case 6: {
       const voiceovers = await queryAll<Record<string, unknown>>(
         conn,
-        "SELECT flow_id FROM voiceover_scripts GROUP BY flow_id",
+        "SELECT flow_id FROM flow_voiceover",
       );
       return { voiceovers };
     }

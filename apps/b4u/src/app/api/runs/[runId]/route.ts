@@ -5,7 +5,7 @@ type SessionRow = {
   id: string;
   session_type: string;
   status: string;
-  project_path: string | null;
+  context_name: string | null;
   created_at: string | null;
 };
 
@@ -55,9 +55,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
 
     const sessionRows = await queryAll<SessionRow>(
       conn,
-      `SELECT id, session_type, status, project_path, created_at
+      `SELECT id, session_type, status, context_name, created_at
        FROM sessions
-       WHERE run_id = ?
+       WHERE context_id = ?
        ORDER BY created_at ASC`,
       [runId],
     );
@@ -75,7 +75,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
       const phaseStatuses = JSON.parse(rs.phase_statuses_json) as Record<Phase, PhaseStatus>;
 
       // Prefer run_state project info, fall back to session-derived
-      const projectPath = rs.project_path || sessionRows[0]?.project_path || "";
+      const projectPath = rs.project_path || sessionRows[0]?.context_name || "";
       const projectName = rs.project_name || basename(projectPath);
 
       return NextResponse.json({
@@ -89,7 +89,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
     }
 
     // Legacy fallback: derive state from sessions only
-    const projectPath = sessionRows[0].project_path || "";
+    const projectPath = sessionRows[0].context_name || "";
     const projectName = basename(projectPath);
 
     const lastSession = sessionRows[sessionRows.length - 1];
@@ -133,7 +133,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
       await execute(
         conn,
         `INSERT INTO run_state (run_id, messages_json, current_phase, phase_statuses_json, project_path, project_name, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         VALUES (?, ?, ?, ?, ?, ?, now())
          ON CONFLICT (run_id) DO NOTHING`,
         [runId, JSON.stringify(messages), currentPhase, JSON.stringify(phaseStatuses), projectPath, projectName],
       );
@@ -167,16 +167,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     // Clean up content tables scoped by run_id
     const contentTables = [
       "project_summary",
-      "file_tree",
-      "routes",
-      "user_flows",
-      "mock_data_entities",
-      "auth_overrides",
-      "env_items",
+      "run_content",
       "flow_scripts",
-      "script_steps",
-      "voiceover_scripts",
-      "timeline_markers",
+      "flow_voiceover",
       "chapter_markers",
       "recordings",
       "audio_files",
@@ -187,10 +180,12 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     }
 
     // Clean up session data
-    await execute(conn, "DELETE FROM session_logs WHERE session_id IN (SELECT id FROM sessions WHERE run_id = ?)", [
-      runId,
-    ]);
-    await execute(conn, "DELETE FROM sessions WHERE run_id = ?", [runId]);
+    await execute(
+      conn,
+      "DELETE FROM session_logs WHERE session_id IN (SELECT id FROM sessions WHERE context_id = ?)",
+      [runId],
+    );
+    await execute(conn, "DELETE FROM sessions WHERE context_id = ?", [runId]);
     await execute(conn, "DELETE FROM run_state WHERE run_id = ?", [runId]);
 
     return NextResponse.json({ ok: true });
