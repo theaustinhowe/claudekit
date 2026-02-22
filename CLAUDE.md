@@ -30,6 +30,7 @@ This file provides guidance to Claude Code when working in this monorepo.
 | `@devkit/logger` | Pino-based structured logging with daily-rotating NDJSON files + log querying utilities |
 | `@devkit/claude-usage` | Claude API usage tracking |
 | `@devkit/mcp-logs` | MCP server for log file access (5 tools) |
+| `@devkit/playwright` | Playwright browser automation helpers (browser session, navigation, screenshot, video) + E2E testing infrastructure |
 
 ## Commands
 
