@@ -1,5 +1,5 @@
-import { ThemeFOUCScript } from "@devkit/hooks";
-import { Toaster } from "@devkit/ui/components/sonner";
+import { ThemeFOUCScript } from "@claudekit/hooks";
+import { Toaster } from "@claudekit/ui/components/sonner";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Header } from "@/components/header";

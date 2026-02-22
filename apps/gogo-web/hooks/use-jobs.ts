@@ -1,6 +1,6 @@
 "use client";
 
-import type { Job, JobLog, JobStatus } from "@devkit/gogo-shared";
+import type { Job, JobLog, JobStatus } from "@claudekit/gogo-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   approvePlan,

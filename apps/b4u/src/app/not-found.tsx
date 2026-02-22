@@ -1,4 +1,4 @@
-import { NotFoundPage } from "@devkit/ui/components/not-found-page";
+import { NotFoundPage } from "@claudekit/ui/components/not-found-page";
 
 export default function NotFound() {
   return <NotFoundPage returnLabel="Return Home" />;

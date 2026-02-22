@@ -1,7 +1,7 @@
 "use client";
 
-import { ErrorBoundary } from "@devkit/ui/components/error-boundary";
-import { SplitPanel } from "@devkit/ui/components/split-panel";
+import { ErrorBoundary } from "@claudekit/ui/components/error-boundary";
+import { SplitPanel } from "@claudekit/ui/components/split-panel";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { LayoutShell } from "@/components/layout/layout-shell";

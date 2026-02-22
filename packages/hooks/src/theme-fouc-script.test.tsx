@@ -11,14 +11,14 @@ describe("ThemeFOUCScript", () => {
   it("includes the default storage key in the script", () => {
     const element = ThemeFOUCScript({});
     const html = element.props.dangerouslySetInnerHTML.__html as string;
-    expect(html).toContain("devkit-theme");
+    expect(html).toContain("claudekit-theme");
   });
 
   it("uses custom storage key when provided", () => {
     const element = ThemeFOUCScript({ storageKey: "my-app-theme" });
     const html = element.props.dangerouslySetInnerHTML.__html as string;
     expect(html).toContain("my-app-theme");
-    expect(html).not.toContain("devkit-theme");
+    expect(html).not.toContain("claudekit-theme");
   });
 
   it("script reads from localStorage and adds theme class", () => {

@@ -1,4 +1,4 @@
-import type { JobLog, WsMessage } from "@devkit/gogo-shared";
+import type { JobLog, WsMessage } from "@claudekit/gogo-shared";
 import type { WebSocket } from "@fastify/websocket";
 import { z } from "zod";
 import { WsClientMessageSchema } from "../schemas/index.js";

@@ -9,10 +9,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@devkit/ui/components/alert-dialog";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+} from "@claudekit/ui/components/alert-dialog";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import {
   Dialog,
   DialogBody,
@@ -20,8 +20,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   AlertTriangle,
   Check,

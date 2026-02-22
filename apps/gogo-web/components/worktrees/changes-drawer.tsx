@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { DiffViewer } from "@devkit/ui/components/diff-viewer";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Button } from "@claudekit/ui/components/button";
+import { DiffViewer } from "@claudekit/ui/components/diff-viewer";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { FileCode, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import {

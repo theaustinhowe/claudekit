@@ -1,6 +1,6 @@
 "use client";
 
-import { useIsMobile } from "@devkit/hooks";
+import { useIsMobile } from "@claudekit/hooks";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

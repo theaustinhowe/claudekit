@@ -1,16 +1,16 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Switch } from "@devkit/ui/components/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { Switch } from "@claudekit/ui/components/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   BookOpen,
   CheckSquare,
@@ -757,7 +757,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
             <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground mt-6">
               <ScrollText className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p className="text-lg font-medium">No log files found</p>
-              <p className="text-sm mt-1">Start a ClaudeKit app to generate logs in ~/.devkit/logs/</p>
+              <p className="text-sm mt-1">Start a ClaudeKit app to generate logs in ~/.claudekit/logs/</p>
             </div>
           )}
 

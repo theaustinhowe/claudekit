@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { GitBranch, Plus } from "lucide-react";
 import Link from "next/link";
 import { RepoSettings } from "@/components/repo/repo-settings";

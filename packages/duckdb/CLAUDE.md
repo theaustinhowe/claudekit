@@ -1,6 +1,6 @@
-# @devkit/duckdb
+# @claudekit/duckdb
 
-Shared DuckDB connection and query helpers for all devkit apps.
+Shared DuckDB connection and query helpers for all claudekit apps.
 
 ## API
 

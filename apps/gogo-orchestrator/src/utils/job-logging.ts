@@ -1,5 +1,5 @@
-import { execute, queryOne } from "@devkit/duckdb";
-import type { JobStatus, LogStream } from "@devkit/gogo-shared";
+import { execute, queryOne } from "@claudekit/duckdb";
+import type { JobStatus, LogStream } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitEvent, getLiveSession } from "../services/session-bridge.js";
@@ -44,7 +44,7 @@ function getOrCreateBuffer(jobId: string): JobLogBuffer {
 /**
  * Emit a log entry for a job and broadcast to WebSocket subscribers.
  *
- * If the job has an active session (via @devkit/session), the log is routed
+ * If the job has an active session (via @claudekit/session), the log is routed
  * through the session manager's ring buffer + batch flush. Otherwise, it falls
  * back to the local buffer (for pre-session logs like workspace setup).
  *

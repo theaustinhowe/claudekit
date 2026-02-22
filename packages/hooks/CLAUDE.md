@@ -1,6 +1,6 @@
-# @devkit/hooks
+# @claudekit/hooks
 
-Shared React hooks for all devkit apps.
+Shared React hooks for all claudekit apps.
 
 ## Hooks
 

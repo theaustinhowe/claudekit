@@ -10,11 +10,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@devkit/ui/components/alert-dialog";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/alert-dialog";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { formatDistanceToNow } from "date-fns";
 import {
   Check,

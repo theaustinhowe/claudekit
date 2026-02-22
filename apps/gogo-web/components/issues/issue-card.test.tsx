@@ -2,20 +2,20 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/card", () => ({
+vi.mock("@claudekit/ui/components/card", () => ({
   Card: ({ children, ...props }: { children: ReactNode }) => <div {...props}>{children}</div>,
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/tooltip", () => ({
+vi.mock("@claudekit/ui/components/tooltip", () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,

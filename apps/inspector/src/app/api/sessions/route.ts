@@ -1,4 +1,4 @@
-import { createSessionsListHandler } from "@devkit/session/next";
+import { createSessionsListHandler } from "@claudekit/session/next";
 import { type NextRequest, NextResponse } from "next/server";
 import { listSessions } from "@/lib/actions/sessions";
 import { createSession, startSession } from "@/lib/services/session-manager";

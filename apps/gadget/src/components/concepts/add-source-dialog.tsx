@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
+import { Button } from "@claudekit/ui/components/button";
 import {
   Dialog,
   DialogBody,
@@ -9,9 +9,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+} from "@claudekit/ui/components/dialog";
+import { Input } from "@claudekit/ui/components/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
 import { Github, List, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

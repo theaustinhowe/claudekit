@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("./health-events.js", () => ({
   emitHealthEvent: vi.fn(),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";
 import { emitHealthEvent } from "./health-events.js";
 import { checkStaleJobs } from "./stale-job-monitor.js";

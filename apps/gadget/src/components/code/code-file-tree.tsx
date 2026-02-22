@@ -1,7 +1,7 @@
 "use client";
 
-import type { FileTreeEntry } from "@devkit/ui";
-import { FileTree } from "@devkit/ui/components/file-tree";
+import type { FileTreeEntry } from "@claudekit/ui";
+import { FileTree } from "@claudekit/ui/components/file-tree";
 import { useCallback } from "react";
 import { getDirectoryContents } from "@/lib/actions/code-browser";
 

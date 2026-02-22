@@ -1,1 +1,1 @@
-export { SessionPanel } from "@devkit/ui/components/session-panel";
+export { SessionPanel } from "@claudekit/ui/components/session-panel";

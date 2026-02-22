@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryOne: vi.fn(),
   execute: vi.fn(),
 }));
@@ -12,7 +12,7 @@ vi.mock("../ws/handler.js", () => ({
   sendLogToSubscribers: vi.fn(),
 }));
 
-import { queryOne } from "@devkit/duckdb";
+import { queryOne } from "@claudekit/duckdb";
 import { isRunning, startMockRun, stopMockRun } from "./mock-agent.js";
 
 beforeEach(() => {

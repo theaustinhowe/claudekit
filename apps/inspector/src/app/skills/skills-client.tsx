@@ -1,11 +1,11 @@
 "use client";
 
-import { useSessionStream } from "@devkit/hooks";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Slider } from "@devkit/ui/components/slider";
+import { useSessionStream } from "@claudekit/hooks";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
+import { Slider } from "@claudekit/ui/components/slider";
 import { Brain, Filter, GitCompareArrows, History, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";

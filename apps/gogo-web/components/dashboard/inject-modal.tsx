@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
+import { Button } from "@claudekit/ui/components/button";
 import {
   Dialog,
   DialogBody,
@@ -10,9 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@devkit/ui/components/dialog";
-import { Label } from "@devkit/ui/components/label";
-import { Textarea } from "@devkit/ui/components/textarea";
+} from "@claudekit/ui/components/dialog";
+import { Label } from "@claudekit/ui/components/label";
+import { Textarea } from "@claudekit/ui/components/textarea";
 import { Clock, Loader2, MessageSquarePlus, Send, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

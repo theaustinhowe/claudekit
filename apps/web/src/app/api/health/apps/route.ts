@@ -71,7 +71,7 @@ const APP_DEFINITIONS: Omit<AppInfo, "url" | "status">[] = [
   {
     id: "web",
     name: "Web",
-    description: "Devkit dashboard, app health monitor, and log viewer",
+    description: "ClaudeKit dashboard, app health monitor, and log viewer",
     port: 2000,
     icon: "Monitor",
     favicon: "/app-icons/web.png",

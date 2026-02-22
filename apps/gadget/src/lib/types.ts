@@ -1,4 +1,4 @@
-import type { FileContent, FileTreeEntry } from "@devkit/ui";
+import type { FileContent, FileTreeEntry } from "@claudekit/ui";
 
 export type RepoType = "nextjs" | "node" | "react" | "library" | "monorepo" | "tanstack";
 export type PackageManager = "npm" | "pnpm" | "bun" | "yarn";
@@ -247,7 +247,7 @@ export interface ConceptLinkWithConcept extends ConceptLink {
 
 export type ToolCategory = "package-manager" | "runtime" | "dev-tool" | "vcs" | "ai-tool";
 
-export type { ClaudeRateLimits, ClaudeUsageStats } from "@devkit/claude-usage";
+export type { ClaudeRateLimits, ClaudeUsageStats } from "@claudekit/claude-usage";
 
 export interface OnboardingState {
   hasScanRoots: boolean;

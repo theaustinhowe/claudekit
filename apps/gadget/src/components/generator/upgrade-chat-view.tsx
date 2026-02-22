@@ -1,13 +1,13 @@
 "use client";
 
-import type { SessionStreamEvent } from "@devkit/hooks";
-import { useSessionStream } from "@devkit/hooks";
-import { cn } from "@devkit/ui";
-import { Button } from "@devkit/ui/components/button";
-import { MarkdownRenderer } from "@devkit/ui/components/markdown-renderer";
-import { Progress } from "@devkit/ui/components/progress";
-import type { StreamEntry } from "@devkit/ui/components/streaming-display";
-import { parseStreamLog, StreamingDisplay } from "@devkit/ui/components/streaming-display";
+import type { SessionStreamEvent } from "@claudekit/hooks";
+import { useSessionStream } from "@claudekit/hooks";
+import { cn } from "@claudekit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { MarkdownRenderer } from "@claudekit/ui/components/markdown-renderer";
+import { Progress } from "@claudekit/ui/components/progress";
+import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
+import { parseStreamLog, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
 import {
   AlertCircle,
   CheckCircle2,

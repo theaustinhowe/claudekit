@@ -26,28 +26,28 @@ importers:
 
   apps/b4u:
     dependencies:
-      '@devkit/claude-runner':
+      '@claudekit/claude-runner':
         specifier: workspace:*
         version: link:../../packages/claude-runner
-      '@devkit/claude-usage':
+      '@claudekit/claude-usage':
         specifier: workspace:*
         version: link:../../packages/claude-usage
-      '@devkit/duckdb':
+      '@claudekit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
-      '@devkit/hooks':
+      '@claudekit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
-      '@devkit/playwright':
+      '@claudekit/playwright':
         specifier: workspace:*
         version: link:../../packages/playwright
-      '@devkit/session':
+      '@claudekit/session':
         specifier: workspace:*
         version: link:../../packages/session
-      '@devkit/ui':
+      '@claudekit/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@devkit/validation':
+      '@claudekit/validation':
         specifier: workspace:*
         version: link:../../packages/validation
       '@duckdb/node-api':
@@ -108,28 +108,28 @@ importers:
 
   apps/gadget:
     dependencies:
-      '@devkit/claude-runner':
+      '@claudekit/claude-runner':
         specifier: workspace:*
         version: link:../../packages/claude-runner
-      '@devkit/claude-usage':
+      '@claudekit/claude-usage':
         specifier: workspace:*
         version: link:../../packages/claude-usage
-      '@devkit/duckdb':
+      '@claudekit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
-      '@devkit/hooks':
+      '@claudekit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
-      '@devkit/logger':
+      '@claudekit/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@devkit/playwright':
+      '@claudekit/playwright':
         specifier: workspace:*
         version: link:../../packages/playwright
-      '@devkit/session':
+      '@claudekit/session':
         specifier: workspace:*
         version: link:../../packages/session
-      '@devkit/ui':
+      '@claudekit/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@duckdb/node-api':
@@ -196,22 +196,22 @@ importers:
 
   apps/gogo-orchestrator:
     dependencies:
-      '@devkit/claude-runner':
+      '@claudekit/claude-runner':
         specifier: workspace:*
         version: link:../../packages/claude-runner
-      '@devkit/duckdb':
+      '@claudekit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
-      '@devkit/github':
+      '@claudekit/github':
         specifier: workspace:*
         version: link:../../packages/github
-      '@devkit/gogo-shared':
+      '@claudekit/gogo-shared':
         specifier: workspace:*
         version: link:../../packages/gogo-shared
-      '@devkit/logger':
+      '@claudekit/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@devkit/session':
+      '@claudekit/session':
         specifier: workspace:*
         version: link:../../packages/session
       '@duckdb/node-api':
@@ -251,16 +251,16 @@ importers:
 
   apps/gogo-web:
     dependencies:
-      '@devkit/claude-usage':
+      '@claudekit/claude-usage':
         specifier: workspace:*
         version: link:../../packages/claude-usage
-      '@devkit/gogo-shared':
+      '@claudekit/gogo-shared':
         specifier: workspace:*
         version: link:../../packages/gogo-shared
-      '@devkit/hooks':
+      '@claudekit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
-      '@devkit/ui':
+      '@claudekit/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@tanstack/react-query':
@@ -339,28 +339,28 @@ importers:
 
   apps/inspector:
     dependencies:
-      '@devkit/claude-runner':
+      '@claudekit/claude-runner':
         specifier: workspace:*
         version: link:../../packages/claude-runner
-      '@devkit/claude-usage':
+      '@claudekit/claude-usage':
         specifier: workspace:*
         version: link:../../packages/claude-usage
-      '@devkit/duckdb':
+      '@claudekit/duckdb':
         specifier: workspace:*
         version: link:../../packages/duckdb
-      '@devkit/github':
+      '@claudekit/github':
         specifier: workspace:*
         version: link:../../packages/github
-      '@devkit/hooks':
+      '@claudekit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
-      '@devkit/logger':
+      '@claudekit/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@devkit/session':
+      '@claudekit/session':
         specifier: workspace:*
         version: link:../../packages/session
-      '@devkit/ui':
+      '@claudekit/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       lucide-react:
@@ -421,13 +421,13 @@ importers:
 
   apps/web:
     dependencies:
-      '@devkit/hooks':
+      '@claudekit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
-      '@devkit/logger':
+      '@claudekit/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@devkit/ui':
+      '@claudekit/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@tanstack/react-virtual':
@@ -497,10 +497,10 @@ importers:
 
   packages/claude-usage:
     dependencies:
-      '@devkit/hooks':
+      '@claudekit/hooks':
         specifier: workspace:*
         version: link:../hooks
-      '@devkit/ui':
+      '@claudekit/ui':
         specifier: workspace:*
         version: link:../ui
       lucide-react:
@@ -612,7 +612,7 @@ importers:
 
   packages/mcp-logs:
     dependencies:
-      '@devkit/logger':
+      '@claudekit/logger':
         specifier: workspace:*
         version: link:../logger
       '@modelcontextprotocol/sdk':
@@ -714,10 +714,10 @@ importers:
         specifier: ^3.4.0
         version: 3.4.1
     devDependencies:
-      '@devkit/hooks':
+      '@claudekit/hooks':
         specifier: workspace:*
         version: link:../hooks
-      '@devkit/session':
+      '@claudekit/session':
         specifier: workspace:*
         version: link:../session
       '@storybook/react':

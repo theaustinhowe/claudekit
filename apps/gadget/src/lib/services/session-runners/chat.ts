@@ -1,5 +1,5 @@
 import path from "node:path";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { createDesignMessage, getGeneratorProject } from "@/lib/actions/generator-projects";
 import { getUpgradeTasks } from "@/lib/actions/upgrade-tasks";
 import type { SessionRunner } from "@/lib/services/session-manager";

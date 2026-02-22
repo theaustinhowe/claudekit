@@ -5,7 +5,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -53,7 +53,7 @@ vi.mock("../utils/job-logging.js", () => ({
   emitLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { startAgent } from "./agent-executor.js";
 import { startJobRun } from "./agent-runner.js";
 import { pollQueuedJobs } from "./job-auto-start.js";

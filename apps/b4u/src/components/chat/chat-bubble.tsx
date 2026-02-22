@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@devkit/ui";
+import { cn } from "@claudekit/ui";
 import { Bot } from "lucide-react";
 import type { ChatMessage } from "@/lib/types";
 import { ActionCardRenderer } from "./action-card";

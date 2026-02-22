@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
+import { Button } from "@claudekit/ui/components/button";
 import { GitCommit, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { CodeCommitDetail } from "@/components/code/code-commit-detail";

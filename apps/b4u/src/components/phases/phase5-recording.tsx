@@ -1,6 +1,6 @@
 "use client";
 
-import { useSessionStream } from "@devkit/hooks";
+import { useSessionStream } from "@claudekit/hooks";
 import { useEffect, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase5RecordingSkeleton } from "@/components/ui/phase-skeletons";

@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Card } from "@devkit/ui/components/card";
+import { cn } from "@claudekit/ui";
+import { Card } from "@claudekit/ui/components/card";
 import { toast } from "sonner";
 import { DESIGN_VIBES } from "@/lib/constants";
 

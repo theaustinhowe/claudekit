@@ -1,5 +1,5 @@
 import os from "node:os";
-import type { NetworkInfo } from "@devkit/gogo-shared";
+import type { NetworkInfo } from "@claudekit/gogo-shared";
 import type { FastifyPluginAsync } from "fastify";
 
 // Get the configured ports

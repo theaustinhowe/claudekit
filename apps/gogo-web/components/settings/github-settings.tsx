@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Eye, EyeOff, Github, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

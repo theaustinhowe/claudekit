@@ -1,5 +1,5 @@
-import { runClaude } from "@devkit/claude-runner";
-import type { SessionRunner } from "@devkit/session";
+import { runClaude } from "@claudekit/claude-runner";
+import type { SessionRunner } from "@claudekit/session";
 import { buildGenerateDataPlanPrompt } from "@/lib/claude/prompts/generate-data-plan";
 import { execute, getDb, queryAll } from "@/lib/db";
 

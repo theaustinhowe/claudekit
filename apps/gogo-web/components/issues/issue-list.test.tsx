@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/ui/components/skeleton", () => ({
+vi.mock("@claudekit/ui/components/skeleton", () => ({
   Skeleton: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} />,
 }));
 

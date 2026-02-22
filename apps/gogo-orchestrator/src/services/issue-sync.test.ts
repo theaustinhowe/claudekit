@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("../utils/logger.js", () => ({
   }),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { broadcast } from "../ws/handler.js";
 import { getIssueCommentsForRepo, getIssuesForRepo } from "./github/index.js";
 import { syncAllIssues, syncCommentsForIssue, syncIssuesForRepo } from "./issue-sync.js";

@@ -1,7 +1,7 @@
 "use client";
 
-import type { JobLog } from "@devkit/gogo-shared";
-import { cn } from "@devkit/ui";
+import type { JobLog } from "@claudekit/gogo-shared";
+import { cn } from "@claudekit/ui";
 import { Terminal } from "lucide-react";
 import { useMemo } from "react";
 import { useJobLogs } from "@/hooks/use-jobs";

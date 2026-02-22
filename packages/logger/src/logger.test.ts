@@ -76,7 +76,7 @@ describe("parseLogFileName", () => {
 
   it("handles full path by extracting basename", async () => {
     const { parseLogFileName } = await import("./index.js");
-    const result = parseLogFileName("/home/user/.devkit/logs/web.2026-03-10.ndjson");
+    const result = parseLogFileName("/home/user/.claudekit/logs/web.2026-03-10.ndjson");
     expect(result).toEqual({ app: "web", date: "2026-03-10" });
   });
 });

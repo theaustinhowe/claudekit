@@ -1,11 +1,11 @@
-# @devkit/logger
+# @claudekit/logger
 
-Structured logging for all devkit apps. Built on Pino with dual transport (console + NDJSON file).
+Structured logging for all claudekit apps. Built on Pino with dual transport (console + NDJSON file).
 
 ## Usage
 
 ```typescript
-import { createLogger, createServiceLogger } from "@devkit/logger";
+import { createLogger, createServiceLogger } from "@claudekit/logger";
 
 const logger = createLogger({ app: "gadget" });
 const serviceLogger = createServiceLogger(logger, "scanner");
@@ -39,7 +39,7 @@ interface LoggerConfig {
   level?: string;         // Default: LOG_LEVEL env or "info"
   pretty?: boolean;       // Default: NODE_ENV !== "production"
   fileLogging?: boolean;  // Default: true
-  logDir?: string;        // Default: ~/.devkit/logs
+  logDir?: string;        // Default: ~/.claudekit/logs
 }
 ```
 

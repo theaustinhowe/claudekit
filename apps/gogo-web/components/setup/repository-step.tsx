@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import {
   Dialog,
   DialogBody,
@@ -11,9 +11,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
+} from "@claudekit/ui/components/dialog";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
 import {
   CheckCircle2,
   ChevronRight,

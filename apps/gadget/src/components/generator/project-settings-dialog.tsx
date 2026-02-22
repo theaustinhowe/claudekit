@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@claudekit/ui/components/dialog";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

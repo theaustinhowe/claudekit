@@ -4,13 +4,13 @@
  * Handles Octokit instance creation, caching, and rate limit tracking.
  */
 
-import { queryOne } from "@devkit/duckdb";
+import { queryOne } from "@claudekit/duckdb";
 import {
   getAllRateLimitInfo,
   getRateLimitInfo,
   shouldThrottleRequests,
   updateRateLimitFromResponse,
-} from "@devkit/github";
+} from "@claudekit/github";
 import { Octokit } from "octokit";
 import { getDb } from "../../db/index.js";
 import type { DbRepository } from "../../db/schema.js";

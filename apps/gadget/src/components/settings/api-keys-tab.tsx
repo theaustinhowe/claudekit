@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import {
   Dialog,
   DialogBody,
@@ -11,9 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/dialog";
+import { Input } from "@claudekit/ui/components/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Check, ExternalLink, Eye, EyeOff, HelpCircle, Key, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
@@ -24,7 +24,7 @@ const KEY_HELP: Record<string, { title: string; steps: string[]; url: string; ur
   GITHUB_PERSONAL_ACCESS_TOKEN: {
     title: "Create a GitHub Personal Access Token",
     steps: [
-      'Give the token a descriptive name (e.g. "Devkit")',
+      'Give the token a descriptive name (e.g. "ClaudeKit")',
       "Set an expiration (90 days recommended)",
       "The repo and workflow scopes will be pre-selected via the link below",
       'Click "Generate token" and copy the value',

@@ -1,12 +1,12 @@
 "use client";
 
-import { useIsMobile } from "@devkit/hooks";
-import { cn } from "@devkit/ui";
-import { Button } from "@devkit/ui/components/button";
-import { CollapsibleSidebar, SidebarLogo } from "@devkit/ui/components/collapsible-sidebar";
-import { NavLink } from "@devkit/ui/components/nav-link";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { useIsMobile } from "@claudekit/hooks";
+import { cn } from "@claudekit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { CollapsibleSidebar, SidebarLogo } from "@claudekit/ui/components/collapsible-sidebar";
+import { NavLink } from "@claudekit/ui/components/nav-link";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Archive, CircleDot, FolderTree, LayoutDashboard, Menu, MoreHorizontal, Search, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

@@ -29,13 +29,13 @@ vi.mock("sonner", () => ({
   }),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode } & Record<string, unknown>) => (
     <button {...props}>{children}</button>
   ),
 }));
 
-vi.mock("@devkit/ui/components/dialog", () => ({
+vi.mock("@claudekit/ui/components/dialog", () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div data-testid="dialog">{children}</div>,
   DialogBody: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -46,16 +46,16 @@ vi.mock("@devkit/ui/components/dialog", () => ({
   DialogTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/input", () => ({
+vi.mock("@claudekit/ui/components/input", () => ({
   Input: (props: Record<string, unknown>) => <input {...props} />,
 }));
 
-vi.mock("@devkit/ui/components/label", () => ({
+vi.mock("@claudekit/ui/components/label", () => ({
   // biome-ignore lint/a11y/noLabelWithoutControl: test mock
   Label: ({ children, ...props }: { children: ReactNode }) => <label {...props}>{children}</label>,
 }));
 
-vi.mock("@devkit/ui/components/select", () => ({
+vi.mock("@claudekit/ui/components/select", () => ({
   Select: ({
     children,
     value,
@@ -77,7 +77,7 @@ vi.mock("@devkit/ui/components/select", () => ({
   SelectValue: ({ placeholder }: { placeholder: string }) => <span>{placeholder}</span>,
 }));
 
-vi.mock("@devkit/ui/components/textarea", () => ({
+vi.mock("@claudekit/ui/components/textarea", () => ({
   Textarea: (props: Record<string, unknown>) => <textarea {...props} />,
 }));
 

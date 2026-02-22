@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/hooks", () => ({
+vi.mock("@claudekit/hooks", () => ({
   useIsMobile: () => false,
 }));
 
@@ -41,37 +41,37 @@ vi.mock("@/components/repo/repo-selector", () => ({
   ),
 }));
 
-// Mock @devkit/ui components
-vi.mock("@devkit/ui/components/collapsible-sidebar", () => ({
+// Mock @claudekit/ui components
+vi.mock("@claudekit/ui/components/collapsible-sidebar", () => ({
   CollapsibleSidebar: ({ children }: { children: (opts: { collapsed: boolean }) => ReactNode }) => (
     <aside data-testid="sidebar">{children({ collapsed: false })}</aside>
   ),
   SidebarLogo: ({ collapsed }: { collapsed: boolean }) => <div data-testid="sidebar-logo" data-collapsed={collapsed} />,
 }));
 
-vi.mock("@devkit/ui/components/nav-link", () => ({
+vi.mock("@claudekit/ui/components/nav-link", () => ({
   NavLink: ({ children, href }: { children: ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
 
-vi.mock("@devkit/ui/components/sheet", () => ({
+vi.mock("@claudekit/ui/components/sheet", () => ({
   Sheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetTitle: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("@devkit/ui/components/tooltip", () => ({
+vi.mock("@claudekit/ui/components/tooltip", () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui", () => ({
+vi.mock("@claudekit/ui", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
 }));
 

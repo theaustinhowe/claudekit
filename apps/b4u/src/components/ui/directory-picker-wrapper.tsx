@@ -1,7 +1,7 @@
 "use client";
 
-import type { BrowseResult } from "@devkit/ui";
-import { DirectoryPicker } from "@devkit/ui/components/directory-picker";
+import type { BrowseResult } from "@claudekit/ui";
+import { DirectoryPicker } from "@claudekit/ui/components/directory-picker";
 
 async function browse(path: string, showHidden: boolean): Promise<BrowseResult> {
   const params = new URLSearchParams({ path, showHidden: String(showHidden) });

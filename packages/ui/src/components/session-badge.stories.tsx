@@ -1,4 +1,4 @@
-import type { SessionStatusBase } from "@devkit/session";
+import type { SessionStatusBase } from "@claudekit/session";
 import type { Meta, StoryObj } from "@storybook/react";
 import { SessionBadge } from "./session-badge";
 

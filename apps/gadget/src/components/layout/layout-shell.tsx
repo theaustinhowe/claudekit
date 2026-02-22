@@ -1,6 +1,6 @@
 "use client";
 
-import { AppLayout } from "@devkit/ui/components/shared-layout";
+import { AppLayout } from "@claudekit/ui/components/shared-layout";
 import { GadgetSessionProvider } from "@/components/sessions/session-context";
 import { SessionIndicator } from "@/components/sessions/session-indicator";
 import { SessionPanel } from "@/components/sessions/session-panel";

@@ -34,7 +34,7 @@ describe("polling", () => {
     vi.doMock("../db/index.js", () => ({
       getDb: vi.fn(async () => ({})),
     }));
-    vi.doMock("@devkit/duckdb", () => ({
+    vi.doMock("@claudekit/duckdb", () => ({
       queryAll: vi.fn(),
       queryOne: mockQueryOne,
       execute: vi.fn(),

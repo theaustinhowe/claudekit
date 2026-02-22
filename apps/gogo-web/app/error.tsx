@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorPage } from "@devkit/ui/components/error-page";
+import { ErrorPage } from "@claudekit/ui/components/error-page";
 import { useEffect } from "react";
 
 export default function ErrorBoundary({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

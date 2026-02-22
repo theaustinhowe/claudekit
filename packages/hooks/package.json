@@ -1,5 +1,5 @@
 {
-  "name": "@devkit/hooks",
+  "name": "@claudekit/hooks",
   "version": "0.1.0",
   "private": true,
   "type": "module",

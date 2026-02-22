@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
 import { ArrowDown, ArrowUp, Minus, Plus, X } from "lucide-react";
 import type { ComparisonSkill } from "@/lib/actions/skills";
 

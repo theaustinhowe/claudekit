@@ -1,10 +1,10 @@
 "use client";
 
-import { useIsMobile } from "@devkit/hooks";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { useIsMobile } from "@claudekit/hooks";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import {
   Activity,

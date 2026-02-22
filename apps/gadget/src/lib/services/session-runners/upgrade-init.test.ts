@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("node:child_process", () => ({
   execSync: vi.fn(),
 }));
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/actions/generator-projects", () => ({
@@ -35,7 +35,7 @@ vi.mock("@/lib/utils", () => ({
   nowTimestamp: vi.fn(() => "2025-01-01T00:00:00.000Z"),
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { createUpgradeTasks, deleteUpgradeTasks } from "@/lib/actions/upgrade-tasks";
 import { execute } from "@/lib/db";

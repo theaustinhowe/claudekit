@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@devkit/ui/styles/themes.css";
+@import "@claudekit/ui/styles/themes.css";
 @source "../../../packages/ui/src";
 @source "../../../packages/claude-usage/src";
 @plugin "tailwindcss-animate";

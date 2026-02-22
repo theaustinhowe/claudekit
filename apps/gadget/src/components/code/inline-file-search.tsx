@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Input } from "@devkit/ui/components/input";
+import { cn } from "@claudekit/ui";
+import { Input } from "@claudekit/ui/components/input";
 import { File, Folder, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getFileTree } from "@/lib/actions/code-browser";

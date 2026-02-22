@@ -39,7 +39,7 @@ function applyThemeClass(themeId: string) {
 }
 
 export interface UseAppThemeOptions {
-  /** localStorage key for persisting the theme. Default: "devkit-theme" */
+  /** localStorage key for persisting the theme. Default: "claudekit-theme" */
   storageKey?: string;
   /** Default theme when no stored value exists. Default: "amethyst" */
   defaultTheme?: ThemeId;
@@ -54,7 +54,7 @@ export interface UseAppThemeReturn {
 }
 
 export function useAppTheme(options: UseAppThemeOptions = {}): UseAppThemeReturn {
-  const { storageKey = "devkit-theme", defaultTheme = DEFAULT_THEME } = options;
+  const { storageKey = "claudekit-theme", defaultTheme = DEFAULT_THEME } = options;
 
   const [theme, setThemeState] = useState<ThemeId>(defaultTheme);
   const [mounted, setMounted] = useState(false);

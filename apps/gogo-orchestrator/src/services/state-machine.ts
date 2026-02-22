@@ -1,5 +1,5 @@
-import { buildUpdate, execute, queryOne, withTransaction } from "@devkit/duckdb";
-import { type JobActionType, type JobEventType, type JobStatus, VALID_TRANSITIONS } from "@devkit/gogo-shared";
+import { buildUpdate, execute, queryOne, withTransaction } from "@claudekit/duckdb";
+import { type JobActionType, type JobEventType, type JobStatus, VALID_TRANSITIONS } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
 import { type DbJob, JOB_JSON_FIELDS } from "../db/schema.js";
 import { broadcast } from "../ws/handler.js";

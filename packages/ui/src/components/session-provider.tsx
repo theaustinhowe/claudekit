@@ -1,6 +1,6 @@
 "use client";
 
-import type { SessionRowBase } from "@devkit/session";
+import type { SessionRowBase } from "@claudekit/session";
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";

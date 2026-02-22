@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { Textarea } from "@devkit/ui/components/textarea";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+import { Textarea } from "@claudekit/ui/components/textarea";
 import {
   AlertCircle,
   Bot,

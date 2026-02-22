@@ -1,4 +1,4 @@
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { saveAutoFixRun, updateAutoFixRun } from "@/lib/actions/auto-fix";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";

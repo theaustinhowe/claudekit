@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -55,7 +55,7 @@ vi.mock("node:fs/promises", () => ({
   realpath: vi.fn(async (p: string) => p),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getChangedFiles, getFileDiff, getRepoDir, listWorktrees, removeWorktree } from "../services/git.js";
 import { getOctokitForRepo, getRepoConfigById } from "../services/github/index.js";

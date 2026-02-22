@@ -1,4 +1,4 @@
-import { ThemeFOUCScript } from "@devkit/hooks";
+import { ThemeFOUCScript } from "@claudekit/hooks";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";

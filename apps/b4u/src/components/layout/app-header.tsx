@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@devkit/ui";
+import { cn } from "@claudekit/ui";
 import { useApp } from "@/lib/store";
 import { PHASE_LABELS, type Phase } from "@/lib/types";
 

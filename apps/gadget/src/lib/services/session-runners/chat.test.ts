@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/actions/generator-projects", () => ({
@@ -21,7 +21,7 @@ vi.mock("@/lib/utils", () => ({
   expandTilde: vi.fn((p: string) => p),
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { createDesignMessage, getGeneratorProject } from "@/lib/actions/generator-projects";
 import { getUpgradeTasks } from "@/lib/actions/upgrade-tasks";
 import { applyTaskMutations, parseTaskMutations } from "@/lib/services/task-mutation-parser";

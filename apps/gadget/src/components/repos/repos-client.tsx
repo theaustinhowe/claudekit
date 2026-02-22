@@ -9,13 +9,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@devkit/ui/components/alert-dialog";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Input } from "@devkit/ui/components/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@devkit/ui/components/table";
+} from "@claudekit/ui/components/alert-dialog";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Input } from "@claudekit/ui/components/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@claudekit/ui/components/table";
 import {
   ArrowUpDown,
   ChevronDown,

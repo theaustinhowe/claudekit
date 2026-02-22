@@ -4,7 +4,7 @@ vi.mock("node:fs/promises", () => ({
   rm: vi.fn(),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   execute: vi.fn(),
   queryAll: vi.fn(),
   queryOne: vi.fn(),
@@ -52,7 +52,7 @@ vi.mock("./state-machine.js", () => ({
   applyTransitionAtomic: vi.fn(),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import { broadcast } from "../ws/handler.js";
 import { resumeAgent } from "./agent-executor.js";

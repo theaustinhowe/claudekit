@@ -10,14 +10,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@devkit/ui/components/alert-dialog";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/alert-dialog";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { format, formatDistanceStrict } from "date-fns";
 import {
   AlertTriangle,

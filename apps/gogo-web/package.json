@@ -12,10 +12,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@devkit/claude-usage": "workspace:*",
-    "@devkit/gogo-shared": "workspace:*",
-    "@devkit/hooks": "workspace:*",
-    "@devkit/ui": "workspace:*",
+    "@claudekit/claude-usage": "workspace:*",
+    "@claudekit/gogo-shared": "workspace:*",
+    "@claudekit/hooks": "workspace:*",
+    "@claudekit/ui": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.563.0",

@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorBoundary } from "@devkit/ui/components/error-boundary";
+import { ErrorBoundary } from "@claudekit/ui/components/error-boundary";
 import { usePhaseController } from "@/lib/phase-controller";
 import { useApp } from "@/lib/store";
 import { PHASE_LABELS, type Phase } from "@/lib/types";

@@ -1,4 +1,4 @@
-import { checkpoint, execute } from "@devkit/duckdb";
+import { checkpoint, execute } from "@claudekit/duckdb";
 import type { DuckDBConnection } from "@duckdb/node-api";
 import {
   CLAUDE_CONFIG_SOURCE_ID,

@@ -14,7 +14,7 @@ vi.mock("../utils/logger.js", () => ({
   createServiceLogger: () => mockLogger,
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock("@devkit/duckdb", () => ({
   checkpoint: vi.fn(),
 }));
 
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import { runDataPruning } from "./data-pruning.js";
 
 describe("data-pruning", () => {

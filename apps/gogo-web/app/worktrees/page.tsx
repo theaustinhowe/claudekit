@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Button } from "@claudekit/ui/components/button";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { AlertCircle, Inbox, Lightbulb, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";

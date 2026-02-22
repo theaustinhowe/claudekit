@@ -91,7 +91,7 @@ src/
 ├── schemas/
 │   └── index.ts                  # Zod schemas for API validation
 └── utils/
-    ├── logger.ts                 # @devkit/logger service logging
+    ├── logger.ts                 # @claudekit/logger service logging
     ├── job-logging.ts            # Ring buffer (500), batch flush, WebSocket broadcast
     ├── binary-check.ts           # Validate required binaries (git, node, etc.)
     └── timeout.ts                # Promise timeout utilities
@@ -115,7 +115,7 @@ paused → queued (resume) | running (resume_with_agent)
 
 ### Database
 
-**DuckDB** via `@devkit/duckdb`. Tables:
+**DuckDB** via `@claudekit/duckdb`. Tables:
 
 | Table | Purpose |
 |-------|---------|
@@ -203,8 +203,8 @@ All job status changes go through `applyTransitionAtomic()` which wraps the upda
 ## Conventions
 
 - Bearer token auth on all REST routes
-- All domain types from `@devkit/gogo-shared` (Zod-validated)
-- Query helpers from `@devkit/duckdb` (`queryAll`, `queryOne`, `execute`, `withTransaction`)
-- Structured logging via `@devkit/logger` (Pino-based)
+- All domain types from `@claudekit/gogo-shared` (Zod-validated)
+- Query helpers from `@claudekit/duckdb` (`queryAll`, `queryOne`, `execute`, `withTransaction`)
+- Structured logging via `@claudekit/logger` (Pino-based)
 - Biome for linting/formatting: 2-space indent, 120 line width, double quotes, semicolons
 - Tests co-located with source files (`*.test.ts`)

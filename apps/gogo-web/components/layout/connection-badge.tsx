@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { useWebSocketContext } from "@/contexts/websocket-context";

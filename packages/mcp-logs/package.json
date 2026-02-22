@@ -1,5 +1,5 @@
 {
-  "name": "@devkit/mcp-logs",
+  "name": "@claudekit/mcp-logs",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@devkit/logger": "workspace:*",
+    "@claudekit/logger": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "zod": "^4.3.6"
   },

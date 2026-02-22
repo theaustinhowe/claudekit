@@ -1,10 +1,10 @@
 "use client";
 
-import type { WsMessage } from "@devkit/gogo-shared";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import type { WsMessage } from "@claudekit/gogo-shared";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
 import {
   AlertCircle,
   ChevronDown,

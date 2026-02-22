@@ -20,7 +20,7 @@ vi.mock("@/lib/actions/settings", () => ({
   getSetting: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 
@@ -32,7 +32,7 @@ vi.mock("node:crypto", () => ({
   default: { randomUUID: vi.fn().mockReturnValue("mock-uuid") },
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getSetting } from "@/lib/actions/settings";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import {

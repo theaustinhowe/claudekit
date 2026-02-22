@@ -1,4 +1,4 @@
-import { execute, queryOne } from "@devkit/duckdb";
+import { execute, queryOne } from "@claudekit/duckdb";
 import { getDb } from "./index.js";
 import type { DbJob, DbRepository } from "./schema.js";
 

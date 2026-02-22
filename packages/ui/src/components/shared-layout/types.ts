@@ -30,7 +30,7 @@ export interface LogoConfig {
 // Cross-app footer links
 // ---------------------------------------------------------------------------
 
-export interface DevkitAppLink {
+export interface ClaudeKitAppLink {
   label: string;
   port: number;
   icon: ComponentType<{ className?: string }>;

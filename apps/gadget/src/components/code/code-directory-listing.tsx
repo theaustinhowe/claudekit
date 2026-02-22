@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, formatBytes } from "@devkit/ui";
+import { cn, formatBytes } from "@claudekit/ui";
 import { File, Folder } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getLastCommitForPath } from "@/lib/actions/code-browser";

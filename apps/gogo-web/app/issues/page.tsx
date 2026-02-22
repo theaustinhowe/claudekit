@@ -1,7 +1,7 @@
 "use client";
 
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { Inbox } from "lucide-react";
 import { parseAsInteger, parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, useMemo, useState } from "react";

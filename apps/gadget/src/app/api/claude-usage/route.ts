@@ -1,4 +1,4 @@
-import { getClaudeRateLimits } from "@devkit/claude-usage/server";
+import { getClaudeRateLimits } from "@claudekit/claude-usage/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {

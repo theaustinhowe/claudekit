@@ -1,4 +1,4 @@
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 
@@ -19,10 +19,10 @@ export function createSkillAnalysisRunner(metadata: Record<string, unknown>, _co
 
     // Gather comments — dynamic import to avoid server action in non-server context
     const { getDb } = await import("@/lib/db");
-    const { queryAll, queryOne } = await import("@devkit/duckdb");
+    const { queryAll, queryOne } = await import("@claudekit/duckdb");
     const { getSetting } = await import("@/lib/actions/settings");
     const { buildSkillAnalysisPrompt } = await import("@/lib/prompts");
-    const { execute } = await import("@devkit/duckdb");
+    const { execute } = await import("@claudekit/duckdb");
     const crypto = await import("node:crypto");
 
     const db = await getDb();

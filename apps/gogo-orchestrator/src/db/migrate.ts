@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { runMigrations } from "@devkit/duckdb";
+import { runMigrations } from "@claudekit/duckdb";
 import { DuckDBInstance } from "@duckdb/node-api";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

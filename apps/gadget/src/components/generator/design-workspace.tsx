@@ -1,7 +1,7 @@
 "use client";
 
-import { useSessionStream } from "@devkit/hooks";
-import { cn } from "@devkit/ui";
+import { useSessionStream } from "@claudekit/hooks";
+import { cn } from "@claudekit/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,15 +11,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@devkit/ui/components/alert-dialog";
-import { Button } from "@devkit/ui/components/button";
+} from "@claudekit/ui/components/alert-dialog";
+import { Button } from "@claudekit/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@devkit/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   AlertCircle,
   Camera,

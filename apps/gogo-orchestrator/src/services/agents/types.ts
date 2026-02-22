@@ -1,4 +1,4 @@
-import type { InjectMode, LogStream } from "@devkit/gogo-shared";
+import type { InjectMode, LogStream } from "@claudekit/gogo-shared";
 
 /**
  * Capabilities that an agent runner supports

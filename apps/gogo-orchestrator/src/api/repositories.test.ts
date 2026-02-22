@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -38,7 +38,7 @@ vi.mock("../utils/timeout.js", () => ({
   TIMEOUTS: { GITHUB_API: 10000 },
 }));
 
-import { buildUpdate, execute, queryAll, queryOne } from "@devkit/duckdb";
+import { buildUpdate, execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getOctokitForRepo } from "../services/github/index.js";
 import { repositoriesRouter, toSnakeCaseFields } from "./repositories.js";

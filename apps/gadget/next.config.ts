@@ -1,4 +1,4 @@
-import { securityHeaders } from "@devkit/ui/next-config";
+import { securityHeaders } from "@claudekit/ui/next-config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {

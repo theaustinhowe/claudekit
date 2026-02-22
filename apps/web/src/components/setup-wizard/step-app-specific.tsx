@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { BookOpen, ChevronDown, Cpu, GitPullRequest, Rocket, Video } from "lucide-react";
 import type { EnvVariable } from "@/lib/env-parser";
 import { EnvField } from "./env-field";

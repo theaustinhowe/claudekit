@@ -1,1 +1,1 @@
-export { SessionIndicator } from "@devkit/ui/components/session-indicator";
+export { SessionIndicator } from "@claudekit/ui/components/session-indicator";

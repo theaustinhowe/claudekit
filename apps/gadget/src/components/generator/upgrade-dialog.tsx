@@ -8,8 +8,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@devkit/ui/components/alert-dialog";
-import { Button } from "@devkit/ui/components/button";
+} from "@claudekit/ui/components/alert-dialog";
+import { Button } from "@claudekit/ui/components/button";
 import { Loader2, Rocket } from "lucide-react";
 import { useState } from "react";
 import type { GeneratorProject } from "@/lib/types";

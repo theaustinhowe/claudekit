@@ -1,12 +1,12 @@
 "use client";
 
-import type { SessionStreamEvent } from "@devkit/hooks";
-import { useAutoScroll, useSessionStream } from "@devkit/hooks";
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Switch } from "@devkit/ui/components/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import type { SessionStreamEvent } from "@claudekit/hooks";
+import { useAutoScroll, useSessionStream } from "@claudekit/hooks";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Switch } from "@claudekit/ui/components/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { ArrowDown, CheckCircle2, Loader2, Pause, ShieldAlert, Sparkles, X, Zap } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AutoFixStatus } from "@/lib/types";

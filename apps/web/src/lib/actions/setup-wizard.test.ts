@@ -20,7 +20,7 @@ const mockParseEnvExample = vi.mocked(parseEnvExample);
 const mockDeduplicateVariables = vi.mocked(deduplicateVariables);
 
 // The cwd is deep inside the monorepo during tests
-const FAKE_ROOT = "/workspace/devkit";
+const FAKE_ROOT = "/workspace/claudekit";
 
 beforeEach(() => {
   vi.clearAllMocks();

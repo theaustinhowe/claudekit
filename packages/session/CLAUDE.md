@@ -1,4 +1,4 @@
-# @devkit/session
+# @claudekit/session
 
 Unified session lifecycle manager for long-running operations. Uses dependency injection — apps provide their own DB persistence callbacks.
 

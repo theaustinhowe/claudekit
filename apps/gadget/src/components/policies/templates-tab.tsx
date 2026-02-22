@@ -9,14 +9,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@devkit/ui/components/alert-dialog";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/alert-dialog";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@claudekit/ui/components/dialog";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Textarea } from "@claudekit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Book, Globe, Layers, Plus, Server, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

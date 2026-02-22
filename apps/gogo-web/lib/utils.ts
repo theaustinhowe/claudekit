@@ -1,1 +1,1 @@
-export { timeAgo as formatLastChecked } from "@devkit/ui";
+export { timeAgo as formatLastChecked } from "@claudekit/ui";

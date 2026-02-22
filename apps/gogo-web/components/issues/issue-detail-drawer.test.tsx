@@ -3,19 +3,19 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/scroll-area", () => ({
+vi.mock("@claudekit/ui/components/scroll-area", () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/sheet", () => ({
+vi.mock("@claudekit/ui/components/sheet", () => ({
   Sheet: ({ children, open }: { children: ReactNode; open: boolean }) =>
     open ? <div data-testid="sheet">{children}</div> : null,
   SheetContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -24,7 +24,7 @@ vi.mock("@devkit/ui/components/sheet", () => ({
   SheetBody: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/tooltip", () => ({
+vi.mock("@claudekit/ui/components/tooltip", () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,

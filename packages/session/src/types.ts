@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Base types shared across all apps (used by @devkit/ui session components)
+// Base types shared across all apps (used by @claudekit/ui session components)
 // ---------------------------------------------------------------------------
 
 export type SessionStatusBase = "pending" | "running" | "done" | "error" | "cancelled";

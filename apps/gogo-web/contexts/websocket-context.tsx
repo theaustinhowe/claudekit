@@ -1,6 +1,6 @@
 "use client";
 
-import type { Job, JobLog, WsMessage } from "@devkit/gogo-shared";
+import type { Job, JobLog, WsMessage } from "@claudekit/gogo-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, type ReactNode, useCallback, useContext, useRef } from "react";
 import { appendLogToCache, invalidateJobsList, updateJobInCache } from "@/hooks/use-jobs";

@@ -5,7 +5,7 @@ vi.mock("../../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock("./client.js", () => ({
   getOctokitForRepo: vi.fn(),
 }));
 
-import { queryOne } from "@devkit/duckdb";
+import { queryOne } from "@claudekit/duckdb";
 import { withTimeout } from "../../utils/timeout.js";
 import { getOctokitForRepo } from "./client.js";
 import { RepositoryNotFoundError } from "./errors.js";

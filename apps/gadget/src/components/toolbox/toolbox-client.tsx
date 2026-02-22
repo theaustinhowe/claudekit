@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import {
   Dialog,
   DialogBody,
@@ -14,11 +14,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@claudekit/ui/components/sheet";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   AlertCircle,
   ArrowRight,

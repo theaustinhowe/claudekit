@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
 import {
   Dialog,
   DialogBody,
@@ -10,10 +10,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Tabs, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/dialog";
+import { Input } from "@claudekit/ui/components/input";
+import { Tabs, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Bot, Link2, Loader2, Puzzle, Search, Server, Sparkles, Star, Terminal, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";

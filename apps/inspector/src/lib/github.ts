@@ -1,4 +1,4 @@
-import { GitHubClient } from "@devkit/github";
+import { GitHubClient } from "@claudekit/github";
 
 let _client: GitHubClient | null = null;
 

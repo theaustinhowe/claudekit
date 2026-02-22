@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Button } from "@devkit/ui/components/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { cn } from "@claudekit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { AlertCircle, Circle, Loader2, Monitor, MonitorDot, Play, RefreshCw, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 

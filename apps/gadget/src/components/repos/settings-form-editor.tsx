@@ -1,14 +1,14 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
-import { Switch } from "@devkit/ui/components/switch";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@claudekit/ui/components/select";
+import { Switch } from "@claudekit/ui/components/switch";
+import { Textarea } from "@claudekit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import type { LucideIcon } from "lucide-react";
 import {
   Box,

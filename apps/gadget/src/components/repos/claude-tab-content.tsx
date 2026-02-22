@@ -10,11 +10,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@devkit/ui/components/alert-dialog";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+} from "@claudekit/ui/components/alert-dialog";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
 import { Code, Download, FileCode, FileText, FormInput, Info, Plus, RotateCcw, Save } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";

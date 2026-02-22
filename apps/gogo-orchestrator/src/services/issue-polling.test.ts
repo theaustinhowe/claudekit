@@ -5,7 +5,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock("./github/index.js", () => ({
   removeLabelFromIssue: vi.fn(),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { broadcast } from "../ws/handler.js";
 import { getIssuesWithLabel, removeLabelFromIssue } from "./github/index.js";
 import { pollForLabeledIssues } from "./issue-polling.js";

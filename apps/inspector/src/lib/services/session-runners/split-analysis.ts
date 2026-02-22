@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 
@@ -18,7 +18,7 @@ export function createSplitAnalysisRunner(metadata: Record<string, unknown>, _co
     if (signal.aborted) throw new DOMException("Aborted", "AbortError");
 
     const { getDb } = await import("@/lib/db");
-    const { queryOne, execute } = await import("@devkit/duckdb");
+    const { queryOne, execute } = await import("@claudekit/duckdb");
     const { fetchPRDiff } = await import("@/lib/actions/github");
     const { buildSplitPlanPrompt } = await import("@/lib/prompts");
 

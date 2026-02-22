@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import fs from "node:fs";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getDb, queryAll, queryOne } from "@/lib/db";
 import { createServiceLogger } from "@/lib/logger";
 import { classifyFinding } from "@/lib/services/finding-classifier";

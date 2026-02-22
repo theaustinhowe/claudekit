@@ -1,5 +1,5 @@
 {
-  "name": "@devkit/claude-runner",
+  "name": "@claudekit/claude-runner",
   "version": "0.1.0",
   "private": true,
   "type": "module",

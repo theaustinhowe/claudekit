@@ -12,7 +12,7 @@ export interface AppSettings {
   apps: Record<string, PerAppSettings>;
 }
 
-const SETTINGS_DIR = join(homedir(), ".devkit");
+const SETTINGS_DIR = join(homedir(), ".claudekit");
 export const SETTINGS_PATH = join(SETTINGS_DIR, "app-settings.json");
 
 const DEFAULTS: PerAppSettings = {

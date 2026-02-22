@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Button } from "@devkit/ui/components/button";
-import { Calendar } from "@devkit/ui/components/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { cn } from "@claudekit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { Calendar } from "@claudekit/ui/components/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, CalendarIcon, Check, Copy, Pause, Play, Search } from "lucide-react";
 import { useRouter } from "next/navigation";

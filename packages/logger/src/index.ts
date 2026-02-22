@@ -13,11 +13,11 @@ export interface LoggerConfig {
   pretty?: boolean;
   /** Write NDJSON log file to disk. Default: true */
   fileLogging?: boolean;
-  /** Directory for log files. Default: ~/.devkit/logs */
+  /** Directory for log files. Default: ~/.claudekit/logs */
   logDir?: string;
 }
 
-export type DevkitLogger = pino.Logger;
+export type ClaudeKitLogger = pino.Logger;
 
 export interface LogFileEntry {
   path: string;
@@ -25,7 +25,7 @@ export interface LogFileEntry {
   date: string | null;
 }
 
-const DEFAULT_LOG_DIR = join(homedir(), ".devkit", "logs");
+const DEFAULT_LOG_DIR = join(homedir(), ".claudekit", "logs");
 const MAX_LOG_AGE_DAYS = 14;
 
 function getTodayDate(): string {
@@ -116,7 +116,7 @@ class DailyRotatingStream extends Writable {
   }
 }
 
-export function createLogger(config: LoggerConfig): DevkitLogger {
+export function createLogger(config: LoggerConfig): ClaudeKitLogger {
   const {
     app,
     level = process.env.LOG_LEVEL || "info",
@@ -176,7 +176,7 @@ export function createLogger(config: LoggerConfig): DevkitLogger {
   });
 }
 
-export function createServiceLogger(logger: DevkitLogger, service: string): DevkitLogger {
+export function createServiceLogger(logger: ClaudeKitLogger, service: string): ClaudeKitLogger {
   return logger.child({ service });
 }
 

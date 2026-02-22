@@ -1,6 +1,6 @@
 "use client";
 
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
 import type { ColumnGroup, Job, JobStatus } from "@/types/job";
 import { JobCard } from "./job-card";
 

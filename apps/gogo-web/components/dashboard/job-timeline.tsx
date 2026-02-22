@@ -1,7 +1,7 @@
 "use client";
 
-import type { JobEvent } from "@devkit/gogo-shared";
-import { cn } from "@devkit/ui";
+import type { JobEvent } from "@claudekit/gogo-shared";
+import { cn } from "@claudekit/ui";
 import { formatDistanceStrict } from "date-fns";
 import { CheckCircle2, Circle, Clock, Eye, GitPullRequest, Loader2, PauseCircle, XCircle } from "lucide-react";
 import { useMemo } from "react";

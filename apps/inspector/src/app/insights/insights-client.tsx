@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
 import { FileCode, MessageSquare, Users } from "lucide-react";
 import { useState, useTransition } from "react";
 import { getReviewerComments, getReviewerFileStats } from "@/lib/actions/reviewers";

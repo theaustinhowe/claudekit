@@ -1,8 +1,8 @@
 "use client";
 
-import type { UseSessionStreamReturn } from "@devkit/hooks";
-import { Button } from "@devkit/ui/components/button";
-import { Progress } from "@devkit/ui/components/progress";
+import type { UseSessionStreamReturn } from "@claudekit/hooks";
+import { Button } from "@claudekit/ui/components/button";
+import { Progress } from "@claudekit/ui/components/progress";
 import { Check, Square } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";

@@ -1,4 +1,4 @@
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { getDb } from "../db/index.js";
 import { type DbSetting, mapSetting } from "../db/schema.js";

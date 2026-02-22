@@ -200,7 +200,7 @@ describe("parseEnvExample", () => {
       "",
       "# Database",
       "# @hint Relative to monorepo root",
-      "# DATABASE_PATH=./data/devkit.duckdb",
+      "# DATABASE_PATH=./data/claudekit.duckdb",
     ].join("\n");
 
     const result = parseEnvExample(content);
@@ -228,7 +228,7 @@ describe("parseEnvExample", () => {
     expect(result[2].required).toBe(false);
     expect(result[2].group).toBe("Database");
     expect(result[2].hint).toBe("Relative to monorepo root");
-    expect(result[2].defaultValue).toBe("./data/devkit.duckdb");
+    expect(result[2].defaultValue).toBe("./data/claudekit.duckdb");
   });
 });
 

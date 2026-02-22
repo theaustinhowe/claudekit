@@ -1,9 +1,9 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { AlertCircle, Bot, Check, ExternalLink, Info, X } from "lucide-react";
 import { useAllAgents } from "@/hooks/use-agents";
 import type { KnownAgentInfo } from "@/lib/api";

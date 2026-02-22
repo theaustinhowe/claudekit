@@ -79,7 +79,7 @@ export const WithLogo: Story = {
           <SidebarLogo
             collapsed={collapsed}
             icon={<Layers className="w-6 h-6 text-primary mx-auto" />}
-            wordmark={<span className="text-sm font-semibold text-sidebar-foreground">Devkit</span>}
+            wordmark={<span className="text-sm font-semibold text-sidebar-foreground">ClaudeKit</span>}
           />
         </div>
         <nav className="flex flex-col gap-1 p-2 mt-2">

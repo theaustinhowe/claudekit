@@ -1,8 +1,8 @@
 // Re-export core types and constants from shared package (source of truth)
-export type { Job } from "@devkit/gogo-shared";
+export type { Job } from "@claudekit/gogo-shared";
 
 // Import JobStatus as a value for use in constants
-import type { JobStatus as JobStatusType } from "@devkit/gogo-shared";
+import type { JobStatus as JobStatusType } from "@claudekit/gogo-shared";
 export type JobStatus = JobStatusType;
 
 export const JOB_STATUS_CONFIG: Record<

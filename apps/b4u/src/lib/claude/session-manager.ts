@@ -1,4 +1,4 @@
-import { createSessionManager } from "@devkit/session";
+import { createSessionManager } from "@claudekit/session";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import type { SessionRow, SessionType } from "./types";
 

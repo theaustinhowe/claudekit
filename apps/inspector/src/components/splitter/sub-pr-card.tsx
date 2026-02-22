@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
-import { Textarea } from "@devkit/ui/components/textarea";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+import { Textarea } from "@claudekit/ui/components/textarea";
 import { AlertTriangle, ChevronDown, ChevronRight, FileCode } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RISK_CLASSES, SIZE_CLASSES } from "@/lib/constants";

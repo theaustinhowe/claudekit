@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import path from "node:path";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { createUpgradeTasks, deleteUpgradeTasks } from "@/lib/actions/upgrade-tasks";
 import { execute, getDb } from "@/lib/db";

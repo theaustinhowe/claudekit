@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Checkbox } from "@devkit/ui/components/checkbox";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
 import {
   Dialog,
   DialogBody,
@@ -11,8 +11,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
+} from "@claudekit/ui/components/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@claudekit/ui/components/select";
 import { Bot, Link2, Puzzle, Server, Sparkles, Terminal, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

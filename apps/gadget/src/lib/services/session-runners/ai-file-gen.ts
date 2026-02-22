@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { refreshAIFileFindings } from "@/lib/actions/findings";
 import { getDb, queryOne } from "@/lib/db";
 import type { SessionRunner } from "@/lib/services/session-manager";

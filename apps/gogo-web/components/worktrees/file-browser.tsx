@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@devkit/ui";
+import { cn } from "@claudekit/ui";
 import { FileCode, FileMinus, FilePlus, FileQuestion, FileText, Folder, FolderOpen } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ChangedFile } from "@/lib/api";

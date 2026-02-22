@@ -20,7 +20,7 @@ vi.mock("@/lib/actions/github", () => ({
   fetchFileContent: vi.fn(),
 }));
 
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 
@@ -32,7 +32,7 @@ vi.mock("node:crypto", () => ({
   default: { randomUUID: vi.fn().mockReturnValue("mock-fix-id") },
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { fetchFileContent } from "@/lib/actions/github";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { getCommentFixes, resolveAllFixes, resolveCommentFix, startCommentFixes } from "./resolver";

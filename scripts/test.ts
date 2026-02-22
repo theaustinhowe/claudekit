@@ -269,7 +269,7 @@ async function main() {
     process.exit(1);
   }
 
-  const jsonDir = join(tmpdir(), `devkit-test-${Date.now()}`);
+  const jsonDir = join(tmpdir(), `claudekit-test-${Date.now()}`);
   mkdirSync(jsonDir, { recursive: true });
 
   console.log(

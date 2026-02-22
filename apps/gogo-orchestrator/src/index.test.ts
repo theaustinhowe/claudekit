@@ -15,7 +15,7 @@ vi.mock("./db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn().mockResolvedValue([]),
   queryOne: vi.fn(),
   execute: vi.fn().mockResolvedValue(undefined),
@@ -97,7 +97,7 @@ vi.mock("./utils/logger.js", () => ({
   })),
 }));
 
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import { getDb } from "./db/index.js";
 import { createServer } from "./server.js";
 import { runDataPruning } from "./services/data-pruning.js";

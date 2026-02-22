@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getCleanupFiles } from "@/lib/actions/settings";
 import { getDb, queryOne } from "@/lib/db";
 import { runProcess } from "@/lib/services/process-runner";

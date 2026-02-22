@@ -1,5 +1,5 @@
-import { execute, queryOne } from "@devkit/duckdb";
-import type { JobStatus, LogStream } from "@devkit/gogo-shared";
+import { execute, queryOne } from "@claudekit/duckdb";
+import type { JobStatus, LogStream } from "@claudekit/gogo-shared";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";

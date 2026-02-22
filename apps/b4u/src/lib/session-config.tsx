@@ -1,6 +1,6 @@
 "use client";
 
-import type { SessionPanelConfig } from "@devkit/ui/components/session-provider";
+import type { SessionPanelConfig } from "@claudekit/ui/components/session-provider";
 
 const B4U_SESSION_TYPE_LABELS: Record<string, string> = {
   "analyze-project": "Analyze Project",

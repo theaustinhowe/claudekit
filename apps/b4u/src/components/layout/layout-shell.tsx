@@ -1,9 +1,9 @@
 "use client";
 
-import { SessionIndicator } from "@devkit/ui/components/session-indicator";
-import { SessionPanel } from "@devkit/ui/components/session-panel";
-import { SessionProvider } from "@devkit/ui/components/session-provider";
-import { AppLayout } from "@devkit/ui/components/shared-layout";
+import { SessionIndicator } from "@claudekit/ui/components/session-indicator";
+import { SessionPanel } from "@claudekit/ui/components/session-panel";
+import { SessionProvider } from "@claudekit/ui/components/session-provider";
+import { AppLayout } from "@claudekit/ui/components/shared-layout";
 import { useMemo } from "react";
 import { b4uSessionConfig } from "@/lib/session-config";
 import { PhaseStepper } from "./app-header";

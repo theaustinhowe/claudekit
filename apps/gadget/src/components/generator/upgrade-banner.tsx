@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Progress } from "@devkit/ui/components/progress";
+import { Button } from "@claudekit/ui/components/button";
+import { Progress } from "@claudekit/ui/components/progress";
 import { CheckCircle2, Loader2, Zap } from "lucide-react";
 import type { UpgradeTask } from "@/lib/types";
 

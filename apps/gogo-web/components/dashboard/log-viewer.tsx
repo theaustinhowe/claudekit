@@ -1,10 +1,10 @@
 "use client";
 
-import type { JobLog, LogStream } from "@devkit/gogo-shared";
-import { cn } from "@devkit/ui";
-import { Button } from "@devkit/ui/components/button";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Tabs, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import type { JobLog, LogStream } from "@claudekit/gogo-shared";
+import { cn } from "@claudekit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
 import { format } from "date-fns";
 import { AlertCircle, ArrowDown, Info, Loader2, Terminal } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";

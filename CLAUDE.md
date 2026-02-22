@@ -1,16 +1,16 @@
-# CLAUDE.md — Devkit Monorepo
+# CLAUDE.md — ClaudeKit Monorepo
 
 This file provides guidance to Claude Code when working in this monorepo.
 
 ## Overview
 
-**Devkit** is a pnpm workspace monorepo containing local-first dev tool apps and shared packages.
+**ClaudeKit** is a pnpm workspace monorepo containing local-first dev tool apps and shared packages.
 
 ## Apps
 
 | App | Port | Framework | Description |
 |-----|------|-----------|-------------|
-| `apps/web` | 2000 | Next.js 16 | Devkit dashboard, app health monitor, log viewer |
+| `apps/web` | 2000 | Next.js 16 | ClaudeKit dashboard, app health monitor, log viewer |
 | `apps/gadget` | 2100 | Next.js 16 | Repository auditor, AI integrations, project scaffolding |
 | `apps/gogo-web` | 2200 | Next.js 16 | Job orchestration dashboard for multi-repo AI agents |
 | `apps/gogo-orchestrator` | 2201 | Fastify 5 | Backend orchestrator for GoGo job execution |
@@ -21,16 +21,16 @@ This file provides guidance to Claude Code when working in this monorepo.
 
 | Package | Description |
 |---------|-------------|
-| `@devkit/duckdb` | DuckDB connection factory, query helpers, migration runner (async mutex, typed params) |
-| `@devkit/claude-runner` | Claude CLI spawn + stream-json parsing, progress estimator, JSON extractor |
-| `@devkit/session` | Session lifecycle manager (ring buffer, batch log flush, DI persistence) |
-| `@devkit/ui` | shadcn/ui components + cn() utility (65 components) |
-| `@devkit/hooks` | Shared React hooks (useAppTheme, useAutoScroll, useIsMobile, useSessionStream) |
-| `@devkit/gogo-shared` | GoGo domain types, Zod schemas, typed API client |
-| `@devkit/logger` | Pino-based structured logging with daily-rotating NDJSON files + log querying utilities |
-| `@devkit/claude-usage` | Claude API usage tracking |
-| `@devkit/mcp-logs` | MCP server for log file access (5 tools) |
-| `@devkit/playwright` | Playwright browser automation helpers (browser session, navigation, screenshot, video) + E2E testing infrastructure |
+| `@claudekit/duckdb` | DuckDB connection factory, query helpers, migration runner (async mutex, typed params) |
+| `@claudekit/claude-runner` | Claude CLI spawn + stream-json parsing, progress estimator, JSON extractor |
+| `@claudekit/session` | Session lifecycle manager (ring buffer, batch log flush, DI persistence) |
+| `@claudekit/ui` | shadcn/ui components + cn() utility (65 components) |
+| `@claudekit/hooks` | Shared React hooks (useAppTheme, useAutoScroll, useIsMobile, useSessionStream) |
+| `@claudekit/gogo-shared` | GoGo domain types, Zod schemas, typed API client |
+| `@claudekit/logger` | Pino-based structured logging with daily-rotating NDJSON files + log querying utilities |
+| `@claudekit/claude-usage` | Claude API usage tracking |
+| `@claudekit/mcp-logs` | MCP server for log file access (5 tools) |
+| `@claudekit/playwright` | Playwright browser automation helpers (browser session, navigation, screenshot, video) + E2E testing infrastructure |
 
 ## Commands
 
@@ -62,7 +62,7 @@ pnpm check            # typecheck + lint + test + build
 
 ### DuckDB
 
-All apps use `@devkit/duckdb` for database access:
+All apps use `@claudekit/duckdb` for database access:
 - `createDatabase(config)` — factory with optional `globalThis` caching for Next.js HMR survival
 - `queryAll<T>`, `queryOne<T>`, `execute` — query helpers with async mutex
 - `withTransaction` — automatic BEGIN/COMMIT/ROLLBACK
@@ -72,14 +72,14 @@ All apps use `@devkit/duckdb` for database access:
 
 ### Session System
 
-Long-running operations use `@devkit/session`:
+Long-running operations use `@claudekit/session`:
 - `createSessionManager(config)` — factory with DI persistence callbacks
 - Ring buffer (500 events), batch log flush (2s), heartbeat (15s)
 - Apps provide `loadSession`, `updateSession`, `persistLogs` callbacks
 
 ### Claude CLI
 
-`@devkit/claude-runner` wraps Claude CLI invocation:
+`@claudekit/claude-runner` wraps Claude CLI invocation:
 - `runClaude(options)` — spawn with stream-json parsing, abort, PID tracking
 - `parseStreamJsonEvent(evt, cwd)` — standalone event parser for any transport
 
@@ -91,7 +91,7 @@ All Next.js pages follow:
 
 ### Theme System
 
-All apps share 9 color themes via `@devkit/hooks`:
+All apps share 9 color themes via `@claudekit/hooks`:
 - Amethyst (default), Sapphire, Emerald, Ruby, Amber, Slate, Midnight, Sunset, Forest
 - HSL CSS custom properties, class-based switching (`theme-{id}`)
 - `useAppTheme()` hook with configurable storage key
@@ -99,6 +99,6 @@ All apps share 9 color themes via `@devkit/hooks`:
 ## Working in This Repo
 
 - **Scope your work**: Use `pnpm --filter <package> <command>` to run commands in specific packages
-- **Package changes**: When modifying a shared package, check which apps use it: `grep -r "@devkit/packagename" apps/`
-- **Migrations**: Apps use numbered `.sql` files in `migrations/` directories with `runMigrations()` from `@devkit/duckdb`. Use `pnpm --filter <app> db:reset` for full schema reset during development
+- **Package changes**: When modifying a shared package, check which apps use it: `grep -r "@claudekit/packagename" apps/`
+- **Migrations**: Apps use numbered `.sql` files in `migrations/` directories with `runMigrations()` from `@claudekit/duckdb`. Use `pnpm --filter <app> db:reset` for full schema reset during development
 - **Each app has its own CLAUDE.md** with domain-specific context

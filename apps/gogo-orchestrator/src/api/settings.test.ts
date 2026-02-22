@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock("../db/schema.js", async (importOriginal) => {
   };
 });
 
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import { mapSetting } from "../db/schema.js";
 import { settingsRouter } from "./settings.js";
 

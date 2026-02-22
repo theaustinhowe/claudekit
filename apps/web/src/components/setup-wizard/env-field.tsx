@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { ExternalLink, Eye, EyeOff, Info } from "lucide-react";
 import { useCallback, useState } from "react";
 

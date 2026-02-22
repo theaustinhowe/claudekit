@@ -1,6 +1,6 @@
 "use client";
 
-import { useClaudeUsageRefresh } from "@devkit/hooks";
+import { useClaudeUsageRefresh } from "@claudekit/hooks";
 import type { ClaudeRateLimits, ClaudeUsageStats } from "../types";
 import { ClaudeUsageDialog, HeaderUsageWidget } from "./usage-shared";
 

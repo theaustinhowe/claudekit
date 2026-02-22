@@ -1,4 +1,4 @@
-# @devkit/claude-runner
+# @claudekit/claude-runner
 
 Shared Claude CLI runner for spawning Claude Code processes with stream-json output parsing.
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import {
   Activity,
   ArrowRight,

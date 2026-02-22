@@ -1,9 +1,9 @@
 "use client";
 
-import type { Job } from "@devkit/gogo-shared";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Collapsible, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import type { Job } from "@claudekit/gogo-shared";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Collapsible, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { AlertTriangle, ChevronDown, ChevronRight, RefreshCw, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

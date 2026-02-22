@@ -42,7 +42,7 @@ vi.mock("node:fs/promises", () => ({
   mkdir: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@devkit/playwright", () => ({
+vi.mock("@claudekit/playwright", () => ({
   createVideoSession: vi.fn().mockResolvedValue(mockSession),
   finalizeVideo: vi.fn().mockReturnValue("/output/flow.webm"),
   navigateTo: vi.fn().mockResolvedValue(undefined),
@@ -97,7 +97,7 @@ describe("recordFlow", () => {
 
   it("calls createVideoSession with correct options", async () => {
     const { recordFlow } = await import("./playwright-runner");
-    const { createVideoSession } = await import("@devkit/playwright");
+    const { createVideoSession } = await import("@claudekit/playwright");
 
     await recordFlow({
       serverUrl: "http://localhost:3000",
@@ -114,7 +114,7 @@ describe("recordFlow", () => {
 
   it("navigates to URLs for each step", async () => {
     const { recordFlow } = await import("./playwright-runner");
-    const { navigateTo } = await import("@devkit/playwright");
+    const { navigateTo } = await import("@claudekit/playwright");
 
     await recordFlow({
       serverUrl: "http://localhost:3000",
@@ -138,7 +138,7 @@ describe("recordFlow", () => {
 
   it("skips navigation when page is already at the URL", async () => {
     const { recordFlow } = await import("./playwright-runner");
-    const { navigateTo } = await import("@devkit/playwright");
+    const { navigateTo } = await import("@claudekit/playwright");
 
     mockPage.url.mockReturnValue("http://localhost:3000/dashboard");
 
@@ -201,7 +201,9 @@ describe("recordFlow", () => {
 
   it("closes session even when steps throw", async () => {
     const { recordFlow } = await import("./playwright-runner");
-    const { navigateTo } = (await import("@devkit/playwright")) as unknown as { navigateTo: ReturnType<typeof vi.fn> };
+    const { navigateTo } = (await import("@claudekit/playwright")) as unknown as {
+      navigateTo: ReturnType<typeof vi.fn>;
+    };
 
     navigateTo.mockRejectedValueOnce(new Error("Navigation failed"));
 
@@ -219,7 +221,7 @@ describe("recordFlow", () => {
 
   it("finalizes video after recording", async () => {
     const { recordFlow } = await import("./playwright-runner");
-    const { finalizeVideo } = await import("@devkit/playwright");
+    const { finalizeVideo } = await import("@claudekit/playwright");
 
     await recordFlow({
       serverUrl: "http://localhost:3000",

@@ -18,18 +18,18 @@ vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/card", () => ({
+vi.mock("@claudekit/ui/components/card", () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardTitle: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
 }));
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 

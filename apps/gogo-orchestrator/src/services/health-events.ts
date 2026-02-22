@@ -15,7 +15,7 @@
  * - shutdown_initiated: Orchestrator shutdown started
  */
 
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbHealthEvent } from "../db/schema.js";
 import { createServiceLogger } from "../utils/logger.js";

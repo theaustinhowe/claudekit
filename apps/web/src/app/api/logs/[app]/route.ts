@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { filterLogEntries, getLogFilePath, readLogEntries } from "@devkit/logger";
+import { filterLogEntries, getLogFilePath, readLogEntries } from "@claudekit/logger";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ app: string }> }) {

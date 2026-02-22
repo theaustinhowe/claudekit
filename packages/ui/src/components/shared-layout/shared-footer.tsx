@@ -3,9 +3,9 @@
 import { Clapperboard, Eye, LayoutDashboard, Search, Swords } from "lucide-react";
 import { Fragment } from "react";
 import { cn } from "../../utils";
-import type { DevkitAppLink } from "./types";
+import type { ClaudeKitAppLink } from "./types";
 
-const DEFAULT_APPS: DevkitAppLink[] = [
+const DEFAULT_APPS: ClaudeKitAppLink[] = [
   { label: "Dashboard", port: 2000, icon: LayoutDashboard },
   { label: "Gadget", port: 2100, icon: Search },
   { label: "GoGo", port: 2200, icon: Swords },

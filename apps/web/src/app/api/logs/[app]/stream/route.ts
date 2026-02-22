@@ -1,7 +1,7 @@
 import { existsSync, watch } from "node:fs";
 import { open } from "node:fs/promises";
 import { createInterface } from "node:readline";
-import { getLogFilePath } from "@devkit/logger";
+import { getLogFilePath } from "@claudekit/logger";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request, { params }: { params: Promise<{ app: string }> }) {

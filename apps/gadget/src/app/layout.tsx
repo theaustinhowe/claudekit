@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeFOUCScript } from "@devkit/hooks";
-import { Toaster } from "@devkit/ui/components/sonner";
+import { ThemeFOUCScript } from "@claudekit/hooks";
+import { Toaster } from "@claudekit/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
 import { LayoutShell } from "@/components/layout/layout-shell";
 import { APP_NAME } from "@/lib/constants";

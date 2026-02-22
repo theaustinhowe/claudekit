@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { FileViewer as CodeFileViewer } from "@devkit/ui/components/file-viewer";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Button } from "@claudekit/ui/components/button";
+import { FileViewer as CodeFileViewer } from "@claudekit/ui/components/file-viewer";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";

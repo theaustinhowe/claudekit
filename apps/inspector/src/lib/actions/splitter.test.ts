@@ -19,7 +19,7 @@ vi.mock("@/lib/actions/github", () => ({
   fetchPRDiff: vi.fn(),
 }));
 
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 
@@ -31,7 +31,7 @@ vi.mock("node:crypto", () => ({
   default: { randomUUID: vi.fn().mockReturnValue("mock-plan-id") },
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { fetchPRDiff } from "@/lib/actions/github";
 import { execute, getDb, queryOne } from "@/lib/db";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "./splitter";

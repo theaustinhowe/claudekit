@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeFOUCScript } from "@devkit/hooks";
+import { ThemeFOUCScript } from "@claudekit/hooks";
 import { ClientLayout } from "@/components/layout/client-layout";
 import { Providers } from "@/components/providers";
 

@@ -69,7 +69,7 @@ async function fetchData(url: string): Promise<Response> {
 And a shell command:
 
 \`\`\`bash
-npm install @devkit/ui --save
+npm install @claudekit/ui --save
 \`\`\`
 `,
   },

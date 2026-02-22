@@ -1,4 +1,4 @@
-import { parseJsonField, queryAll, queryOne } from "@devkit/duckdb";
+import { parseJsonField, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbRepository, DbSetting } from "../db/schema.js";
 import type { GitConfig } from "./git.js";

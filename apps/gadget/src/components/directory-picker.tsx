@@ -1,7 +1,7 @@
 "use client";
 
-import type { BrowseResult } from "@devkit/ui";
-import { DirectoryPicker as BaseDirectoryPicker } from "@devkit/ui/components/directory-picker";
+import type { BrowseResult } from "@claudekit/ui";
+import { DirectoryPicker as BaseDirectoryPicker } from "@claudekit/ui/components/directory-picker";
 import { useCallback } from "react";
 
 interface GadgetDirectoryPickerProps {

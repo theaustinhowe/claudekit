@@ -1,6 +1,6 @@
 "use client";
 
-import { useAutoScroll } from "@devkit/hooks";
+import { useAutoScroll } from "@claudekit/hooks";
 import {
   AlertCircle,
   ArrowDown,

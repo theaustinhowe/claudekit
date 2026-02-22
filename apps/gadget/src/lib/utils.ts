@@ -1,6 +1,6 @@
 import type { Policy } from "@/lib/types";
 
-export { formatElapsed, generateId, nowTimestamp, parseGitHubUrl, timeAgo } from "@devkit/ui";
+export { formatElapsed, generateId, nowTimestamp, parseGitHubUrl, timeAgo } from "@claudekit/ui";
 
 export function expandTilde(filepath: string): string {
   if (filepath.startsWith("~/") || filepath === "~") {

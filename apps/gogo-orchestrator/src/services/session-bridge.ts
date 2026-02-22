@@ -1,5 +1,5 @@
 /**
- * Session Bridge — Integrates @devkit/session with GoGo Orchestrator.
+ * Session Bridge — Integrates @claudekit/session with GoGo Orchestrator.
  *
  * Key design decisions:
  * - Uses dedicated sessions/session_logs tables (002_sessions.sql)
@@ -9,8 +9,8 @@
  * - emitEvent() allows external code (emitLog) to route through the session
  */
 
-import { execute, queryOne } from "@devkit/duckdb";
-import { createSessionManager } from "@devkit/session";
+import { execute, queryOne } from "@claudekit/duckdb";
+import { createSessionManager } from "@claudekit/session";
 import { getDb } from "../db/index.js";
 
 interface DbSession {

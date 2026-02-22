@@ -14,7 +14,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock("octokit", () => ({
   Octokit: vi.fn(),
 }));
 
-import { queryAll } from "@devkit/duckdb";
+import { queryAll } from "@claudekit/duckdb";
 
 interface RouteHandler {
   method: string;

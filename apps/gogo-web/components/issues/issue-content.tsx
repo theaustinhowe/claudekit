@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Separator } from "@devkit/ui/components/separator";
-import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Button } from "@claudekit/ui/components/button";
+import { Separator } from "@claudekit/ui/components/separator";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { Textarea } from "@claudekit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { format, formatDistanceToNow } from "date-fns";
 import { ExternalLink, Loader2, MessageSquare, Send } from "lucide-react";
 import Image from "next/image";

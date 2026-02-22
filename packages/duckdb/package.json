@@ -1,5 +1,5 @@
 {
-  "name": "@devkit/duckdb",
+  "name": "@claudekit/duckdb",
   "version": "0.1.0",
   "private": true,
   "type": "module",

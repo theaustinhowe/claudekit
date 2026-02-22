@@ -39,8 +39,8 @@ vi.mock("sonner", () => ({
   }),
 }));
 
-// Mock all @devkit/ui components
-vi.mock("@devkit/ui/components/alert-dialog", () => ({
+// Mock all @claudekit/ui components
+vi.mock("@claudekit/ui/components/alert-dialog", () => ({
   AlertDialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   AlertDialogAction: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
   AlertDialogCancel: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
@@ -52,21 +52,21 @@ vi.mock("@devkit/ui/components/alert-dialog", () => ({
   AlertDialogTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span data-testid="badge">{children}</span>,
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode } & Record<string, unknown>) => (
     <button {...props}>{children}</button>
   ),
 }));
 
-vi.mock("@devkit/ui/components/scroll-area", () => ({
+vi.mock("@claudekit/ui/components/scroll-area", () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/sheet", () => ({
+vi.mock("@claudekit/ui/components/sheet", () => ({
   Sheet: ({ children, open }: { children: ReactNode; open: boolean }) =>
     open ? <div data-testid="sheet">{children}</div> : null,
   SheetContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -75,11 +75,11 @@ vi.mock("@devkit/ui/components/sheet", () => ({
   SheetBody: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/skeleton", () => ({
+vi.mock("@claudekit/ui/components/skeleton", () => ({
   Skeleton: ({ className }: { className: string }) => <div data-testid="skeleton" className={className} />,
 }));
 
-vi.mock("@devkit/ui/components/tabs", () => ({
+vi.mock("@claudekit/ui/components/tabs", () => ({
   Tabs: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TabsContent: ({ children, value }: { children: ReactNode; value: string }) => (
     <div data-testid={`tab-content-${value}`}>{children}</div>
@@ -92,7 +92,7 @@ vi.mock("@devkit/ui/components/tabs", () => ({
   ),
 }));
 
-vi.mock("@devkit/ui/components/tooltip", () => ({
+vi.mock("@claudekit/ui/components/tooltip", () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/logger", () => ({
+vi.mock("@claudekit/logger", () => ({
   listLogFiles: vi.fn(),
 }));
 
@@ -9,7 +9,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import { statSync } from "node:fs";
-import { listLogFiles } from "@devkit/logger";
+import { listLogFiles } from "@claudekit/logger";
 import { GET } from "./route";
 
 const mockListLogFiles = vi.mocked(listLogFiles);

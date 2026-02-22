@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { queryAll, queryOne } from "@devkit/duckdb";
+import { queryAll, queryOne } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { Octokit } from "octokit";
 import { z } from "zod";

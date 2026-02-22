@@ -7,21 +7,21 @@ vi.mock("@/hooks/use-jobs", () => ({
   useStaleJobs: vi.fn(),
 }));
 
-vi.mock("@devkit/ui", () => ({
+vi.mock("@claudekit/ui", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/collapsible", () => ({
+vi.mock("@claudekit/ui/components/collapsible", () => ({
   Collapsible: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CollapsibleContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CollapsibleTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 

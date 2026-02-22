@@ -27,7 +27,7 @@ describe("shutdown", () => {
       getDb: vi.fn(async () => ({})),
       closeDatabase: mockCloseDatabase,
     }));
-    vi.doMock("@devkit/duckdb", () => ({
+    vi.doMock("@claudekit/duckdb", () => ({
       queryAll: mockQueryAll,
       queryOne: vi.fn(),
       execute: mockExecute,

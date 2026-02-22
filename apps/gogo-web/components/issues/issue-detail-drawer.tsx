@@ -1,11 +1,11 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { ScrollArea } from "@devkit/ui/components/scroll-area";
-import { Separator } from "@devkit/ui/components/separator";
-import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { TooltipProvider } from "@devkit/ui/components/tooltip";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { ScrollArea } from "@claudekit/ui/components/scroll-area";
+import { Separator } from "@claudekit/ui/components/separator";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
+import { TooltipProvider } from "@claudekit/ui/components/tooltip";
 import { ExternalLink, Loader2, Play, Zap } from "lucide-react";
 import Link from "next/link";
 import type { GitHubIssue } from "@/lib/api";

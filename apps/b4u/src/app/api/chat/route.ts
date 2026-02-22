@@ -1,4 +1,4 @@
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { NextResponse } from "next/server";
 import { buildChatResponsePrompt } from "@/lib/claude/prompts/chat-response";
 import { getDb, queryAll, queryOne } from "@/lib/db";

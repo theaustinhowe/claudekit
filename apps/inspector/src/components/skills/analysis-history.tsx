@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
+import { Badge } from "@claudekit/ui/components/badge";
 import { Calendar, Hash } from "lucide-react";
 
 interface AnalysisHistoryEntry {

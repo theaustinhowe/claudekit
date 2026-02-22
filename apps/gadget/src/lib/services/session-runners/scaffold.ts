@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { buildInterfaceDesignSystem, writeInterfaceDesignFile, writeSkillFiles } from "@/lib/services/interface-design";
 import { buildPrototypePrompt } from "@/lib/services/scaffold-prompt";

@@ -1,4 +1,4 @@
-import type { SessionRunner } from "@devkit/session";
+import type { SessionRunner } from "@claudekit/session";
 import { generateFlowVoiceover } from "@/lib/audio/voiceover-generator";
 import { execute, getDb, queryAll } from "@/lib/db";
 

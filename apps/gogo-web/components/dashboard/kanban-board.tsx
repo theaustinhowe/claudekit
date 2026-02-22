@@ -1,8 +1,8 @@
 "use client";
 
-import { useIsMobile } from "@devkit/hooks";
-import { ScrollArea, ScrollBar } from "@devkit/ui/components/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { useIsMobile } from "@claudekit/hooks";
+import { ScrollArea, ScrollBar } from "@claudekit/ui/components/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
 import { useMemo } from "react";
 import { COLUMN_GROUPS, type ColumnGroup, JOB_STATUS_CONFIG, type Job, type JobStatus } from "@/types/job";
 import { ATTENTION_STATES, type FilterType } from "./job-filters";

@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createDatabase, runMigrations } from "@devkit/duckdb";
+import { createDatabase, runMigrations } from "@claudekit/duckdb";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
@@ -19,4 +19,4 @@ const db = createDatabase({
 
 export const getDb = db.getDb;
 
-export { execute, queryAll, queryOne } from "@devkit/duckdb";
+export { execute, queryAll, queryOne } from "@claudekit/duckdb";

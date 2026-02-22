@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
@@ -12,7 +12,7 @@ vi.mock("@/lib/claude/prompts/chat-response", () => ({
   buildChatResponsePrompt: vi.fn(() => "mock prompt"),
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { POST } from "@/app/api/chat/route";
 import { buildChatResponsePrompt } from "@/lib/claude/prompts/chat-response";
 import { queryAll, queryOne } from "@/lib/db";

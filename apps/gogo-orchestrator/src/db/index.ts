@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createDatabase, runMigrations } from "@devkit/duckdb";
+import { createDatabase, runMigrations } from "@claudekit/duckdb";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");

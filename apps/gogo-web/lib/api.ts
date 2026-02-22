@@ -7,7 +7,7 @@ import type {
   JobStatus,
   NetworkInfo,
   PaginatedResponse,
-} from "@devkit/gogo-shared";
+} from "@claudekit/gogo-shared";
 
 export type { JobActionType };
 

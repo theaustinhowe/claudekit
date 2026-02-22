@@ -1,6 +1,6 @@
 "use client";
 
-import type { SessionRowBase } from "@devkit/session";
+import type { SessionRowBase } from "@claudekit/session";
 import { ExternalLink, Square } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";

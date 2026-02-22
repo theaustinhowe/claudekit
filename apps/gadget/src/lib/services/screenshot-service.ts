@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { captureScreenshot as playwrightScreenshot } from "@devkit/playwright";
+import { captureScreenshot as playwrightScreenshot } from "@claudekit/playwright";
 import { expandTilde } from "@/lib/utils";
 
 const SCREENSHOTS_DIR = path.join(expandTilde("~"), ".gadget", "screenshots");

@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { SessionEvent } from "@devkit/session";
+import type { SessionEvent } from "@claudekit/session";
 import { execute, getDb, queryAll } from "@/lib/db";
 import type { FlowScript } from "@/lib/types";
 import { startDevServer, stopDevServer } from "./app-launcher";

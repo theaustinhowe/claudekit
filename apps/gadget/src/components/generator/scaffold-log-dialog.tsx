@@ -1,7 +1,7 @@
 "use client";
 
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
-import { parseStreamLog, type StreamEntry, StreamingDisplay } from "@devkit/ui/components/streaming-display";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@claudekit/ui/components/dialog";
+import { parseStreamLog, type StreamEntry, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
 import { useMemo } from "react";
 
 interface ScaffoldLogDialogProps {

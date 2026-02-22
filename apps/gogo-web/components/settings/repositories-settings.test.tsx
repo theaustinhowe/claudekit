@@ -13,16 +13,16 @@ vi.mock("@/hooks/use-repositories", () => ({
   }),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/card", () => ({
+vi.mock("@claudekit/ui/components/card", () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/skeleton", () => ({
+vi.mock("@claudekit/ui/components/skeleton", () => ({
   Skeleton: () => <div data-testid="skeleton" />,
 }));
 

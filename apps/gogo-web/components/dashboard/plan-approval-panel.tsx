@@ -1,9 +1,9 @@
 "use client";
 
-import type { JobSource } from "@devkit/gogo-shared";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Textarea } from "@devkit/ui/components/textarea";
+import type { JobSource } from "@claudekit/gogo-shared";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Textarea } from "@claudekit/ui/components/textarea";
 import { CheckCircle, ClipboardCheck, ExternalLink, MessageSquare, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

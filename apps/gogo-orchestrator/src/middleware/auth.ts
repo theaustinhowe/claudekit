@@ -1,4 +1,4 @@
-import { parseJsonField, queryOne } from "@devkit/duckdb";
+import { parseJsonField, queryOne } from "@claudekit/duckdb";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { getDb } from "../db/index.js";
 import type { DbSetting } from "../db/schema.js";

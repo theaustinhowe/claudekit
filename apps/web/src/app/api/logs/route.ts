@@ -1,5 +1,5 @@
 import { statSync } from "node:fs";
-import { listLogFiles } from "@devkit/logger";
+import { listLogFiles } from "@claudekit/logger";
 import { NextResponse } from "next/server";
 
 export async function GET() {

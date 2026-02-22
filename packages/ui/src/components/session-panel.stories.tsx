@@ -1,4 +1,4 @@
-import type { SessionRowBase } from "@devkit/session";
+import type { SessionRowBase } from "@claudekit/session";
 import type { Meta, StoryObj } from "@storybook/react";
 import { SessionPanel } from "./session-panel";
 import type { SessionPanelContextValue } from "./session-provider";

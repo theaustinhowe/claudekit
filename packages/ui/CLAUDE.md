@@ -1,14 +1,14 @@
-# @devkit/ui
+# @claudekit/ui
 
-Shared UI components and utilities for all devkit apps.
+Shared UI components and utilities for all claudekit apps.
 
 ## Usage
 
 Import components directly from the components path:
 
 ```typescript
-import { Button } from "@devkit/ui/components/button";
-import { cn } from "@devkit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { cn } from "@claudekit/ui";
 ```
 
 ## Components (36)
@@ -46,7 +46,7 @@ Run Storybook for interactive component development:
 
 ```bash
 pnpm storybook           # from packages/ui (port 6006)
-pnpm --filter @devkit/ui storybook  # from repo root
+pnpm --filter @claudekit/ui storybook  # from repo root
 ```
 
 Stories are co-located with components at `src/components/*.stories.tsx`.

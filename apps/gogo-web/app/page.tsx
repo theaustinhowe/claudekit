@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Button } from "@claudekit/ui/components/button";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";

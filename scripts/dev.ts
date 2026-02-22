@@ -18,12 +18,12 @@ const apps: App[] = [
   { name: "gogo-orch", filter: "gogo-orchestrator", color: "\x1b[33m", port: 2201 }, // yellow
   { name: "b4u", filter: "b4u", color: "\x1b[32m", port: 2300 }, // green
   { name: "inspector", filter: "inspector", color: "\x1b[95m", port: 2400 }, // bright magenta
-  { name: "storybook", filter: "@devkit/ui", color: "\x1b[31m", port: 6006 }, // red
+  { name: "storybook", filter: "@claudekit/ui", color: "\x1b[31m", port: 6006 }, // red
 ];
 
 const RESET = "\x1b[0m";
 const BOLD = "\x1b[1m";
-const LOG_DIR = join(homedir(), ".devkit", "logs");
+const LOG_DIR = join(homedir(), ".claudekit", "logs");
 const MAX_RESTARTS = 3;
 const UPTIME_RESET_MS = 30_000;
 
@@ -115,7 +115,7 @@ for (const app of apps) {
   }
 }
 
-console.log(`\n${BOLD}Devkit dev servers starting...${RESET}`);
+console.log(`\n${BOLD}ClaudeKit dev servers starting...${RESET}`);
 const DIM = "\x1b[2m";
 for (const app of apps) {
   const appSettings = getAppSettings(app.name, fgSettings);

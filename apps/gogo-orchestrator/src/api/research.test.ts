@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -35,7 +35,7 @@ vi.mock("../utils/logger.js", () => ({
   }),
 }));
 
-import { queryAll, queryOne } from "@devkit/duckdb";
+import { queryAll, queryOne } from "@claudekit/duckdb";
 import { cancelResearchSession, getSessionSuggestions, startResearchSession } from "../services/research.js";
 
 interface RouteHandler {

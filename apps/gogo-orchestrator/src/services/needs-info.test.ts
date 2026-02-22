@@ -14,7 +14,7 @@ vi.mock("../utils/logger.js", () => ({
   createServiceLogger: () => mockLogger,
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock("./state-machine.js", () => ({
   validateTransition: vi.fn(),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { createIssueCommentForRepo, getIssueCommentsForRepo, isHumanComment } from "./github/index.js";
 import { checkJobForResponseById, enterNeedsInfo, pollNeedsInfoJobs } from "./needs-info.js";
 import { applyTransitionAtomic, validateTransition } from "./state-machine.js";

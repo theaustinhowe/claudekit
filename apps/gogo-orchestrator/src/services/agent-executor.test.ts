@@ -18,7 +18,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -58,7 +58,7 @@ vi.mock("./state-machine.js", () => ({
 }));
 
 import { existsSync } from "node:fs";
-import { execute, queryOne, withTransaction } from "@devkit/duckdb";
+import { execute, queryOne, withTransaction } from "@claudekit/duckdb";
 import { resumeAgent, startAgent } from "./agent-executor.js";
 import { agentRegistry } from "./agents/index.js";
 import type { AgentRunner } from "./agents/types.js";

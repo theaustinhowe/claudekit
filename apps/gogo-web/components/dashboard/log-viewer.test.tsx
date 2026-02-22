@@ -17,19 +17,19 @@ vi.mock("@/hooks/use-jobs", () => ({
   useJobLogs: vi.fn(),
 }));
 
-vi.mock("@devkit/ui", () => ({
+vi.mock("@claudekit/ui", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/scroll-area", () => ({
+vi.mock("@claudekit/ui/components/scroll-area", () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div data-testid="scroll-area">{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/tabs", () => ({
+vi.mock("@claudekit/ui/components/tabs", () => ({
   Tabs: ({
     children,
     value,

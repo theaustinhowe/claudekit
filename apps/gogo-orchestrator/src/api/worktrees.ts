@@ -1,6 +1,6 @@
 import { realpath, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { buildInClause, execute, queryAll, queryOne } from "@devkit/duckdb";
+import { buildInClause, execute, queryAll, queryOne } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { getDb } from "../db/index.js";
 import { type DbJob, type DbRepository, mapJob, mapRepositoryFull } from "../db/schema.js";

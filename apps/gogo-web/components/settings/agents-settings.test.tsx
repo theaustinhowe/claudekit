@@ -2,11 +2,11 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("@devkit/ui/components/card", () => ({
+vi.mock("@claudekit/ui/components/card", () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
@@ -14,13 +14,13 @@ vi.mock("@devkit/ui/components/card", () => ({
   CardTitle: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
 }));
 
-vi.mock("@devkit/ui/components/collapsible", () => ({
+vi.mock("@claudekit/ui/components/collapsible", () => ({
   Collapsible: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CollapsibleContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CollapsibleTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/skeleton", () => ({
+vi.mock("@claudekit/ui/components/skeleton", () => ({
   Skeleton: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} />,
 }));
 

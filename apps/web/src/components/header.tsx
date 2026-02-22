@@ -1,4 +1,4 @@
-import { ThemeToggle } from "@devkit/ui/components/theme-toggle";
+import { ThemeToggle } from "@claudekit/ui/components/theme-toggle";
 import Image from "next/image";
 import Link from "next/link";
 

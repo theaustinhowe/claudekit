@@ -6,7 +6,7 @@ vi.mock("node:fs", () => ({
     rmSync: vi.fn(),
   },
 }));
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
@@ -47,7 +47,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import fs from "node:fs";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { queryOne } from "@/lib/db";
 import { pushBranchAndCreatePR, runShell } from "@/lib/services/git-utils";
 import { setCleanupFn } from "@/lib/services/session-manager";

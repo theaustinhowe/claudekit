@@ -1,5 +1,5 @@
-import { UsageSection } from "@devkit/claude-usage/components/usage-section";
-import type { AppLayoutConfig, NavGroup } from "@devkit/ui/components/shared-layout";
+import { UsageSection } from "@claudekit/claude-usage/components/usage-section";
+import type { AppLayoutConfig, NavGroup } from "@claudekit/ui/components/shared-layout";
 import { Brain, GitBranch, LayoutDashboard, MessageSquareCode, Settings, Users } from "lucide-react";
 import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/logger", async () => {
-  const actual = await vi.importActual<typeof import("@devkit/logger")>("@devkit/logger");
+vi.mock("@claudekit/logger", async () => {
+  const actual = await vi.importActual<typeof import("@claudekit/logger")>("@claudekit/logger");
   return {
     ...actual,
     getLogFilePath: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import { existsSync } from "node:fs";
-import { getLogFilePath, readLogEntries } from "@devkit/logger";
+import { getLogFilePath, readLogEntries } from "@claudekit/logger";
 import { GET } from "./route";
 
 const mockGetLogFilePath = vi.mocked(getLogFilePath);

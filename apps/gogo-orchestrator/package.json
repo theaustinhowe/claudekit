@@ -15,12 +15,12 @@
     "db:reset": "rm -f data/gogo.duckdb data/gogo.duckdb.wal"
   },
   "dependencies": {
-    "@devkit/claude-runner": "workspace:*",
-    "@devkit/duckdb": "workspace:*",
-    "@devkit/github": "workspace:*",
-    "@devkit/gogo-shared": "workspace:*",
-    "@devkit/logger": "workspace:*",
-    "@devkit/session": "workspace:*",
+    "@claudekit/claude-runner": "workspace:*",
+    "@claudekit/duckdb": "workspace:*",
+    "@claudekit/github": "workspace:*",
+    "@claudekit/gogo-shared": "workspace:*",
+    "@claudekit/logger": "workspace:*",
+    "@claudekit/session": "workspace:*",
     "@duckdb/node-api": "1.4.4-r.1",
     "@fastify/cors": "^10.0.0",
     "@fastify/websocket": "^11.0.0",

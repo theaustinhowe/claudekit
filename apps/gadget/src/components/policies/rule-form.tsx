@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Button } from "@claudekit/ui/components/button";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@claudekit/ui/components/dialog";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@claudekit/ui/components/select";
+import { Textarea } from "@claudekit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { CustomRule, CustomRuleType, FindingCategory, Policy, Severity } from "@/lib/types";

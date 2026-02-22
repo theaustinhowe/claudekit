@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Input } from "@devkit/ui/components/input";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Input } from "@claudekit/ui/components/input";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 

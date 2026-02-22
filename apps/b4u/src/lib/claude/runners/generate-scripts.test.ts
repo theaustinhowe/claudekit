@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
@@ -15,7 +15,7 @@ vi.mock("@/lib/claude/prompts/generate-voiceover", () => ({
   buildGenerateVoiceoverPrompt: vi.fn(() => "voiceover prompt"),
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { execute, queryAll } from "@/lib/db";
 import { createGenerateScriptsRunner } from "./generate-scripts";
 

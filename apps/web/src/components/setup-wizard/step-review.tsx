@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
 import { AlertTriangle, Eye, EyeOff, FileText } from "lucide-react";
 import { useState } from "react";
 import type { SetupWizardData } from "@/lib/env-parser";

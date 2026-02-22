@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   parseJsonField: vi.fn((value: string, _default: unknown) => {
@@ -16,7 +16,7 @@ vi.mock("@devkit/duckdb", () => ({
   }),
 }));
 
-import { queryAll, queryOne } from "@devkit/duckdb";
+import { queryAll, queryOne } from "@claudekit/duckdb";
 import { getClaudeSettings, toGitConfigFromRepo, validateStartupSettings } from "./settings-helper.js";
 
 describe("toGitConfigFromRepo", () => {

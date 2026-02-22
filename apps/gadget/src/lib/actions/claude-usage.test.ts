@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/claude-usage/server", () => ({
+vi.mock("@claudekit/claude-usage/server", () => ({
   getClaudeUsageStats: vi.fn(),
   getClaudeRateLimits: vi.fn(),
 }));
 
-import { getClaudeRateLimits, getClaudeUsageStats } from "@devkit/claude-usage/server";
+import { getClaudeRateLimits, getClaudeUsageStats } from "@claudekit/claude-usage/server";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "./claude-usage";
 
 const mockGetUsageStats = vi.mocked(getClaudeUsageStats);

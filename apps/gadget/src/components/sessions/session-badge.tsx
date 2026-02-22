@@ -1,1 +1,1 @@
-export { SessionBadge } from "@devkit/ui/components/session-badge";
+export { SessionBadge } from "@claudekit/ui/components/session-badge";

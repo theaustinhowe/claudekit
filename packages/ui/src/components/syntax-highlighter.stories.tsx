@@ -53,7 +53,7 @@ export const WithoutLineNumbers: Story = {
 
 export const JsonExample: Story = {
   args: {
-    code: '{\n  "name": "@devkit/ui",\n  "version": "0.1.0",\n  "private": true\n}',
+    code: '{\n  "name": "@claudekit/ui",\n  "version": "0.1.0",\n  "private": true\n}',
     language: "json",
   },
 };

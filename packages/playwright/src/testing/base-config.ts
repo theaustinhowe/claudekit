@@ -8,7 +8,7 @@ interface BaseConfigOptions {
 }
 
 /**
- * Create a Playwright test config for a Devkit app.
+ * Create a Playwright test config for a ClaudeKit app.
  * Provides sensible defaults: Chromium-only, headless, webServer auto-start.
  */
 export function createBaseConfig(options: BaseConfigOptions): PlaywrightTestConfig {

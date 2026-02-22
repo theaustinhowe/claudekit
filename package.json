@@ -1,5 +1,5 @@
 {
-  "name": "devkit",
+  "name": "claudekit",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,7 +23,7 @@
     "db:reset": "tsx scripts/db-reset.ts",
     "knip": "knip",
     "check": "pnpm typecheck && pnpm lint && pnpm test && NODE_ENV=production pnpm build",
-    "storybook": "pnpm --filter @devkit/ui storybook"
+    "storybook": "pnpm --filter @claudekit/ui storybook"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.0",

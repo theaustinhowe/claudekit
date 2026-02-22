@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { FileViewer as CodeFileViewer } from "@devkit/ui/components/file-viewer";
-import { MarkdownRenderer } from "@devkit/ui/components/markdown-renderer";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Button } from "@claudekit/ui/components/button";
+import { FileViewer as CodeFileViewer } from "@claudekit/ui/components/file-viewer";
+import { MarkdownRenderer } from "@claudekit/ui/components/markdown-renderer";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { AlertCircle, FolderGit2, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";

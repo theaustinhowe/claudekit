@@ -1,5 +1,5 @@
-import { UsageSection } from "@devkit/claude-usage/components/usage-section";
-import type { AppLayoutConfig, NavItem } from "@devkit/ui/components/shared-layout";
+import { UsageSection } from "@claudekit/claude-usage/components/usage-section";
+import type { AppLayoutConfig, NavItem } from "@claudekit/ui/components/shared-layout";
 import { Archive, CircleDot, FolderTree, LayoutDashboard, Search, Settings } from "lucide-react";
 import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";

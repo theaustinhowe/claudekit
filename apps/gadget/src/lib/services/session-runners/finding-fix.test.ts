@@ -22,7 +22,7 @@ vi.mock("node:child_process", () => ({
     };
   }),
 }));
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
@@ -51,7 +51,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import fs from "node:fs";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { queryAll, queryOne } from "@/lib/db";
 import { classifyFinding } from "@/lib/services/finding-classifier";
 import { createFindingFixRunner } from "./finding-fix";

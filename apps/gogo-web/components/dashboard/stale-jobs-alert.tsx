@@ -1,9 +1,9 @@
 "use client";
 
-import type { Job } from "@devkit/gogo-shared";
-import { cn } from "@devkit/ui";
-import { Button } from "@devkit/ui/components/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import type { Job } from "@claudekit/gogo-shared";
+import { cn } from "@claudekit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, Clock, ExternalLink, Info } from "lucide-react";
 import { useState } from "react";

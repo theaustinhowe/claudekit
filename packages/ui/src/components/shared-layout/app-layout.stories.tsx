@@ -11,7 +11,7 @@ const sampleConfig: AppLayoutConfig = {
   appId: "storybook",
   logo: {
     icon: <Layers className="w-6 h-6 text-primary" />,
-    wordmark: <span className="text-sm font-semibold">Devkit</span>,
+    wordmark: <span className="text-sm font-semibold">ClaudeKit</span>,
   },
   nav: [
     {
@@ -53,7 +53,7 @@ export const Default: Story = {
     children: (
       <div className="flex-1 flex items-center justify-center text-muted-foreground">
         <div className="text-center space-y-2">
-          <h2 className="text-lg font-medium text-foreground">Welcome to Devkit</h2>
+          <h2 className="text-lg font-medium text-foreground">Welcome to ClaudeKit</h2>
           <p className="text-sm">This is the main content area.</p>
         </div>
       </div>

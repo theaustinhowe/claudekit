@@ -1,12 +1,12 @@
 "use client";
 
-import { useSessionStream } from "@devkit/hooks";
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import { useSessionStream } from "@claudekit/hooks";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, MessageSquare, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState, useTransition } from "react";

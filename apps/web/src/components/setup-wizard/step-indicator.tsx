@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@devkit/ui";
+import { cn } from "@claudekit/ui";
 import { Check } from "lucide-react";
 
 const STEPS = ["Shared", "App-Specific", "Review"] as const;

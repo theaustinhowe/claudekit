@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/logger", () => ({
+vi.mock("@claudekit/logger", () => ({
   getLogFilePath: vi.fn(),
 }));
 
@@ -21,7 +21,7 @@ vi.mock("node:readline", () => ({
 import { existsSync, statSync, watch } from "node:fs";
 import { open } from "node:fs/promises";
 import { createInterface } from "node:readline";
-import { getLogFilePath } from "@devkit/logger";
+import { getLogFilePath } from "@claudekit/logger";
 import { GET } from "./route";
 
 const mockGetLogFilePath = vi.mocked(getLogFilePath);

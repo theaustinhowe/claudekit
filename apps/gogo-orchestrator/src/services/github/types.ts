@@ -5,7 +5,7 @@ export type {
   PullRequestInfo,
   PullRequestResult,
   PullRequestReviewComment,
-} from "@devkit/github";
+} from "@claudekit/github";
 
 export interface RepoConfig {
   owner: string;

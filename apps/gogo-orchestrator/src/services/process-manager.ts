@@ -1,4 +1,4 @@
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import { createServiceLogger } from "../utils/logger.js";
 

@@ -1,4 +1,4 @@
-import type { InjectMode } from "@devkit/gogo-shared";
+import type { InjectMode } from "@claudekit/gogo-shared";
 import {
   CLAUDE_ERRORS,
   getActiveRunCount,

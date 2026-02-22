@@ -12,7 +12,7 @@ const sampleConfig: AppLayoutConfig = {
   appId: "storybook",
   logo: {
     icon: <Layers className="w-6 h-6 text-primary" />,
-    wordmark: <span className="text-sm font-semibold">Devkit</span>,
+    wordmark: <span className="text-sm font-semibold">ClaudeKit</span>,
   },
   nav: [
     { label: "Home", href: "/", icon: Home },

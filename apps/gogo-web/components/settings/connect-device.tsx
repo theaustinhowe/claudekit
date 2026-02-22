@@ -1,10 +1,10 @@
 "use client";
 
-import type { NetworkInfo } from "@devkit/gogo-shared";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import type { NetworkInfo } from "@claudekit/gogo-shared";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { Check, Copy, QrCode, RefreshCw, Smartphone, Wifi } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";

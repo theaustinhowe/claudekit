@@ -1,8 +1,8 @@
 "use client";
 
-import type { Job } from "@devkit/gogo-shared";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import type { Job } from "@claudekit/gogo-shared";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { PauseCircle, Play, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useResumeAgent } from "@/hooks/use-jobs";

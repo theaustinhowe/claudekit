@@ -1,4 +1,4 @@
-import type { Repository } from "@devkit/gogo-shared";
+import type { Repository } from "@claudekit/gogo-shared";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

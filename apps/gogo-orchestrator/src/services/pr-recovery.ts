@@ -6,7 +6,7 @@
  * creates job records for them.
  */
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbJob, DbRepository } from "../db/schema.js";
 import { createServiceLogger } from "../utils/logger.js";

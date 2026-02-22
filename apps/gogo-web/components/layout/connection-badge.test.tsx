@@ -13,15 +13,15 @@ vi.mock("@/hooks/use-jobs", () => ({
   useHealth: () => mockUseHealth(),
 }));
 
-vi.mock("@devkit/ui", () => ({
+vi.mock("@claudekit/ui", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("@devkit/ui/components/popover", () => ({
+vi.mock("@claudekit/ui/components/popover", () => ({
   Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   PopoverTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,

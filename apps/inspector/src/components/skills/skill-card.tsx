@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Card, CardContent } from "@devkit/ui/components/card";
+import { cn } from "@claudekit/ui";
+import { Card, CardContent } from "@claudekit/ui/components/card";
 import { SEVERITY_COLORS, TREND_ICONS } from "@/lib/constants";
 import type { SkillWithComments } from "@/lib/types";
 

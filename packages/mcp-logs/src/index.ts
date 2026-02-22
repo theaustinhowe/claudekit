@@ -8,13 +8,13 @@ import {
   nameToLevel,
   parseSince,
   readLogEntries,
-} from "@devkit/logger";
+} from "@claudekit/logger";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
 const server = new McpServer({
-  name: "devkit-logs",
+  name: "claudekit-logs",
   version: "0.1.0",
 });
 
@@ -22,7 +22,7 @@ const server = new McpServer({
 
 server.tool(
   "list_log_files",
-  "List all devkit log files with size, date, and last modified",
+  "List all claudekit log files with size, date, and last modified",
   { app: z.string().optional().describe("Filter by app name") },
   async ({ app }) => {
     const files = listLogFiles();

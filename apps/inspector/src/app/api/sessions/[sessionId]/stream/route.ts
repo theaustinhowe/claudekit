@@ -1,4 +1,4 @@
-import { createStreamHandler } from "@devkit/session/next";
+import { createStreamHandler } from "@claudekit/session/next";
 import { getSessionLogsFromDb, getSessionRecord } from "@/lib/actions/sessions";
 import { SESSION_HEARTBEAT_INTERVAL_MS } from "@/lib/constants";
 import { sessionManager } from "@/lib/services/session-manager";

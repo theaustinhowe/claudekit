@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Skeleton } from "@claudekit/ui/components/skeleton";
 
 export function Phase1TreeSkeleton() {
   return (

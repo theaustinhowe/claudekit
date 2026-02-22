@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "devkit-logs": {
+    "claudekit-logs": {
       "command": "tsx",
       "args": ["packages/mcp-logs/src/index.ts"]
     }

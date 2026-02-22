@@ -139,14 +139,14 @@ App binds to `0.0.0.0` — accessible from other devices on the network. API URL
 
 ### Types
 
-All domain types re-exported from `@devkit/gogo-shared` (Job, JobStatus, Repository, Issue, WsMessage, etc.). Local `types/job.ts` defines UI-specific config (status colors, icons, Kanban column groupings).
+All domain types re-exported from `@claudekit/gogo-shared` (Job, JobStatus, Repository, Issue, WsMessage, etc.). Local `types/job.ts` defines UI-specific config (status colors, icons, Kanban column groupings).
 
 ## Conventions
 
 - All components use `"use client"` directive (interactive SPA)
-- Imports use `@/` alias for root and `@devkit/gogo-shared` for shared types
+- Imports use `@/` alias for root and `@claudekit/gogo-shared` for shared types
 - Biome for linting/formatting: 2-space indent, 120 line width, double quotes, semicolons
-- `cn()` from `@devkit/ui` for conditional class merging
+- `cn()` from `@claudekit/ui` for conditional class merging
 - Icons from `lucide-react`
 - Toasts via `sonner`
-- Theme switching via `next-themes` + `@devkit/hooks` `useAppTheme()` hook
+- Theme switching via `next-themes` + `@claudekit/hooks` `useAppTheme()` hook

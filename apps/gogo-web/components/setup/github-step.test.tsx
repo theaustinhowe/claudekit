@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({
     children,
     onClick,
@@ -19,7 +19,7 @@ vi.mock("@devkit/ui/components/button", () => ({
   ),
 }));
 
-vi.mock("@devkit/ui/components/card", () => ({
+vi.mock("@claudekit/ui/components/card", () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
@@ -27,7 +27,7 @@ vi.mock("@devkit/ui/components/card", () => ({
   CardTitle: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
 }));
 
-vi.mock("@devkit/ui/components/dialog", () => ({
+vi.mock("@claudekit/ui/components/dialog", () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogBody: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -38,13 +38,13 @@ vi.mock("@devkit/ui/components/dialog", () => ({
   DialogTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@devkit/ui/components/input", () => ({
+vi.mock("@claudekit/ui/components/input", () => ({
   Input: ({ value, onChange, type, ...props }: { value?: string; onChange?: (e: unknown) => void; type?: string }) => (
     <input value={value} onChange={onChange} type={type} data-testid="token-input" {...props} />
   ),
 }));
 
-vi.mock("@devkit/ui/components/label", () => ({
+vi.mock("@claudekit/ui/components/label", () => ({
   // biome-ignore lint/a11y/noLabelWithoutControl: test mock
   Label: ({ children }: { children: ReactNode }) => <label>{children}</label>,
 }));

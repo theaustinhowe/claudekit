@@ -1,7 +1,7 @@
 "use client";
 
-import type { SessionRowBase } from "@devkit/session";
-import { type SessionPanelConfig, SessionProvider } from "@devkit/ui/components/session-provider";
+import type { SessionRowBase } from "@claudekit/session";
+import { type SessionPanelConfig, SessionProvider } from "@claudekit/ui/components/session-provider";
 import type React from "react";
 import { SESSION_TYPE_LABELS } from "@/lib/constants";
 
@@ -39,4 +39,4 @@ export function GadgetSessionProvider({ children }: { children: React.ReactNode 
   return <SessionProvider config={gadgetSessionConfig}>{children}</SessionProvider>;
 }
 
-export { useSessionPanel as useSessionContext } from "@devkit/ui/components/session-provider";
+export { useSessionPanel as useSessionContext } from "@claudekit/ui/components/session-provider";

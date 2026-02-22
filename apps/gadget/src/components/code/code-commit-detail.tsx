@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { DiffViewer } from "@devkit/ui/components/diff-viewer";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { DiffViewer } from "@claudekit/ui/components/diff-viewer";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { getCommitDetailAction, getCommitFilePatch } from "@/lib/actions/code-browser";

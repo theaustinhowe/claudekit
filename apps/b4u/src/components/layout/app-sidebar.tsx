@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { cn } from "@claudekit/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Clock, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 

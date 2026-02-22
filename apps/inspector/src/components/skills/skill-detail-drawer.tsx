@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Textarea } from "@devkit/ui/components/textarea";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Textarea } from "@claudekit/ui/components/textarea";
 import { Check, ExternalLink } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { markSkillAddressed, updateSkillActionItem } from "@/lib/actions/skills";

@@ -1,4 +1,4 @@
-import { cn } from "@devkit/ui";
+import { cn } from "@claudekit/ui";
 import type { ReactNode } from "react";
 
 interface PageBannerProps {

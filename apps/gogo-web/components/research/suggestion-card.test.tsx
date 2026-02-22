@@ -2,13 +2,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children, className }: { children: ReactNode; className?: string }) => (
     <span className={className}>{children}</span>
   ),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, onClick, disabled }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) => (
     <button type="button" onClick={onClick} disabled={disabled}>
       {children}
@@ -16,7 +16,7 @@ vi.mock("@devkit/ui/components/button", () => ({
   ),
 }));
 
-vi.mock("@devkit/ui/components/card", () => ({
+vi.mock("@claudekit/ui/components/card", () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,

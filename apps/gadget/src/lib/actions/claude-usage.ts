@@ -1,6 +1,6 @@
 "use server";
 
-import { getClaudeRateLimits, getClaudeUsageStats } from "@devkit/claude-usage/server";
+import { getClaudeRateLimits, getClaudeUsageStats } from "@claudekit/claude-usage/server";
 import type { ClaudeRateLimits, ClaudeUsageStats } from "@/lib/types";
 
 export async function getClaudeUsageStatsAction(): Promise<ClaudeUsageStats | null> {

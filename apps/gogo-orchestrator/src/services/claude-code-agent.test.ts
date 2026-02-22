@@ -9,7 +9,7 @@ vi.mock("node:crypto", () => ({
   randomUUID: vi.fn().mockReturnValue("test-uuid-1234"),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   execute: vi.fn(),
   queryOne: vi.fn(),
 }));
@@ -52,7 +52,7 @@ vi.mock("./settings-helper.js", () => ({
 }));
 
 import { execSync } from "node:child_process";
-import { queryOne } from "@devkit/duckdb";
+import { queryOne } from "@claudekit/duckdb";
 import type { DbJob } from "../db/schema.js";
 import {
   buildPrompt,

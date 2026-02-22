@@ -1,7 +1,7 @@
 "use client";
 
-import { useAppTheme } from "@devkit/hooks";
-import { cn } from "@devkit/ui";
+import { useAppTheme } from "@claudekit/hooks";
+import { cn } from "@claudekit/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,14 +12,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@devkit/ui/components/alert-dialog";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Input } from "@devkit/ui/components/input";
-import { Slider } from "@devkit/ui/components/slider";
-import { Switch } from "@devkit/ui/components/switch";
+} from "@claudekit/ui/components/alert-dialog";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Input } from "@claudekit/ui/components/input";
+import { Slider } from "@claudekit/ui/components/slider";
+import { Switch } from "@claudekit/ui/components/switch";
 import { Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

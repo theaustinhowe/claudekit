@@ -5,7 +5,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock("@devkit/duckdb", () => ({
   checkpoint: vi.fn(),
 }));
 
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import {
   cleanupOrphanedProcesses,
   clearStalePidReferences,

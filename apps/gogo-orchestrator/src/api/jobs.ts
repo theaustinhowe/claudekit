@@ -1,4 +1,4 @@
-import { buildInClause, execute, queryAll, queryOne } from "@devkit/duckdb";
+import { buildInClause, execute, queryAll, queryOne } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { getDb } from "../db/index.js";

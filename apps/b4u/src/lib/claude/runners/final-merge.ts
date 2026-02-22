@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { SessionRunner } from "@devkit/session";
+import type { SessionRunner } from "@claudekit/session";
 import { execute, getDb, queryAll } from "@/lib/db";
 import { generateChapters } from "@/lib/video/chapter-generator";
 import { concatenateAudioFiles, concatenateVideos, mergeVideoAudio } from "@/lib/video/ffmpeg-merger";

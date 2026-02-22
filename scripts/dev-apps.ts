@@ -15,11 +15,11 @@ export const apps: AppDef[] = [
   { id: "gogo-orchestrator", filter: "gogo-orchestrator", port: 2201 },
   { id: "b4u", filter: "b4u", port: 2300 },
   { id: "inspector", filter: "inspector", port: 2400 },
-  { id: "storybook", filter: "@devkit/ui", port: 6006 },
+  { id: "storybook", filter: "@claudekit/ui", port: 6006 },
 ];
 
-export const PID_DIR = join(homedir(), ".devkit", "pids");
-export const LOG_DIR = join(homedir(), ".devkit", "logs");
+export const PID_DIR = join(homedir(), ".claudekit", "pids");
+export const LOG_DIR = join(homedir(), ".claudekit", "logs");
 
 export function pidFilePath(): string {
   return join(PID_DIR, "dev.pid");

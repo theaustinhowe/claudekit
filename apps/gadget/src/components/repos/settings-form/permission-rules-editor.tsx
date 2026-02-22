@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
-import { Input } from "@devkit/ui/components/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { Button } from "@claudekit/ui/components/button";
+import { Input } from "@claudekit/ui/components/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
 import { Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { PERMISSION_SUGGESTIONS } from "@/lib/constants/permission-suggestions";

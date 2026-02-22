@@ -13,9 +13,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@devkit/hooks": "workspace:*",
-    "@devkit/logger": "workspace:*",
-    "@devkit/ui": "workspace:*",
+    "@claudekit/hooks": "workspace:*",
+    "@claudekit/logger": "workspace:*",
+    "@claudekit/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.6",
     "lucide-react": "^0.563.0",
     "next": "^16.1.6",

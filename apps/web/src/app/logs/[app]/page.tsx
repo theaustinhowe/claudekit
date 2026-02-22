@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { getLogFilePath, listLogFiles } from "@devkit/logger";
+import { getLogFilePath, listLogFiles } from "@claudekit/logger";
 import Link from "next/link";
 import { LogViewerClient } from "@/components/log-viewer-client";
 

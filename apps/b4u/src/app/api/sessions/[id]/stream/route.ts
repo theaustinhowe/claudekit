@@ -1,4 +1,4 @@
-import { createStreamHandler } from "@devkit/session/next";
+import { createStreamHandler } from "@claudekit/session/next";
 import { sessionManager } from "@/lib/claude/session-manager";
 import type { SessionLogRow, SessionRow } from "@/lib/claude/types";
 import { getDb, queryAll } from "@/lib/db";

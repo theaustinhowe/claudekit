@@ -1,4 +1,4 @@
--- Session tables for @devkit/session integration
+-- Session tables for @claudekit/session integration
 -- Sessions track individual Claude process runs within the job lifecycle
 
 CREATE TABLE IF NOT EXISTS sessions (

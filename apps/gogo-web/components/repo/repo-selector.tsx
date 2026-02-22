@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Button } from "@devkit/ui/components/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { cn } from "@claudekit/ui";
+import { Button } from "@claudekit/ui/components/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Check, ChevronsUpDown, GitBranch, Plus } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

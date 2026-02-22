@@ -8,7 +8,7 @@ const RESET = "\x1b[0m";
 const pid = readPid();
 
 if (!pid || !isProcessAlive(pid)) {
-  console.log("No devkit apps running.");
+  console.log("No claudekit apps running.");
   // Clean up stale PID file
   if (pid) {
     try {
@@ -20,7 +20,7 @@ if (!pid || !isProcessAlive(pid)) {
   process.exit(0);
 }
 
-console.log(`Stopping devkit (PID ${pid})...`);
+console.log(`Stopping claudekit (PID ${pid})...`);
 
 // Send SIGTERM
 try {
@@ -42,7 +42,7 @@ const poll = setInterval(() => {
     } catch {
       // Ignore
     }
-    console.log(`${BOLD}${GREEN}Devkit stopped.${RESET}`);
+    console.log(`${BOLD}${GREEN}ClaudeKit stopped.${RESET}`);
     process.exit(0);
   }
   if (Date.now() > deadline) {
@@ -58,7 +58,7 @@ const poll = setInterval(() => {
     } catch {
       // Ignore
     }
-    console.log(`${BOLD}${GREEN}Devkit stopped.${RESET}`);
+    console.log(`${BOLD}${GREEN}ClaudeKit stopped.${RESET}`);
     process.exit(0);
   }
 }, 200);

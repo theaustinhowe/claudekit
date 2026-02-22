@@ -72,6 +72,6 @@ DuckDB at `~/.inspector/data.duckdb` with tables:
 
 - **Server/Client split**: Server components fetch from DB, pass props to `"use client"` components
 - **GitHub sync**: `syncRepo()` → `syncPRs()` → `syncPRComments()` pipeline
-- **AI analysis**: Uses `@devkit/claude-runner` to call Claude CLI for skill analysis, split plans, and fix generation
+- **AI analysis**: Uses `@claudekit/claude-runner` to call Claude CLI for skill analysis, split plans, and fix generation
 - **Three-phase workflows**: Select → Analyzing (animated progress) → Results
-- **Theme system**: Uses `useAppTheme()` from `@devkit/hooks` with 9 color themes
+- **Theme system**: Uses `useAppTheme()` from `@claudekit/hooks` with 9 color themes

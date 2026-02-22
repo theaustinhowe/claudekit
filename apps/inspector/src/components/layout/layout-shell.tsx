@@ -1,6 +1,6 @@
 "use client";
 
-import { AppLayout } from "@devkit/ui/components/shared-layout";
+import { AppLayout } from "@claudekit/ui/components/shared-layout";
 import { inspectorLayoutConfig } from "./layout-config";
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {

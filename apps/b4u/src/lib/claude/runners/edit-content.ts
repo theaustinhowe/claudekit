@@ -1,5 +1,5 @@
-import { runClaude } from "@devkit/claude-runner";
-import type { SessionRunner } from "@devkit/session";
+import { runClaude } from "@claudekit/claude-runner";
+import type { SessionRunner } from "@claudekit/session";
 import { buildEditContentPrompt } from "@/lib/claude/prompts/edit-content";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 

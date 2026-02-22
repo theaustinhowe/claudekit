@@ -5,7 +5,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock("../ws/handler.js", () => ({
   getClientCount: vi.fn().mockReturnValue(5),
 }));
 
-import { queryAll } from "@devkit/duckdb";
+import { queryAll } from "@claudekit/duckdb";
 import { getAllRateLimitInfo } from "../services/github/index.js";
 import { getThrottleState } from "../services/polling.js";
 import { isShutdownInProgress } from "../services/shutdown.js";

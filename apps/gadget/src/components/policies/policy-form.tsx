@@ -1,16 +1,16 @@
 "use client";
 
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
-import { Separator } from "@devkit/ui/components/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@devkit/ui/components/table";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@claudekit/ui/components/select";
+import { Separator } from "@claudekit/ui/components/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@claudekit/ui/components/table";
+import { Textarea } from "@claudekit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { PackageManager, Policy, RepoType } from "@/lib/types";

@@ -17,11 +17,11 @@ vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/card", () => ({
+vi.mock("@claudekit/ui/components/card", () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CardDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
@@ -29,16 +29,16 @@ vi.mock("@devkit/ui/components/card", () => ({
   CardTitle: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
 }));
 
-vi.mock("@devkit/ui/components/input", () => ({
+vi.mock("@claudekit/ui/components/input", () => ({
   Input: (props: Record<string, unknown>) => <input {...props} />,
 }));
 
-vi.mock("@devkit/ui/components/label", () => ({
+vi.mock("@claudekit/ui/components/label", () => ({
   // biome-ignore lint/a11y/noLabelWithoutControl: test mock
   Label: ({ children, ...props }: { children: ReactNode }) => <label {...props}>{children}</label>,
 }));
 
-vi.mock("@devkit/ui/components/tooltip", () => ({
+vi.mock("@claudekit/ui/components/tooltip", () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,

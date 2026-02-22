@@ -9,7 +9,7 @@ export interface Todo {
   createdAt: string;
 }
 
-const TODOS_DIR = join(homedir(), ".devkit", "todos");
+const TODOS_DIR = join(homedir(), ".claudekit", "todos");
 
 function ensureDir() {
   if (!existsSync(TODOS_DIR)) {

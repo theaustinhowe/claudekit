@@ -7,7 +7,7 @@ export { SharedSidebar } from "./shared-sidebar";
 export type {
   AppLayoutConfig,
   AppLayoutProps,
-  DevkitAppLink,
+  ClaudeKitAppLink,
   LogoConfig,
   NavGroup,
   NavItem,

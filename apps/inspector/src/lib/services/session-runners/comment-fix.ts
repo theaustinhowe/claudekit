@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 
@@ -18,7 +18,7 @@ export function createCommentFixRunner(metadata: Record<string, unknown>, _conte
     if (signal.aborted) throw new DOMException("Aborted", "AbortError");
 
     const { getDb } = await import("@/lib/db");
-    const { queryAll, queryOne, execute } = await import("@devkit/duckdb");
+    const { queryAll, queryOne, execute } = await import("@claudekit/duckdb");
     const { fetchFileContent } = await import("@/lib/actions/github");
     const { buildCommentFixPrompt } = await import("@/lib/prompts");
 

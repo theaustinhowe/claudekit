@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
+import { Button } from "@claudekit/ui/components/button";
 import {
   Dialog,
   DialogBody,
@@ -10,10 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@devkit/ui/components/dialog";
-import { Input } from "@devkit/ui/components/input";
-import { Label } from "@devkit/ui/components/label";
-import { Textarea } from "@devkit/ui/components/textarea";
+} from "@claudekit/ui/components/dialog";
+import { Input } from "@claudekit/ui/components/input";
+import { Label } from "@claudekit/ui/components/label";
+import { Textarea } from "@claudekit/ui/components/textarea";
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 

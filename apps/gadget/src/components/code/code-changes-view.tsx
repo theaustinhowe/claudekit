@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Checkbox } from "@devkit/ui/components/checkbox";
-import { DiffViewer } from "@devkit/ui/components/diff-viewer";
-import { Textarea } from "@devkit/ui/components/textarea";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { DiffViewer } from "@claudekit/ui/components/diff-viewer";
+import { Textarea } from "@claudekit/ui/components/textarea";
 import {
   ChevronDown,
   ChevronRight,

@@ -1,4 +1,4 @@
-import type { JobStatus } from "@devkit/gogo-shared";
+import type { JobStatus } from "@claudekit/gogo-shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyAction,
@@ -13,7 +13,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock("../ws/handler.js", () => ({
   broadcast: vi.fn(),
 }));
 
-import { buildUpdate, execute, queryOne, withTransaction } from "@devkit/duckdb";
+import { buildUpdate, execute, queryOne, withTransaction } from "@claudekit/duckdb";
 import { broadcast } from "../ws/handler.js";
 
 describe("state-machine", () => {

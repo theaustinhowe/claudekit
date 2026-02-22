@@ -14,15 +14,15 @@ vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@devkit/ui/components/textarea", () => ({
+vi.mock("@claudekit/ui/components/textarea", () => ({
   Textarea: (props: Record<string, unknown>) => <textarea {...props} />,
 }));
 
-vi.mock("@devkit/ui/components/scroll-area", () => ({
+vi.mock("@claudekit/ui/components/scroll-area", () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 

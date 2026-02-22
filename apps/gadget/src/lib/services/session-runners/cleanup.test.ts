@@ -6,7 +6,7 @@ vi.mock("node:fs", () => ({
     unlinkSync: vi.fn(),
   },
 }));
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
@@ -24,7 +24,7 @@ vi.mock("@/lib/services/session-manager", () => ({
 }));
 
 import fs from "node:fs";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getCleanupFiles } from "@/lib/actions/settings";
 import { queryOne } from "@/lib/db";
 import { runProcess } from "@/lib/services/process-runner";

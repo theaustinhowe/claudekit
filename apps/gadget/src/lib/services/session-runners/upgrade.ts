@@ -1,5 +1,5 @@
 import path from "node:path";
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { getUpgradeTasks, updateUpgradeTask } from "@/lib/actions/upgrade-tasks";
 import { safeGitCommit } from "@/lib/services/git-utils";

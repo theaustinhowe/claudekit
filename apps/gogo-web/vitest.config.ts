@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "."),
-      "@devkit/gogo-shared": path.resolve(__dirname, "../../packages/gogo-shared/src"),
+      "@claudekit/gogo-shared": path.resolve(__dirname, "../../packages/gogo-shared/src"),
     },
   },
   test: {

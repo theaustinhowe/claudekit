@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/claude-runner", () => ({
+vi.mock("@claudekit/claude-runner", () => ({
   runClaude: vi.fn(),
 }));
 vi.mock("@/lib/db", () => ({
@@ -11,7 +11,7 @@ vi.mock("@/lib/claude/prompts/analyze-project", () => ({
   buildAnalyzeProjectPrompt: vi.fn(() => "analyze prompt"),
 }));
 
-import { runClaude } from "@devkit/claude-runner";
+import { runClaude } from "@claudekit/claude-runner";
 import { execute } from "@/lib/db";
 import { createAnalyzeProjectRunner } from "./analyze-project";
 

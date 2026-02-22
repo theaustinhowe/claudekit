@@ -1,7 +1,7 @@
 "use client";
 
-import type { SessionStreamEvent } from "@devkit/hooks";
-import { useSessionStream } from "@devkit/hooks";
+import type { SessionStreamEvent } from "@claudekit/hooks";
+import { useSessionStream } from "@claudekit/hooks";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,13 +11,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@devkit/ui/components/alert-dialog";
-import { Button } from "@devkit/ui/components/button";
-import { MarkdownRenderer } from "@devkit/ui/components/markdown-renderer";
-import type { StreamEntry } from "@devkit/ui/components/streaming-display";
-import { parseStreamLog, StreamingDisplay } from "@devkit/ui/components/streaming-display";
-import { Textarea } from "@devkit/ui/components/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/alert-dialog";
+import { Button } from "@claudekit/ui/components/button";
+import { MarkdownRenderer } from "@claudekit/ui/components/markdown-renderer";
+import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
+import { parseStreamLog, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
+import { Textarea } from "@claudekit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Bot, Clock, Loader2, Send, Square, User } from "lucide-react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { DesignMessage } from "@/lib/types";

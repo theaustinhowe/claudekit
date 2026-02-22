@@ -2,15 +2,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/ui", () => ({
+vi.mock("@claudekit/ui", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@devkit/ui/components/badge", () => ({
+vi.mock("@claudekit/ui/components/badge", () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("@devkit/ui/components/button", () => ({
+vi.mock("@claudekit/ui/components/button", () => ({
   Button: ({ children, onClick, ...props }: { children: ReactNode; onClick?: () => void }) => (
     <button onClick={onClick} {...props}>
       {children}

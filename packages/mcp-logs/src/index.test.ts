@@ -22,7 +22,7 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
   StdioServerTransport: class {},
 }));
 
-vi.mock("@devkit/logger", () => ({
+vi.mock("@claudekit/logger", () => ({
   listLogFiles: vi.fn(),
   readLogEntries: vi.fn(),
   filterLogEntries: vi.fn(),
@@ -37,7 +37,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import { statSync } from "node:fs";
-import type { LogEntry } from "@devkit/logger";
+import type { LogEntry } from "@claudekit/logger";
 import {
   filterLogEntries,
   formatLogEntry,
@@ -46,7 +46,7 @@ import {
   nameToLevel,
   parseSince,
   readLogEntries,
-} from "@devkit/logger";
+} from "@claudekit/logger";
 
 // Trigger module load to register tools
 await import("./index");

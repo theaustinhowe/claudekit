@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@devkit/ui/components/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
 import { FileCode, Film, Monitor, Terminal, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { AppPreview } from "@/components/generator/app-preview";

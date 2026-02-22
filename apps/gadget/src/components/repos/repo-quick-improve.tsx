@@ -1,15 +1,15 @@
 "use client";
 
-import { useSessionStream } from "@devkit/hooks";
-import { Button } from "@devkit/ui/components/button";
+import { useSessionStream } from "@claudekit/hooks";
+import { Button } from "@claudekit/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@devkit/ui/components/dropdown-menu";
-import { SessionTerminal } from "@devkit/ui/components/session-terminal";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/dropdown-menu";
+import { SessionTerminal } from "@claudekit/ui/components/session-terminal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Brush, ChevronDown, Code2, Eraser, Shield, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";

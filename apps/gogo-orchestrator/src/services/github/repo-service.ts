@@ -4,7 +4,7 @@
  * All repository-scoped operations for the multi-repo architecture.
  */
 
-import { queryOne } from "@devkit/duckdb";
+import { queryOne } from "@claudekit/duckdb";
 import { getDb } from "../../db/index.js";
 import type { DbRepository } from "../../db/schema.js";
 import { createServiceLogger } from "../../utils/logger.js";

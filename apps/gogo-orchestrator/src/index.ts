@@ -9,7 +9,7 @@ const rootEnvLocal = resolve(rootDir, ".env.local");
 if (existsSync(rootEnv)) config({ path: rootEnv, override: false });
 if (existsSync(rootEnvLocal)) config({ path: rootEnvLocal, override: false });
 
-import { execute, queryAll } from "@devkit/duckdb";
+import { execute, queryAll } from "@claudekit/duckdb";
 import { getDb } from "./db/index.js";
 import { createServer } from "./server.js";
 import { runDataPruning } from "./services/data-pruning.js";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
+import { Button } from "@claudekit/ui/components/button";
 import {
   Dialog,
   DialogBody,
@@ -9,8 +9,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@devkit/ui/components/dialog";
-import { TooltipProvider } from "@devkit/ui/components/tooltip";
+} from "@claudekit/ui/components/dialog";
+import { TooltipProvider } from "@claudekit/ui/components/tooltip";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -82,7 +82,7 @@ export function SetupWizardDialog({ open, onOpenChange }: SetupWizardDialogProps
           <DialogHeader>
             <StepIndicator currentStep={step} />
             <DialogTitle>Environment Setup</DialogTitle>
-            <DialogDescription>Configure environment variables for all devkit apps.</DialogDescription>
+            <DialogDescription>Configure environment variables for all claudekit apps.</DialogDescription>
           </DialogHeader>
 
           <DialogBody>

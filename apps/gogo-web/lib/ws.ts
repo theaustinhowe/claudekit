@@ -1,6 +1,6 @@
 "use client";
 
-import type { WsClientMessage, WsMessage } from "@devkit/gogo-shared";
+import type { WsClientMessage, WsMessage } from "@claudekit/gogo-shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // Dynamically determine WebSocket URL based on current browser location

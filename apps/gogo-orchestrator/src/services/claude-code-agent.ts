@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { ClaudeStreamEvent } from "@devkit/claude-runner";
-import { isClaudeCliAvailable as checkClaudeCli, spawnClaude } from "@devkit/claude-runner";
-import { execute, queryOne } from "@devkit/duckdb";
-import type { InjectMode, JobStatus } from "@devkit/gogo-shared";
-import type { SessionRunner } from "@devkit/session";
+import type { ClaudeStreamEvent } from "@claudekit/claude-runner";
+import { isClaudeCliAvailable as checkClaudeCli, spawnClaude } from "@claudekit/claude-runner";
+import { execute, queryOne } from "@claudekit/duckdb";
+import type { InjectMode, JobStatus } from "@claudekit/gogo-shared";
+import type { SessionRunner } from "@claudekit/session";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState, updateJobStatus } from "../utils/job-logging.js";
@@ -351,7 +351,7 @@ export function parseStreamJsonLine(line: string): ParsedLine {
 /**
  * Start a Claude Code run for a job.
  *
- * Creates a @devkit/session session and wraps the Claude process as a SessionRunner.
+ * Creates a @claudekit/session session and wraps the Claude process as a SessionRunner.
  * The session manages the ring buffer, batch log flushing, PID tracking, and cleanup.
  */
 export async function startClaudeRun(

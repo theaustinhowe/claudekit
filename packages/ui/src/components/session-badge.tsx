@@ -1,6 +1,6 @@
 "use client";
 
-import type { SessionStatusBase } from "@devkit/session";
+import type { SessionStatusBase } from "@claudekit/session";
 import { Check, Clock, Loader2, X } from "lucide-react";
 import { cn, formatElapsed } from "../utils";
 import { Badge } from "./badge";

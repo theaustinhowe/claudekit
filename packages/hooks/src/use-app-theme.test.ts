@@ -80,19 +80,19 @@ describe("useAppTheme", () => {
   });
 
   it("reads stored theme from localStorage on mount", () => {
-    mockStorage.set("devkit-theme", "ruby");
+    mockStorage.set("claudekit-theme", "ruby");
     const { result } = renderHook(() => useAppTheme());
     expect(result.current.theme).toBe("ruby");
   });
 
   it("applies CSS class for non-amethyst stored theme", () => {
-    mockStorage.set("devkit-theme", "emerald");
+    mockStorage.set("claudekit-theme", "emerald");
     renderHook(() => useAppTheme());
     expect(document.documentElement.classList.contains("theme-emerald")).toBe(true);
   });
 
   it("does not apply CSS class for amethyst (default)", () => {
-    mockStorage.set("devkit-theme", "amethyst");
+    mockStorage.set("claudekit-theme", "amethyst");
     renderHook(() => useAppTheme());
     expect(document.documentElement.className).toBe("");
   });
@@ -102,7 +102,7 @@ describe("useAppTheme", () => {
     act(() => {
       result.current.setTheme("sapphire");
     });
-    expect(mockStorage.get("devkit-theme")).toBe("sapphire");
+    expect(mockStorage.get("claudekit-theme")).toBe("sapphire");
     expect(result.current.theme).toBe("sapphire");
   });
 
@@ -140,7 +140,7 @@ describe("useAppTheme", () => {
   });
 
   it("ignores invalid stored theme values", () => {
-    mockStorage.set("devkit-theme", "nonexistent-theme");
+    mockStorage.set("claudekit-theme", "nonexistent-theme");
     const { result } = renderHook(() => useAppTheme());
     expect(result.current.theme).toBe("amethyst");
   });
@@ -159,7 +159,7 @@ describe("useAppTheme", () => {
       result.current.setTheme("slate");
     });
     expect(mockStorage.get("my-key")).toBe("slate");
-    expect(mockStorage.has("devkit-theme")).toBe(false);
+    expect(mockStorage.has("claudekit-theme")).toBe(false);
   });
 
   // --- defaultTheme ---

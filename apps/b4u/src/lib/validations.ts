@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export { parseBody } from "@devkit/validation";
+export { parseBody } from "@claudekit/validation";
 
 // --- Route validation ---
 

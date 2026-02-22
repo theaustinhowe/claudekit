@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@devkit/ui/components/button";
+import { Button } from "@claudekit/ui/components/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 

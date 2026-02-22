@@ -1,4 +1,4 @@
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import { emitLog, type LogState } from "../utils/job-logging.js";

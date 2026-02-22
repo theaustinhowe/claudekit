@@ -1,7 +1,7 @@
 "use client";
 
-import type { LogEntry } from "@devkit/ui/components/session-terminal";
-import { SessionTerminal } from "@devkit/ui/components/session-terminal";
+import type { LogEntry } from "@claudekit/ui/components/session-terminal";
+import { SessionTerminal } from "@claudekit/ui/components/session-terminal";
 import { useEffect, useMemo, useState } from "react";
 import { AutoFixIndicator } from "@/components/generator/auto-fix-indicator";
 

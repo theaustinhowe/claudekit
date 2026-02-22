@@ -4,7 +4,7 @@ vi.mock("../db/index.js", () => ({
   getDb: vi.fn(async () => ({})),
 }));
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   execute: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock("../services/issue-sync.js", () => ({
   syncCommentsForIssue: vi.fn(),
 }));
 
-import { execute, queryAll, queryOne } from "@devkit/duckdb";
+import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { mapIssue, mapRepositoryFull } from "../db/schema.js";
 import { syncIssuesForRepo } from "../services/issue-sync.js";
 import { broadcast } from "../ws/handler.js";

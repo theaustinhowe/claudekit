@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@devkit/duckdb", () => ({
+vi.mock("@claudekit/duckdb", () => ({
   queryOne: vi.fn(),
   execute: vi.fn(),
   parseJsonField: vi.fn((val: unknown, fallback: unknown) => {
@@ -19,7 +19,7 @@ vi.mock("../ws/handler.js", () => ({
   sendLogToSubscribers: vi.fn(),
 }));
 
-import { execute, queryOne } from "@devkit/duckdb";
+import { execute, queryOne } from "@claudekit/duckdb";
 import { getMaxTestRetries, getTestCommands, runTests } from "./test-runner.js";
 
 beforeEach(() => {

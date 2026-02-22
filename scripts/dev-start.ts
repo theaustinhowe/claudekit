@@ -12,7 +12,7 @@ const RESET = "\x1b[0m";
 // Check if daemon is already running
 const existingPid = readPid();
 if (existingPid && isProcessAlive(existingPid)) {
-  console.log(`${BOLD}Devkit is already running${RESET} ${DIM}(PID ${existingPid})${RESET}`);
+  console.log(`${BOLD}ClaudeKit is already running${RESET} ${DIM}(PID ${existingPid})${RESET}`);
   console.log(`Run ${CYAN}pnpm dev:stop${RESET} to stop, or ${CYAN}pnpm dev:stop && pnpm dev${RESET} to restart.`);
   process.exit(0);
 }
@@ -28,7 +28,7 @@ child.unref();
 
 // Print startup banner
 console.log();
-console.log(`${BOLD}${GREEN}Devkit started in background${RESET} ${DIM}(PID ${child.pid})${RESET}`);
+console.log(`${BOLD}${GREEN}ClaudeKit started in background${RESET} ${DIM}(PID ${child.pid})${RESET}`);
 console.log();
 const settings = readSettings();
 for (const app of apps) {
@@ -38,7 +38,7 @@ for (const app of apps) {
   console.log(`  ${app.id}${padding}http://localhost:${app.port}${willStart ? "" : `  ${DIM}(skipped)${RESET}`}`);
 }
 console.log();
-console.log(`${DIM}Logs:${RESET}  ~/.devkit/logs/`);
+console.log(`${DIM}Logs:${RESET}  ~/.claudekit/logs/`);
 console.log(`${DIM}View:${RESET}  ${CYAN}http://localhost:2000${RESET}`);
 console.log(`${DIM}Stop:${RESET}  ${CYAN}pnpm dev:stop${RESET}`);
 console.log();

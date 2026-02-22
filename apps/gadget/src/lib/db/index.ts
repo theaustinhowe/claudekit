@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createDatabase, execute, queryOne, runMigrations } from "@devkit/duckdb";
+import { createDatabase, execute, queryOne, runMigrations } from "@claudekit/duckdb";
 import { nowTimestamp } from "@/lib/utils";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -51,4 +51,12 @@ const db = createDatabase({
 export const getDb = db.getDb;
 
 // Re-export query helpers so consumers can import from "@/lib/db"
-export { buildUpdate, checkpoint, execute, parseJsonField, queryAll, queryOne, withTransaction } from "@devkit/duckdb";
+export {
+  buildUpdate,
+  checkpoint,
+  execute,
+  parseJsonField,
+  queryAll,
+  queryOne,
+  withTransaction,
+} from "@claudekit/duckdb";

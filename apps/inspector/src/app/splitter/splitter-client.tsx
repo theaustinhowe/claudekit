@@ -1,11 +1,18 @@
 "use client";
 
-import { useSessionStream } from "@devkit/hooks";
-import { cn } from "@devkit/ui";
-import { Badge } from "@devkit/ui/components/badge";
-import { Button } from "@devkit/ui/components/button";
-import { Card, CardContent } from "@devkit/ui/components/card";
-import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
+import { useSessionStream } from "@claudekit/hooks";
+import { cn } from "@claudekit/ui";
+import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
+import { Card, CardContent } from "@claudekit/ui/components/card";
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@claudekit/ui/components/sheet";
 import { ArrowDown, ClipboardCopy, Scissors } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";

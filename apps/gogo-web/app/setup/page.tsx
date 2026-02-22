@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeToggle } from "@devkit/ui/components/theme-toggle";
+import { ThemeToggle } from "@claudekit/ui/components/theme-toggle";
 import Image from "next/image";
 import Link from "next/link";
 import { SetupWizard } from "@/components/setup/setup-wizard";

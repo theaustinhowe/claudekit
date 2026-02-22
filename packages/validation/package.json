@@ -1,5 +1,5 @@
 {
-  "name": "@devkit/validation",
+  "name": "@claudekit/validation",
   "version": "0.1.0",
   "private": true,
   "type": "module",

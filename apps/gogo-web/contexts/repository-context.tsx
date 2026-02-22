@@ -1,6 +1,6 @@
 "use client";
 
-import type { Repository } from "@devkit/gogo-shared";
+import type { Repository } from "@claudekit/gogo-shared";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 
 interface RepositoryContextValue {
