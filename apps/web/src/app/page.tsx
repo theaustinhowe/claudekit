@@ -33,7 +33,7 @@ function getLogFileInfos(): LogFileInfo[] {
     .sort((a, b) => b.lastModified.localeCompare(a.lastModified));
 }
 
-const APP_IDS = ["gadget", "gogo-web", "b4u", "inspector", "storybook", "gogo-orchestrator", "web"];
+const APP_IDS = ["gadget", "gogo-web", "b4u", "inspector", "inside", "storybook", "gogo-orchestrator", "web"];
 
 export default function DashboardPage() {
   const files = getLogFileInfos();

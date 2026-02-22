@@ -53,6 +53,15 @@ const APP_DEFINITIONS: Omit<AppInfo, "url" | "status">[] = [
     maturity: { label: "Beta", percentage: 55, color: "yellow" },
   },
   {
+    id: "inside",
+    name: "Inside",
+    description: "Project creation, scaffolding, design workspace",
+    port: 2150,
+    icon: "Sparkles",
+    favicon: "/app-icons/inside.png",
+    maturity: { label: "Alpha", percentage: 40, color: "red" },
+  },
+  {
     id: "storybook",
     name: "Storybook",
     description: "Interactive component library and documentation",

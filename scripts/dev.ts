@@ -18,6 +18,7 @@ const apps: App[] = [
   { name: "gogo-orch", filter: "gogo-orchestrator", color: "\x1b[33m", port: 2201 }, // yellow
   { name: "b4u", filter: "b4u", color: "\x1b[32m", port: 2300 }, // green
   { name: "inspector", filter: "inspector", color: "\x1b[95m", port: 2400 }, // bright magenta
+  { name: "inside", filter: "inside", color: "\x1b[94m", port: 2150 }, // bright blue
   { name: "storybook", filter: "@claudekit/ui", color: "\x1b[31m", port: 6006 }, // red
 ];
 

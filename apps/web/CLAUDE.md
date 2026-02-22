@@ -6,7 +6,7 @@ Next.js 16 app serving as the claudekit landing page and control center.
 
 ## Features
 
-- Dashboard with health status for all claudekit apps (Gadget, GoGo Web, GoGo Orchestrator, B4U, Inspector)
+- Dashboard with health status for all claudekit apps (Gadget, GoGo Web, GoGo Orchestrator, B4U, Inspector, Inside)
 - Live app status polling (running/stopped indicators)
 - Log file listing with links to per-app log viewer
 - Per-app log viewer with virtual scrolling (@tanstack/react-virtual)

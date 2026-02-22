@@ -34,7 +34,7 @@ function pushLog(server: DevServer, line: string) {
   }
 }
 
-async function findAvailablePort(startPort = 2500): Promise<number> {
+async function findAvailablePort(startPort = 2550): Promise<number> {
   let port = startPort;
   while (port < startPort + 100) {
     const available = await new Promise<boolean>((resolve) => {

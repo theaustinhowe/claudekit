@@ -1,6 +1,7 @@
 import { UsageSection } from "@claudekit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavGroup } from "@claudekit/ui/components/shared-layout";
 import { Archive, FolderKanban, Settings, Sparkles } from "lucide-react";
+import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 
 const navGroups: NavGroup[] = [
@@ -19,8 +20,8 @@ const navGroups: NavGroup[] = [
 export const insideLayoutConfig: AppLayoutConfig = {
   appId: "inside",
   logo: {
-    icon: <Sparkles className="w-6 h-6 text-primary" />,
-    wordmark: <span className="text-xl font-bold tracking-tight">Inside</span>,
+    icon: <Image src="/favicon-32x32.png" alt="Inside" width={32} height={32} className="w-8 h-8" />,
+    wordmark: <Image src="/logo.png" alt="Inside" width={887} height={617} className="h-10 w-auto" />,
   },
   nav: navGroups,
   bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
@@ -30,5 +31,5 @@ export const insideLayoutConfig: AppLayoutConfig = {
     { label: "Archived", href: "/archived", icon: Archive },
   ],
   usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
-  port: 2500,
+  port: 2150,
 };

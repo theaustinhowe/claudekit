@@ -16,7 +16,7 @@ describe("GET /api/health/apps", () => {
     const response = await GET();
     const data = await response.json();
 
-    expect(data).toHaveLength(7);
+    expect(data).toHaveLength(8);
     for (const app of data) {
       expect(app.status).toBe("running");
     }
@@ -28,7 +28,7 @@ describe("GET /api/health/apps", () => {
     const response = await GET();
     const data = await response.json();
 
-    expect(data).toHaveLength(7);
+    expect(data).toHaveLength(8);
     for (const app of data) {
       expect(app.status).toBe("stopped");
     }
@@ -41,7 +41,7 @@ describe("GET /api/health/apps", () => {
     const data = await response.json();
 
     const ids = data.map((a: { id: string }) => a.id);
-    expect(ids).toEqual(["gadget", "gogo-web", "b4u", "inspector", "storybook", "gogo-orchestrator", "web"]);
+    expect(ids).toEqual(["gadget", "gogo-web", "b4u", "inspector", "inside", "storybook", "gogo-orchestrator", "web"]);
   });
 
   it("builds correct urls from ports", async () => {
@@ -56,6 +56,7 @@ describe("GET /api/health/apps", () => {
       "gogo-orchestrator": 2201,
       b4u: 2300,
       inspector: 2400,
+      inside: 2150,
       storybook: 6006,
       web: 2000,
     };
@@ -77,6 +78,7 @@ describe("GET /api/health/apps", () => {
     expect(calledUrls).toContain("http://localhost:2201");
     expect(calledUrls).toContain("http://localhost:2300");
     expect(calledUrls).toContain("http://localhost:2400");
+    expect(calledUrls).toContain("http://localhost:2150");
     expect(calledUrls).toContain("http://localhost:6006");
     expect(calledUrls).toContain("http://localhost:2000");
   });

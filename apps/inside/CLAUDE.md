@@ -3,7 +3,7 @@
 ## Commands
 
 ```bash
-pnpm dev          # Start dev server at http://localhost:2500
+pnpm dev          # Start dev server at http://localhost:2150
 pnpm build        # Production build (also runs type-check)
 pnpm lint         # Biome check
 pnpm lint:fix     # Biome check with auto-fix
