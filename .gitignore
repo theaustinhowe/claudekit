@@ -9,3 +9,4 @@ dist/
 *.tsbuildinfo
 coverage/
 apps/staging/
+*.log
