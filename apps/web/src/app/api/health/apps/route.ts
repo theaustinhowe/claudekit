@@ -9,9 +9,10 @@ interface AppInfo {
   status: "running" | "stopped";
   icon: string;
   favicon?: string;
+  maturity?: { label: string; percentage: number; color: "green" | "yellow" | "red" };
 }
 
-const APP_DEFINITIONS = [
+const APP_DEFINITIONS: Omit<AppInfo, "url" | "status">[] = [
   {
     id: "gadget",
     name: "Gadget",
@@ -19,6 +20,7 @@ const APP_DEFINITIONS = [
     port: 2100,
     icon: "Wrench",
     favicon: "/app-icons/gadget.png",
+    maturity: { label: "Beta", percentage: 65, color: "yellow" },
   },
   {
     id: "gogo-web",
@@ -27,6 +29,7 @@ const APP_DEFINITIONS = [
     port: 2200,
     icon: "Rocket",
     favicon: "/app-icons/gogo-web.png",
+    maturity: { label: "Alpha", percentage: 40, color: "red" },
   },
   {
     id: "b4u",
@@ -35,6 +38,7 @@ const APP_DEFINITIONS = [
     port: 2300,
     icon: "Video",
     favicon: "/app-icons/b4u.png",
+    maturity: { label: "Prototype", percentage: 20, color: "red" },
   },
   {
     id: "inspector",
@@ -43,6 +47,7 @@ const APP_DEFINITIONS = [
     port: 2400,
     icon: "GitPullRequest",
     favicon: "/app-icons/inspector.png",
+    maturity: { label: "Beta", percentage: 55, color: "yellow" },
   },
   {
     id: "storybook",
@@ -50,6 +55,7 @@ const APP_DEFINITIONS = [
     description: "Interactive component library and documentation",
     port: 6006,
     icon: "BookOpen",
+    maturity: { label: "Stable", percentage: 90, color: "green" },
   },
   {
     id: "gogo-orchestrator",
@@ -57,6 +63,7 @@ const APP_DEFINITIONS = [
     description: "Backend orchestrator for GoGo job execution",
     port: 2201,
     icon: "Cpu",
+    maturity: { label: "Alpha", percentage: 35, color: "red" },
   },
   {
     id: "web",
@@ -65,6 +72,7 @@ const APP_DEFINITIONS = [
     port: 2000,
     icon: "Monitor",
     favicon: "/app-icons/web.png",
+    maturity: { label: "Stable", percentage: 85, color: "green" },
   },
 ];
 

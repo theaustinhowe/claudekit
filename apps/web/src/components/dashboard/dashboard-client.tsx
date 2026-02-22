@@ -3,15 +3,20 @@
 import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/card";
+import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
+import { Input } from "@devkit/ui/components/input";
 import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   BookOpen,
+  CheckSquare,
   ChevronDown,
   Cpu,
   ExternalLink,
   GitPullRequest,
   Monitor,
+  Plus,
   Rocket,
   RotateCw,
   ScrollText,
@@ -21,8 +26,15 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
+
+interface Todo {
+  id: string;
+  text: string;
+  resolved: boolean;
+  createdAt: string;
+}
 
 interface AppInfo {
   id: string;
@@ -33,6 +45,7 @@ interface AppInfo {
   status: "running" | "stopped";
   icon: string;
   favicon?: string;
+  maturity?: { label: string; percentage: number; color: "green" | "yellow" | "red" };
 }
 
 interface LogFileInfo {
@@ -61,6 +74,18 @@ const ACCENT_COLORS: Record<string, string> = {
   inspector: "border-l-rose-500",
   storybook: "border-l-pink-500",
   web: "border-l-emerald-500",
+};
+
+const MATURITY_DOT_COLORS: Record<string, string> = {
+  green: "bg-green-500",
+  yellow: "bg-yellow-500",
+  red: "bg-red-500",
+};
+
+const MATURITY_BAR_COLORS: Record<string, string> = {
+  green: "bg-green-500",
+  yellow: "bg-yellow-500",
+  red: "bg-red-500",
 };
 
 function formatSize(bytes: number): string {
@@ -103,9 +128,48 @@ function AppCardSkeleton({ index }: { index: number }) {
   );
 }
 
-export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
+function TodoAddForm({ onAdd }: { onAdd: (text: string) => void }) {
+  const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    onAdd(trimmed);
+    setText("");
+    inputRef.current?.focus();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex items-center gap-1.5 mt-2">
+      <Input
+        ref={inputRef}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Add a todo..."
+        className="h-7 text-xs"
+      />
+      <button
+        type="submit"
+        disabled={!text.trim()}
+        className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </button>
+    </form>
+  );
+}
+
+interface DashboardClientProps {
+  logFiles: LogFileInfo[];
+  initialTodos: Record<string, Todo[]>;
+}
+
+export function DashboardClient({ logFiles, initialTodos }: DashboardClientProps) {
   const [apps, setApps] = useState<AppInfo[] | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
+  const [todosByApp, setTodosByApp] = useState<Record<string, Todo[]>>(initialTodos);
 
   const fetchApps = useCallback(async () => {
     try {
@@ -130,7 +194,6 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
       setRestarting((prev) => new Set(prev).add(appId));
       try {
         await fetch(`/api/apps/${encodeURIComponent(appId)}/restart`, { method: "POST" });
-        // Poll for status change after a short delay
         setTimeout(fetchApps, 2000);
       } finally {
         setRestarting((prev) => {
@@ -143,6 +206,63 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
     [fetchApps],
   );
 
+  const addTodo = useCallback(async (appId: string, text: string) => {
+    const optimistic: Todo = {
+      id: crypto.randomUUID(),
+      text,
+      resolved: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    setTodosByApp((prev) => ({
+      ...prev,
+      [appId]: [...(prev[appId] ?? []), optimistic],
+    }));
+
+    try {
+      const res = await fetch(`/api/todos/${encodeURIComponent(appId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("Failed to add todo");
+      const created = (await res.json()) as Todo;
+      // Replace optimistic with server response
+      setTodosByApp((prev) => ({
+        ...prev,
+        [appId]: (prev[appId] ?? []).map((t) => (t.id === optimistic.id ? created : t)),
+      }));
+    } catch {
+      // Revert optimistic add
+      setTodosByApp((prev) => ({
+        ...prev,
+        [appId]: (prev[appId] ?? []).filter((t) => t.id !== optimistic.id),
+      }));
+    }
+  }, []);
+
+  const toggleTodo = useCallback(async (appId: string, todoId: string, resolved: boolean) => {
+    setTodosByApp((prev) => ({
+      ...prev,
+      [appId]: (prev[appId] ?? []).map((t) => (t.id === todoId ? { ...t, resolved } : t)),
+    }));
+
+    try {
+      const res = await fetch(`/api/todos/${encodeURIComponent(appId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: todoId, resolved }),
+      });
+      if (!res.ok) throw new Error("Failed to toggle todo");
+    } catch {
+      // Revert
+      setTodosByApp((prev) => ({
+        ...prev,
+        [appId]: (prev[appId] ?? []).map((t) => (t.id === todoId ? { ...t, resolved: !resolved } : t)),
+      }));
+    }
+  }, []);
+
   const logsByApp = useMemo(() => {
     const map = new Map<string, LogFileInfo[]>();
     for (const file of logFiles) {
@@ -150,7 +270,6 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
       existing.push(file);
       map.set(file.app, existing);
     }
-    // Sort each app's logs by date descending (most recent first)
     for (const [key, files] of map) {
       map.set(
         key,
@@ -165,50 +284,52 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
     return map;
   }, [logFiles]);
 
-  // Collect orphan logs that don't belong to any known app
   const knownAppIds = apps ? new Set(apps.map((a) => a.id)) : new Set<string>();
   const orphanLogs = logFiles.filter((f) => !knownAppIds.has(f.app));
 
   return (
-    <div className="p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Applications */}
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Applications</h2>
-            <button
-              type="button"
-              onClick={() => setSetupOpen(true)}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Settings className="h-4 w-4" />
-              Setup Environment
-            </button>
-          </div>
-          <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            {apps === null ? (
-              <>
-                <AppCardSkeleton index={0} />
-                <AppCardSkeleton index={1} />
-                <AppCardSkeleton index={2} />
-                <AppCardSkeleton index={3} />
-                <AppCardSkeleton index={4} />
-                <AppCardSkeleton index={5} />
-                <AppCardSkeleton index={6} />
-              </>
-            ) : (
-              apps.map((app) => {
-                const appLogs = logsByApp.get(app.id) ?? [];
-                return (
-                  <Collapsible key={app.id}>
+    <TooltipProvider>
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Applications */}
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Applications</h2>
+              <button
+                type="button"
+                onClick={() => setSetupOpen(true)}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+                Setup Environment
+              </button>
+            </div>
+            <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {apps === null ? (
+                <>
+                  <AppCardSkeleton index={0} />
+                  <AppCardSkeleton index={1} />
+                  <AppCardSkeleton index={2} />
+                  <AppCardSkeleton index={3} />
+                  <AppCardSkeleton index={4} />
+                  <AppCardSkeleton index={5} />
+                  <AppCardSkeleton index={6} />
+                </>
+              ) : (
+                apps.map((app) => {
+                  const appLogs = logsByApp.get(app.id) ?? [];
+                  const appTodos = todosByApp[app.id] ?? [];
+                  const pendingCount = appTodos.filter((t) => !t.resolved).length;
+                  return (
                     <Card
+                      key={app.id}
                       className={cn(
                         "relative border-l-4 transition-all hover:shadow-md hover:-translate-y-0.5",
                         ACCENT_COLORS[app.id] ?? "border-l-primary",
                       )}
                     >
-                      {/* Upper zone — click to open app (disabled for web since you're already here) */}
+                      {/* Upper zone — click to open app */}
                       {/* biome-ignore lint/a11y/noStaticElementInteractions: conditional role/tabIndex/onKeyDown correctly implemented */}
                       <div
                         role={app.id !== "web" && app.status === "running" ? "link" : undefined}
@@ -238,6 +359,30 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                                 <span className="text-primary">{ICON_MAP[app.icon]}</span>
                               )}
                               <CardTitle className="text-base">{app.name}</CardTitle>
+                              {app.maturity && (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <span
+                                      className={cn(
+                                        "h-2.5 w-2.5 rounded-full",
+                                        MATURITY_DOT_COLORS[app.maturity.color],
+                                      )}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="w-40">
+                                    <div className="flex items-center justify-between text-xs mb-1">
+                                      <span className="font-medium">{app.maturity.label}</span>
+                                      <span className="text-muted-foreground">{app.maturity.percentage}%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full rounded-full bg-muted">
+                                      <div
+                                        className={cn("h-full rounded-full", MATURITY_BAR_COLORS[app.maturity.color])}
+                                        style={{ width: `${app.maturity.percentage}%` }}
+                                      />
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                             </div>
                             <Badge variant="outline" className="font-mono text-xs">
                               :{app.port}
@@ -288,84 +433,120 @@ export function DashboardClient({ logFiles }: { logFiles: LogFileInfo[] }) {
                         </div>
                       </div>
 
-                      {/* Lower zone — collapsible logs */}
+                      {/* Logs collapsible */}
                       {appLogs.length > 0 && (
+                        <Collapsible>
+                          <div className="px-6 pb-4">
+                            <CollapsibleTrigger className="flex items-center gap-1.5 pt-3 border-t w-full text-xs text-muted-foreground hover:text-foreground transition-colors group">
+                              <ScrollText className="h-3.5 w-3.5" />
+                              <span>
+                                {appLogs.length} log {appLogs.length === 1 ? "file" : "files"}
+                              </span>
+                              <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent>
+                            <div className="px-6 pb-4 space-y-1.5">
+                              {appLogs.map((file) => (
+                                <Link
+                                  key={file.path}
+                                  href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
+                                  className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                                >
+                                  <span className="font-medium">{file.date ? formatDate(file.date) : "Legacy"}</span>
+                                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                    <span className="font-mono">{formatSize(file.size)}</span>
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+
+                      {/* Todos collapsible */}
+                      <Collapsible>
                         <div className="px-6 pb-4">
-                          <CollapsibleTrigger className="flex items-center gap-1.5 pt-3 border-t w-full text-xs text-muted-foreground hover:text-foreground transition-colors group">
-                            <ScrollText className="h-3.5 w-3.5" />
+                          <CollapsibleTrigger
+                            className={cn(
+                              "flex items-center gap-1.5 w-full text-xs text-muted-foreground hover:text-foreground transition-colors group",
+                              appLogs.length === 0 && "pt-3 border-t",
+                            )}
+                          >
+                            <CheckSquare className="h-3.5 w-3.5" />
                             <span>
-                              {appLogs.length} log {appLogs.length === 1 ? "file" : "files"}
+                              {pendingCount} pending / {appTodos.length} total
                             </span>
                             <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
                           </CollapsibleTrigger>
                         </div>
-                      )}
-
-                      {appLogs.length > 0 && (
                         <CollapsibleContent>
-                          <div className="px-6 pb-4 space-y-1.5">
-                            {appLogs.map((file) => (
-                              <Link
-                                key={file.path}
-                                href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
-                                className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                          <div className="px-6 pb-4 space-y-1">
+                            {appTodos.map((todo) => (
+                              <div
+                                key={todo.id}
+                                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent transition-colors"
                               >
-                                <span className="font-medium">{file.date ? formatDate(file.date) : "Legacy"}</span>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                  <span className="font-mono">{formatSize(file.size)}</span>
-                                </div>
-                              </Link>
+                                <Checkbox
+                                  checked={todo.resolved}
+                                  onCheckedChange={(checked) => toggleTodo(app.id, todo.id, checked === true)}
+                                />
+                                <span className={cn(todo.resolved && "line-through text-muted-foreground")}>
+                                  {todo.text}
+                                </span>
+                              </div>
                             ))}
+                            <TodoAddForm onAdd={(text) => addTodo(app.id, text)} />
                           </div>
                         </CollapsibleContent>
-                      )}
+                      </Collapsible>
                     </Card>
-                  </Collapsible>
-                );
-              })
-            )}
-          </div>
-
-          {/* Empty state */}
-          {logFiles.length === 0 && apps !== null && (
-            <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground mt-6">
-              <ScrollText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-lg font-medium">No log files found</p>
-              <p className="text-sm mt-1">Start a ClaudeKit app to generate logs in ~/.devkit/logs/</p>
+                  );
+                })
+              )}
             </div>
-          )}
 
-          {/* Orphan logs that don't match any known app */}
-          {orphanLogs.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold text-muted-foreground mb-3">Other Logs</h3>
-              <div className="grid gap-2">
-                {orphanLogs.map((file) => (
-                  <Link
-                    key={file.path}
-                    href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
-                    className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-accent transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <ScrollText className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{file.app}</span>
-                      {file.date && <span className="text-xs text-muted-foreground">{formatDate(file.date)}</span>}
-                      {!file.date && (
-                        <Badge variant="outline" className="text-xs">
-                          Legacy
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="font-mono">{formatSize(file.size)}</span>
-                    </div>
-                  </Link>
-                ))}
+            {/* Empty state */}
+            {logFiles.length === 0 && apps !== null && (
+              <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground mt-6">
+                <ScrollText className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-lg font-medium">No log files found</p>
+                <p className="text-sm mt-1">Start a ClaudeKit app to generate logs in ~/.devkit/logs/</p>
               </div>
-            </div>
-          )}
-        </section>
+            )}
+
+            {/* Orphan logs */}
+            {orphanLogs.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Other Logs</h3>
+                <div className="grid gap-2">
+                  {orphanLogs.map((file) => (
+                    <Link
+                      key={file.path}
+                      href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
+                      className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ScrollText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{file.app}</span>
+                        {file.date && <span className="text-xs text-muted-foreground">{formatDate(file.date)}</span>}
+                        {!file.date && (
+                          <Badge variant="outline" className="text-xs">
+                            Legacy
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="font-mono">{formatSize(file.size)}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
