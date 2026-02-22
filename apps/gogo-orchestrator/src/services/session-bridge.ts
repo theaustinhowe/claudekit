@@ -9,12 +9,9 @@
  * - emitEvent() allows external code (emitLog) to route through the session
  */
 
-import { createSessionManager } from "@devkit/session";
 import { execute, queryOne } from "@devkit/duckdb";
+import { createSessionManager } from "@devkit/session";
 import { getDb } from "../db/index.js";
-import { createServiceLogger } from "../utils/logger.js";
-
-const log = createServiceLogger("session-bridge");
 
 interface DbSession {
   id: string;
@@ -70,11 +67,12 @@ const manager = createSessionManager({
       const conn = await getDb();
       const now = new Date().toISOString();
       for (const entry of logs) {
-        await execute(
-          conn,
-          "INSERT INTO session_logs (session_id, log, log_type, created_at) VALUES (?, ?, ?, ?)",
-          [id, entry.log, entry.logType, now],
-        );
+        await execute(conn, "INSERT INTO session_logs (session_id, log, log_type, created_at) VALUES (?, ?, ?, ?)", [
+          id,
+          entry.log,
+          entry.logType,
+          now,
+        ]);
       }
     },
   },

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { isClaudeCliAvailable as checkClaudeCli, spawnClaude } from "@devkit/claude-runner";
 import type { ClaudeStreamEvent } from "@devkit/claude-runner";
+import { isClaudeCliAvailable as checkClaudeCli, spawnClaude } from "@devkit/claude-runner";
 import { execute, queryOne } from "@devkit/duckdb";
 import type { InjectMode, JobStatus } from "@devkit/gogo-shared";
 import type { SessionRunner } from "@devkit/session";
@@ -471,7 +471,8 @@ export async function startClaudeRun(
   });
 
   // Build the SessionRunner that wraps the Claude process
-  const runner: SessionRunner = async ({ onProgress, signal }: { onProgress: (event: import("@devkit/session").SessionEvent) => void; signal: AbortSignal; sessionId: string }) => {
+  const runner: SessionRunner = async (ctx) => {
+    const { onProgress, signal } = ctx;
     return new Promise<{ result?: Record<string, unknown> }>((resolve, reject) => {
       // Spawn Claude process
       const spawnOpts: Parameters<typeof spawnClaude>[0] = {
@@ -519,12 +520,7 @@ export async function startClaudeRun(
       // Set up timeout
       const timeoutId = setTimeout(async () => {
         proc.child.kill("SIGTERM");
-        await emitLog(
-          jobId,
-          "stderr",
-          `Claude run timed out after ${claudeSettings.max_runtime_ms / 1000}s`,
-          logState,
-        );
+        await emitLog(jobId, "stderr", `Claude run timed out after ${claudeSettings.max_runtime_ms / 1000}s`, logState);
         await updateJobStatus(jobId, "paused", "running", "Timed out - session saved", {
           pause_reason: "Execution timeout",
         });
@@ -698,12 +694,7 @@ export async function startClaudeRun(
         // Handle accumulated plan content on process exit
         if (isAccumulatingPlan && planAccumulator.trim() && currentJob.status === "planning") {
           const planContent = planAccumulator.trim();
-          await emitLog(
-            jobId,
-            "system",
-            "Plan accumulation complete, transitioning to awaiting approval",
-            logState,
-          );
+          await emitLog(jobId, "system", "Plan accumulation complete, transitioning to awaiting approval", logState);
 
           // Post plan as issue comment for GitHub-backed jobs
           let planCommentId: number | null = null;
@@ -737,16 +728,10 @@ export async function startClaudeRun(
           await emitLog(jobId, "system", "Claude process exited successfully", logState);
         } else if (code !== null) {
           await emitLog(jobId, "stderr", `Claude process exited with code ${code}`, logState);
-          await updateJobStatus(
-            jobId,
-            "failed",
-            currentJob.status as JobStatus,
-            `Claude exited with code ${code}`,
-            {
-              failure_reason: `Process exit code: ${code}`,
-              claude_session_id: currentClaudeSessionId,
-            },
-          );
+          await updateJobStatus(jobId, "failed", currentJob.status as JobStatus, `Claude exited with code ${code}`, {
+            failure_reason: `Process exit code: ${code}`,
+            claude_session_id: currentClaudeSessionId,
+          });
         }
         resolveOnce({ exitCode: code });
       });
