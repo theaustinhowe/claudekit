@@ -1,3 +1,4 @@
+import { UsageSection } from "@devkit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavGroup } from "@devkit/ui/components/shared-layout";
 import { Brain, GitBranch, LayoutDashboard, MessageSquareCode, Settings, Users } from "lucide-react";
 import Image from "next/image";
@@ -32,9 +33,8 @@ export const insideLayoutConfig: AppLayoutConfig = {
     { label: "Splitter", href: "/splitter", icon: GitBranch },
     { label: "Resolver", href: "/resolver", icon: MessageSquareCode },
   ],
-  claudeUsage: {
-    getUsageStats: getClaudeUsageStatsAction,
-    getRateLimits: getClaudeRateLimitsAction,
-  },
+  usageWidget: (
+    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
+  ),
   port: 2400,
 };

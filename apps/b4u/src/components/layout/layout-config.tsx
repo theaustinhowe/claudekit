@@ -1,3 +1,4 @@
+import { UsageSection } from "@devkit/claude-usage/components/usage-section";
 import type { AppLayoutConfig } from "@devkit/ui/components/shared-layout";
 import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
@@ -9,9 +10,8 @@ export const b4uLayoutConfig: AppLayoutConfig = {
     wordmark: <Image src="/logo.png" alt="B4U" width={859} height={529} className="h-10 w-auto" />,
   },
   nav: [],
-  claudeUsage: {
-    getUsageStats: getClaudeUsageStatsAction,
-    getRateLimits: getClaudeRateLimitsAction,
-  },
+  usageWidget: (
+    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
+  ),
   port: 2300,
 };

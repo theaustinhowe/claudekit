@@ -36,7 +36,7 @@ export function AppLayout({
         header={
           <>
             <SharedHeader
-              claudeUsage={config.claudeUsage}
+              usageWidget={config.usageWidget}
               statusIndicator={statusIndicator}
               mobileMenuButton={<MobileMenuButton onClick={() => setMobileMenuOpen(true)} />}
             />

@@ -1,3 +1,4 @@
+import { UsageSection } from "@devkit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavItem } from "@devkit/ui/components/shared-layout";
 import { Archive, CircleDot, FolderTree, LayoutDashboard, Search, Settings } from "lucide-react";
 import Image from "next/image";
@@ -25,9 +26,8 @@ export const gogoLayoutConfig: AppLayoutConfig = {
     { icon: Search, label: "Research", href: "/research" },
     { icon: FolderTree, label: "Workspaces", href: "/worktrees" },
   ],
-  claudeUsage: {
-    getUsageStats: getClaudeUsageStatsAction,
-    getRateLimits: getClaudeRateLimitsAction,
-  },
+  usageWidget: (
+    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
+  ),
   port: 2200,
 };

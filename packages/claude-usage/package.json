@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
-    "./components/*": "./src/components/*.tsx"
+    "./components/*": "./src/components/*.tsx",
+    "./components/usage-section": "./src/components/usage-section.tsx"
   },
   "typesVersions": {
     "*": {
@@ -17,6 +18,9 @@
       ],
       "components/*": [
         "src/components/*.tsx"
+      ],
+      "components/usage-section": [
+        "src/components/usage-section.tsx"
       ]
     }
   },
@@ -28,8 +32,14 @@
     "lucide-react": "^0.563.0"
   },
   "peerDependencies": {
+    "@devkit/hooks": "workspace:*",
     "@devkit/ui": "workspace:*",
     "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@devkit/hooks": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

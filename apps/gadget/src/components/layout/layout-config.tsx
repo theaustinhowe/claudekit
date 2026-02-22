@@ -1,3 +1,4 @@
+import { UsageSection } from "@devkit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavGroup } from "@devkit/ui/components/shared-layout";
 import { FolderGit2, FolderKanban, Hammer, LayoutDashboard, Puzzle, ScanSearch, Settings, Shield } from "lucide-react";
 import Image from "next/image";
@@ -44,9 +45,8 @@ export const gadgetLayoutConfig: AppLayoutConfig = {
     { label: "Repos", href: "/repositories", icon: FolderGit2 },
     { label: "Projects", href: "/projects", icon: FolderKanban },
   ],
-  claudeUsage: {
-    getUsageStats: getClaudeUsageStatsAction,
-    getRateLimits: getClaudeRateLimitsAction,
-  },
+  usageWidget: (
+    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
+  ),
   port: 2100,
 };

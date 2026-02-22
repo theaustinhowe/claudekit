@@ -27,15 +27,6 @@ export interface LogoConfig {
 }
 
 // ---------------------------------------------------------------------------
-// Claude Usage (dependency injection for server actions)
-// ---------------------------------------------------------------------------
-
-export interface ClaudeUsageActions {
-  getUsageStats: () => Promise<unknown>;
-  getRateLimits: () => Promise<unknown>;
-}
-
-// ---------------------------------------------------------------------------
 // Cross-app footer links
 // ---------------------------------------------------------------------------
 
@@ -55,7 +46,7 @@ export interface AppLayoutConfig {
   nav: NavItem[] | NavGroup[];
   bottomNav?: NavItem[];
   mobileNav?: NavItem[];
-  claudeUsage?: ClaudeUsageActions;
+  usageWidget?: ReactNode;
   port: number;
 }
 

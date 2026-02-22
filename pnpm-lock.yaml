@@ -488,6 +488,9 @@ importers:
 
   packages/claude-usage:
     dependencies:
+      '@devkit/hooks':
+        specifier: workspace:*
+        version: link:../hooks
       '@devkit/ui':
         specifier: workspace:*
         version: link:../ui
@@ -683,9 +686,6 @@ importers:
         specifier: ^3.4.0
         version: 3.4.1
     devDependencies:
-      '@devkit/claude-usage':
-        specifier: workspace:*
-        version: link:../claude-usage
       '@devkit/hooks':
         specifier: workspace:*
         version: link:../hooks
