@@ -1,6 +1,6 @@
 {
-  "name": "Inside",
-  "short_name": "Inside",
+  "name": "Inspector",
+  "short_name": "Inspector",
   "description": "GitHub PR analysis, skill building, comment resolution",
   "start_url": "/",
   "icons": [
