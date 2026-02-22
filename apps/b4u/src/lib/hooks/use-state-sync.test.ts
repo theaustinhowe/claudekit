@@ -32,7 +32,6 @@ vi.mock("@/lib/store", () => ({
   useApp: () => ({ state: mockState, dispatch: vi.fn() }),
 }));
 
-// biome-ignore lint/suspicious/noConfusingVoidType: matching React's useEffect signature
 type EffectCallback = () => undefined | (() => void);
 type EventHandler = (...args: never[]) => unknown;
 

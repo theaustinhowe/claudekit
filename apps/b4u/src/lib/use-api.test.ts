@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Track hook state
 // ---------------------------------------------------------------------------
 
-// biome-ignore lint/suspicious/noConfusingVoidType: matching React's useEffect signature
 type EffectCallback = () => undefined | (() => void);
 
 // Collect effect callbacks for manual execution

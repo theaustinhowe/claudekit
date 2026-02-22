@@ -12,8 +12,8 @@ vi.mock("date-fns", () => ({
 
 // Mock next/image
 vi.mock("next/image", () => ({
-  // biome-ignore lint/performance/noImgElement: mock for testing
   default: ({ alt, ...props }: { alt: string; src: string; width: number; height: number }) => (
+    // biome-ignore lint/performance/noImgElement: test mock for next/image
     <img alt={alt} {...props} />
   ),
 }));

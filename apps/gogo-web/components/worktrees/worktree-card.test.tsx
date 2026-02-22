@@ -20,20 +20,22 @@ Object.assign(navigator, {
   },
 });
 
+const defaultJob = {
+  id: "job-1",
+  issueNumber: 42,
+  issueTitle: "Fix authentication bug",
+  status: "running",
+  prNumber: null,
+  prUrl: null,
+  updatedAt: "2024-01-01T00:00:00Z",
+};
+
 function makeWorktree(overrides: Partial<WorktreeInfo> = {}): WorktreeInfo {
   return {
     path: "/home/user/worktrees/agent-issue-42",
     branch: "agent/issue-42-fix-auth",
     commit: "abc123",
-    job: {
-      id: "job-1",
-      issueNumber: 42,
-      issueTitle: "Fix authentication bug",
-      status: "running",
-      prNumber: null,
-      prUrl: null,
-      updatedAt: "2024-01-01T00:00:00Z",
-    },
+    job: defaultJob,
     repository: {
       id: "repo-1",
       owner: "acme",
@@ -81,7 +83,7 @@ describe("WorktreeCard", () => {
   });
 
   it("renders a status badge for the job", () => {
-    render(<WorktreeCard worktree={makeWorktree({ job: { ...makeWorktree().job!, status: "done" } })} />);
+    render(<WorktreeCard worktree={makeWorktree({ job: { ...defaultJob, status: "done" } })} />);
 
     expect(screen.getByText("Done")).toBeInTheDocument();
   });
@@ -104,7 +106,7 @@ describe("WorktreeCard", () => {
   it("renders PR link when prNumber is present", () => {
     const worktree = makeWorktree({
       job: {
-        ...makeWorktree().job!,
+        ...defaultJob,
         prNumber: 99,
         prUrl: "https://github.com/acme/my-project/pull/99",
       },
@@ -147,7 +149,7 @@ describe("WorktreeCard", () => {
   it("shows cleanup button for done jobs", () => {
     const onCleanup = vi.fn();
     const worktree = makeWorktree({
-      job: { ...makeWorktree().job!, status: "done" },
+      job: { ...defaultJob, status: "done" },
     });
     render(<WorktreeCard worktree={worktree} onCleanup={onCleanup} />);
 
@@ -158,7 +160,7 @@ describe("WorktreeCard", () => {
   it("disables cleanup button for running jobs with tooltip reason", () => {
     const onCleanup = vi.fn();
     const worktree = makeWorktree({
-      job: { ...makeWorktree().job!, status: "running" },
+      job: { ...defaultJob, status: "running" },
     });
     render(<WorktreeCard worktree={worktree} onCleanup={onCleanup} />);
 
