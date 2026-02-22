@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { captureScreenshot as playwrightScreenshot } from "@devkit/playwright";
 import { expandTilde } from "@/lib/utils";
 
 const SCREENSHOTS_DIR = path.join(expandTilde("~"), ".gadget", "screenshots");
@@ -13,9 +14,6 @@ interface ScreenshotResult {
 
 export async function captureScreenshot(projectId: string, port: number): Promise<ScreenshotResult | null> {
   try {
-    // Dynamic import for playwright (may not be installed)
-    const { chromium } = await import("playwright");
-
     const projectDir = path.join(SCREENSHOTS_DIR, projectId);
     fs.mkdirSync(projectDir, { recursive: true });
 
@@ -23,35 +21,21 @@ export async function captureScreenshot(projectId: string, port: number): Promis
     const fileName = `${timestamp}.png`;
     const filePath = path.join(projectDir, fileName);
 
-    const browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage({
+    await playwrightScreenshot(`http://localhost:${port}`, {
       viewport: { width: 1280, height: 800 },
+      path: filePath,
+      navigation: { timeout: 30_000, settleMs: 2000 },
     });
 
-    try {
-      await page.goto(`http://localhost:${port}`, {
-        waitUntil: "networkidle",
-        timeout: 30_000,
-      });
+    const stats = fs.statSync(filePath);
 
-      // Extra wait for any animations/transitions to settle
-      await page.waitForTimeout(2000);
-
-      await page.screenshot({ path: filePath, fullPage: false });
-
-      const stats = fs.statSync(filePath);
-
-      return {
-        filePath,
-        width: 1280,
-        height: 800,
-        fileSize: stats.size,
-      };
-    } finally {
-      await browser.close();
-    }
+    return {
+      filePath,
+      width: 1280,
+      height: 800,
+      fileSize: stats.size,
+    };
   } catch {
-    // Graceful degradation — Playwright may not be installed or screenshot may fail
     return null;
   }
 }

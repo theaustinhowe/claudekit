@@ -1,3 +1,6 @@
+import { createVideoSession, finalizeVideo, navigateTo, type Page } from "@devkit/playwright";
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import type { ScriptStep } from "@/lib/types";
 
 interface RecordFlowOptions {
@@ -16,11 +19,6 @@ interface RecordingResult {
 export async function recordFlow(options: RecordFlowOptions): Promise<RecordingResult> {
   const { serverUrl, flowId, steps, outputDir, onProgress } = options;
 
-  // Dynamic import to avoid requiring playwright at startup
-  const { chromium } = await import("playwright");
-  const { join } = await import("node:path");
-  const { mkdir } = await import("node:fs/promises");
-
   await mkdir(outputDir, { recursive: true });
 
   const videoDir = join(outputDir, `${flowId}-raw`);
@@ -28,13 +26,11 @@ export async function recordFlow(options: RecordFlowOptions): Promise<RecordingR
 
   onProgress?.("Launching browser", 0);
 
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
+  const session = await createVideoSession({
+    videoDir,
     viewport: { width: 1920, height: 1080 },
-    recordVideo: { dir: videoDir, size: { width: 1920, height: 1080 } },
   });
-
-  const page = await context.newPage();
+  const page = session.page;
   let totalDuration = 0;
 
   try {
@@ -46,10 +42,7 @@ export async function recordFlow(options: RecordFlowOptions): Promise<RecordingR
       // Navigate if URL changed
       const fullUrl = `${serverUrl}${step.url}`;
       if (page.url() !== fullUrl) {
-        await page.goto(fullUrl, { waitUntil: "networkidle", timeout: 15000 }).catch(() => {
-          // Fallback: just wait for load
-          return page.goto(fullUrl, { waitUntil: "load", timeout: 15000 });
-        });
+        await navigateTo(page, fullUrl, { timeout: 15000, fallbackWaitUntil: "load" });
       }
 
       // Execute the step action
@@ -61,26 +54,16 @@ export async function recordFlow(options: RecordFlowOptions): Promise<RecordingR
       await page.waitForTimeout(durationMs);
     }
   } finally {
-    await context.close();
-    await browser.close();
+    await session.close();
   }
 
-  // Find the recorded video file
-  const fs = await import("node:fs");
-  const files = fs.readdirSync(videoDir).filter((f: string) => f.endsWith(".webm"));
-  if (files.length === 0) throw new Error("No video file produced");
-
-  const srcVideo = join(videoDir, files[0]);
   const destVideo = join(outputDir, `${flowId}.webm`);
-  fs.renameSync(srcVideo, destVideo);
-
-  // Cleanup raw dir
-  fs.rmSync(videoDir, { recursive: true, force: true });
+  finalizeVideo(videoDir, destVideo);
 
   return { videoPath: destVideo, durationSeconds: totalDuration };
 }
 
-async function executeStep(page: import("playwright").Page, step: ScriptStep): Promise<void> {
+async function executeStep(page: Page, step: ScriptStep): Promise<void> {
   const action = step.action.toLowerCase();
 
   // Try to interpret the action string
