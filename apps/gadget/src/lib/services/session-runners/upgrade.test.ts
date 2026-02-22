@@ -86,9 +86,7 @@ describe("upgrade runner", () => {
 
   it("throws when no pending tasks", async () => {
     vi.mocked(getGeneratorProject).mockResolvedValue(defaultProject as never);
-    vi.mocked(getUpgradeTasks).mockResolvedValue([
-      { id: "t1", status: "completed" },
-    ] as never);
+    vi.mocked(getUpgradeTasks).mockResolvedValue([{ id: "t1", status: "completed" }] as never);
 
     const runner = createUpgradeRunner({}, "proj1");
 
@@ -181,9 +179,7 @@ describe("upgrade runner", () => {
 
   it("throws when single task is already completed", async () => {
     vi.mocked(getGeneratorProject).mockResolvedValue(defaultProject as never);
-    vi.mocked(getUpgradeTasks).mockResolvedValue([
-      { ...pendingTask, status: "completed" },
-    ] as never);
+    vi.mocked(getUpgradeTasks).mockResolvedValue([{ ...pendingTask, status: "completed" }] as never);
 
     const runner = createUpgradeRunner({ taskId: "t1" }, "proj1");
 
@@ -200,10 +196,7 @@ describe("upgrade runner", () => {
     const runner = createUpgradeRunner({}, "proj1");
     await runner({ onProgress, signal: new AbortController().signal, sessionId: "s1" });
 
-    expect(safeGitCommit).toHaveBeenCalledWith(
-      expect.stringContaining("my-app"),
-      expect.stringContaining("Setup DB"),
-    );
+    expect(safeGitCommit).toHaveBeenCalledWith(expect.stringContaining("my-app"), expect.stringContaining("Setup DB"));
   });
 
   it("archives project on full success (non-single-task mode)", async () => {
@@ -235,10 +228,7 @@ describe("upgrade runner", () => {
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
 
     // safeGitCommit should only be called for the individual task, not a final commit
-    expect(safeGitCommit).not.toHaveBeenCalledWith(
-      expect.anything(),
-      "Upgrade: remaining changes",
-    );
+    expect(safeGitCommit).not.toHaveBeenCalledWith(expect.anything(), "Upgrade: remaining changes");
     expect(updateGeneratorProject).not.toHaveBeenCalledWith("proj1", { status: "archived" });
   });
 
@@ -256,9 +246,7 @@ describe("upgrade runner", () => {
 
   it("uses env_setup tools for env_setup tasks", async () => {
     vi.mocked(getGeneratorProject).mockResolvedValue(defaultProject as never);
-    vi.mocked(getUpgradeTasks).mockResolvedValue([
-      { ...pendingTask, step_type: "env_setup" },
-    ] as never);
+    vi.mocked(getUpgradeTasks).mockResolvedValue([{ ...pendingTask, step_type: "env_setup" }] as never);
     vi.mocked(runClaude).mockResolvedValue({
       exitCode: 0,
       stdout: '[{"name":"DATABASE_URL","required":true}]',
@@ -279,9 +267,7 @@ describe("upgrade runner", () => {
 
   it("uses validate tools for validate tasks", async () => {
     vi.mocked(getGeneratorProject).mockResolvedValue(defaultProject as never);
-    vi.mocked(getUpgradeTasks).mockResolvedValue([
-      { ...pendingTask, step_type: "validate" },
-    ] as never);
+    vi.mocked(getUpgradeTasks).mockResolvedValue([{ ...pendingTask, step_type: "validate" }] as never);
     vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "ok", stderr: "" } as never);
 
     const runner = createUpgradeRunner({}, "proj1");

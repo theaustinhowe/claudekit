@@ -108,7 +108,9 @@ describe("cleanup runner", () => {
     const result = await runner({ onProgress, signal: new AbortController().signal, sessionId: "s1" });
 
     expect(result).toEqual({ result: { removedCount: 0 } });
-    const logCalls = onProgress.mock.calls.filter(([evt]) => evt.type === "log" && evt.log?.includes("Failed to remove"));
+    const logCalls = onProgress.mock.calls.filter(
+      ([evt]) => evt.type === "log" && evt.log?.includes("Failed to remove"),
+    );
     expect(logCalls.length).toBe(1);
   });
 
@@ -194,9 +196,9 @@ describe("cleanup runner", () => {
 
     const runner = createCleanupRunner({ repoId: "r1" });
 
-    await expect(
-      runner({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" }),
-    ).rejects.toThrow("Aborted");
+    await expect(runner({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" })).rejects.toThrow(
+      "Aborted",
+    );
   });
 
   it("handles git commit error gracefully", async () => {

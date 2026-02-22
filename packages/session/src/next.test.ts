@@ -232,10 +232,7 @@ describe("createCancelHandler", () => {
     const handler = createCancelHandler({ manager });
     await handler(makeMockRequest(), makeRouteContext({ sessionId: "fail-session" }));
 
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("fail-session"),
-      expect.any(Error),
-    );
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining("fail-session"), expect.any(Error));
 
     consoleError.mockRestore();
   });
@@ -423,10 +420,7 @@ describe("createSessionsListHandler", () => {
     const request = new Request("http://localhost/api/sessions");
     await handler(request);
 
-    expect(consoleError).toHaveBeenCalledWith(
-      "[sessions] Error listing sessions:",
-      expect.any(Error),
-    );
+    expect(consoleError).toHaveBeenCalledWith("[sessions] Error listing sessions:", expect.any(Error));
 
     consoleError.mockRestore();
   });

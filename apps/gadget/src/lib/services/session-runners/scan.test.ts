@@ -86,11 +86,10 @@ describe("scan runner", () => {
     const runner = createScanRunner({ scanRoots: ["/home/user/projects"] });
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
 
-    expect(execute).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.stringContaining("INSERT INTO scan_root_entries"),
-      ["gen-id", "existing-root-id"],
-    );
+    expect(execute).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("INSERT INTO scan_root_entries"), [
+      "gen-id",
+      "existing-root-id",
+    ]);
   });
 
   it("discovers and stores repos", async () => {
@@ -156,9 +155,7 @@ describe("scan runner", () => {
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
 
     expect(runAudit).toHaveBeenCalledTimes(1);
-    expect(runAudit).toHaveBeenCalledWith(
-      expect.objectContaining({ repoId: "r1" }),
-    );
+    expect(runAudit).toHaveBeenCalledWith(expect.objectContaining({ repoId: "r1" }));
   });
 
   it("filters repos by selectedRepoPaths", async () => {
@@ -175,9 +172,7 @@ describe("scan runner", () => {
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
 
     expect(runAudit).toHaveBeenCalledTimes(1);
-    expect(runAudit).toHaveBeenCalledWith(
-      expect.objectContaining({ repoId: "r2" }),
-    );
+    expect(runAudit).toHaveBeenCalledWith(expect.objectContaining({ repoId: "r2" }));
   });
 
   it("plans and stores fixes for audited repos", async () => {
@@ -212,7 +207,7 @@ describe("scan runner", () => {
     vi.mocked(queryAll)
       .mockResolvedValueOnce([defaultPolicy]) // policies
       .mockResolvedValueOnce([{ id: "r1", name: "repo-a", local_path: "/repos/a" }]); // repos
-    vi.mocked(runAudit).mockRejectedValue(new DOMException("Aborted", "AbortError"));
+    vi.mocked(runAudit).mockRejectedValueOnce(new DOMException("Aborted", "AbortError"));
 
     const runner = createScanRunner({});
 
@@ -251,9 +246,9 @@ describe("scan runner", () => {
 
     const runner = createScanRunner({});
 
-    await expect(
-      runner({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" }),
-    ).rejects.toThrow("Aborted");
+    await expect(runner({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" })).rejects.toThrow(
+      "Aborted",
+    );
   });
 
   it("emits progress events for each phase", async () => {
@@ -263,9 +258,7 @@ describe("scan runner", () => {
     const runner = createScanRunner({ scanRoots: ["/repos"] });
     await runner({ onProgress, signal: new AbortController().signal, sessionId: "s1" });
 
-    const phases = onProgress.mock.calls
-      .filter(([evt]) => evt.phase)
-      .map(([evt]) => evt.phase);
+    const phases = onProgress.mock.calls.filter(([evt]) => evt.phase).map(([evt]) => evt.phase);
     expect(phases).toContain("Discovering");
     expect(phases).toContain("Analyzing");
     expect(phases).toContain("Generating Fixes");

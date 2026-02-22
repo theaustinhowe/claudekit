@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs/promises", () => ({
   default: {
@@ -27,10 +27,12 @@ vi.mock("@/lib/utils", () => ({
 
 import fs from "node:fs/promises";
 import { getGeneratorProject } from "@/lib/actions/generator-projects";
+import { expandTilde } from "@/lib/utils";
 import { GET } from "./route";
 
 const mockGetGeneratorProject = vi.mocked(getGeneratorProject);
 const mockReadFile = vi.mocked(fs.readFile);
+const mockExpandTilde = vi.mocked(expandTilde);
 
 const mockProject = {
   id: "proj-1",
@@ -73,12 +75,9 @@ function createParams(projectId = "proj-1") {
 
 describe("GET /api/projects/[projectId]/raw", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetGeneratorProject.mockResolvedValue(mockProject);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
+    mockGetGeneratorProject.mockResolvedValue(mockProject as never);
+    mockExpandTilde.mockImplementation((p: string) => p.replace("~", "/home/testuser"));
   });
 
   it("returns 400 when path parameter is missing", async () => {

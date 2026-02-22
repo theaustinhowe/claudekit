@@ -3,10 +3,7 @@ import { runClaude } from "@devkit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 
-export function createSplitAnalysisRunner(
-  metadata: Record<string, unknown>,
-  _contextId?: string,
-): SessionRunner {
+export function createSplitAnalysisRunner(metadata: Record<string, unknown>, _contextId?: string): SessionRunner {
   return async ({ onProgress, signal, sessionId }) => {
     const prId = metadata.prId as string;
 
@@ -34,7 +31,9 @@ export function createSplitAnalysisRunner(
       files_changed: number;
       lines_added: number;
       lines_deleted: number;
-    }>(db, "SELECT id, repo_id, number, title, files_changed, lines_added, lines_deleted FROM prs WHERE id = ?", [prId]);
+    }>(db, "SELECT id, repo_id, number, title, files_changed, lines_added, lines_deleted FROM prs WHERE id = ?", [
+      prId,
+    ]);
 
     if (!pr) throw new Error(`PR not found: ${prId}`);
 

@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock external dependencies before importing the module under test
 vi.mock("node:child_process", () => ({
@@ -28,6 +28,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { execute, getDb, queryOne } from "@/lib/db";
+import { generateId, nowTimestamp } from "@/lib/utils";
 import { generateProject } from "./generator";
 
 const mockQueryOne = vi.mocked(queryOne);
@@ -49,13 +50,14 @@ describe("generateProject", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     process.env.HOME = "/home/testuser";
+    // Re-establish default mock behavior after resetAllMocks
+    vi.mocked(getDb).mockResolvedValue({} as never);
+    mockExecute.mockResolvedValue(undefined as never);
+    vi.mocked(generateId).mockReturnValue("test-run-id");
+    vi.mocked(nowTimestamp).mockReturnValue("2026-01-01T00:00:00.000Z");
     mockExistsSync.mockReturnValue(false);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it("returns error when template is not found", async () => {

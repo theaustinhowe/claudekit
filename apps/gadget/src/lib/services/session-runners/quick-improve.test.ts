@@ -55,6 +55,7 @@ import { createQuickImproveRunner } from "./quick-improve";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(fs.existsSync).mockReturnValue(true);
 });
 
 describe("quick-improve runner", () => {

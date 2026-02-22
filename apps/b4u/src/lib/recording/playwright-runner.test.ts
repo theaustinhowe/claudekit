@@ -159,10 +159,7 @@ describe("recordFlow", () => {
     await recordFlow({
       serverUrl: "http://localhost:3000",
       flowId: "progress-flow",
-      steps: [
-        makeStep({ action: "Do step one" }),
-        makeStep({ id: "step-2", stepNumber: 2, action: "Do step two" }),
-      ],
+      steps: [makeStep({ action: "Do step one" }), makeStep({ id: "step-2", stepNumber: 2, action: "Do step two" })],
       outputDir: "/tmp/output",
       onProgress,
     });

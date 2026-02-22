@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs/promises", () => ({
   default: {
@@ -27,11 +27,13 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import fs from "node:fs/promises";
-import { queryOne } from "@/lib/db";
+import { getDb, queryOne } from "@/lib/db";
+import { expandTilde } from "@/lib/utils";
 import { GET } from "./route";
 
 const mockQueryOne = vi.mocked(queryOne);
 const mockReadFile = vi.mocked(fs.readFile);
+const mockExpandTilde = vi.mocked(expandTilde);
 
 function createRequest(filePath?: string): Request {
   const url = filePath
@@ -46,12 +48,10 @@ function createParams(repoId = "repo-1") {
 
 describe("GET /api/repos/[repoId]/raw", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.mocked(getDb).mockResolvedValue({} as never);
     mockQueryOne.mockResolvedValue({ local_path: "/home/testuser/repos/my-repo" });
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    mockExpandTilde.mockImplementation((p: string) => p.replace("~", "/home/testuser"));
   });
 
   it("returns 400 when path parameter is missing", async () => {

@@ -2,10 +2,7 @@ import { runClaude } from "@devkit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 
-export function createSkillAnalysisRunner(
-  metadata: Record<string, unknown>,
-  _contextId?: string,
-): SessionRunner {
+export function createSkillAnalysisRunner(metadata: Record<string, unknown>, _contextId?: string): SessionRunner {
   return async ({ onProgress, signal, sessionId }) => {
     const repoId = metadata.repoId as string;
     const prNumbers = metadata.prNumbers as number[];

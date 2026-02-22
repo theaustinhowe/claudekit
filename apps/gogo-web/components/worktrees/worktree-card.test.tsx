@@ -95,9 +95,10 @@ describe("WorktreeCard", () => {
   it("shows the branch as title for orphaned worktrees", () => {
     render(<WorktreeCard worktree={makeWorktree({ job: null })} />);
 
-    // The branch should be used as the heading for orphaned worktrees
-    const heading = screen.getByText("agent/issue-42-fix-auth");
-    expect(heading).toBeInTheDocument();
+    // The branch should be used as the heading (h3) for orphaned worktrees
+    const headings = screen.getAllByText("agent/issue-42-fix-auth");
+    const h3 = headings.find((el) => el.tagName === "H3");
+    expect(h3).toBeDefined();
   });
 
   it("renders PR link when prNumber is present", () => {
@@ -137,9 +138,7 @@ describe("WorktreeCard", () => {
 
   it("shows Remove button for orphaned worktrees with onCleanupOrphaned", () => {
     const onCleanupOrphaned = vi.fn();
-    render(
-      <WorktreeCard worktree={makeWorktree({ job: null })} onCleanupOrphaned={onCleanupOrphaned} />,
-    );
+    render(<WorktreeCard worktree={makeWorktree({ job: null })} onCleanupOrphaned={onCleanupOrphaned} />);
 
     const removeButton = screen.getByRole("button", { name: /remove/i });
     expect(removeButton).toBeInTheDocument();
@@ -172,9 +171,7 @@ describe("WorktreeCard", () => {
     render(<WorktreeCard worktree={makeWorktree()} />);
 
     const links = screen.getAllByRole("link");
-    const githubLink = links.find((l) =>
-      l.getAttribute("href")?.includes("github.com/acme/my-project/issues/42"),
-    );
+    const githubLink = links.find((l) => l.getAttribute("href")?.includes("github.com/acme/my-project/issues/42"));
     expect(githubLink).toBeDefined();
   });
 

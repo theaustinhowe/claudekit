@@ -1,17 +1,17 @@
 "use client";
 
+import { useSessionStream } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
-import { Progress } from "@devkit/ui/components/progress";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { useSessionStream } from "@devkit/hooks/use-session-stream";
-import { ArrowDown, Check, ClipboardCopy, Scissors, Square } from "lucide-react";
+import { ArrowDown, ClipboardCopy, Scissors } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { SessionProgress } from "@/components/session-progress";
 import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
 import { SubPRCard } from "@/components/splitter/sub-pr-card";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "@/lib/actions/splitter";
@@ -36,48 +36,45 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
   const [plan, setPlan] = useState<{ prNumber: number; prTitle: string; totalLines: number; subPRs: SubPR[] } | null>(
     null,
   );
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
   const [selectedFile, setSelectedFile] = useState<{ path: string; subPRTitle: string } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const handleSessionComplete = useCallback(
-    (event: { type: string; data?: Record<string, unknown> }) => {
-      if (event.type === "done") {
-        const resultPlanId = (event.data as { planId?: string })?.planId;
-        if (resultPlanId) {
-          setPlanId(resultPlanId);
-          startTransition(async () => {
-            const result = await getSplitPlan(resultPlanId);
-            if (result) {
-              setPlan({
-                prNumber: result.prNumber,
-                prTitle: result.prTitle,
-                totalLines: result.total_lines,
-                subPRs: result.subPRs,
-              });
-              setPhase("results");
-              toast.success("Split plan ready", {
-                description: `Generated ${result.subPRs.length} sub-PRs`,
-              });
-            } else {
-              toast.error("No split plan generated");
-              setPhase("select");
-            }
-          });
-        } else {
-          setPhase("select");
-        }
-      } else if (event.type === "error") {
-        toast.error("Split analysis failed", { description: event.data?.message as string });
-        setPhase("select");
-      } else if (event.type === "cancelled") {
-        toast.info("Analysis cancelled");
+  const handleSessionComplete = useCallback((event: { type: string; data?: Record<string, unknown> }) => {
+    if (event.type === "done") {
+      const resultPlanId = (event.data as { planId?: string })?.planId;
+      if (resultPlanId) {
+        setPlanId(resultPlanId);
+        startTransition(async () => {
+          const result = await getSplitPlan(resultPlanId);
+          if (result) {
+            setPlan({
+              prNumber: result.prNumber,
+              prTitle: result.prTitle,
+              totalLines: result.total_lines,
+              subPRs: result.subPRs,
+            });
+            setPhase("results");
+            toast.success("Split plan ready", {
+              description: `Generated ${result.subPRs.length} sub-PRs`,
+            });
+          } else {
+            toast.error("No split plan generated");
+            setPhase("select");
+          }
+        });
+      } else {
         setPhase("select");
       }
-      setSessionId(null);
-    },
-    [startTransition],
-  );
+    } else if (event.type === "error") {
+      toast.error("Split analysis failed", { description: event.data?.message as string });
+      setPhase("select");
+    } else if (event.type === "cancelled") {
+      toast.info("Analysis cancelled");
+      setPhase("select");
+    }
+    setSessionId(null);
+  }, []);
 
   const stream = useSessionStream({
     sessionId,
@@ -106,37 +103,7 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
 
   if (phase === "analyzing") {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8">
-        <Scissors className="h-12 w-12 text-primary mb-6 animate-pulse" />
-        <div className="w-full max-w-md space-y-6">
-          <Progress value={stream.progress ?? 0} className="h-2" />
-          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
-          <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {stream.logs.slice(-8).map((entry, i) => (
-              <motion.div
-                key={`${i}-${entry.log}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2 text-sm"
-              >
-                {entry.log.includes("[SUCCESS]") ? (
-                  <Check className="h-4 w-4 text-status-success shrink-0" />
-                ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent shrink-0" />
-                )}
-                <span className="text-muted-foreground truncate">{entry.log}</span>
-              </motion.div>
-            ))}
-          </div>
-          {stream.elapsed > 0 && (
-            <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>
-          )}
-          <Button variant="outline" className="w-full" onClick={stream.cancel}>
-            <Square className="h-3 w-3 mr-2" />
-            Cancel
-          </Button>
-        </div>
-      </div>
+      <SessionProgress stream={stream} icon={<Scissors className="h-12 w-12 text-primary mb-6 animate-pulse" />} />
     );
   }
 

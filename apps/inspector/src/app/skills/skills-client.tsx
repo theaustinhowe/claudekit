@@ -1,17 +1,17 @@
 "use client";
 
+import { useSessionStream } from "@devkit/hooks";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Progress } from "@devkit/ui/components/progress";
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Slider } from "@devkit/ui/components/slider";
-import { useSessionStream } from "@devkit/hooks/use-session-stream";
-import { Brain, Check, Filter, GitCompareArrows, History, Square, TrendingUp } from "lucide-react";
+import { Brain, Filter, GitCompareArrows, History, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { SessionProgress } from "@/components/session-progress";
 import { AnalysisComparison } from "@/components/skills/analysis-comparison";
 import { AnalysisHistory } from "@/components/skills/analysis-history";
 import { SkillCard } from "@/components/skills/skill-card";
@@ -201,33 +201,30 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
   const [trendData, setTrendData] = useState<SkillTrendPoint[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const handleSessionComplete = useCallback(
-    (event: { type: string; data?: Record<string, unknown> }) => {
-      if (event.type === "done") {
-        const analysisId = (event.data as { analysisId?: string })?.analysisId;
-        if (analysisId) {
-          startTransition(async () => {
-            const results = await getSkillsForAnalysis(analysisId);
-            setSkills(results);
-            setPhase("results");
-            toast.success("Skill analysis complete", {
-              description: `Found ${results.length} skill pattern${results.length !== 1 ? "s" : ""}`,
-            });
-          });
-        } else {
+  const handleSessionComplete = useCallback((event: { type: string; data?: Record<string, unknown> }) => {
+    if (event.type === "done") {
+      const analysisId = (event.data as { analysisId?: string })?.analysisId;
+      if (analysisId) {
+        startTransition(async () => {
+          const results = await getSkillsForAnalysis(analysisId);
+          setSkills(results);
           setPhase("results");
-        }
-      } else if (event.type === "error") {
-        toast.error("Skill analysis failed", { description: event.data?.message as string });
-        setPhase("select");
-      } else if (event.type === "cancelled") {
-        toast.info("Analysis cancelled");
-        setPhase("select");
+          toast.success("Skill analysis complete", {
+            description: `Found ${results.length} skill pattern${results.length !== 1 ? "s" : ""}`,
+          });
+        });
+      } else {
+        setPhase("results");
       }
-      setSessionId(null);
-    },
-    [startTransition],
-  );
+    } else if (event.type === "error") {
+      toast.error("Skill analysis failed", { description: event.data?.message as string });
+      setPhase("select");
+    } else if (event.type === "cancelled") {
+      toast.info("Analysis cancelled");
+      setPhase("select");
+    }
+    setSessionId(null);
+  }, []);
 
   const stream = useSessionStream({
     sessionId,
@@ -265,39 +262,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
   };
 
   if (phase === "analyzing") {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-8">
-        <Brain className="h-12 w-12 text-primary mb-6 animate-pulse" />
-        <div className="w-full max-w-md space-y-6">
-          <Progress value={stream.progress ?? 0} className="h-2" />
-          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
-          <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {stream.logs.slice(-8).map((entry, i) => (
-              <motion.div
-                key={`${i}-${entry.log}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2 text-sm"
-              >
-                {entry.log.includes("[SUCCESS]") ? (
-                  <Check className="h-4 w-4 text-status-success shrink-0" />
-                ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent shrink-0" />
-                )}
-                <span className="text-muted-foreground truncate">{entry.log}</span>
-              </motion.div>
-            ))}
-          </div>
-          {stream.elapsed > 0 && (
-            <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>
-          )}
-          <Button variant="outline" className="w-full" onClick={stream.cancel}>
-            <Square className="h-3 w-3 mr-2" />
-            Cancel
-          </Button>
-        </div>
-      </div>
-    );
+    return <SessionProgress stream={stream} icon={<Brain className="h-12 w-12 text-primary mb-6 animate-pulse" />} />;
   }
 
   if (phase === "results") {

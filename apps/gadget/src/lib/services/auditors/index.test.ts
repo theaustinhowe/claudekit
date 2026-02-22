@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn().mockResolvedValue({}),
@@ -36,9 +36,10 @@ vi.mock("./structure", () => ({
 }));
 
 import { getEnabledRulesForPolicy } from "@/lib/actions/custom-rules";
-import { execute } from "@/lib/db";
+import { execute, getDb } from "@/lib/db";
 import { discoverConcepts, storeConcepts } from "@/lib/services/concept-scanner";
 import type { Policy } from "@/lib/types";
+import { generateId } from "@/lib/utils";
 import { auditAIFiles } from "./ai-files";
 import { auditCustomRules } from "./custom-rules";
 import { auditDependencies } from "./dependencies";
@@ -80,11 +81,19 @@ const baseOpts = {
 
 describe("runAudit", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
+    // Re-establish default mock behavior after resetAllMocks
+    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(execute).mockResolvedValue(undefined as never);
+    vi.mocked(generateId).mockReturnValue("finding-id-1");
+    mockAuditDependencies.mockReturnValue([]);
+    mockAuditAIFiles.mockReturnValue([]);
+    mockAuditStructure.mockReturnValue([]);
+    mockAuditCustomRules.mockReturnValue([]);
+    mockResolveWorkspacePackages.mockReturnValue([]);
+    mockGetEnabledRulesForPolicy.mockResolvedValue([]);
+    mockDiscoverConcepts.mockReturnValue([]);
+    mockStoreConcepts.mockResolvedValue(undefined as never);
   });
 
   it("runs all auditors and returns combined findings", async () => {
@@ -240,7 +249,7 @@ describe("runAudit", () => {
     mockAuditDependencies.mockReturnValue([]);
     mockAuditStructure.mockReturnValue([]);
 
-    const findings = await runAudit(baseOpts);
+    await runAudit(baseOpts);
 
     // auditDependencies called once for root + 2 for workspace packages
     expect(mockAuditDependencies).toHaveBeenCalledTimes(3);

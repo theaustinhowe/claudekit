@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/actions/generator-projects", () => ({
   getGeneratorProject: vi.fn(),
@@ -23,8 +23,9 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { getGeneratorProject, getMockData, getUiSpec, updateGeneratorProject } from "@/lib/actions/generator-projects";
-import { execute } from "@/lib/db";
+import { execute, getDb } from "@/lib/db";
 import { generateExportFiles, writeExportToDisk } from "@/lib/services/spec-exporter";
+import { generateId, nowTimestamp } from "@/lib/utils";
 import { POST } from "./route";
 
 const mockGetGeneratorProject = vi.mocked(getGeneratorProject);
@@ -77,12 +78,18 @@ const mockProject = {
 
 describe("POST /api/projects/[projectId]/export", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    // Re-establish default mock behavior after resetAllMocks
     mockGetGeneratorProject.mockResolvedValue(mockProject);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    mockGetUiSpec.mockResolvedValue(null);
+    mockGetMockData.mockResolvedValue([] as never);
+    mockUpdateGeneratorProject.mockResolvedValue(undefined as never);
+    mockGenerateExportFiles.mockReturnValue([]);
+    mockWriteExportToDisk.mockResolvedValue({ filesWritten: 5, fullPath: "/tmp/export/my-app" });
+    vi.mocked(getDb).mockResolvedValue({} as never);
+    mockExecute.mockResolvedValue(undefined as never);
+    vi.mocked(generateId).mockReturnValue("run-id-1");
+    vi.mocked(nowTimestamp).mockReturnValue("2026-01-01T00:00:00.000Z");
   });
 
   it("returns 404 when project is not found", async () => {
@@ -128,7 +135,6 @@ describe("POST /api/projects/[projectId]/export", () => {
     };
 
     const res = await POST(createRequest({ spec: customSpec }) as never, createParams());
-    const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(mockGenerateExportFiles).toHaveBeenCalledWith(mockProject, customSpec, expect.anything());
@@ -140,7 +146,6 @@ describe("POST /api/projects/[projectId]/export", () => {
     const customMockData = [{ id: "e1", name: "User", description: "A user", fields: [], sample_rows: [] }];
 
     const res = await POST(createRequest({ mockData: customMockData }) as never, createParams());
-    const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(mockGenerateExportFiles).toHaveBeenCalledWith(mockProject, mockSpec, customMockData);
@@ -206,7 +211,24 @@ describe("POST /api/projects/[projectId]/export", () => {
     expect(body.error).toBe("Export failed");
   });
 
-  it("handles malformed JSON body gracefully", async () => {
+  it("handles malformed JSON body gracefully without crashing", async () => {
+    const req = new Request("http://localhost:2100/api/projects/proj-1/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "not valid json",
+    });
+
+    // The route handles request.json().catch(() => ({})) so it doesn't crash.
+    // Since body.spec is undefined, it falls back to getUiSpec which returns null,
+    // so it returns 400 "No spec found to export".
+    const res = await POST(req as never, createParams());
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("No spec found to export");
+  });
+
+  it("handles malformed JSON body but exports when spec exists in DB", async () => {
     const mockSpec = { version: 1, pages: [], components: [], layouts: [], navigation: { type: "sidebar", items: [] } };
     mockGetUiSpec.mockResolvedValue(mockSpec as never);
 
@@ -217,7 +239,9 @@ describe("POST /api/projects/[projectId]/export", () => {
     });
 
     const res = await POST(req as never, createParams());
-    // The route handles .json().catch(() => ({})) so it should still work
+    const body = await res.json();
+
     expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
   });
 });

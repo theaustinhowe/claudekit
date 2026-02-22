@@ -1,4 +1,4 @@
-import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Mock external modules BEFORE importing the module under test
@@ -56,6 +56,41 @@ vi.mock("react", async () => {
 });
 
 // ---------------------------------------------------------------------------
+// EventSource mock — set up on globalThis BEFORE any imports
+// ---------------------------------------------------------------------------
+
+interface MockESInstance {
+  close: ReturnType<typeof vi.fn>;
+  onmessage: ((evt: { data: string }) => void) | null;
+  onerror: (() => void) | null;
+  triggerMessage: (data: unknown) => void;
+  triggerError: () => void;
+}
+
+const esInstances: MockESInstance[] = [];
+
+function createESInstance(): MockESInstance {
+  const instance: MockESInstance = {
+    close: vi.fn(),
+    onmessage: null,
+    onerror: null,
+    triggerMessage(data: unknown) {
+      this.onmessage?.({ data: JSON.stringify(data) });
+    },
+    triggerError() {
+      this.onerror?.();
+    },
+  };
+  esInstances.push(instance);
+  return instance;
+}
+
+// Set EventSource globally before module evaluation
+(globalThis as unknown as { EventSource: unknown }).EventSource = function MockEventSource() {
+  return createESInstance();
+};
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -67,35 +102,6 @@ function mockFetchResponse(data: unknown, ok = true, status = 200) {
   });
 }
 
-function mockEventSource() {
-  let onmessage: ((evt: { data: string }) => void) | null = null;
-  let onerror: (() => void) | null = null;
-  const instance = {
-    close: vi.fn(),
-    set onmessage(fn: ((evt: { data: string }) => void) | null) {
-      onmessage = fn;
-    },
-    get onmessage() {
-      return onmessage;
-    },
-    set onerror(fn: (() => void) | null) {
-      onerror = fn;
-    },
-    get onerror() {
-      return onerror;
-    },
-    triggerMessage(data: unknown) {
-      onmessage?.({ data: JSON.stringify(data) });
-    },
-    triggerError() {
-      onerror?.();
-    },
-  };
-
-  (globalThis as unknown as { EventSource: unknown }).EventSource = vi.fn(() => instance);
-  return instance;
-}
-
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -105,6 +111,8 @@ describe("usePhaseController", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    esInstances.length = 0;
+
     mockState.currentPhase = 1;
     mockState.runId = null;
     mockState.projectPath = null;
@@ -120,7 +128,6 @@ describe("usePhaseController", () => {
     mockState.messages = [];
 
     globalThis.fetch = mockFetchResponse({});
-    (globalThis as unknown as { EventSource: unknown }).EventSource = vi.fn();
 
     const mod = await import("./phase-controller");
     controller = mod.usePhaseController();
@@ -138,7 +145,6 @@ describe("usePhaseController", () => {
     it("dispatches welcome messages and sets right panel to phase 1", async () => {
       await controller.startPhase1();
 
-      // Should dispatch SET_TYPING true then false (for addAIMessage), then ADD_MESSAGE
       const typingCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_TYPING",
       );
@@ -149,16 +155,13 @@ describe("usePhaseController", () => {
       );
       expect(addMsgCalls.length).toBe(2);
 
-      // First AI message is the welcome
       const firstMsg = (addMsgCalls[0][0] as { message: { content: string } }).message;
       expect(firstMsg.content).toContain("Welcome to B4U");
 
-      // Second AI message asks to select project
       const secondMsg = (addMsgCalls[1][0] as { message: { content: string; actionCard?: { type: string } } }).message;
       expect(secondMsg.content).toContain("project folder");
       expect(secondMsg.actionCard?.type).toBe("folder-select");
 
-      // Should set right panel
       const panelCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_RIGHT_PANEL",
       );
@@ -167,12 +170,10 @@ describe("usePhaseController", () => {
     });
 
     it("does not run if already busy", async () => {
-      // Start two calls concurrently — the second should be a no-op
       const p1 = controller.startPhase1();
       const p2 = controller.startPhase1();
       await Promise.all([p1, p2]);
 
-      // Only one set of messages should be dispatched (from the first call)
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
@@ -195,28 +196,21 @@ describe("usePhaseController", () => {
         tree: [{ name: "src", type: "directory" }],
       });
 
-      // Mock crypto.randomUUID
-      const originalCrypto = globalThis.crypto;
-      globalThis.crypto = { ...originalCrypto, randomUUID: () => "test-run-id" } as Crypto;
+      vi.stubGlobal("crypto", { randomUUID: () => "test-run-id" });
 
       await controller.handleFolderSelected("/home/user/project");
 
-      globalThis.crypto = originalCrypto;
-
-      // Should set run ID
       const runIdCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_RUN_ID",
       );
       expect(runIdCalls.length).toBe(1);
 
-      // Should set project path
       const pathCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_PROJECT_PATH",
       );
       expect(pathCalls.length).toBe(1);
       expect((pathCalls[0][0] as { path: string }).path).toBe("/home/user/project");
 
-      // Should add user message "Selected: ..."
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
@@ -224,7 +218,7 @@ describe("usePhaseController", () => {
         (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "user",
       );
       expect(userMsg).toBeDefined();
-      expect((userMsg![0] as { message: { content: string } }).message.content).toContain("/home/user/project");
+      expect((userMsg?.[0] as { message: { content: string } }).message.content).toContain("/home/user/project");
     });
 
     it("handles scan failure gracefully", async () => {
@@ -234,19 +228,14 @@ describe("usePhaseController", () => {
         json: () => Promise.resolve({ error: "Internal error" }),
       });
 
-      const originalCrypto = globalThis.crypto;
-      globalThis.crypto = { ...originalCrypto, randomUUID: () => "test-run-id-2" } as Crypto;
+      vi.stubGlobal("crypto", { randomUUID: () => "test-run-id-2" });
 
       await controller.handleFolderSelected("/bad/path");
 
-      globalThis.crypto = originalCrypto;
-
-      // Should still set project name (fallback)
       const nameCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_PROJECT_NAME",
       );
       expect(nameCalls.length).toBe(1);
-      // Fallback name is last segment of path
       expect((nameCalls[0][0] as { name: string }).name).toBe("path");
     });
   });
@@ -257,8 +246,6 @@ describe("usePhaseController", () => {
 
   describe("approvePhase", () => {
     it("dispatches user message and completes the phase", async () => {
-      const es = mockEventSource();
-
       globalThis.fetch = vi.fn().mockImplementation((url: string) => {
         if (typeof url === "string" && url.includes("/api/analyze")) {
           return Promise.resolve({
@@ -272,27 +259,26 @@ describe("usePhaseController", () => {
         });
       });
 
-      // Start the approve and immediately trigger session completion
       const promise = controller.approvePhase(1 as 1);
 
-      // Wait a tick for the fetch to complete and EventSource to be created
-      await new Promise((r) => setTimeout(r, 0));
-      es.triggerMessage({ type: "done", data: { routeCount: 5, flowCount: 3 } });
-      await new Promise((r) => setTimeout(r, 0));
-      es.triggerMessage({ type: "done", data: { routeCount: 5, flowCount: 3 } });
+      // Poll until first EventSource is created
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
+      esInstances[0].triggerMessage({ type: "done", data: {} });
+
+      // Poll until second EventSource is created
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(2));
+      esInstances[1].triggerMessage({ type: "done", data: { routeCount: 5, flowCount: 3 } });
 
       await promise;
 
-      // Should dispatch user "Approved" message
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
       const userApproval = addMsgCalls.find(
-        (c: unknown[]) => (c[0] as { message: { role: string; content: string } }).message.role === "user",
+        (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "user",
       );
       expect(userApproval).toBeDefined();
 
-      // Should dispatch COMPLETE_PHASE
       const completeCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "COMPLETE_PHASE",
       );
@@ -301,19 +287,16 @@ describe("usePhaseController", () => {
     });
 
     it("handles errors by restarting from current phase", async () => {
-      // Make the API call fail
       globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
       await controller.approvePhase(1 as 1);
 
-      // Should dispatch RESTART_FROM_PHASE on error
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
       );
       expect(restartCalls.length).toBe(1);
       expect((restartCalls[0][0] as { phase: number }).phase).toBe(1);
 
-      // Should show error message with retry action
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
@@ -332,38 +315,36 @@ describe("usePhaseController", () => {
       );
 
       controller.approvePhase(1 as 1);
-      // Second call should be no-op since first is still running
       await controller.approvePhase(1 as 1);
 
       const completeCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "COMPLETE_PHASE",
       );
-      // Only one COMPLETE_PHASE from the first call
       expect(completeCalls.length).toBe(1);
     });
 
     it("handles phase 6 to 7 transition (audio + merge)", async () => {
-      const es = mockEventSource();
       mockState.currentPhase = 6;
 
-      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      globalThis.fetch = vi.fn().mockImplementation(() => {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ sessionId: `sess-${url}` }),
+          json: () => Promise.resolve({ sessionId: "sess-audio" }),
         });
       });
 
       const promise = controller.approvePhase(6 as 6);
 
-      // Trigger done events for audio and merge sessions
-      await new Promise((r) => setTimeout(r, 0));
-      es.triggerMessage({ type: "done", data: {} });
-      await new Promise((r) => setTimeout(r, 0));
-      es.triggerMessage({ type: "done", data: {} });
+      // Wait for audio generate session EventSource
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
+      esInstances[0].triggerMessage({ type: "done", data: {} });
+
+      // Wait for merge session EventSource
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(2));
+      esInstances[1].triggerMessage({ type: "done", data: {} });
 
       await promise;
 
-      // Should set right panel to phase 7
       const panelCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_RIGHT_PANEL",
       );
@@ -372,7 +353,6 @@ describe("usePhaseController", () => {
     });
 
     it("handles phase 4 to 5 transition (recording)", async () => {
-      const es = mockEventSource();
       mockState.currentPhase = 4;
 
       globalThis.fetch = vi.fn().mockImplementation(() => {
@@ -384,12 +364,11 @@ describe("usePhaseController", () => {
 
       const promise = controller.approvePhase(4 as 4);
 
-      await new Promise((r) => setTimeout(r, 0));
-      es.triggerMessage({ type: "done", data: {} });
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
+      esInstances[0].triggerMessage({ type: "done", data: {} });
 
       await promise;
 
-      // Should set right panel to phase 5
       const panelCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_RIGHT_PANEL",
       );
@@ -402,7 +381,6 @@ describe("usePhaseController", () => {
 
       await controller.approvePhase(5 as 5);
 
-      // Phase 6 is voiceover — no session needed, just panel setup
       const panelCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_RIGHT_PANEL",
       );
@@ -447,7 +425,6 @@ describe("usePhaseController", () => {
 
       await controller.handleUserMessage("Hello there");
 
-      // Should dispatch user message
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
@@ -456,7 +433,6 @@ describe("usePhaseController", () => {
       );
       expect(userMsg).toBeDefined();
 
-      // Should dispatch SET_TYPING true then false
       const typingCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_TYPING",
       );
@@ -472,13 +448,10 @@ describe("usePhaseController", () => {
 
       await controller.handleUserMessage("help me please");
 
-      // Should still dispatch AI message (fallback)
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
-      const aiMsg = addMsgCalls.find(
-        (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai",
-      );
+      const aiMsg = addMsgCalls.find((c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai");
       expect(aiMsg).toBeDefined();
     });
 
@@ -487,11 +460,10 @@ describe("usePhaseController", () => {
 
       await controller.handleUserMessage("how does this work?");
 
-      // Should still show a response via keyword matching
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
-      expect(addMsgCalls.length).toBeGreaterThanOrEqual(2); // user + AI fallback
+      expect(addMsgCalls.length).toBeGreaterThanOrEqual(2);
     });
 
     it("includes approve action card when API suggests it", async () => {
@@ -505,11 +477,9 @@ describe("usePhaseController", () => {
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
-      const aiMsg = addMsgCalls.find(
-        (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai",
-      );
+      const aiMsg = addMsgCalls.find((c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai");
       expect(aiMsg).toBeDefined();
-      const card = (aiMsg![0] as { message: { actionCard?: { type: string } } }).message.actionCard;
+      const card = (aiMsg?.[0] as { message: { actionCard?: { type: string } } }).message.actionCard;
       expect(card?.type).toBe("approve");
     });
 
@@ -524,11 +494,9 @@ describe("usePhaseController", () => {
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
-      const aiMsg = addMsgCalls.find(
-        (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai",
-      );
+      const aiMsg = addMsgCalls.find((c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai");
       expect(aiMsg).toBeDefined();
-      const card = (aiMsg![0] as { message: { actionCard?: { type: string; label?: string } } }).message.actionCard;
+      const card = (aiMsg?.[0] as { message: { actionCard?: { type: string; label?: string } } }).message.actionCard;
       expect(card?.type).toBe("approve");
       expect(card?.label).toBe("Edit...");
     });
@@ -551,8 +519,8 @@ describe("usePhaseController", () => {
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
-      const aiMsg = addMsgCalls.find(
-        (c: unknown[]) => (c[0] as { message: { content: string } }).message.content.includes("change"),
+      const aiMsg = addMsgCalls.find((c: unknown[]) =>
+        (c[0] as { message: { content: string } }).message.content.includes("change"),
       );
       expect(aiMsg).toBeDefined();
     });
@@ -564,8 +532,6 @@ describe("usePhaseController", () => {
 
   describe("handleEditSubmit", () => {
     it("posts edit request and dispatches success messages", async () => {
-      const es = mockEventSource();
-
       globalThis.fetch = vi.fn().mockImplementation(() => {
         return Promise.resolve({
           ok: true,
@@ -575,8 +541,9 @@ describe("usePhaseController", () => {
 
       const promise = controller.handleEditSubmit(2 as 2, "Add more routes");
 
-      await new Promise((r) => setTimeout(r, 0));
-      es.triggerMessage({ type: "done", data: {} });
+      // Poll until the EventSource instance is created, then resolve it
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
+      esInstances[0].triggerMessage({ type: "done", data: {} });
 
       await promise;
 
@@ -599,7 +566,6 @@ describe("usePhaseController", () => {
 
       await controller.handleEditSubmit(3 as 3, "Change data entities");
 
-      // Should show error message with approve card
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
@@ -611,7 +577,7 @@ describe("usePhaseController", () => {
   });
 
   // -----------------------------------------------------------------------
-  // getAffectedPhases / handleGoBackToPhase
+  // handleGoBackToPhase
   // -----------------------------------------------------------------------
 
   describe("handleGoBackToPhase", () => {
@@ -648,13 +614,11 @@ describe("usePhaseController", () => {
 
       await controller.handleGoBackToPhase(1 as 1);
 
-      // Should NOT dispatch RESTART_FROM_PHASE (should warn instead)
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
       );
       expect(restartCalls.length).toBe(0);
 
-      // Should show warning message
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );
@@ -707,7 +671,6 @@ describe("usePhaseController", () => {
       );
       expect(restartCalls.length).toBe(0);
 
-      // Should show warning with affected phase names
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
       );

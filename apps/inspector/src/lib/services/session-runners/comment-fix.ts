@@ -3,10 +3,7 @@ import { runClaude } from "@devkit/claude-runner";
 import type { SessionRunner } from "@/lib/services/session-manager";
 import { setSessionPid } from "@/lib/services/session-manager";
 
-export function createCommentFixRunner(
-  metadata: Record<string, unknown>,
-  _contextId?: string,
-): SessionRunner {
+export function createCommentFixRunner(metadata: Record<string, unknown>, _contextId?: string): SessionRunner {
   return async ({ onProgress, signal, sessionId }) => {
     const commentIds = metadata.commentIds as string[];
 

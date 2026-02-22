@@ -1,17 +1,17 @@
 "use client";
 
+import { useSessionStream } from "@devkit/hooks";
 import { cn } from "@devkit/ui";
 import { Badge } from "@devkit/ui/components/badge";
 import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Checkbox } from "@devkit/ui/components/checkbox";
-import { Progress } from "@devkit/ui/components/progress";
 import { Skeleton } from "@devkit/ui/components/skeleton";
-import { useSessionStream } from "@devkit/hooks/use-session-stream";
-import { Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, MessageSquare, Square, Zap } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, MessageSquare, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { SessionProgress } from "@/components/session-progress";
 import { getPRComments } from "@/lib/actions/prs";
 import { getCommentFixes, resolveAllFixes, resolveCommentFix, startCommentFixes } from "@/lib/actions/resolver";
 import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
@@ -123,7 +123,7 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
       }
       setSessionId(null);
     },
-    [selectedComments, startTransition],
+    [selectedComments],
   );
 
   const stream = useSessionStream({
@@ -174,41 +174,12 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
   // Phase: Fixing
   if (phase === "fixing") {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8">
-        <Zap className="h-12 w-12 text-primary mb-6 animate-pulse" />
-        <h2 className="text-xl font-bold mb-2">Generating Fixes</h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          Fixing {selectedComments.size} comment{selectedComments.size !== 1 ? "s" : ""} on PR #{selectedPR?.number}
-        </p>
-        <div className="w-full max-w-md space-y-6">
-          <Progress value={stream.progress ?? 0} className="h-2" />
-          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
-          <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {stream.logs.slice(-8).map((entry, i) => (
-              <motion.div
-                key={`${i}-${entry.log}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2 text-sm"
-              >
-                {entry.log.includes("[SUCCESS]") ? (
-                  <Check className="h-4 w-4 text-status-success shrink-0" />
-                ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent shrink-0" />
-                )}
-                <span className="text-muted-foreground truncate">{entry.log}</span>
-              </motion.div>
-            ))}
-          </div>
-          {stream.elapsed > 0 && (
-            <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>
-          )}
-          <Button variant="outline" className="w-full" onClick={stream.cancel}>
-            <Square className="h-3 w-3 mr-2" />
-            Cancel
-          </Button>
-        </div>
-      </div>
+      <SessionProgress
+        stream={stream}
+        icon={<Zap className="h-12 w-12 text-primary mb-6 animate-pulse" />}
+        title="Generating Fixes"
+        subtitle={`Fixing ${selectedComments.size} comment${selectedComments.size !== 1 ? "s" : ""} on PR #${selectedPR?.number}`}
+      />
     );
   }
 

@@ -4,23 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Track hook state
 // ---------------------------------------------------------------------------
 
-interface HookState<T> {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => void;
-}
-
-let hookState: HookState<unknown> = {
-  data: null,
-  loading: true,
-  error: null,
-  refetch: () => {},
-};
+// biome-ignore lint/suspicious/noConfusingVoidType: matching React's useEffect signature
+type EffectCallback = () => undefined | (() => void);
 
 // Collect effect callbacks for manual execution
-let effectCallbacks: Array<{ cb: () => void | (() => void); deps: unknown[] }> = [];
-let stateSetters: Map<string, Function> = new Map();
+let effectCallbacks: Array<{ cb: EffectCallback; deps: unknown[] }> = [];
+let stateSetters: Map<string, (v: unknown) => void> = new Map();
 let stateValues: Map<string, unknown> = new Map();
 let stateIndex = 0;
 
@@ -42,8 +31,8 @@ vi.mock("react", async () => {
       stateSetters.set(key, setter);
       return [stateValues.get(key), setter];
     },
-    useCallback: (fn: Function) => fn,
-    useEffect: (cb: () => void | (() => void), deps: unknown[]) => {
+    useCallback: (fn: (...args: never[]) => unknown) => fn,
+    useEffect: (cb: EffectCallback, deps: unknown[]) => {
       effectCallbacks.push({ cb, deps });
     },
   };

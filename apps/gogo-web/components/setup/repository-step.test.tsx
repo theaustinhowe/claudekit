@@ -13,22 +13,6 @@ vi.mock("@/hooks/use-setup", () => ({
   }),
 }));
 
-// Mock lucide-react icons to simple spans
-vi.mock("lucide-react", () => ({
-  CheckCircle2: (props: Record<string, unknown>) => <span data-testid="check-circle-icon" {...props} />,
-  ChevronRight: (props: Record<string, unknown>) => <span data-testid="chevron-right-icon" {...props} />,
-  Folder: (props: Record<string, unknown>) => <span data-testid="folder-icon" {...props} />,
-  FolderGit2: (props: Record<string, unknown>) => <span data-testid="folder-git-icon" {...props} />,
-  FolderOpen: (props: Record<string, unknown>) => <span data-testid="folder-open-icon" {...props} />,
-  GitBranch: (props: Record<string, unknown>) => <span data-testid="git-branch-icon" {...props} />,
-  Loader2: (props: Record<string, unknown>) => <span data-testid="loader-icon" {...props} />,
-  Lock: (props: Record<string, unknown>) => <span data-testid="lock-icon" {...props} />,
-  Search: (props: Record<string, unknown>) => <span data-testid="search-icon" {...props} />,
-  Tag: (props: Record<string, unknown>) => <span data-testid="tag-icon" {...props} />,
-  Trash2: (props: Record<string, unknown>) => <span data-testid="trash-icon" {...props} />,
-  XCircle: (props: Record<string, unknown>) => <span data-testid="x-circle-icon" {...props} />,
-}));
-
 function makeDefaultProps(overrides: Partial<React.ComponentProps<typeof RepositoryStep>> = {}) {
   return {
     selectedRepos: [] as SelectedRepo[],
@@ -119,8 +103,20 @@ describe("RepositoryStep", () => {
 
   it("renders discovered repos with GitHub remotes", () => {
     const discoveredRepos: DiscoveredRepo[] = [
-      { path: "/home/user/project-a", owner: "acme", name: "project-a", remoteUrl: "git@github.com:acme/project-a.git", currentBranch: "main" },
-      { path: "/home/user/project-b", owner: "acme", name: "project-b", remoteUrl: "git@github.com:acme/project-b.git", currentBranch: "develop" },
+      {
+        path: "/home/user/project-a",
+        owner: "acme",
+        name: "project-a",
+        remoteUrl: "git@github.com:acme/project-a.git",
+        currentBranch: "main",
+      },
+      {
+        path: "/home/user/project-b",
+        owner: "acme",
+        name: "project-b",
+        remoteUrl: "git@github.com:acme/project-b.git",
+        currentBranch: "develop",
+      },
     ];
     render(<RepositoryStep {...makeDefaultProps({ discoveredRepos })} />);
 
@@ -141,7 +137,13 @@ describe("RepositoryStep", () => {
 
   it("marks existing repos as disabled with 'Already added' text", () => {
     const discoveredRepos: DiscoveredRepo[] = [
-      { path: "/home/user/project-a", owner: "acme", name: "project-a", remoteUrl: "git@github.com:acme/project-a.git", currentBranch: "main" },
+      {
+        path: "/home/user/project-a",
+        owner: "acme",
+        name: "project-a",
+        remoteUrl: "git@github.com:acme/project-a.git",
+        currentBranch: "main",
+      },
     ];
     const existingRepoKeys = new Set(["acme/project-a"]);
     render(<RepositoryStep {...makeDefaultProps({ discoveredRepos, existingRepoKeys })} />);
@@ -152,7 +154,13 @@ describe("RepositoryStep", () => {
   it("calls onToggleRepo when a non-existing repo is clicked", () => {
     const onToggleRepo = vi.fn();
     const discoveredRepos: DiscoveredRepo[] = [
-      { path: "/home/user/project-a", owner: "acme", name: "project-a", remoteUrl: "git@github.com:acme/project-a.git", currentBranch: "main" },
+      {
+        path: "/home/user/project-a",
+        owner: "acme",
+        name: "project-a",
+        remoteUrl: "git@github.com:acme/project-a.git",
+        currentBranch: "main",
+      },
     ];
     render(<RepositoryStep {...makeDefaultProps({ discoveredRepos, onToggleRepo })} />);
 
@@ -163,7 +171,13 @@ describe("RepositoryStep", () => {
   it("does not call onToggleRepo for existing repos", () => {
     const onToggleRepo = vi.fn();
     const discoveredRepos: DiscoveredRepo[] = [
-      { path: "/home/user/project-a", owner: "acme", name: "project-a", remoteUrl: "git@github.com:acme/project-a.git", currentBranch: "main" },
+      {
+        path: "/home/user/project-a",
+        owner: "acme",
+        name: "project-a",
+        remoteUrl: "git@github.com:acme/project-a.git",
+        currentBranch: "main",
+      },
     ];
     const existingRepoKeys = new Set(["acme/project-a"]);
     render(<RepositoryStep {...makeDefaultProps({ discoveredRepos, existingRepoKeys, onToggleRepo })} />);
@@ -232,7 +246,7 @@ describe("RepositoryStep", () => {
     expect(screen.getByText("Token is invalid")).toBeInTheDocument();
   });
 
-  it("shows verification failure for a specific repo", () => {
+  it("shows verification failure indicator for a specific repo", () => {
     const selectedRepos: SelectedRepo[] = [
       { owner: "acme", name: "project-a", triggerLabel: "agent", baseBranch: "main" },
     ];
@@ -241,6 +255,8 @@ describe("RepositoryStep", () => {
     ]);
     render(<RepositoryStep {...makeDefaultProps({ selectedRepos, verificationResults })} />);
 
-    expect(screen.getByText("Repo not found")).toBeInTheDocument();
+    // The failed repo card has a destructive border style applied
+    const repoCard = screen.getByText("acme/project-a").closest("div.rounded-lg");
+    expect(repoCard?.className).toContain("border-destructive");
   });
 });
