@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Phase, PhaseStatus } from "./types";
 
 // ---------------------------------------------------------------------------
 // Mock external modules BEFORE importing the module under test
@@ -6,16 +7,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock store
 const mockDispatch = vi.fn();
-const mockState = {
-  currentPhase: 1 as const,
+const mockState: {
+  currentPhase: Phase;
+  phaseStatuses: Record<Phase, PhaseStatus>;
+  messages: unknown[];
+  isTyping: boolean;
+  projectName: string;
+  rightPanelContent: Phase | null;
+  editMode: string | null;
+  projectPath: string | null;
+  activeSessionId: string | null;
+  fileBrowserOpen: boolean;
+  historySidebarOpen: boolean;
+  runId: string | null;
+  panelRefreshKey: number;
+} = {
+  currentPhase: 1,
   phaseStatuses: {
-    1: "active" as const,
-    2: "locked" as const,
-    3: "locked" as const,
-    4: "locked" as const,
-    5: "locked" as const,
-    6: "locked" as const,
-    7: "locked" as const,
+    1: "active",
+    2: "locked",
+    3: "locked",
+    4: "locked",
+    5: "locked",
+    6: "locked",
+    7: "locked",
   },
   messages: [],
   isTyping: false,
@@ -259,7 +274,7 @@ describe("usePhaseController", () => {
         });
       });
 
-      const promise = controller.approvePhase(1 as 1);
+      const promise = controller.approvePhase(1);
 
       // Poll until first EventSource is created
       await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
@@ -289,7 +304,7 @@ describe("usePhaseController", () => {
     it("handles errors by restarting from current phase", async () => {
       globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
-      await controller.approvePhase(1 as 1);
+      await controller.approvePhase(1);
 
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
@@ -314,8 +329,8 @@ describe("usePhaseController", () => {
           }),
       );
 
-      controller.approvePhase(1 as 1);
-      await controller.approvePhase(1 as 1);
+      controller.approvePhase(1);
+      await controller.approvePhase(1);
 
       const completeCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "COMPLETE_PHASE",
@@ -333,7 +348,7 @@ describe("usePhaseController", () => {
         });
       });
 
-      const promise = controller.approvePhase(6 as 6);
+      const promise = controller.approvePhase(6);
 
       // Wait for audio generate session EventSource
       await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
@@ -362,7 +377,7 @@ describe("usePhaseController", () => {
         });
       });
 
-      const promise = controller.approvePhase(4 as 4);
+      const promise = controller.approvePhase(4);
 
       await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
       esInstances[0].triggerMessage({ type: "done", data: {} });
@@ -379,7 +394,7 @@ describe("usePhaseController", () => {
     it("handles phase 5 to 6 transition (voiceover)", async () => {
       mockState.currentPhase = 5;
 
-      await controller.approvePhase(5 as 5);
+      await controller.approvePhase(5);
 
       const panelCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_RIGHT_PANEL",
@@ -508,7 +523,7 @@ describe("usePhaseController", () => {
 
   describe("handleEditRequest", () => {
     it("dispatches edit mode and prompt message", async () => {
-      await controller.handleEditRequest(2 as 2);
+      await controller.handleEditRequest(2);
 
       const editCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_EDIT_MODE",
@@ -592,7 +607,7 @@ describe("usePhaseController", () => {
         7: "locked",
       };
 
-      await controller.handleGoBackToPhase(1 as 1);
+      await controller.handleGoBackToPhase(1);
 
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
@@ -612,7 +627,7 @@ describe("usePhaseController", () => {
         7: "locked",
       };
 
-      await controller.handleGoBackToPhase(1 as 1);
+      await controller.handleGoBackToPhase(1);
 
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
@@ -645,7 +660,7 @@ describe("usePhaseController", () => {
         7: "locked",
       };
 
-      await controller.handleEditPhaseFromPanel(1 as 1);
+      await controller.handleEditPhaseFromPanel(1);
 
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
@@ -664,7 +679,7 @@ describe("usePhaseController", () => {
         7: "locked",
       };
 
-      await controller.handleEditPhaseFromPanel(2 as 2);
+      await controller.handleEditPhaseFromPanel(2);
 
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",

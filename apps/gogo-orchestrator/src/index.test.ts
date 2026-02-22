@@ -53,7 +53,7 @@ vi.mock("./services/pr-recovery.js", () => ({
 }));
 
 vi.mock("./services/process-manager.js", () => ({
-  cleanupOrphanedProcesses: vi.fn().mockResolvedValue({ found: 0, terminated: 0 }),
+  cleanupOrphanedProcesses: vi.fn().mockResolvedValue({ found: 0, terminated: 0, failed: 0 }),
   clearStalePidReferences: vi.fn().mockResolvedValue(0),
 }));
 
@@ -125,7 +125,7 @@ describe("index.ts startup dependencies", () => {
       missingRequired: [],
       missingOptional: [],
     });
-    vi.mocked(cleanupOrphanedProcesses).mockResolvedValue({ found: 0, terminated: 0 });
+    vi.mocked(cleanupOrphanedProcesses).mockResolvedValue({ found: 0, terminated: 0, failed: 0 });
     vi.mocked(clearStalePidReferences).mockResolvedValue(0);
     vi.mocked(queryAll).mockResolvedValue([]);
     vi.mocked(execute).mockResolvedValue(undefined);
@@ -193,7 +193,7 @@ describe("index.ts startup dependencies", () => {
     });
 
     it("should report found and terminated counts", async () => {
-      vi.mocked(cleanupOrphanedProcesses).mockResolvedValue({ found: 3, terminated: 2 });
+      vi.mocked(cleanupOrphanedProcesses).mockResolvedValue({ found: 3, terminated: 2, failed: 1 });
 
       const result = await cleanupOrphanedProcesses();
 
