@@ -10,6 +10,23 @@ export default meta;
 
 type Story = StoryObj<typeof Badge>;
 
+interface PlaygroundArgs {
+  variant: "default" | "secondary" | "destructive" | "outline";
+  children: string;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    variant: { control: "select", options: ["default", "secondary", "destructive", "outline"] },
+    children: { control: "text" },
+  },
+  args: {
+    variant: "default",
+    children: "Badge",
+  },
+  render: (args) => <Badge variant={args.variant}>{args.children}</Badge>,
+};
+
 export const Default: Story = {
   args: { children: "Badge" },
 };

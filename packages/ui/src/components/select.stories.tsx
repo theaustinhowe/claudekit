@@ -10,6 +10,31 @@ export default meta;
 
 type Story = StoryObj<typeof Select>;
 
+interface PlaygroundArgs {
+  disabled: boolean;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    disabled: { control: "boolean" },
+  },
+  args: {
+    disabled: false,
+  },
+  render: (args) => (
+    <Select disabled={args.disabled}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Select a fruit" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="apple">Apple</SelectItem>
+        <SelectItem value="banana">Banana</SelectItem>
+        <SelectItem value="cherry">Cherry</SelectItem>
+      </SelectContent>
+    </Select>
+  ),
+};
+
 export const Default: Story = {
   args: {
     disabled: false,

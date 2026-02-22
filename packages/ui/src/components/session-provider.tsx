@@ -28,7 +28,7 @@ export interface SessionPanelConfig {
 // Context
 // ---------------------------------------------------------------------------
 
-interface SessionPanelContextValue {
+export interface SessionPanelContextValue {
   sessions: SessionRowBase[];
   activeCount: number;
   panelOpen: boolean;
@@ -36,7 +36,7 @@ interface SessionPanelContextValue {
   config: SessionPanelConfig;
 }
 
-const SessionPanelContext = createContext<SessionPanelContextValue>({
+export const SessionPanelContext = createContext<SessionPanelContextValue>({
   sessions: [],
   activeCount: 0,
   panelOpen: false,

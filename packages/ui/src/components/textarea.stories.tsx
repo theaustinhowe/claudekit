@@ -11,6 +11,26 @@ export default meta;
 
 type Story = StoryObj<typeof Textarea>;
 
+interface PlaygroundArgs {
+  placeholder: string;
+  disabled: boolean;
+  rows: number;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    placeholder: { control: "text" },
+    disabled: { control: "boolean" },
+    rows: { control: "number" },
+  },
+  args: {
+    placeholder: "Type your message here.",
+    disabled: false,
+    rows: 4,
+  },
+  render: (args) => <Textarea placeholder={args.placeholder} disabled={args.disabled} rows={args.rows} />,
+};
+
 export const Default: Story = {
   args: { placeholder: "Type your message here." },
 };

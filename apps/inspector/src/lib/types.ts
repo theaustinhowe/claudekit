@@ -1,3 +1,37 @@
+// --- Session Types ---
+
+export type SessionType = "skill_analysis" | "split_analysis" | "comment_fix";
+export type SessionStatus = "pending" | "running" | "done" | "error" | "cancelled";
+
+export interface SessionRow {
+  id: string;
+  session_type: SessionType;
+  status: SessionStatus;
+  label: string;
+  context_type: string | null;
+  context_id: string | null;
+  context_name: string | null;
+  metadata_json: string;
+  progress: number;
+  phase: string | null;
+  pid: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  error_message: string | null;
+  result_json: string;
+}
+
+export interface SessionLogRow {
+  id: number;
+  session_id: string;
+  log: string;
+  log_type: string;
+  created_at: string;
+}
+
+// --- Domain Types ---
+
 export type PRSize = "S" | "M" | "L" | "XL";
 export type SkillTrend = "Improving" | "Needs attention" | "New pattern" | "Flat";
 export type Severity = "blocking" | "suggestion" | "nit";

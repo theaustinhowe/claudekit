@@ -6,10 +6,11 @@ import { Button } from "@devkit/ui/components/button";
 import { Card, CardContent } from "@devkit/ui/components/card";
 import { Progress } from "@devkit/ui/components/progress";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
-import { ArrowDown, Check, ClipboardCopy, Scissors } from "lucide-react";
+import { useSessionStream } from "@devkit/hooks/use-session-stream";
+import { ArrowDown, Check, ClipboardCopy, Scissors, Square } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
 import { SubPRCard } from "@/components/splitter/sub-pr-card";
@@ -19,13 +20,6 @@ import { exportSplitPlanToMarkdown } from "@/lib/export";
 import type { PRWithComments, SubPR } from "@/lib/types";
 
 type Phase = "select" | "analyzing" | "results";
-
-const analysisSteps = [
-  "Parsing diff\u2026",
-  "Building file dependency graph\u2026",
-  "Detecting logical boundaries\u2026",
-  "Generating split plan\u2026",
-];
 
 interface SplitterClientProps {
   repoId: string;
@@ -37,41 +31,23 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
   const preselected = searchParams.get("pr");
 
   const [selectedPR, setSelectedPR] = useState<string | null>(preselected ? `${repoId}#${preselected}` : null);
-  const [_selectedNumber, setSelectedNumber] = useState<number | null>(preselected ? Number(preselected) : null);
   const [phase, setPhase] = useState<Phase>("select");
-  const [step, setStep] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [planId, setPlanId] = useState<string | null>(null);
   const [plan, setPlan] = useState<{ prNumber: number; prTitle: string; totalLines: number; subPRs: SubPR[] } | null>(
     null,
   );
   const [isPending, startTransition] = useTransition();
   const [selectedFile, setSelectedFile] = useState<{ path: string; subPRTitle: string } | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const handleSelect = (pr: PRWithComments) => {
-    setSelectedPR(pr.id);
-    setSelectedNumber(pr.number);
-  };
-
-  const handleAnalyze = () => {
-    if (!selectedPR) return;
-    setPhase("analyzing");
-    setStep(0);
-    setProgress(0);
-
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      setStep(currentStep);
-      setProgress((currentStep / analysisSteps.length) * 100);
-
-      if (currentStep >= analysisSteps.length) {
-        clearInterval(interval);
-        startTransition(async () => {
-          try {
-            const newPlanId = await startSplitAnalysis(selectedPR);
-            setPlanId(newPlanId);
-            const result = await getSplitPlan(newPlanId);
+  const handleSessionComplete = useCallback(
+    (event: { type: string; data?: Record<string, unknown> }) => {
+      if (event.type === "done") {
+        const resultPlanId = (event.data as { planId?: string })?.planId;
+        if (resultPlanId) {
+          setPlanId(resultPlanId);
+          startTransition(async () => {
+            const result = await getSplitPlan(resultPlanId);
             if (result) {
               setPlan({
                 prNumber: result.prNumber,
@@ -87,15 +63,45 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
               toast.error("No split plan generated");
               setPhase("select");
             }
-          } catch (err) {
-            toast.error("Split analysis failed", {
-              description: err instanceof Error ? err.message : "Unknown error",
-            });
-            setPhase("select");
-          }
-        });
+          });
+        } else {
+          setPhase("select");
+        }
+      } else if (event.type === "error") {
+        toast.error("Split analysis failed", { description: event.data?.message as string });
+        setPhase("select");
+      } else if (event.type === "cancelled") {
+        toast.info("Analysis cancelled");
+        setPhase("select");
       }
-    }, 1500);
+      setSessionId(null);
+    },
+    [startTransition],
+  );
+
+  const stream = useSessionStream({
+    sessionId,
+    onComplete: handleSessionComplete,
+  });
+
+  const handleSelect = (pr: PRWithComments) => {
+    setSelectedPR(pr.id);
+  };
+
+  const handleAnalyze = () => {
+    if (!selectedPR) return;
+    setPhase("analyzing");
+    startTransition(async () => {
+      try {
+        const id = await startSplitAnalysis(selectedPR);
+        setSessionId(id);
+      } catch (err) {
+        toast.error("Failed to start analysis", {
+          description: err instanceof Error ? err.message : "Unknown error",
+        });
+        setPhase("select");
+      }
+    });
   };
 
   if (phase === "analyzing") {
@@ -103,85 +109,32 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
       <div className="flex flex-col items-center justify-center h-full p-8">
         <Scissors className="h-12 w-12 text-primary mb-6 animate-pulse" />
         <div className="w-full max-w-md space-y-6">
-          <Progress value={progress} className="h-2" />
-          <div className="space-y-2">
-            {analysisSteps.map((s, i) => (
+          <Progress value={stream.progress ?? 0} className="h-2" />
+          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
+          <div className="space-y-1.5 max-h-48 overflow-y-auto">
+            {stream.logs.slice(-8).map((entry, i) => (
               <motion.div
-                key={s}
+                key={`${i}-${entry.log}`}
                 initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: i <= step ? 1 : 0.3, x: 0 }}
+                animate={{ opacity: 1, x: 0 }}
                 className="flex items-center gap-2 text-sm"
               >
-                {i < step ? (
-                  <Check className="h-4 w-4 text-status-success" />
-                ) : i === step ? (
-                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent" />
+                {entry.log.includes("[SUCCESS]") ? (
+                  <Check className="h-4 w-4 text-status-success shrink-0" />
                 ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-muted" />
+                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent shrink-0" />
                 )}
-                <span className={i <= step ? "text-foreground" : "text-muted-foreground"}>{s}</span>
+                <span className="text-muted-foreground truncate">{entry.log}</span>
               </motion.div>
             ))}
           </div>
-
-          {step >= 1 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 flex justify-center">
-              <svg width="200" height="120" viewBox="0 0 200 120" aria-hidden="true">
-                {[
-                  { x: 40, y: 20 },
-                  { x: 100, y: 15 },
-                  { x: 160, y: 25 },
-                  { x: 30, y: 60 },
-                  { x: 80, y: 70 },
-                  { x: 130, y: 55 },
-                  { x: 170, y: 65 },
-                  { x: 60, y: 100 },
-                  { x: 120, y: 95 },
-                  { x: 150, y: 105 },
-                ].map((n, i) => (
-                  <motion.circle
-                    key={`${n.x}-${n.y}`}
-                    cx={n.x}
-                    cy={n.y}
-                    r="6"
-                    fill="hsl(var(--primary))"
-                    opacity={0.7}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: i * 0.1 }}
-                  />
-                ))}
-                {[
-                  [40, 20, 100, 15],
-                  [100, 15, 160, 25],
-                  [40, 20, 80, 70],
-                  [100, 15, 130, 55],
-                  [80, 70, 120, 95],
-                  [130, 55, 150, 105],
-                  [30, 60, 60, 100],
-                  [170, 65, 150, 105],
-                ].map(([x1, y1, x2, y2], i) => (
-                  <motion.line
-                    key={`${x1}-${y1}-${x2}-${y2}`}
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth="1.5"
-                    opacity={0.3}
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ delay: 0.5 + i * 0.15, duration: 0.4 }}
-                  />
-                ))}
-              </svg>
-            </motion.div>
+          {stream.elapsed > 0 && (
+            <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>
           )}
-
-          {isPending && step >= analysisSteps.length && (
-            <p className="text-center text-sm text-muted-foreground animate-pulse">Running Claude analysis...</p>
-          )}
+          <Button variant="outline" className="w-full" onClick={stream.cancel}>
+            <Square className="h-3 w-3 mr-2" />
+            Cancel
+          </Button>
         </div>
       </div>
     );

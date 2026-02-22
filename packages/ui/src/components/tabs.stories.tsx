@@ -14,6 +14,68 @@ export default meta;
 
 type Story = StoryObj<typeof Tabs>;
 
+interface PlaygroundArgs {
+  defaultValue: string;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    defaultValue: {
+      control: "select",
+      options: ["account", "password"],
+    },
+  },
+  args: {
+    defaultValue: "account",
+  },
+  render: (args) => (
+    <Tabs defaultValue={args.defaultValue} className="w-[400px]">
+      <TabsList>
+        <TabsTrigger value="account">Account</TabsTrigger>
+        <TabsTrigger value="password">Password</TabsTrigger>
+      </TabsList>
+      <TabsContent value="account">
+        <Card>
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+            <CardDescription>Make changes to your account here.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="pg-name">Name</Label>
+              <Input id="pg-name" defaultValue="Pedro Duarte" />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button>Save changes</Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
+      <TabsContent value="password">
+        <Card>
+          <CardHeader>
+            <CardTitle>Password</CardTitle>
+            <CardDescription>Change your password here.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="pg-current">Current password</Label>
+              <Input id="pg-current" type="password" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="pg-new">New password</Label>
+              <Input id="pg-new" type="password" />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button>Save password</Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  ),
+};
+
 export const Default: Story = {
   render: () => (
     <Tabs defaultValue="account" className="w-[400px]">

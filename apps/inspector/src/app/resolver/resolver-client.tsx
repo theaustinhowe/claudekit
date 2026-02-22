@@ -7,9 +7,10 @@ import { Card, CardContent } from "@devkit/ui/components/card";
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Progress } from "@devkit/ui/components/progress";
 import { Skeleton } from "@devkit/ui/components/skeleton";
-import { Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, MessageSquare, Zap } from "lucide-react";
+import { useSessionStream } from "@devkit/hooks/use-session-stream";
+import { Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, MessageSquare, Square, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getPRComments } from "@/lib/actions/prs";
 import { getCommentFixes, resolveAllFixes, resolveCommentFix, startCommentFixes } from "@/lib/actions/resolver";
@@ -18,13 +19,6 @@ import { exportFixesToMarkdown } from "@/lib/export";
 import type { CommentStatus, PRWithComments } from "@/lib/types";
 
 type Phase = "select-pr" | "select-comments" | "fixing" | "results";
-
-const fixSteps = [
-  "Analyzing comment context\u2026",
-  "Generating code fixes\u2026",
-  "Validating changes\u2026",
-  "Preparing results\u2026",
-];
 
 const statusConfig: Record<CommentStatus, { label: string; color: string; icon: typeof Check }> = {
   open: { label: "Open", color: "text-muted-foreground", icon: MessageSquare },
@@ -61,12 +55,11 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedComments, setSelectedComments] = useState<Set<string>>(new Set());
   const [phase, setPhase] = useState<Phase>("select-pr");
-  const [step, setStep] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [commentStatuses, setCommentStatuses] = useState<Record<string, CommentStatus>>({});
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [fixes, setFixes] = useState<FixResult[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const handleSelectPR = (pr: PRWithComments) => {
     setSelectedPR(pr);
@@ -98,10 +91,48 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
     });
   };
 
+  const handleSessionComplete = useCallback(
+    (event: { type: string; data?: Record<string, unknown> }) => {
+      if (event.type === "done") {
+        startTransition(async () => {
+          const fixResults = await getCommentFixes([...selectedComments]);
+          setFixes(
+            fixResults.map((f) => ({
+              commentId: f.comment_id,
+              suggestedFix: f.suggested_fix,
+              fixDiff: f.fix_diff,
+              status: f.status,
+            })),
+          );
+          setCommentStatuses((prev) => {
+            const next = { ...prev };
+            for (const k of Object.keys(next)) next[k] = "fixed";
+            return next;
+          });
+          setPhase("results");
+          toast.success("Fixes generated", {
+            description: `${fixResults.length} fix${fixResults.length !== 1 ? "es" : ""} ready for review`,
+          });
+        });
+      } else if (event.type === "error") {
+        toast.error("Fix generation failed", { description: event.data?.message as string });
+        setPhase("select-comments");
+      } else if (event.type === "cancelled") {
+        toast.info("Fix generation cancelled");
+        setPhase("select-comments");
+      }
+      setSessionId(null);
+    },
+    [selectedComments, startTransition],
+  );
+
+  const stream = useSessionStream({
+    sessionId,
+    onComplete: handleSessionComplete,
+  });
+
   const handleStartFixing = () => {
     setPhase("fixing");
-    setStep(0);
-    setProgress(0);
 
     const statuses: Record<string, CommentStatus> = {};
     selectedComments.forEach((id) => {
@@ -109,44 +140,17 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
     });
     setCommentStatuses(statuses);
 
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      setStep(currentStep);
-      setProgress((currentStep / fixSteps.length) * 100);
-
-      if (currentStep >= fixSteps.length) {
-        clearInterval(interval);
-        startTransition(async () => {
-          try {
-            await startCommentFixes([...selectedComments]);
-            const fixResults = await getCommentFixes([...selectedComments]);
-            setFixes(
-              fixResults.map((f) => ({
-                commentId: f.comment_id,
-                suggestedFix: f.suggested_fix,
-                fixDiff: f.fix_diff,
-                status: f.status,
-              })),
-            );
-            setCommentStatuses((prev) => {
-              const next = { ...prev };
-              for (const k of Object.keys(next)) next[k] = "fixed";
-              return next;
-            });
-            setPhase("results");
-            toast.success("Fixes generated", {
-              description: `${fixResults.length} fix${fixResults.length !== 1 ? "es" : ""} ready for review`,
-            });
-          } catch (err) {
-            toast.error("Fix generation failed", {
-              description: err instanceof Error ? err.message : "Unknown error",
-            });
-            setPhase("select-comments");
-          }
+    startTransition(async () => {
+      try {
+        const id = await startCommentFixes([...selectedComments]);
+        setSessionId(id);
+      } catch (err) {
+        toast.error("Failed to start fix generation", {
+          description: err instanceof Error ? err.message : "Unknown error",
         });
+        setPhase("select-comments");
       }
-    }, 1500);
+    });
   };
 
   const handleResolve = (commentId: string) => {

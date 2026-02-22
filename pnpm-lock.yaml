@@ -354,6 +354,9 @@ importers:
       '@devkit/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@devkit/session':
+        specifier: workspace:*
+        version: link:../../packages/session
       '@devkit/ui':
         specifier: workspace:*
         version: link:../../packages/ui

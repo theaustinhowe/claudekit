@@ -11,6 +11,26 @@ export default meta;
 
 type Story = StoryObj<typeof Input>;
 
+interface PlaygroundArgs {
+  type: string;
+  placeholder: string;
+  disabled: boolean;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    type: { control: "select", options: ["text", "email", "password", "number", "search"] },
+    placeholder: { control: "text" },
+    disabled: { control: "boolean" },
+  },
+  args: {
+    type: "text",
+    placeholder: "Enter text...",
+    disabled: false,
+  },
+  render: (args) => <Input type={args.type} placeholder={args.placeholder} disabled={args.disabled} />,
+};
+
 export const Default: Story = {
   args: { placeholder: "Email" },
 };

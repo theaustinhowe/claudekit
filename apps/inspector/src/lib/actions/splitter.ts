@@ -1,73 +1,27 @@
 "use server";
 
-import crypto from "node:crypto";
-import { runClaude } from "@devkit/claude-runner";
-import { fetchPRDiff } from "@/lib/actions/github";
 import { execute, getDb, queryOne } from "@/lib/db";
 import { createServiceLogger } from "@/lib/logger";
-import { buildSplitPlanPrompt } from "@/lib/prompts";
+import { createSession, startSession } from "@/lib/services/session-manager";
+import { createSplitAnalysisRunner } from "@/lib/services/session-runners/split-analysis";
 
 const log = createServiceLogger("splitter");
 
-export async function startSplitAnalysis(prId: string) {
-  log.info({ prId }, "Starting split analysis");
-  const db = await getDb();
+export async function startSplitAnalysis(prId: string): Promise<string> {
+  log.info({ prId }, "Starting split analysis session");
 
-  const pr = await queryOne<{
-    id: string;
-    repo_id: string;
-    number: number;
-    title: string;
-    files_changed: number;
-    lines_added: number;
-    lines_deleted: number;
-  }>(db, "SELECT id, repo_id, number, title, files_changed, lines_added, lines_deleted FROM prs WHERE id = ?", [prId]);
-
-  if (!pr) throw new Error(`PR not found: ${prId}`);
-
-  const repo = await queryOne<{ owner: string; name: string }>(db, "SELECT owner, name FROM repos WHERE id = ?", [
-    pr.repo_id,
-  ]);
-  if (!repo) throw new Error(`Repo not found: ${pr.repo_id}`);
-
-  // Fetch the diff from GitHub
-  const diff = await fetchPRDiff(repo.owner, repo.name, pr.number);
-
-  const prompt = buildSplitPlanPrompt({
-    number: pr.number,
-    title: pr.title,
-    filesChanged: pr.files_changed,
-    diff,
+  const metadata = { prId };
+  const sessionId = await createSession({
+    sessionType: "split_analysis",
+    label: `Split analysis for ${prId}`,
+    contextId: prId,
+    metadata,
   });
 
-  const result = await runClaude({
-    prompt,
-    cwd: process.cwd(),
-    allowedTools: "",
-    onProgress: () => {},
-  });
+  const runner = createSplitAnalysisRunner(metadata);
+  await startSession(sessionId, runner);
 
-  // Parse JSON from response
-  const responseText = result.stdout || "";
-  const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    throw new Error("Failed to parse split plan response");
-  }
-
-  const subPRs = JSON.parse(jsonMatch[0]);
-
-  // Persist
-  const planId = crypto.randomUUID();
-  const totalLines = pr.lines_added + pr.lines_deleted;
-
-  await execute(
-    db,
-    "INSERT INTO split_plans (id, pr_id, total_lines, sub_prs, created_at) VALUES (?, ?, ?, ?, current_timestamp)",
-    [planId, prId, totalLines, JSON.stringify(subPRs)],
-  );
-
-  log.info({ planId, prId, subPRCount: subPRs.length }, "Split analysis complete");
-  return planId;
+  return sessionId;
 }
 
 export async function getSplitPlan(planId: string) {

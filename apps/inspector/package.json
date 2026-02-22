@@ -22,6 +22,7 @@
     "@devkit/duckdb": "workspace:*",
     "@devkit/hooks": "workspace:*",
     "@devkit/logger": "workspace:*",
+    "@devkit/session": "workspace:*",
     "@devkit/ui": "workspace:*",
     "lucide-react": "^0.563.0",
     "motion": "^12.34.0",

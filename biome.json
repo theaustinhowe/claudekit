@@ -6,7 +6,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**/apps/**", "**/packages/**", "**/scripts/**", "!**/node_modules", "!**/.next", "!**/dist"]
+    "includes": ["**/apps/**", "**/packages/**", "**/scripts/**", "!**/node_modules", "!**/.next", "!**/dist"],
+    "ignoreUnknown": true
   },
   "formatter": {
     "enabled": true,

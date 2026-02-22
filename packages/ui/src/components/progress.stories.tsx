@@ -10,6 +10,20 @@ export default meta;
 
 type Story = StoryObj<typeof Progress>;
 
+interface PlaygroundArgs {
+  value: number;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    value: { control: { type: "range", min: 0, max: 100, step: 1 } },
+  },
+  args: {
+    value: 50,
+  },
+  render: (args) => <Progress value={args.value} className="w-[300px]" />,
+};
+
 export const Default: Story = {
   args: { value: 60 },
   render: (args) => <Progress {...args} className="w-[300px]" />,

@@ -10,6 +10,41 @@ export default meta;
 
 type Story = StoryObj<typeof DiffViewer>;
 
+interface PlaygroundArgs {
+  maxLines: number;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    maxLines: { control: "number" },
+  },
+  args: {
+    maxLines: 0,
+  },
+  render: (args) => (
+    <div className="w-full max-w-2xl rounded-md border overflow-hidden">
+      <DiffViewer
+        patch={`diff --git a/src/utils.ts b/src/utils.ts
+index abc1234..def5678 100644
+--- a/src/utils.ts
++++ b/src/utils.ts
+@@ -1,7 +1,8 @@
+-import { clsx } from "clsx";
++import { clsx, type ClassValue } from "clsx";
+ import { twMerge } from "tailwind-merge";
+
+-export function cn(...inputs: string[]) {
++export function cn(...inputs: ClassValue[]) {
+   return twMerge(clsx(inputs));
+ }
++
++export const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"]);`}
+        maxLines={args.maxLines || undefined}
+      />
+    </div>
+  ),
+};
+
 const samplePatch = `diff --git a/src/utils.ts b/src/utils.ts
 index abc1234..def5678 100644
 --- a/src/utils.ts

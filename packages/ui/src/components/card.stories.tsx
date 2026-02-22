@@ -13,6 +13,41 @@ export default meta;
 
 type Story = StoryObj<typeof Card>;
 
+interface PlaygroundArgs {
+  title: string;
+  description: string;
+  showFooter: boolean;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    title: { control: "text" },
+    description: { control: "text" },
+    showFooter: { control: "boolean" },
+  },
+  args: {
+    title: "Card Title",
+    description: "Card description text",
+    showFooter: true,
+  },
+  render: (args) => (
+    <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>{args.title}</CardTitle>
+        <CardDescription>{args.description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">Card content goes here.</p>
+      </CardContent>
+      {args.showFooter && (
+        <CardFooter>
+          <Button>Action</Button>
+        </CardFooter>
+      )}
+    </Card>
+  ),
+};
+
 export const Default: Story = {
   render: () => (
     <Card className="w-[350px]">

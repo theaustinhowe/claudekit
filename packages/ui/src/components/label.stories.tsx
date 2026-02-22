@@ -12,6 +12,20 @@ export default meta;
 
 type Story = StoryObj<typeof Label>;
 
+interface PlaygroundArgs {
+  children: string;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    children: { control: "text" },
+  },
+  args: {
+    children: "Label text",
+  },
+  render: (args) => <Label>{args.children}</Label>,
+};
+
 export const Default: Story = {
   args: { children: "Email address" },
 };

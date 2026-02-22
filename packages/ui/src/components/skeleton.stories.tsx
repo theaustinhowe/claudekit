@@ -10,6 +10,23 @@ export default meta;
 
 type Story = StoryObj<typeof Skeleton>;
 
+interface PlaygroundArgs {
+  width: string;
+  height: string;
+}
+
+export const Playground: StoryObj<PlaygroundArgs> = {
+  argTypes: {
+    width: { control: "text" },
+    height: { control: "text" },
+  },
+  args: {
+    width: "200px",
+    height: "20px",
+  },
+  render: (args) => <Skeleton style={{ width: args.width, height: args.height }} />,
+};
+
 export const Default: Story = {
   render: () => (
     <div className="flex items-center space-x-4">

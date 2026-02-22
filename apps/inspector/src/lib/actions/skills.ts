@@ -1,145 +1,29 @@
 "use server";
 
-import crypto from "node:crypto";
-import { runClaude } from "@devkit/claude-runner";
-import { getSetting } from "@/lib/actions/settings";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { createServiceLogger } from "@/lib/logger";
-import { buildSkillAnalysisPrompt } from "@/lib/prompts";
+import { createSession, startSession } from "@/lib/services/session-manager";
+import { createSkillAnalysisRunner } from "@/lib/services/session-runners/skill-analysis";
 import type { Skill, SkillWithComments } from "@/lib/types";
 
 const log = createServiceLogger("skills");
 
-export async function startSkillAnalysis(repoId: string, prNumbers: number[]) {
-  log.info({ repoId, prNumbers }, "Starting skill analysis");
-  const db = await getDb();
-  const analysisId = crypto.randomUUID();
+export async function startSkillAnalysis(repoId: string, prNumbers: number[]): Promise<string> {
+  log.info({ repoId, prNumbers }, "Starting skill analysis session");
 
-  // Gather comments for selected PRs
-  const prIds = prNumbers.map((n) => `${repoId}#${n}`);
-  const placeholders = prIds.map(() => "?").join(",");
-
-  const comments = await queryAll<{
-    id: string;
-    reviewer: string;
-    body: string;
-    file_path: string | null;
-    line_number: number | null;
-    pr_id: string;
-  }>(
-    db,
-    `SELECT id, reviewer, body, file_path, line_number, pr_id FROM pr_comments WHERE pr_id IN (${placeholders})`,
-    prIds,
-  );
-
-  if (comments.length === 0) {
-    throw new Error("No comments found for selected PRs");
-  }
-
-  // Apply settings filters
-  const ignoreBots = await getSetting("ignore_bots");
-  const filteredComments = ignoreBots !== "false" ? comments.filter((c) => !c.reviewer.includes("[bot]")) : comments;
-
-  if (filteredComments.length === 0) {
-    throw new Error("No comments remain after filtering bots");
-  }
-
-  // Get PR titles for context
-  const prs = await queryAll<{ id: string; number: number; title: string }>(
-    db,
-    `SELECT id, number, title FROM prs WHERE id IN (${placeholders})`,
-    prIds,
-  );
-  const prMap = new Map(prs.map((p) => [p.id, p]));
-
-  const enrichedComments = filteredComments.map((c) => {
-    const pr = prMap.get(c.pr_id);
-    return {
-      id: c.id,
-      reviewer: c.reviewer,
-      body: c.body,
-      filePath: c.file_path,
-      lineNumber: c.line_number,
-      prNumber: pr?.number ?? 0,
-      prTitle: pr?.title ?? "",
-    };
+  const metadata = { repoId, prNumbers };
+  const sessionId = await createSession({
+    sessionType: "skill_analysis",
+    label: `Skill analysis (${prNumbers.length} PRs)`,
+    contextType: "repo",
+    contextId: repoId,
+    metadata,
   });
 
-  const prompt = buildSkillAnalysisPrompt(enrichedComments);
-  log.info({ commentCount: enrichedComments.length }, "Calling Claude for skill analysis");
+  const runner = createSkillAnalysisRunner(metadata);
+  await startSession(sessionId, runner);
 
-  // Call Claude
-  const result = await runClaude({
-    prompt,
-    cwd: process.cwd(),
-    allowedTools: "",
-    onProgress: () => {},
-  });
-
-  // Parse JSON from Claude's response
-  const responseText = result.stdout || "";
-  const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    throw new Error("Failed to parse skill analysis response");
-  }
-
-  const skillsData = JSON.parse(jsonMatch[0]) as Array<{
-    name: string;
-    severity: string;
-    frequency: number;
-    trend: string;
-    topExample: string;
-    description: string;
-    commentIds: string[];
-    resources: { title: string; url: string }[];
-    actionItem: string;
-  }>;
-
-  // Persist analysis
-  await execute(
-    db,
-    "INSERT INTO skill_analyses (id, repo_id, pr_numbers, created_at) VALUES (?, ?, ?, current_timestamp)",
-    [analysisId, repoId, JSON.stringify(prNumbers)],
-  );
-
-  for (const skill of skillsData) {
-    const skillId = crypto.randomUUID();
-    await execute(
-      db,
-      `INSERT INTO skills (id, analysis_id, name, frequency, total_prs, trend, severity, top_example, description, resources, action_item, addressed)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false)`,
-      [
-        skillId,
-        analysisId,
-        skill.name,
-        skill.frequency,
-        prNumbers.length,
-        skill.trend,
-        skill.severity,
-        skill.topExample,
-        skill.description,
-        JSON.stringify(skill.resources),
-        skill.actionItem,
-      ],
-    );
-
-    // Link comments to skill
-    for (const commentId of skill.commentIds || []) {
-      const linkId = crypto.randomUUID();
-      // Only link if the comment exists
-      const exists = await queryOne(db, "SELECT 1 FROM pr_comments WHERE id = ?", [commentId]);
-      if (exists) {
-        await execute(db, "INSERT INTO skill_comments (id, skill_id, comment_id) VALUES (?, ?, ?)", [
-          linkId,
-          skillId,
-          commentId,
-        ]);
-      }
-    }
-  }
-
-  log.info({ analysisId, skillCount: skillsData.length }, "Skill analysis complete");
-  return analysisId;
+  return sessionId;
 }
 
 export async function getSkillAnalyses(repoId: string) {

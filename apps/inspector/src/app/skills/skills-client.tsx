@@ -6,10 +6,11 @@ import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Progress } from "@devkit/ui/components/progress";
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Slider } from "@devkit/ui/components/slider";
-import { Brain, Check, Filter, GitCompareArrows, History, TrendingUp } from "lucide-react";
+import { useSessionStream } from "@devkit/hooks/use-session-stream";
+import { Brain, Check, Filter, GitCompareArrows, History, Square, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { AnalysisComparison } from "@/components/skills/analysis-comparison";
 import { AnalysisHistory } from "@/components/skills/analysis-history";
@@ -162,13 +163,6 @@ function SkillTrendChart({ data }: { data: SkillTrendPoint[] }) {
 
 type Phase = "select" | "analyzing" | "results";
 
-const analysisSteps = [
-  "Extracting review comments\u2026",
-  "Categorizing feedback patterns\u2026",
-  "Identifying skill gaps\u2026",
-  "Building improvement plan\u2026",
-];
-
 interface AnalysisHistoryEntry {
   id: string;
   prNumbers: number[];
@@ -195,8 +189,6 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
   const [minComments, setMinComments] = useState(1);
   const [phase, setPhase] = useState<Phase>(previousSkills.length > 0 ? "results" : "select");
   const [skills, setSkills] = useState<SkillWithComments[]>(previousSkills);
-  const [step, setStep] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [selectedSkill, setSelectedSkill] = useState<SkillWithComments | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -207,6 +199,40 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
   const [comparison, setComparison] = useState<ComparisonSkill[]>([]);
   const [showTrends, setShowTrends] = useState(false);
   const [trendData, setTrendData] = useState<SkillTrendPoint[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  const handleSessionComplete = useCallback(
+    (event: { type: string; data?: Record<string, unknown> }) => {
+      if (event.type === "done") {
+        const analysisId = (event.data as { analysisId?: string })?.analysisId;
+        if (analysisId) {
+          startTransition(async () => {
+            const results = await getSkillsForAnalysis(analysisId);
+            setSkills(results);
+            setPhase("results");
+            toast.success("Skill analysis complete", {
+              description: `Found ${results.length} skill pattern${results.length !== 1 ? "s" : ""}`,
+            });
+          });
+        } else {
+          setPhase("results");
+        }
+      } else if (event.type === "error") {
+        toast.error("Skill analysis failed", { description: event.data?.message as string });
+        setPhase("select");
+      } else if (event.type === "cancelled") {
+        toast.info("Analysis cancelled");
+        setPhase("select");
+      }
+      setSessionId(null);
+    },
+    [startTransition],
+  );
+
+  const stream = useSessionStream({
+    sessionId,
+    onComplete: handleSessionComplete,
+  });
 
   const filtered = prsWithComments.filter((p) => p.commentCount >= minComments);
 
@@ -225,37 +251,17 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
 
   const handleAnalyze = () => {
     setPhase("analyzing");
-    setStep(0);
-    setProgress(0);
-
-    // Animate progress steps
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      setStep(currentStep);
-      setProgress((currentStep / analysisSteps.length) * 100);
-
-      if (currentStep >= analysisSteps.length) {
-        clearInterval(interval);
-        // Call the actual analysis
-        startTransition(async () => {
-          try {
-            const analysisId = await startSkillAnalysis(repoId, [...selected]);
-            const results = await getSkillsForAnalysis(analysisId);
-            setSkills(results);
-            setPhase("results");
-            toast.success("Skill analysis complete", {
-              description: `Found ${results.length} skill pattern${results.length !== 1 ? "s" : ""}`,
-            });
-          } catch (err) {
-            toast.error("Skill analysis failed", {
-              description: err instanceof Error ? err.message : "Unknown error",
-            });
-            setPhase("select");
-          }
+    startTransition(async () => {
+      try {
+        const id = await startSkillAnalysis(repoId, [...selected]);
+        setSessionId(id);
+      } catch (err) {
+        toast.error("Failed to start analysis", {
+          description: err instanceof Error ? err.message : "Unknown error",
         });
+        setPhase("select");
       }
-    }, 1500);
+    });
   };
 
   if (phase === "analyzing") {
@@ -263,29 +269,32 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
       <div className="flex flex-col items-center justify-center h-full p-8">
         <Brain className="h-12 w-12 text-primary mb-6 animate-pulse" />
         <div className="w-full max-w-md space-y-6">
-          <Progress value={progress} className="h-2" />
-          <div className="space-y-2">
-            {analysisSteps.map((s, i) => (
+          <Progress value={stream.progress ?? 0} className="h-2" />
+          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
+          <div className="space-y-1.5 max-h-48 overflow-y-auto">
+            {stream.logs.slice(-8).map((entry, i) => (
               <motion.div
-                key={s}
+                key={`${i}-${entry.log}`}
                 initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: i <= step ? 1 : 0.3, x: 0 }}
+                animate={{ opacity: 1, x: 0 }}
                 className="flex items-center gap-2 text-sm"
               >
-                {i < step ? (
-                  <Check className="h-4 w-4 text-status-success" />
-                ) : i === step ? (
-                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent" />
+                {entry.log.includes("[SUCCESS]") ? (
+                  <Check className="h-4 w-4 text-status-success shrink-0" />
                 ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-muted" />
+                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent shrink-0" />
                 )}
-                <span className={i <= step ? "text-foreground" : "text-muted-foreground"}>{s}</span>
+                <span className="text-muted-foreground truncate">{entry.log}</span>
               </motion.div>
             ))}
           </div>
-          {isPending && step >= analysisSteps.length && (
-            <p className="text-center text-sm text-muted-foreground animate-pulse">Running Claude analysis...</p>
+          {stream.elapsed > 0 && (
+            <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>
           )}
+          <Button variant="outline" className="w-full" onClick={stream.cancel}>
+            <Square className="h-3 w-3 mr-2" />
+            Cancel
+          </Button>
         </div>
       </div>
     );
