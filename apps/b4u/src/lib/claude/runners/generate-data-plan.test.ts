@@ -6,6 +6,7 @@ vi.mock("@claudekit/claude-runner", () => ({
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn(async () => ({})),
   queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
 }));
 vi.mock("@/lib/claude/prompts/generate-data-plan", () => ({
@@ -13,7 +14,7 @@ vi.mock("@/lib/claude/prompts/generate-data-plan", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryAll, queryOne } from "@/lib/db";
 import { createGenerateDataPlanRunner } from "./generate-data-plan";
 
 beforeEach(() => {
@@ -36,10 +37,12 @@ describe("createGenerateDataPlanRunner", () => {
   });
 
   it("throws when no user flows found", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js", auth: "n", database_info: "n", project_path: "/p" }])
-      .mockResolvedValueOnce([{ path: "/", title: "Home" }])
-      .mockResolvedValueOnce([]); // no flows
+    vi.mocked(queryAll).mockResolvedValueOnce([
+      { name: "App", framework: "Next.js", auth: "n", database_info: "n", project_path: "/p" },
+    ]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home" }]) }) // routes
+      .mockResolvedValueOnce(null); // no flows
 
     const runner = createGenerateDataPlanRunner();
 
@@ -47,10 +50,12 @@ describe("createGenerateDataPlanRunner", () => {
   });
 
   it("saves data plan to DB on success", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js", auth: "n", database_info: "n", project_path: "/p" }])
-      .mockResolvedValueOnce([{ path: "/", title: "Home" }])
-      .mockResolvedValueOnce([{ id: "f1", name: "Login", steps: [] }]);
+    vi.mocked(queryAll).mockResolvedValueOnce([
+      { name: "App", framework: "Next.js", auth: "n", database_info: "n", project_path: "/p" },
+    ]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home" }]) }) // routes
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ id: "f1", name: "Login", steps: [] }]) }); // flows
 
     const dataPlan = {
       entities: [{ name: "users", count: 10, note: "test users" }],
@@ -67,15 +72,15 @@ describe("createGenerateDataPlanRunner", () => {
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: dataPlan });
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM mock_data_entities WHERE run_id = ?", [
-      undefined,
-    ]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM auth_overrides WHERE run_id = ?", [undefined]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM env_items WHERE run_id = ?", [undefined]);
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),
-      expect.stringContaining("INSERT INTO mock_data_entities"),
-      expect.arrayContaining(["users", 10]),
+      "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('mock_data_entities', 'auth_overrides', 'env_items')",
+      [undefined],
+    );
+    expect(execute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining("'mock_data_entities'"),
+      expect.any(Array),
     );
   });
 });

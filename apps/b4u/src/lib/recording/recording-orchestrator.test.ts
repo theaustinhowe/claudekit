@@ -6,6 +6,7 @@ vi.mock("node:fs/promises", () => ({
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn(async () => ({})),
   queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
 }));
 vi.mock("./app-launcher", () => ({
@@ -20,7 +21,7 @@ vi.mock("./playwright-runner", () => ({
   recordFlow: vi.fn(),
 }));
 
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryAll, queryOne } from "@/lib/db";
 import { startDevServer, stopDevServer } from "./app-launcher";
 import { restoreProject } from "./data-seeder";
 import { recordFlow } from "./playwright-runner";
@@ -39,30 +40,29 @@ describe("runRecordingPipeline", () => {
   });
 
   it("throws when no flow scripts found", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([]) // flow_scripts
-      .mockResolvedValueOnce([]); // script_steps
+    vi.mocked(queryAll).mockResolvedValueOnce([]); // flow_scripts (empty)
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce(null) // entities
+      .mockResolvedValueOnce(null) // auth overrides
+      .mockResolvedValueOnce(null); // env items
 
     await expect(runRecordingPipeline(makeOptions())).rejects.toThrow("No flow scripts found");
   });
 
   it("runs the full pipeline: env setup, dev server, record, cleanup", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ flow_id: "f1", flow_name: "Login" }]) // flow_scripts
-      .mockResolvedValueOnce([
-        {
-          flow_id: "f1",
-          id: "s1",
-          step_number: 1,
-          url: "/",
-          action: "click login",
-          expected_outcome: "ok",
-          duration: "3s",
-        },
-      ]) // script_steps
-      .mockResolvedValueOnce([]) // entities
-      .mockResolvedValueOnce([]) // authOverrides
-      .mockResolvedValueOnce([]); // envItems
+    vi.mocked(queryAll).mockResolvedValueOnce([
+      {
+        flow_id: "f1",
+        flow_name: "Login",
+        steps_json: JSON.stringify([
+          { id: "s1", stepNumber: 1, url: "/", action: "click login", expectedOutcome: "ok", duration: "3s" },
+        ]),
+      },
+    ]); // flow_scripts with embedded steps
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce(null) // entities
+      .mockResolvedValueOnce(null) // auth overrides
+      .mockResolvedValueOnce(null); // env items
 
     vi.mocked(startDevServer).mockResolvedValue({
       process: { pid: 123 } as import("node:child_process").ChildProcess,
@@ -90,15 +90,14 @@ describe("runRecordingPipeline", () => {
   });
 
   it("filters flows by flowIds", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([
-        { flow_id: "f1", flow_name: "Login" },
-        { flow_id: "f2", flow_name: "Dashboard" },
-      ])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    vi.mocked(queryAll).mockResolvedValueOnce([
+      { flow_id: "f1", flow_name: "Login", steps_json: "[]" },
+      { flow_id: "f2", flow_name: "Dashboard", steps_json: "[]" },
+    ]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce(null) // entities
+      .mockResolvedValueOnce(null) // auth overrides
+      .mockResolvedValueOnce(null); // env items
 
     vi.mocked(startDevServer).mockResolvedValue({
       process: { pid: 123 } as import("node:child_process").ChildProcess,
@@ -115,14 +114,19 @@ describe("runRecordingPipeline", () => {
   });
 
   it("stops dev server and restores project on error", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ flow_id: "f1", flow_name: "Login" }])
-      .mockResolvedValueOnce([
-        { flow_id: "f1", id: "s1", step_number: 1, url: "/", action: "x", expected_outcome: "x", duration: "3s" },
-      ])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    vi.mocked(queryAll).mockResolvedValueOnce([
+      {
+        flow_id: "f1",
+        flow_name: "Login",
+        steps_json: JSON.stringify([
+          { id: "s1", stepNumber: 1, url: "/", action: "x", expectedOutcome: "x", duration: "3s" },
+        ]),
+      },
+    ]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce(null) // entities
+      .mockResolvedValueOnce(null) // auth overrides
+      .mockResolvedValueOnce(null); // env items
 
     const mockProcess = { pid: 123 } as import("node:child_process").ChildProcess;
     vi.mocked(startDevServer).mockResolvedValue({ process: mockProcess, url: "http://localhost:3000", pid: 123 });

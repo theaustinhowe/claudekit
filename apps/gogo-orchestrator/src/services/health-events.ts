@@ -50,11 +50,13 @@ const eventBuffer: HealthEvent[] = [];
  */
 async function persistEvent(event: HealthEvent): Promise<void> {
   const conn = await getDb();
-  await execute(
-    conn,
-    "INSERT INTO health_events (id, type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?)",
-    [randomUUID(), event.type, event.message, event.metadata ? JSON.stringify(event.metadata) : null, event.timestamp],
-  );
+  await execute(conn, "INSERT INTO health_events (id, type, message, metadata, created_at) VALUES (?, ?, ?, ?, ?)", [
+    randomUUID(),
+    event.type,
+    event.message,
+    event.metadata ? JSON.stringify(event.metadata) : null,
+    event.timestamp,
+  ]);
 }
 
 /**

@@ -6,6 +6,7 @@ vi.mock("@claudekit/claude-runner", () => ({
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn(async () => ({})),
   queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
 }));
 vi.mock("@/lib/claude/prompts/generate-outline", () => ({
@@ -13,7 +14,7 @@ vi.mock("@/lib/claude/prompts/generate-outline", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryAll, queryOne } from "@/lib/db";
 import { createGenerateOutlineRunner } from "./generate-outline";
 
 beforeEach(() => {
@@ -36,11 +37,10 @@ describe("createGenerateOutlineRunner", () => {
   });
 
   it("throws when Claude returns no JSON", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([
-        { name: "App", framework: "Next.js", auth: "none", database_info: "none", project_path: "/p" },
-      ])
-      .mockResolvedValueOnce([]);
+    vi.mocked(queryAll).mockResolvedValueOnce([
+      { name: "App", framework: "Next.js", auth: "none", database_info: "none", project_path: "/p" },
+    ]);
+    vi.mocked(queryOne).mockResolvedValueOnce({ data_json: "[]" }); // routes from run_content
     vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 
     const runner = createGenerateOutlineRunner();
@@ -49,11 +49,12 @@ describe("createGenerateOutlineRunner", () => {
   });
 
   it("saves outline to DB on success", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([
-        { name: "App", framework: "Next.js", auth: "none", database_info: "none", project_path: "/p" },
-      ])
-      .mockResolvedValueOnce([{ path: "/", title: "Home", auth_required: false, description: "Main" }]);
+    vi.mocked(queryAll).mockResolvedValueOnce([
+      { name: "App", framework: "Next.js", auth: "none", database_info: "none", project_path: "/p" },
+    ]);
+    vi.mocked(queryOne).mockResolvedValueOnce({
+      data_json: JSON.stringify([{ path: "/", title: "Home", authRequired: false, description: "Main" }]),
+    });
 
     const outline = {
       routes: [{ path: "/", title: "Home" }],
@@ -69,15 +70,22 @@ describe("createGenerateOutlineRunner", () => {
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: outline });
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes WHERE run_id = ?", [undefined]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM user_flows WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(
+      expect.anything(),
+      "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'user_flows')",
+      [undefined],
+    );
 
-    // Verify steps INSERT uses ?::VARCHAR[] cast and JSON.stringify
-    const flowInsertCall = vi
+    // Verify routes INSERT into run_content
+    const routesInsert = vi
       .mocked(execute)
-      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("INSERT INTO user_flows"));
-    expect(flowInsertCall).toBeDefined();
-    expect(flowInsertCall?.[1]).toContain("?::VARCHAR[]");
-    expect(flowInsertCall?.[2]).toContain(JSON.stringify(["step1"]));
+      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("'routes'"));
+    expect(routesInsert).toBeDefined();
+
+    // Verify flows INSERT into run_content
+    const flowsInsert = vi
+      .mocked(execute)
+      .mock.calls.find((call) => typeof call[1] === "string" && call[1].includes("'user_flows'"));
+    expect(flowsInsert).toBeDefined();
   });
 });

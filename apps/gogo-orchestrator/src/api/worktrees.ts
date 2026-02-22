@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { realpath, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { buildInClause, execute, queryAll, queryOne } from "@claudekit/duckdb";
@@ -529,9 +530,10 @@ export const worktreesRouter: FastifyPluginAsync = async (fastify) => {
       // Insert job event for cleanup
       await execute(
         conn,
-        `INSERT INTO job_events (job_id, event_type, message, metadata, created_at)
-           VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO job_events (id, job_id, event_type, message, metadata, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
         [
+          randomUUID(),
           jobId,
           "user_action",
           "Worktree cleaned up by user",

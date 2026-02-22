@@ -30,11 +30,19 @@ beforeEach(() => {
 });
 
 describe("GET /api/timeline-markers", () => {
-  it("returns markers grouped by flow_id", async () => {
+  it("returns markers grouped by flow_id from flow_voiceover", async () => {
     mockQueryAll.mockResolvedValue([
-      { flow_id: "flow-1", timestamp: "00:00:05", label: "Login", paragraph_index: 0 },
-      { flow_id: "flow-1", timestamp: "00:00:15", label: "Dashboard", paragraph_index: 1 },
-      { flow_id: "flow-2", timestamp: "00:01:00", label: "Settings", paragraph_index: 0 },
+      {
+        flow_id: "flow-1",
+        markers_json: JSON.stringify([
+          { timestamp: "00:00:05", label: "Login", paragraphIndex: 0 },
+          { timestamp: "00:00:15", label: "Dashboard", paragraphIndex: 1 },
+        ]),
+      },
+      {
+        flow_id: "flow-2",
+        markers_json: JSON.stringify([{ timestamp: "00:01:00", label: "Settings", paragraphIndex: 0 }]),
+      },
     ] as never);
 
     const response = await GET(makeGetRequest("run-1"));
@@ -76,7 +84,9 @@ describe("GET /api/timeline-markers", () => {
 });
 
 describe("PUT /api/timeline-markers", () => {
-  it("saves markers for a single flow", async () => {
+  it("saves markers for a single flow via flow_voiceover", async () => {
+    // No existing row found
+    mockQueryAll.mockResolvedValue([] as never);
     mockExecute.mockResolvedValue(undefined as never);
 
     const body = {
@@ -91,34 +101,14 @@ describe("PUT /api/timeline-markers", () => {
 
     expect(response.status).toBe(200);
     expect(data).toEqual({ ok: true });
-
-    // 1 delete + 2 inserts
-    expect(mockExecute).toHaveBeenCalledTimes(3);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
-      "flow-1",
-      "run-1",
-    ]);
-    expect(mockExecute).toHaveBeenCalledWith(
-      {},
-      "INSERT INTO timeline_markers (run_id, flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?, ?)",
-      ["run-1", "flow-1", "00:00:05", "Login", 0],
-    );
-    expect(mockExecute).toHaveBeenCalledWith(
-      {},
-      "INSERT INTO timeline_markers (run_id, flow_id, timestamp, label, paragraph_index) VALUES (?, ?, ?, ?, ?)",
-      ["run-1", "flow-1", "00:00:15", "Dashboard", 1],
-    );
   });
 
-  it("processes multiple flows", async () => {
+  it("updates existing flow_voiceover row markers", async () => {
+    mockQueryAll.mockResolvedValue([{ id: "existing-id", paragraphs_json: '["Hello"]' }] as never);
     mockExecute.mockResolvedValue(undefined as never);
 
     const body = {
       "flow-1": [{ timestamp: "00:00:05", label: "Login", paragraphIndex: 0 }],
-      "flow-2": [
-        { timestamp: "00:01:00", label: "Settings", paragraphIndex: 0 },
-        { timestamp: "00:01:30", label: "Profile", paragraphIndex: 1 },
-      ],
     };
 
     const response = await PUT(makePutRequest(body));
@@ -126,38 +116,11 @@ describe("PUT /api/timeline-markers", () => {
 
     expect(response.status).toBe(200);
     expect(data).toEqual({ ok: true });
-
-    // 2 deletes + 3 inserts
-    expect(mockExecute).toHaveBeenCalledTimes(5);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
-      "flow-1",
-      "run-1",
-    ]);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
-      "flow-2",
-      "run-1",
-    ]);
-  });
-
-  it("handles empty markers array for a flow", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
-
-    const body = {
-      "flow-1": [],
-    };
-
-    const response = await PUT(makePutRequest(body));
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data).toEqual({ ok: true });
-
-    // Only 1 delete, no inserts
-    expect(mockExecute).toHaveBeenCalledTimes(1);
-    expect(mockExecute).toHaveBeenCalledWith({}, "DELETE FROM timeline_markers WHERE flow_id = ? AND run_id = ?", [
-      "flow-1",
-      "run-1",
-    ]);
+    expect(mockExecute).toHaveBeenCalledWith(
+      {},
+      "UPDATE flow_voiceover SET markers_json = ? WHERE id = ?",
+      expect.any(Array),
+    );
   });
 
   it("returns 400 when runId is missing", async () => {
@@ -189,7 +152,7 @@ describe("PUT /api/timeline-markers", () => {
   });
 
   it("returns 500 on database error", async () => {
-    mockExecute.mockRejectedValue(new Error("DB write error"));
+    mockQueryAll.mockRejectedValue(new Error("DB write error"));
 
     const body = {
       "flow-1": [{ timestamp: "00:00:05", label: "Login", paragraphIndex: 0 }],

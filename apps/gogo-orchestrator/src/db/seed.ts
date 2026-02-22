@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryOne } from "@claudekit/duckdb";
 import { getDb } from "./index.js";
 import type { DbJob, DbRepository } from "./schema.js";
@@ -10,11 +11,12 @@ async function seed() {
   // Create default repository
   const repo = await queryOne<DbRepository>(
     conn,
-    `INSERT INTO repositories (owner, name, display_name, github_token, workdir_path, trigger_label, base_branch, poll_interval_ms, test_command, agent_provider, is_active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO repositories (id, owner, name, display_name, github_token, workdir_path, trigger_label, base_branch, poll_interval_ms, test_command, agent_provider, is_active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT DO NOTHING
      RETURNING *`,
     [
+      randomUUID(),
       "example",
       "repo",
       "example/repo",
@@ -35,10 +37,11 @@ async function seed() {
     // Insert sample job linked to repository
     const job = await queryOne<DbJob>(
       conn,
-      `INSERT INTO jobs (repository_id, issue_number, issue_url, issue_title, issue_body, status)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO jobs (id, repository_id, issue_number, issue_url, issue_title, issue_body, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
       [
+        randomUUID(),
         repo.id,
         1,
         "https://github.com/example/repo/issues/1",
@@ -54,20 +57,22 @@ async function seed() {
       // Insert sample event
       await execute(
         conn,
-        `INSERT INTO job_events (job_id, event_type, from_status, to_status, message)
-         VALUES (?, ?, ?, ?, ?)`,
-        [job.id, "state_change", null, "queued", "Job created from GitHub issue"],
+        `INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [randomUUID(), job.id, "state_change", null, "queued", "Job created from GitHub issue"],
       );
       console.log("Inserted sample event");
 
       // Insert sample logs
-      await execute(conn, `INSERT INTO job_logs (job_id, stream, content, sequence) VALUES (?, ?, ?, ?)`, [
+      await execute(conn, `INSERT INTO job_logs (id, job_id, stream, content, sequence) VALUES (?, ?, ?, ?, ?)`, [
+        randomUUID(),
         job.id,
         "system",
         "Job initialized",
         1,
       ]);
-      await execute(conn, `INSERT INTO job_logs (job_id, stream, content, sequence) VALUES (?, ?, ?, ?)`, [
+      await execute(conn, `INSERT INTO job_logs (id, job_id, stream, content, sequence) VALUES (?, ?, ?, ?, ?)`, [
+        randomUUID(),
         job.id,
         "stdout",
         "Cloning repository...",

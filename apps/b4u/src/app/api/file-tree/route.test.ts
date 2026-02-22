@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn().mockResolvedValue({}),
-  queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
 }));
 
 import { GET, PUT } from "@/app/api/file-tree/route";
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryOne } from "@/lib/db";
 
-const mockQueryAll = vi.mocked(queryAll);
+const mockQueryOne = vi.mocked(queryOne);
 const mockExecute = vi.mocked(execute);
 
 function makeGetRequest(runId: string) {
@@ -22,9 +22,9 @@ beforeEach(() => {
 });
 
 describe("GET /api/file-tree", () => {
-  it("returns the parsed file tree", async () => {
+  it("returns the parsed file tree from run_content", async () => {
     const tree = { name: "root", type: "directory", children: [{ name: "src", type: "directory" }] };
-    mockQueryAll.mockResolvedValue([{ tree_json: JSON.stringify(tree) }] as never);
+    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(tree) } as never);
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -42,7 +42,7 @@ describe("GET /api/file-tree", () => {
   });
 
   it("returns 404 when no file tree exists", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryOne.mockResolvedValue(null as never);
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -51,18 +51,8 @@ describe("GET /api/file-tree", () => {
     expect(data.error).toContain("File tree not found");
   });
 
-  it("returns 500 on corrupt JSON in database", async () => {
-    mockQueryAll.mockResolvedValue([{ tree_json: "not valid json{{{" }] as never);
-
-    const response = await GET(makeGetRequest("run-1"));
-    const data = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(data.error).toContain("Corrupt file tree data");
-  });
-
   it("returns 500 on database error", async () => {
-    mockQueryAll.mockRejectedValue(new Error("DB connection failed"));
+    mockQueryOne.mockRejectedValue(new Error("DB connection failed"));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -73,7 +63,7 @@ describe("GET /api/file-tree", () => {
 });
 
 describe("PUT /api/file-tree", () => {
-  it("saves file tree to database", async () => {
+  it("saves file tree to run_content", async () => {
     mockExecute.mockResolvedValue(undefined as never);
 
     const req = new NextRequest("http://localhost/api/file-tree?runId=run-1", {
@@ -90,10 +80,14 @@ describe("PUT /api/file-tree", () => {
 
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM file_tree WHERE run_id = ?", ["run-1"]);
     expect(mockExecute).toHaveBeenCalledWith(
       expect.anything(),
-      expect.stringContaining("INSERT INTO file_tree"),
+      "DELETE FROM run_content WHERE run_id = ? AND content_type = 'file_tree'",
+      ["run-1"],
+    );
+    expect(mockExecute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining("INSERT INTO run_content"),
       expect.any(Array),
     );
   });

@@ -6,6 +6,7 @@ vi.mock("@claudekit/claude-runner", () => ({
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn(async () => ({})),
   queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
 }));
 vi.mock("@/lib/claude/prompts/generate-scripts", () => ({
@@ -16,7 +17,7 @@ vi.mock("@/lib/claude/prompts/generate-voiceover", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryAll, queryOne } from "@/lib/db";
 import { createGenerateScriptsRunner } from "./generate-scripts";
 
 beforeEach(() => {
@@ -39,10 +40,10 @@ describe("createGenerateScriptsRunner", () => {
   });
 
   it("throws when no user flows found", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js", project_path: "/p" }])
-      .mockResolvedValueOnce([{ path: "/", title: "Home", description: "Main" }])
-      .mockResolvedValueOnce([]); // no flows
+    vi.mocked(queryAll).mockResolvedValueOnce([{ name: "App", framework: "Next.js", project_path: "/p" }]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home", description: "Main" }]) }) // routes
+      .mockResolvedValueOnce(null); // no flows
 
     const runner = createGenerateScriptsRunner();
 
@@ -50,10 +51,14 @@ describe("createGenerateScriptsRunner", () => {
   });
 
   it("runs two Claude calls (scripts then voiceover) and saves results", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js", project_path: "/p" }])
-      .mockResolvedValueOnce([{ path: "/", title: "Home", description: "Main" }])
-      .mockResolvedValueOnce([{ id: "f1", name: "Login", steps: ["step1"] }]);
+    vi.mocked(queryAll).mockResolvedValueOnce([{ name: "App", framework: "Next.js", project_path: "/p" }]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({
+        data_json: JSON.stringify([{ path: "/", title: "Home", description: "Main" }]),
+      }) // routes
+      .mockResolvedValueOnce({
+        data_json: JSON.stringify([{ id: "f1", name: "Login", steps: ["step1"] }]),
+      }); // flows
 
     const scripts = {
       scripts: [
@@ -79,19 +84,16 @@ describe("createGenerateScriptsRunner", () => {
     expect(result).toEqual({ result: { scripts, voiceover } });
     expect(runClaude).toHaveBeenCalledTimes(2);
     expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts WHERE run_id = ?", [undefined]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM voiceover_scripts WHERE run_id = ?", [
-      undefined,
-    ]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM timeline_markers WHERE run_id = ?", [
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_voiceover WHERE run_id = ?", [
       undefined,
     ]);
   });
 
   it("throws when scripts Claude output has no JSON", async () => {
-    vi.mocked(queryAll)
-      .mockResolvedValueOnce([{ name: "App", framework: "Next.js", project_path: "/p" }])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: "f1", name: "Login", steps: [] }]);
+    vi.mocked(queryAll).mockResolvedValueOnce([{ name: "App", framework: "Next.js", project_path: "/p" }]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ data_json: "[]" }) // routes
+      .mockResolvedValueOnce({ data_json: JSON.stringify([{ id: "f1", name: "Login", steps: [] }]) }); // flows
 
     vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 

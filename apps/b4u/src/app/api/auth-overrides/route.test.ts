@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn().mockResolvedValue({}),
-  queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
 }));
 vi.mock("@/lib/validations", () => ({
@@ -12,10 +12,10 @@ vi.mock("@/lib/validations", () => ({
 }));
 
 import { GET, PATCH } from "@/app/api/auth-overrides/route";
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryOne } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
 
-const mockQueryAll = vi.mocked(queryAll);
+const mockQueryOne = vi.mocked(queryOne);
 const mockExecute = vi.mocked(execute);
 const mockParseBody = vi.mocked(parseBody);
 
@@ -28,12 +28,12 @@ beforeEach(() => {
 });
 
 describe("GET /api/auth-overrides", () => {
-  it("returns auth overrides", async () => {
+  it("returns auth overrides from run_content", async () => {
     const overrides = [
       { id: "bypass-login", label: "Bypass login", enabled: true },
       { id: "skip-mfa", label: "Skip MFA", enabled: false },
     ];
-    mockQueryAll.mockResolvedValue(overrides as never);
+    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(overrides) } as never);
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -51,7 +51,7 @@ describe("GET /api/auth-overrides", () => {
   });
 
   it("returns 500 on database error", async () => {
-    mockQueryAll.mockRejectedValue(new Error("DB error"));
+    mockQueryOne.mockRejectedValue(new Error("DB error"));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -62,10 +62,17 @@ describe("GET /api/auth-overrides", () => {
 });
 
 describe("PATCH /api/auth-overrides", () => {
-  it("updates an auth override toggle", async () => {
+  it("updates an auth override toggle in run_content", async () => {
     mockParseBody.mockResolvedValue({
       ok: true,
       data: { id: "bypass-login", enabled: false, runId: "run-1" },
+    } as never);
+    mockQueryOne.mockResolvedValue({
+      id: "rc-1",
+      data_json: JSON.stringify([
+        { id: "bypass-login", label: "Bypass login", enabled: true },
+        { id: "skip-mfa", label: "Skip MFA", enabled: false },
+      ]),
     } as never);
     mockExecute.mockResolvedValue(undefined as never);
 
@@ -80,8 +87,8 @@ describe("PATCH /api/auth-overrides", () => {
     expect(data.success).toBe(true);
     expect(mockExecute).toHaveBeenCalledWith(
       expect.anything(),
-      "UPDATE auth_overrides SET enabled = ? WHERE id = ? AND run_id = ?",
-      [false, "bypass-login", "run-1"],
+      "UPDATE run_content SET data_json = ? WHERE id = ?",
+      expect.any(Array),
     );
   });
 

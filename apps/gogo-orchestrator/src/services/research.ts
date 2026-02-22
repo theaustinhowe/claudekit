@@ -74,9 +74,9 @@ export async function startResearchSession(
   // Create session record
   await execute(
     conn,
-    `INSERT INTO research_sessions (repository_id, status, focus_areas, claude_session_id)
-     VALUES (?, 'running', ?, ?)`,
-    [repositoryId, JSON.stringify(focusAreas), claudeSessionId],
+    `INSERT INTO research_sessions (id, repository_id, status, focus_areas, claude_session_id)
+     VALUES (?, ?, 'running', ?, ?)`,
+    [randomUUID(), repositoryId, JSON.stringify(focusAreas), claudeSessionId],
   );
 
   const session = await queryOne<DbResearchSession>(
@@ -454,9 +454,10 @@ async function storeSuggestion(sessionId: string, suggestion: ParsedSuggestion):
 
   await execute(
     conn,
-    `INSERT INTO research_suggestions (session_id, category, severity, title, description, file_paths)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO research_suggestions (id, session_id, category, severity, title, description, file_paths)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
+      randomUUID(),
       sessionId,
       suggestion.category,
       suggestion.severity,

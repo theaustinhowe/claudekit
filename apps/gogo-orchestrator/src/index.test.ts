@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dotenv before anything else
@@ -313,8 +314,9 @@ describe("index.ts startup dependencies", () => {
       for (const job of jobsToPause) {
         await execute(
           conn,
-          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
           [
+            randomUUID(),
             job.id,
             "state_change",
             job.status,

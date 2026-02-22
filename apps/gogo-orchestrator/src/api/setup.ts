@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { queryAll, queryOne } from "@claudekit/duckdb";
@@ -612,10 +613,10 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       const now = new Date().toISOString();
       const newRepo = await queryOne<DbRepository>(
         conn,
-        `INSERT INTO repositories (owner, name, display_name, github_token, base_branch, trigger_label, workdir_path, is_active, auto_create_jobs, remove_label_after_create, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, true, true, false, ?, ?)
+        `INSERT INTO repositories (id, owner, name, display_name, github_token, base_branch, trigger_label, workdir_path, is_active, auto_create_jobs, remove_label_after_create, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, true, true, false, ?, ?)
          RETURNING *`,
-        [owner, name, `${owner}/${name}`, finalToken, baseBranch, triggerLabel, resolvedPath, now, now],
+        [randomUUID(), owner, name, `${owner}/${name}`, finalToken, baseBranch, triggerLabel, resolvedPath, now, now],
       );
 
       if (!newRepo) {

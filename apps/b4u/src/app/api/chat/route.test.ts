@@ -70,11 +70,13 @@ describe("POST /api/chat", () => {
     expect(mockBuildPrompt).toHaveBeenCalledWith("hello", 1, { summary: { name: "Test" } });
   });
 
-  it("phase 2: calls queryAll for routes and flows", async () => {
+  it("phase 2: calls queryOne for routes and flows from run_content", async () => {
     const mockRoutes = [{ path: "/home", title: "Home" }];
     const mockFlows = [{ name: "Login" }];
-    mockQueryAll.mockResolvedValueOnce(mockRoutes as never).mockResolvedValueOnce(mockFlows as never);
-    mockQueryOne.mockResolvedValueOnce({ project_path: "/project" } as never);
+    mockQueryOne
+      .mockResolvedValueOnce({ data_json: JSON.stringify(mockRoutes) } as never) // routes
+      .mockResolvedValueOnce({ data_json: JSON.stringify(mockFlows) } as never) // flows
+      .mockResolvedValueOnce({ project_path: "/project" } as never); // project_path
     mockRunClaude.mockResolvedValue({
       stdout: '{"response":"OK","suggestedAction":null}',
       stderr: "",
@@ -83,19 +85,19 @@ describe("POST /api/chat", () => {
 
     await POST(makeRequest({ message: "show routes", phase: 2 }));
 
-    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT path, title FROM routes ORDER BY id");
-    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT name FROM user_flows ORDER BY id");
     expect(mockBuildPrompt).toHaveBeenCalledWith("show routes", 2, {
       routes: mockRoutes,
       flows: mockFlows,
     });
   });
 
-  it("phase 3: calls queryAll for entities and auth overrides", async () => {
+  it("phase 3: calls queryOne for entities and auth overrides from run_content", async () => {
     const mockEntities = [{ name: "User", count: 5 }];
     const mockAuth = [{ label: "Admin", enabled: true }];
-    mockQueryAll.mockResolvedValueOnce(mockEntities as never).mockResolvedValueOnce(mockAuth as never);
-    mockQueryOne.mockResolvedValueOnce({ project_path: "/project" } as never);
+    mockQueryOne
+      .mockResolvedValueOnce({ data_json: JSON.stringify(mockEntities) } as never) // entities
+      .mockResolvedValueOnce({ data_json: JSON.stringify(mockAuth) } as never) // auth overrides
+      .mockResolvedValueOnce({ project_path: "/project" } as never); // project_path
     mockRunClaude.mockResolvedValue({
       stdout: '{"response":"OK","suggestedAction":null}',
       stderr: "",
@@ -104,18 +106,18 @@ describe("POST /api/chat", () => {
 
     await POST(makeRequest({ message: "data plan", phase: 3 }));
 
-    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT name, count FROM mock_data_entities");
-    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT label, enabled FROM auth_overrides");
     expect(mockBuildPrompt).toHaveBeenCalledWith("data plan", 3, {
       entities: mockEntities,
       authOverrides: mockAuth,
     });
   });
 
-  it("phase 4: calls queryAll for scripts and step count", async () => {
+  it("phase 4: calls queryAll for scripts and step count from flow_scripts", async () => {
     const mockScripts = [{ flow_name: "Login Flow" }];
-    const mockSteps = [{ total: 12 }];
-    mockQueryAll.mockResolvedValueOnce(mockScripts as never).mockResolvedValueOnce(mockSteps as never);
+    const mockStepsRows = [{ steps_json: JSON.stringify([{ id: "s1" }, { id: "s2" }]) }];
+    mockQueryAll
+      .mockResolvedValueOnce(mockScripts as never)
+      .mockResolvedValueOnce(mockStepsRows as never);
     mockQueryOne.mockResolvedValueOnce({ project_path: "/project" } as never);
     mockRunClaude.mockResolvedValue({
       stdout: '{"response":"OK","suggestedAction":null}',
@@ -126,10 +128,10 @@ describe("POST /api/chat", () => {
     await POST(makeRequest({ message: "scripts", phase: 4 }));
 
     expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT flow_name FROM flow_scripts");
-    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT COUNT(*) as total FROM script_steps");
+    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT steps_json FROM flow_scripts");
     expect(mockBuildPrompt).toHaveBeenCalledWith("scripts", 4, {
       scripts: mockScripts,
-      totalSteps: 12,
+      totalSteps: 2,
     });
   });
 

@@ -2,7 +2,7 @@
  * Session Bridge — Integrates @claudekit/session with GoGo Orchestrator.
  *
  * Key design decisions:
- * - Uses dedicated sessions/session_logs tables (002_sessions.sql)
+ * - Uses dedicated sessions/session_logs tables (001_initial.sql)
  * - Sessions track individual Claude process runs within the job lifecycle
  * - GoGo's state machine remains authoritative for job status
  * - useGlobalCache: false (Fastify, not Next.js)

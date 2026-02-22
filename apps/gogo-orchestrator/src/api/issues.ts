@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
@@ -68,10 +69,10 @@ async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Pro
 
   const newJob = await queryOne<DbJob>(
     conn,
-    `INSERT INTO jobs (repository_id, issue_number, issue_title, issue_url, issue_body, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING *`,
-    [repositoryId, issue.number, issue.title, issue.html_url, issue.body, "queued", now, now],
+    [randomUUID(), repositoryId, issue.number, issue.title, issue.html_url, issue.body, "queued", now, now],
   );
 
   if (!newJob) {
@@ -83,9 +84,9 @@ async function createJobFromIssue(repositoryId: string, issue: GitHubIssue): Pro
   // Create job creation event
   await execute(
     conn,
-    `INSERT INTO job_events (job_id, event_type, from_status, to_status, message, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [mapped.id, "state_change", null, "queued", "Job manually created from issue", now],
+    `INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [randomUUID(), mapped.id, "state_change", null, "queued", "Job manually created from issue", now],
   );
 
   // Broadcast job created
@@ -262,9 +263,10 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
       const now = new Date().toISOString();
       await execute(
         conn,
-        `INSERT INTO issues (repository_id, number, title, body, state, html_url, author_login, author_avatar_url, author_html_url, labels, github_created_at, github_updated_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO issues (id, repository_id, number, title, body, state, html_url, author_login, author_avatar_url, author_html_url, labels, github_created_at, github_updated_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
+          randomUUID(),
           repositoryId,
           ghIssue.number,
           ghIssue.title,
@@ -460,9 +462,20 @@ export const issuesRouter: FastifyPluginAsync = async (fastify) => {
         const now = new Date().toISOString();
         await execute(
           conn,
-          `INSERT INTO issue_comments (repository_id, issue_number, github_comment_id, body, html_url, github_created_at, github_updated_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [repositoryId, issueNumber, ghComment.id, parsed.data.body, ghComment.html_url, now, now, now, now],
+          `INSERT INTO issue_comments (id, repository_id, issue_number, github_comment_id, body, html_url, github_created_at, github_updated_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            randomUUID(),
+            repositoryId,
+            issueNumber,
+            ghComment.id,
+            parsed.data.body,
+            ghComment.html_url,
+            now,
+            now,
+            now,
+            now,
+          ],
         );
 
         return { data: ghComment };

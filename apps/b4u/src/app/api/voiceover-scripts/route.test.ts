@@ -28,11 +28,10 @@ beforeEach(() => {
 });
 
 describe("GET /api/voiceover-scripts", () => {
-  it("returns scripts grouped by flow_id", async () => {
+  it("returns scripts grouped by flow_id from flow_voiceover", async () => {
     mockQueryAll.mockResolvedValue([
-      { flow_id: "flow-1", paragraph_index: 0, text: "Welcome to the app" },
-      { flow_id: "flow-1", paragraph_index: 1, text: "Click the login button" },
-      { flow_id: "flow-2", paragraph_index: 0, text: "Now view your dashboard" },
+      { flow_id: "flow-1", paragraphs_json: JSON.stringify(["Welcome to the app", "Click the login button"]) },
+      { flow_id: "flow-2", paragraphs_json: JSON.stringify(["Now view your dashboard"]) },
     ] as never);
 
     const response = await GET(makeGetRequest("run-1"));
@@ -63,9 +62,10 @@ describe("GET /api/voiceover-scripts", () => {
 });
 
 describe("PUT /api/voiceover-scripts", () => {
-  it("replaces all voiceover scripts", async () => {
+  it("updates voiceover scripts in flow_voiceover", async () => {
     const scripts = { "flow-1": ["Script 1", "Script 2"] };
     mockParseBody.mockResolvedValue({ ok: true, data: scripts } as never);
+    mockQueryAll.mockResolvedValue([] as never); // no existing rows
     mockExecute.mockResolvedValue(undefined as never);
 
     const req = new NextRequest("http://localhost/api/voiceover-scripts?runId=run-1", {
@@ -77,10 +77,6 @@ describe("PUT /api/voiceover-scripts", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    // Should delete old scripts then insert new ones
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM voiceover_scripts WHERE run_id = ?", [
-      "run-1",
-    ]);
   });
 
   it("returns 400 when runId is missing", async () => {

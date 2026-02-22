@@ -137,7 +137,15 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       `INSERT INTO jobs (id, issue_number, issue_title, issue_url, issue_body, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
-      [randomUUID(), parsed.data.issueNumber, parsed.data.issueTitle, parsed.data.issueUrl, parsed.data.issueBody ?? null, now, now],
+      [
+        randomUUID(),
+        parsed.data.issueNumber,
+        parsed.data.issueTitle,
+        parsed.data.issueUrl,
+        parsed.data.issueBody ?? null,
+        now,
+        now,
+      ],
     );
 
     if (!newJob) {
@@ -226,9 +234,9 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
     // Create job creation event
     await execute(
       conn,
-      `INSERT INTO job_events (job_id, event_type, from_status, to_status, message, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [mapped.id, "state_change", null, "queued", "Manual job created", now],
+      `INSERT INTO job_events (id, job_id, event_type, from_status, to_status, message, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [randomUUID(), mapped.id, "state_change", null, "queued", "Manual job created", now],
     );
 
     // Broadcast job created

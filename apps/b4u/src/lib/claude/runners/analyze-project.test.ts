@@ -64,7 +64,11 @@ describe("createAnalyzeProjectRunner", () => {
     expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM project_summary WHERE run_id = ?", [
       undefined,
     ]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM routes WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(
+      expect.anything(),
+      "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'file_tree')",
+      [undefined],
+    );
     // Inserts project summary
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),

@@ -3,15 +3,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   getDb: vi.fn().mockResolvedValue({}),
-  queryAll: vi.fn(),
+  queryOne: vi.fn(),
   execute: vi.fn(),
+}));
+vi.mock("@/lib/validations", () => ({
+  parseBody: vi.fn(),
+  togglePatchSchema: {},
 }));
 
 import { GET, PATCH } from "@/app/api/env-config/route";
-import { execute, queryAll } from "@/lib/db";
+import { execute, queryOne } from "@/lib/db";
+import { parseBody } from "@/lib/validations";
 
-const mockQueryAll = vi.mocked(queryAll);
+const mockQueryOne = vi.mocked(queryOne);
 const mockExecute = vi.mocked(execute);
+const mockParseBody = vi.mocked(parseBody);
 
 function makeGetRequest(runId: string) {
   return new NextRequest(`http://localhost/api/env-config?runId=${runId}`);
@@ -22,12 +28,12 @@ beforeEach(() => {
 });
 
 describe("GET /api/env-config", () => {
-  it("returns env items from database", async () => {
+  it("returns env items from run_content", async () => {
     const items = [
       { id: "seed-db", label: "Seed database on start", enabled: true },
       { id: "disable-rate", label: "Disable rate limiting", enabled: true },
     ];
-    mockQueryAll.mockResolvedValue(items as never);
+    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(items) } as never);
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -45,7 +51,7 @@ describe("GET /api/env-config", () => {
   });
 
   it("returns empty array when no items exist", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryOne.mockResolvedValue(null as never);
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -55,7 +61,7 @@ describe("GET /api/env-config", () => {
   });
 
   it("returns 500 on database error", async () => {
-    mockQueryAll.mockRejectedValue(new Error("DB error"));
+    mockQueryOne.mockRejectedValue(new Error("DB error"));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -66,7 +72,18 @@ describe("GET /api/env-config", () => {
 });
 
 describe("PATCH /api/env-config", () => {
-  it("updates an env item toggle", async () => {
+  it("updates an env item toggle in run_content", async () => {
+    mockParseBody.mockResolvedValue({
+      ok: true,
+      data: { id: "seed-db", enabled: false, runId: "run-1" },
+    } as never);
+    mockQueryOne.mockResolvedValue({
+      id: "rc-1",
+      data_json: JSON.stringify([
+        { id: "seed-db", label: "Seed database on start", enabled: true },
+        { id: "disable-rate", label: "Disable rate limiting", enabled: true },
+      ]),
+    } as never);
     mockExecute.mockResolvedValue(undefined as never);
 
     const req = new NextRequest("http://localhost/api/env-config", {
@@ -82,12 +99,14 @@ describe("PATCH /api/env-config", () => {
     expect(data.success).toBe(true);
     expect(mockExecute).toHaveBeenCalledWith(
       expect.anything(),
-      expect.stringContaining("UPDATE env_items SET enabled"),
-      expect.arrayContaining([false, "seed-db", "run-1"]),
+      "UPDATE run_content SET data_json = ? WHERE id = ?",
+      expect.any(Array),
     );
   });
 
   it("returns 422 for invalid body (missing id)", async () => {
+    mockParseBody.mockResolvedValue({ ok: false, error: "Invalid", status: 422 } as never);
+
     const req = new NextRequest("http://localhost/api/env-config", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -101,41 +120,12 @@ describe("PATCH /api/env-config", () => {
     expect(data.error).toBeTruthy();
   });
 
-  it("returns 422 for invalid body (missing enabled)", async () => {
-    const req = new NextRequest("http://localhost/api/env-config", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "seed-db", runId: "run-1" }),
-    });
-
-    const response = await PATCH(req);
-    expect(response.status).toBe(422);
-  });
-
-  it("returns 422 for invalid body (missing runId)", async () => {
-    const req = new NextRequest("http://localhost/api/env-config", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "seed-db", enabled: true }),
-    });
-
-    const response = await PATCH(req);
-    expect(response.status).toBe(422);
-  });
-
-  it("returns 400 for invalid JSON", async () => {
-    const req = new NextRequest("http://localhost/api/env-config", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: "not json{{",
-    });
-
-    const response = await PATCH(req);
-    expect(response.status).toBe(400);
-  });
-
   it("returns 500 on database error during update", async () => {
-    mockExecute.mockRejectedValue(new Error("DB write failed"));
+    mockParseBody.mockResolvedValue({
+      ok: true,
+      data: { id: "seed-db", enabled: true, runId: "run-1" },
+    } as never);
+    mockQueryOne.mockRejectedValue(new Error("DB write failed"));
 
     const req = new NextRequest("http://localhost/api/env-config", {
       method: "PATCH",

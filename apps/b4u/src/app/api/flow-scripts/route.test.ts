@@ -28,18 +28,19 @@ beforeEach(() => {
 });
 
 describe("GET /api/flow-scripts", () => {
-  it("returns flow scripts with steps", async () => {
-    // First call returns flows, second returns steps
-    mockQueryAll.mockResolvedValueOnce([{ flow_id: "flow-1", flow_name: "Login" }] as never).mockResolvedValueOnce([
+  it("returns flow scripts with embedded steps", async () => {
+    const steps = [
       {
         id: "s1",
-        flow_id: "flow-1",
-        step_number: 1,
+        stepNumber: 1,
         url: "/login",
         action: "Click login",
-        expected_outcome: "Login form shown",
+        expectedOutcome: "Login form shown",
         duration: "5s",
       },
+    ];
+    mockQueryAll.mockResolvedValue([
+      { flow_id: "flow-1", flow_name: "Login", steps_json: JSON.stringify(steps) },
     ] as never);
 
     const response = await GET(makeGetRequest("run-1"));
@@ -73,10 +74,11 @@ describe("GET /api/flow-scripts", () => {
 });
 
 describe("PUT /api/flow-scripts", () => {
-  it("replaces all flow scripts", async () => {
+  it("replaces all flow scripts with embedded steps", async () => {
     const scripts = [
       {
         flowId: "flow-1",
+        flowName: "Login",
         steps: [{ id: "s1", stepNumber: 1, url: "/", action: "Visit", expectedOutcome: "Page loads", duration: "3s" }],
       },
     ];
@@ -92,7 +94,9 @@ describe("PUT /api/flow-scripts", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM script_steps WHERE run_id = ?", ["run-1"]);
+    expect(mockExecute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts WHERE run_id = ?", [
+      "run-1",
+    ]);
   });
 
   it("returns 400 when runId is missing", async () => {

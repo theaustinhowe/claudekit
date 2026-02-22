@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
@@ -189,10 +190,20 @@ export const researchRouter: FastifyPluginAsync = async (fastify) => {
 
         const newJob = await queryOne<DbJob>(
           conn,
-          `INSERT INTO jobs (repository_id, issue_number, issue_title, issue_url, issue_body, source, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO jobs (id, repository_id, issue_number, issue_title, issue_url, issue_body, source, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
            RETURNING *`,
-          [session.repository_id, nextNumber, suggestion.title, "", suggestion.description, "manual", now, now],
+          [
+            randomUUID(),
+            session.repository_id,
+            nextNumber,
+            suggestion.title,
+            "",
+            suggestion.description,
+            "manual",
+            now,
+            now,
+          ],
         );
 
         if (!newJob) {
