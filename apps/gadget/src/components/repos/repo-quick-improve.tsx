@@ -8,12 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@devkit/ui/components/dropdown-menu";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Brush, ChevronDown, Code2, Eraser, Shield, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import type { QuickImprovePersona } from "@/lib/services/quick-improve-prompts";
 import { PERSONA_CONFIGS } from "@/lib/services/quick-improve-prompts";
 import type { Repo } from "@/lib/types";

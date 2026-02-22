@@ -30,6 +30,7 @@ import { Input } from "@devkit/ui/components/input";
 import { Label } from "@devkit/ui/components/label";
 import { Progress } from "@devkit/ui/components/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@devkit/ui/components/select";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@devkit/ui/components/sheet";
 import { Switch } from "@devkit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
@@ -71,7 +72,6 @@ import { ManualFindingForm, type ManualFindingFormData } from "@/components/repo
 import { GitHubTabContent } from "@/components/repos/repo-github-content";
 import { RepoIntegrationsContent } from "@/components/repos/repo-integrations-content";
 import { QuickImproveDropdown, QuickImproveTerminal, useQuickImprove } from "@/components/repos/repo-quick-improve";
-import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import { useTabNavigation } from "@/hooks/use-tab-navigation";
 import {
   createManualFinding,

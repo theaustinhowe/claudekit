@@ -1,10 +1,10 @@
 "use client";
 
 import { useSessionStream } from "@devkit/hooks";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import type { Repo } from "@/lib/types";
 
 // --- Types ---

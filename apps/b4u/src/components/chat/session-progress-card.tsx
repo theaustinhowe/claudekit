@@ -1,8 +1,8 @@
 "use client";
 
 import { useSessionStream } from "@devkit/hooks";
-import { useState } from "react";
 import { SessionTerminal } from "@devkit/ui/components/session-terminal";
+import { useState } from "react";
 
 interface SessionProgressCardProps {
   sessionId: string;

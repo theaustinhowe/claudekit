@@ -6,6 +6,8 @@ import { cn } from "@devkit/ui";
 import { Button } from "@devkit/ui/components/button";
 import { MarkdownRenderer } from "@devkit/ui/components/markdown-renderer";
 import { Progress } from "@devkit/ui/components/progress";
+import type { StreamEntry } from "@devkit/ui/components/streaming-display";
+import { parseStreamLog, StreamingDisplay } from "@devkit/ui/components/streaming-display";
 import {
   AlertCircle,
   CheckCircle2,
@@ -19,8 +21,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { StreamEntry } from "@devkit/ui/components/streaming-display";
-import { parseStreamLog, StreamingDisplay } from "@devkit/ui/components/streaming-display";
 import type { UpgradeTask, UpgradeTaskStatus } from "@/lib/types";
 
 interface UpgradeChatViewProps {

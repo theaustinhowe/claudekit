@@ -1,5 +1,5 @@
-import { test as base } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { test as base } from "@playwright/test";
 
 interface AppFixtures {
   /** A page that has already navigated to the app's baseURL. */

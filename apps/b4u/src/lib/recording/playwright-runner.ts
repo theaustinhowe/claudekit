@@ -1,6 +1,6 @@
-import { createVideoSession, finalizeVideo, navigateTo, type Page } from "@devkit/playwright";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import { createVideoSession, finalizeVideo, navigateTo, type Page } from "@devkit/playwright";
 import type { ScriptStep } from "@/lib/types";
 
 interface RecordFlowOptions {
