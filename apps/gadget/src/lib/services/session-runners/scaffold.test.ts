@@ -151,8 +151,9 @@ describe("scaffold runner", () => {
 
   it("collects scaffold logs", async () => {
     vi.mocked(getGeneratorProject).mockResolvedValue(defaultProject as never);
-    vi.mocked(runClaude).mockImplementation(async (opts: Record<string, unknown>) => {
-      const onProgressFn = opts.onProgress as (...args: never[]) => unknown;
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
+    vi.mocked(runClaude).mockImplementation(async (opts: any) => {
+      const onProgressFn = opts.onProgress as (event: Record<string, unknown>) => void;
       onProgressFn({ log: "Write  src/index.ts", logType: "tool", message: "" });
       onProgressFn({ log: "Bash  npm install", logType: "tool", message: "" });
       return { exitCode: 0, stdout: "", stderr: "" };
@@ -248,8 +249,9 @@ describe("scaffold runner", () => {
 
   it("emits progress events from Claude onProgress", async () => {
     vi.mocked(getGeneratorProject).mockResolvedValue(defaultProject as never);
-    vi.mocked(runClaude).mockImplementation(async (opts: Record<string, unknown>) => {
-      const onProgressFn = opts.onProgress as (...args: never[]) => unknown;
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
+    vi.mocked(runClaude).mockImplementation(async (opts: any) => {
+      const onProgressFn = opts.onProgress as (event: Record<string, unknown>) => void;
       onProgressFn({ log: "step 1", logType: "status", message: "doing step 1" });
       return { exitCode: 0, stdout: "", stderr: "" };
     });

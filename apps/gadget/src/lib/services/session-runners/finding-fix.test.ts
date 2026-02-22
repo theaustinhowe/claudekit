@@ -7,9 +7,11 @@ vi.mock("node:fs", () => ({
 }));
 vi.mock("node:child_process", () => ({
   spawn: vi.fn(() => {
-    const handlers: Record<string, (...args: never[]) => unknown> = {};
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
+    const handlers: Record<string, (...args: any[]) => unknown> = {};
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
     return {
-      on: vi.fn((event: string, handler: (...args: never[]) => unknown) => {
+      on: vi.fn((event: string, handler: (...args: any[]) => unknown) => {
         handlers[event] = handler;
         if (event === "close") {
           setTimeout(() => handler(0), 0);

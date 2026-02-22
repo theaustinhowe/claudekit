@@ -120,10 +120,12 @@ describe("claude-code-runner", () => {
   });
 
   describe("resume", () => {
+    const resume = claudeCodeRunner.resume as NonNullable<typeof claudeCodeRunner.resume>;
+
     it("should return error when Claude is not available", async () => {
       vi.mocked(getClaudeAvailabilityError).mockResolvedValue("Claude Code is disabled");
 
-      const result = await claudeCodeRunner.resume!(makeContext(), makeSession(), makeConfig(), makeCallbacks());
+      const result = await resume(makeContext(), makeSession(), makeConfig(), makeCallbacks());
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Claude Code is disabled");
@@ -135,7 +137,7 @@ describe("claude-code-runner", () => {
       vi.mocked(resumeClaudeRun).mockResolvedValue({ success: true });
 
       const context = makeContext({ jobId: "job-42" });
-      const result = await claudeCodeRunner.resume!(context, makeSession(), makeConfig(), makeCallbacks());
+      const result = await resume(context, makeSession(), makeConfig(), makeCallbacks());
 
       expect(result.success).toBe(true);
       expect(resumeClaudeRun).toHaveBeenCalledWith("job-42", undefined);
@@ -146,13 +148,7 @@ describe("claude-code-runner", () => {
       vi.mocked(resumeClaudeRun).mockResolvedValue({ success: true });
 
       const context = makeContext({ jobId: "job-42" });
-      const result = await claudeCodeRunner.resume!(
-        context,
-        makeSession(),
-        makeConfig(),
-        makeCallbacks(),
-        "Continue with the fix",
-      );
+      const result = await resume(context, makeSession(), makeConfig(), makeCallbacks(), "Continue with the fix");
 
       expect(result.success).toBe(true);
       expect(resumeClaudeRun).toHaveBeenCalledWith("job-42", "Continue with the fix");
@@ -162,7 +158,7 @@ describe("claude-code-runner", () => {
       vi.mocked(getClaudeAvailabilityError).mockResolvedValue(null);
       vi.mocked(resumeClaudeRun).mockResolvedValue({ success: false, error: "Session not found" });
 
-      const result = await claudeCodeRunner.resume!(makeContext(), makeSession(), makeConfig(), makeCallbacks());
+      const result = await resume(makeContext(), makeSession(), makeConfig(), makeCallbacks());
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Session not found");
@@ -170,10 +166,12 @@ describe("claude-code-runner", () => {
   });
 
   describe("inject", () => {
+    const inject = claudeCodeRunner.inject as NonNullable<typeof claudeCodeRunner.inject>;
+
     it("should return error when Claude is not available", async () => {
       vi.mocked(getClaudeAvailabilityError).mockResolvedValue("CLI not found");
 
-      const result = await claudeCodeRunner.inject!("job-1", "some message", "immediate");
+      const result = await inject("job-1", "some message", "immediate");
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("CLI not found");
@@ -184,7 +182,7 @@ describe("claude-code-runner", () => {
       vi.mocked(getClaudeAvailabilityError).mockResolvedValue(null);
       vi.mocked(injectClaudeMessage).mockResolvedValue({ success: true });
 
-      const result = await claudeCodeRunner.inject!("job-1", "review feedback", "queued");
+      const result = await inject("job-1", "review feedback", "queued");
 
       expect(result.success).toBe(true);
       expect(injectClaudeMessage).toHaveBeenCalledWith("job-1", "review feedback", "queued");
@@ -194,7 +192,7 @@ describe("claude-code-runner", () => {
       vi.mocked(getClaudeAvailabilityError).mockResolvedValue(null);
       vi.mocked(injectClaudeMessage).mockResolvedValue({ success: false, error: "Not running" });
 
-      const result = await claudeCodeRunner.inject!("job-1", "msg", "immediate");
+      const result = await inject("job-1", "msg", "immediate");
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Not running");

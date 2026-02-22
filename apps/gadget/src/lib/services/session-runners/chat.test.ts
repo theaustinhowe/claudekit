@@ -87,8 +87,9 @@ describe("chat runner", () => {
     vi.mocked(parseTaskMutations).mockReturnValue({ cleanContent: "text", mutations: null });
 
     // Simulate Claude sending chunks with suggestions
-    vi.mocked(runClaude).mockImplementation(async (opts: Record<string, unknown>) => {
-      const onProgressFn = opts.onProgress as (...args: never[]) => unknown;
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
+    vi.mocked(runClaude).mockImplementation(async (opts: any) => {
+      const onProgressFn = opts.onProgress as (event: Record<string, unknown>) => void;
       onProgressFn({
         chunk: 'Here is your answer <!-- suggestions: ["do A", "do B", "do C"] -->',
         log: "",
@@ -187,8 +188,9 @@ describe("chat runner", () => {
   it("collects progress logs", async () => {
     vi.mocked(getGeneratorProject).mockResolvedValue(defaultProject as never);
     vi.mocked(parseTaskMutations).mockReturnValue({ cleanContent: "text", mutations: null });
-    vi.mocked(runClaude).mockImplementation(async (opts: Record<string, unknown>) => {
-      const onProgressFn = opts.onProgress as (...args: never[]) => unknown;
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
+    vi.mocked(runClaude).mockImplementation(async (opts: any) => {
+      const onProgressFn = opts.onProgress as (event: Record<string, unknown>) => void;
       onProgressFn({ log: "Step 1 done", logType: "status", message: "", chunk: "" });
       onProgressFn({ log: "Step 2 done", logType: "status", message: "", chunk: "" });
       return { exitCode: 0, stdout: "", stderr: "" };
