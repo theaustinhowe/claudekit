@@ -32,20 +32,24 @@ vi.mock("@/lib/store", () => ({
   useApp: () => ({ state: mockState, dispatch: vi.fn() }),
 }));
 
+// biome-ignore lint/suspicious/noConfusingVoidType: matching React's useEffect signature
+type EffectCallback = () => undefined | (() => void);
+type EventHandler = (...args: never[]) => unknown;
+
 // Track registered event listeners
-const windowListeners: Record<string, Function[]> = {};
-const documentListeners: Record<string, Function[]> = {};
+const windowListeners: Record<string, EventHandler[]> = {};
+const documentListeners: Record<string, EventHandler[]> = {};
 
 // Track useEffect callbacks
-let effectCallbacks: Array<{ deps: unknown[]; cb: () => void | (() => void); cleanup?: () => void }> = [];
-let callbackFns: Map<Function, Function> = new Map();
+let effectCallbacks: Array<{ deps: unknown[]; cb: EffectCallback; cleanup?: () => void }> = [];
+let callbackFns: Map<EventHandler, EventHandler> = new Map();
 let refObjects: Map<string, { current: unknown }> = new Map();
 
 vi.mock("react", async () => {
   const actual = await vi.importActual<typeof import("react")>("react");
   return {
     ...actual,
-    useCallback: (fn: Function, _deps: unknown[]) => {
+    useCallback: (fn: EventHandler, _deps: unknown[]) => {
       callbackFns.set(fn, fn);
       return fn;
     },
@@ -55,9 +59,10 @@ vi.mock("react", async () => {
       if (!refObjects.has(key)) {
         refObjects.set(key, { current: initial });
       }
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed to exist after the set above
       return refObjects.get(key)!;
     },
-    useEffect: (cb: () => void | (() => void), deps: unknown[]) => {
+    useEffect: (cb: EffectCallback, deps: unknown[]) => {
       effectCallbacks.push({ deps, cb });
     },
   };
@@ -99,11 +104,11 @@ describe("useStateSync", () => {
     for (const key of Object.keys(documentListeners)) delete documentListeners[key];
 
     vi.stubGlobal("window", {
-      addEventListener: (event: string, fn: Function) => {
+      addEventListener: (event: string, fn: EventHandler) => {
         if (!windowListeners[event]) windowListeners[event] = [];
         windowListeners[event].push(fn);
       },
-      removeEventListener: (event: string, fn: Function) => {
+      removeEventListener: (event: string, fn: EventHandler) => {
         if (windowListeners[event]) {
           windowListeners[event] = windowListeners[event].filter((f) => f !== fn);
         }
@@ -111,11 +116,11 @@ describe("useStateSync", () => {
     });
 
     vi.stubGlobal("document", {
-      addEventListener: (event: string, fn: Function) => {
+      addEventListener: (event: string, fn: EventHandler) => {
         if (!documentListeners[event]) documentListeners[event] = [];
         documentListeners[event].push(fn);
       },
-      removeEventListener: (event: string, fn: Function) => {
+      removeEventListener: (event: string, fn: EventHandler) => {
         if (documentListeners[event]) {
           documentListeners[event] = documentListeners[event].filter((f) => f !== fn);
         }
@@ -138,7 +143,7 @@ describe("useStateSync", () => {
       (e) => e.deps.length === 1, // [flushBeacon]
     );
     expect(listenerEffect).toBeDefined();
-    listenerEffect!.cb();
+    listenerEffect?.cb();
 
     expect(windowListeners.beforeunload).toBeDefined();
     expect(windowListeners.beforeunload.length).toBe(1);

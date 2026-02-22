@@ -24,7 +24,7 @@ vi.mock("react", async () => {
       };
       return [stateValues.get(key), setter];
     },
-    useCallback: (fn: Function) => fn,
+    useCallback: (fn: (...args: never[]) => unknown) => fn,
   };
 });
 

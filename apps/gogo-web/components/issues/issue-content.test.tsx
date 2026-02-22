@@ -12,6 +12,7 @@ vi.mock("date-fns", () => ({
 
 // Mock next/image
 vi.mock("next/image", () => ({
+  // biome-ignore lint/performance/noImgElement: mock for testing
   default: ({ alt, ...props }: { alt: string; src: string; width: number; height: number }) => (
     <img alt={alt} {...props} />
   ),
@@ -77,7 +78,11 @@ describe("IssueAuthorInfo", () => {
   it("renders the author login name", () => {
     render(
       <IssueAuthorInfo
-        user={{ login: "johndoe", avatar_url: "https://github.com/johndoe.png", html_url: "https://github.com/johndoe" }}
+        user={{
+          login: "johndoe",
+          avatar_url: "https://github.com/johndoe.png",
+          html_url: "https://github.com/johndoe",
+        }}
         createdAt="2024-01-01T00:00:00Z"
       />,
     );
@@ -88,7 +93,11 @@ describe("IssueAuthorInfo", () => {
   it("renders the avatar image", () => {
     render(
       <IssueAuthorInfo
-        user={{ login: "johndoe", avatar_url: "https://github.com/johndoe.png", html_url: "https://github.com/johndoe" }}
+        user={{
+          login: "johndoe",
+          avatar_url: "https://github.com/johndoe.png",
+          html_url: "https://github.com/johndoe",
+        }}
         createdAt="2024-01-01T00:00:00Z"
       />,
     );
@@ -101,7 +110,11 @@ describe("IssueAuthorInfo", () => {
   it("renders a link to the author profile", () => {
     render(
       <IssueAuthorInfo
-        user={{ login: "johndoe", avatar_url: "https://github.com/johndoe.png", html_url: "https://github.com/johndoe" }}
+        user={{
+          login: "johndoe",
+          avatar_url: "https://github.com/johndoe.png",
+          html_url: "https://github.com/johndoe",
+        }}
         createdAt="2024-01-01T00:00:00Z"
       />,
     );
@@ -113,7 +126,11 @@ describe("IssueAuthorInfo", () => {
   it("renders the relative creation date", () => {
     render(
       <IssueAuthorInfo
-        user={{ login: "johndoe", avatar_url: "https://github.com/johndoe.png", html_url: "https://github.com/johndoe" }}
+        user={{
+          login: "johndoe",
+          avatar_url: "https://github.com/johndoe.png",
+          html_url: "https://github.com/johndoe",
+        }}
         createdAt="2024-01-01T00:00:00Z"
       />,
     );
@@ -187,10 +204,9 @@ describe("IssueComments", () => {
   });
 
   it("renders GitHub link when issueUrl is provided", () => {
-    render(
-      <IssueComments repositoryId="repo-1" issueNumber={1} issueUrl="https://github.com/acme/repo/issues/1" />,
-      { wrapper: createWrapper() },
-    );
+    render(<IssueComments repositoryId="repo-1" issueNumber={1} issueUrl="https://github.com/acme/repo/issues/1" />, {
+      wrapper: createWrapper(),
+    });
 
     const githubLink = screen.getByRole("link", { name: /github/i });
     expect(githubLink).toHaveAttribute("href", "https://github.com/acme/repo/issues/1");
