@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { StreamEntry } from "@/components/generator/streaming-display";
-import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
+import type { StreamEntry } from "@devkit/ui/components/streaming-display";
+import { parseStreamLog, StreamingDisplay } from "@devkit/ui/components/streaming-display";
 import type { UpgradeTask, UpgradeTaskStatus } from "@/lib/types";
 
 interface UpgradeChatViewProps {

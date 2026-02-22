@@ -4,7 +4,7 @@ import { useSessionStream } from "@devkit/hooks";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SessionTerminal } from "@/components/sessions/session-terminal";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import type { Repo } from "@/lib/types";
 
 // --- Types ---

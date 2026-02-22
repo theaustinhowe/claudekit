@@ -3,6 +3,7 @@ import { createWriteStream, mkdirSync, readdirSync, rmSync, type WriteStream, wr
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { type AppDef, apps, LOG_DIR, PID_DIR, pidFilePath } from "./dev-apps.js";
+import { getAppSettings, readSettings } from "./dev-settings.js";
 
 const CONTROL_PORT = 2999;
 
@@ -128,6 +129,7 @@ interface ManagedApp {
   restartCount: number;
   startTime: number;
   pendingRestart: boolean;
+  manuallyStopped: boolean;
 }
 
 const managed: ManagedApp[] = [];
@@ -198,7 +200,24 @@ function launchApp(entry: ManagedApp): void {
       return;
     }
 
+    // Don't restart manually stopped apps
+    if (entry.manuallyStopped) return;
+
     if (code !== 0 && code !== null) {
+      // Check autoRestart setting
+      const currentSettings = readSettings();
+      const appSettings = getAppSettings(app.id, currentSettings);
+      if (!appSettings.autoRestart) {
+        writeLog(app.id, {
+          level: 30,
+          time: Date.now(),
+          msg: "Auto-restart disabled by settings",
+          app: app.id,
+          service: "lifecycle",
+        });
+        return;
+      }
+
       const uptime = Date.now() - entry.startTime;
       if (uptime > UPTIME_RESET_MS) {
         entry.restartCount = 0;
@@ -282,6 +301,7 @@ process.on("SIGINT", shutdown);
 
 function restartApp(entry: ManagedApp): void {
   entry.restartCount = 0;
+  entry.manuallyStopped = false;
   if (entry.proc?.pid) {
     // Process running — flag for restart after exit
     entry.pendingRestart = true;
@@ -332,6 +352,55 @@ const controlServer = createServer((req, res) => {
     return;
   }
 
+  // Stop endpoint
+  const stopMatch = req.url?.match(/^\/stop\/(.+)$/);
+  if (req.method === "POST" && stopMatch) {
+    const appId = decodeURIComponent(stopMatch[1]);
+    const entry = managed.find((e) => e.app.id === appId);
+    if (!entry) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: "Unknown app" }));
+      return;
+    }
+    entry.manuallyStopped = true;
+    if (entry.proc?.pid) {
+      writeLog(entry.app.id, {
+        level: 30,
+        time: Date.now(),
+        msg: "Stop requested via control server",
+        app: entry.app.id,
+        service: "lifecycle",
+      });
+      try {
+        process.kill(-entry.proc.pid, "SIGTERM");
+      } catch {
+        try {
+          entry.proc.kill("SIGTERM");
+        } catch {
+          // Already dead
+        }
+      }
+    }
+    res.writeHead(200);
+    res.end(JSON.stringify({ ok: true, appId }));
+    return;
+  }
+
+  // Status endpoint
+  if (req.method === "GET" && req.url === "/status") {
+    const status = managed.map((e) => ({
+      id: e.app.id,
+      port: e.app.port,
+      running: e.proc !== null,
+      pid: e.proc?.pid ?? null,
+      manuallyStopped: e.manuallyStopped,
+      restartCount: e.restartCount,
+    }));
+    res.writeHead(200);
+    res.end(JSON.stringify(status));
+    return;
+  }
+
   res.writeHead(404);
   res.end(JSON.stringify({ error: "Not found" }));
 });
@@ -348,17 +417,25 @@ writeFileSync(pidFilePath(), String(process.pid));
 // Prune old logs
 pruneOldLogs();
 
-// Start all apps
+// Start apps based on settings
+const startupSettings = readSettings();
 for (const app of apps) {
+  const appSettings = getAppSettings(app.id, startupSettings);
+  const shouldStart = startupSettings === null // legacy mode: start all
+    || app.id === "web" // web always starts
+    || appSettings.autoStart;
   const entry: ManagedApp = {
     app,
     proc: null,
     restartCount: 0,
     startTime: 0,
     pendingRestart: false,
+    manuallyStopped: false,
   };
   managed.push(entry);
-  launchApp(entry);
+  if (shouldStart) {
+    launchApp(entry);
+  }
 }
 
 // Start control server

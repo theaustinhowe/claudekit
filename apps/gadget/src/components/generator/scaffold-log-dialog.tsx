@@ -2,7 +2,7 @@
 
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@devkit/ui/components/dialog";
 import { useMemo } from "react";
-import { parseStreamLog, type StreamEntry, StreamingDisplay } from "@/components/generator/streaming-display";
+import { parseStreamLog, type StreamEntry, StreamingDisplay } from "@devkit/ui/components/streaming-display";
 
 interface ScaffoldLogDialogProps {
   open: boolean;

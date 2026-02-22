@@ -2,7 +2,7 @@
 
 import { useSessionStream } from "@devkit/hooks";
 import { useState } from "react";
-import { SessionTerminal } from "./session-terminal";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 
 interface SessionProgressCardProps {
   sessionId: string;
@@ -25,12 +25,13 @@ export function SessionProgressCard({ sessionId, label }: SessionProgressCardPro
     return (
       <SessionTerminal
         logs={logs}
-        progress={progress}
+        progress={progress > 0 ? progress : null}
         phase={phase}
         status={status}
         error={error}
         elapsed={elapsed}
-        label={label}
+        title={label}
+        variant="card"
         onCancel={cancel}
         onRetry={reconnect}
         minimized={false}

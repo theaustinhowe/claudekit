@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { join } from "node:path";
 import { apps, isProcessAlive, readPid } from "./dev-apps.js";
+import { getAppSettings, readSettings } from "./dev-settings.js";
 
 const BOLD = "\x1b[1m";
 const GREEN = "\x1b[32m";
@@ -29,9 +30,12 @@ child.unref();
 console.log();
 console.log(`${BOLD}${GREEN}Devkit started in background${RESET} ${DIM}(PID ${child.pid})${RESET}`);
 console.log();
+const settings = readSettings();
 for (const app of apps) {
+  const appSettings = getAppSettings(app.id, settings);
+  const willStart = settings === null || app.id === "web" || appSettings.autoStart;
   const padding = " ".repeat(22 - app.id.length);
-  console.log(`  ${app.id}${padding}http://localhost:${app.port}`);
+  console.log(`  ${app.id}${padding}http://localhost:${app.port}${willStart ? "" : `  ${DIM}(skipped)${RESET}`}`);
 }
 console.log();
 console.log(`${DIM}Logs:${RESET}  ~/.devkit/logs/`);

@@ -2,6 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { getAppSettings, readSettings } from "./dev-settings.js";
 
 interface App {
   name: string;
@@ -76,6 +77,14 @@ function startApp(app: App) {
       console.log(`${prefix} exited with code ${code}`);
       appendToLog(app.filter, `${timestamp()} [exit] code=${code}`);
 
+      // Check autoRestart setting
+      const exitSettings = readSettings();
+      const exitAppSettings = getAppSettings(app.name, exitSettings);
+      if (!exitAppSettings.autoRestart) {
+        console.log(`${prefix} auto-restart disabled by settings`);
+        return;
+      }
+
       if (code !== 0 && code !== null) {
         const uptime = Date.now() - startTime;
         if (uptime > UPTIME_RESET_MS) {
@@ -97,13 +106,21 @@ function startApp(app: App) {
   launch();
 }
 
+const fgSettings = readSettings();
 for (const app of apps) {
-  startApp(app);
+  const appSettings = getAppSettings(app.name, fgSettings);
+  const shouldStart = fgSettings === null || app.name === "web" || appSettings.autoStart;
+  if (shouldStart) {
+    startApp(app);
+  }
 }
 
 console.log(`\n${BOLD}Devkit dev servers starting...${RESET}`);
+const DIM = "\x1b[2m";
 for (const app of apps) {
+  const appSettings = getAppSettings(app.name, fgSettings);
+  const willStart = fgSettings === null || app.name === "web" || appSettings.autoStart;
   const padding = " ".repeat(20 - app.name.length);
-  console.log(`  ${app.color}${app.name}${RESET}:${padding}http://localhost:${app.port}`);
+  console.log(`  ${app.color}${app.name}${RESET}:${padding}http://localhost:${app.port}${willStart ? "" : `  ${DIM}(skipped)${RESET}`}`);
 }
 console.log();

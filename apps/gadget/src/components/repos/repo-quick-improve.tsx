@@ -13,7 +13,7 @@ import { Brush, ChevronDown, Code2, Eraser, Shield, Sparkles } from "lucide-reac
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SessionTerminal } from "@/components/sessions/session-terminal";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import type { QuickImprovePersona } from "@/lib/services/quick-improve-prompts";
 import { PERSONA_CONFIGS } from "@/lib/services/quick-improve-prompts";
 import type { Repo } from "@/lib/types";

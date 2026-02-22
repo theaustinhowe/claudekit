@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAppSettings, type PerAppSettings, readSettings } from "@/lib/app-settings";
 
 interface AppInfo {
   id: string;
@@ -10,6 +11,8 @@ interface AppInfo {
   icon: string;
   favicon?: string;
   maturity?: { label: string; percentage: number; color: "green" | "yellow" | "red" };
+  settings?: PerAppSettings;
+  managedByDaemon?: boolean;
 }
 
 const APP_DEFINITIONS: Omit<AppInfo, "url" | "status">[] = [
@@ -92,6 +95,23 @@ async function checkAppHealth(port: number): Promise<boolean> {
 }
 
 export async function GET() {
+  const settings = readSettings();
+
+  // Optionally query daemon status
+  let daemonStatus: Record<string, { running: boolean; manuallyStopped: boolean }> | null = null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch("http://localhost:2999/status", { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const statuses = (await res.json()) as Array<{ id: string; running: boolean; manuallyStopped: boolean }>;
+      daemonStatus = Object.fromEntries(statuses.map((s) => [s.id, s]));
+    }
+  } catch {
+    // Daemon not running
+  }
+
   const results: AppInfo[] = await Promise.all(
     APP_DEFINITIONS.map(async (app) => {
       const isRunning = await checkAppHealth(app.port);
@@ -99,6 +119,8 @@ export async function GET() {
         ...app,
         url: `http://localhost:${app.port}`,
         status: isRunning ? ("running" as const) : ("stopped" as const),
+        settings: app.id !== "web" ? getAppSettings(app.id, settings) : undefined,
+        managedByDaemon: daemonStatus ? (daemonStatus[app.id]?.running ?? false) : undefined,
       };
     }),
   );

@@ -6,9 +6,9 @@ import { Badge } from "@devkit/ui/components/badge";
 import { CheckCircle2, FileCode } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { StreamEntry } from "@/components/generator/streaming-display";
-import { parseStreamLog, resetStreamIdCounter } from "@/components/generator/streaming-display";
-import { SessionTerminal } from "@/components/sessions/session-terminal";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
+import type { StreamEntry } from "@devkit/ui/components/streaming-display";
+import { parseStreamLog, resetStreamIdCounter } from "@devkit/ui/components/streaming-display";
 
 // ---------------------------------------------------------------------------
 // Types

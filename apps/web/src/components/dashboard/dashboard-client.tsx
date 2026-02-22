@@ -16,18 +16,34 @@ import {
   ExternalLink,
   GitPullRequest,
   Monitor,
+  Play,
   Plus,
+  Power,
   Rocket,
   RotateCw,
   ScrollText,
   Settings,
+  Settings2,
   Video,
   Wrench,
 } from "lucide-react";
+import { Label } from "@devkit/ui/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
+import { Switch } from "@devkit/ui/components/switch";
 import Image from "next/image";
 import Link from "next/link";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
+
+interface PerAppSettings {
+  autoStart: boolean;
+  autoRestart: boolean;
+}
+
+interface AppSettings {
+  version: 1;
+  apps: Record<string, PerAppSettings>;
+}
 
 interface Todo {
   id: string;
@@ -46,6 +62,7 @@ interface AppInfo {
   icon: string;
   favicon?: string;
   maturity?: { label: string; percentage: number; color: "green" | "yellow" | "red" };
+  settings?: PerAppSettings;
 }
 
 interface LogFileInfo {
@@ -164,12 +181,65 @@ function TodoAddForm({ onAdd }: { onAdd: (text: string) => void }) {
 interface DashboardClientProps {
   logFiles: LogFileInfo[];
   initialTodos: Record<string, Todo[]>;
+  initialSettings: AppSettings | null;
 }
 
-export function DashboardClient({ logFiles, initialTodos }: DashboardClientProps) {
+function SettingsPopover({
+  appId,
+  settings,
+  onToggle,
+}: {
+  appId: string;
+  settings: PerAppSettings;
+  onToggle: (appId: string, key: "autoStart" | "autoRestart", value: boolean) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56" align="end" onClick={(e) => e.stopPropagation()}>
+        <div className="space-y-3">
+          <p className="text-sm font-medium">App Settings</p>
+          <div className="flex items-center justify-between">
+            <Label htmlFor={`${appId}-autostart`} className="text-xs">Auto-start</Label>
+            <Switch
+              id={`${appId}-autostart`}
+              checked={settings.autoStart}
+              onCheckedChange={(checked) => onToggle(appId, "autoStart", checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor={`${appId}-autorestart`} className="text-xs">Auto-restart</Label>
+            <Switch
+              id={`${appId}-autorestart`}
+              checked={settings.autoRestart}
+              onCheckedChange={(checked) => onToggle(appId, "autoRestart", checked)}
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function DashboardClient({ logFiles, initialTodos, initialSettings }: DashboardClientProps) {
   const [apps, setApps] = useState<AppInfo[] | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
   const [todosByApp, setTodosByApp] = useState<Record<string, Todo[]>>(initialTodos);
+  const [settings, setSettings] = useState<AppSettings>(
+    initialSettings ?? { version: 1, apps: {} },
+  );
+  const [stopping, setStopping] = useState<Set<string>>(new Set());
+  // Track confirmed statuses for debounced section transitions
+  const [confirmedStatus, setConfirmedStatus] = useState<Record<string, "running" | "stopped">>({});
+  const prevStatusRef = useRef<Record<string, "running" | "stopped">>({});
 
   const fetchApps = useCallback(async () => {
     try {
@@ -205,6 +275,69 @@ export function DashboardClient({ logFiles, initialTodos }: DashboardClientProps
     },
     [fetchApps],
   );
+
+  const toggleSetting = useCallback(
+    async (appId: string, key: "autoStart" | "autoRestart", value: boolean) => {
+      setSettings((prev) => {
+        const updated: AppSettings = {
+          ...prev,
+          apps: {
+            ...prev.apps,
+            [appId]: {
+              autoStart: prev.apps[appId]?.autoStart ?? false,
+              autoRestart: prev.apps[appId]?.autoRestart ?? true,
+              ...prev.apps[appId],
+              [key]: value,
+            },
+          },
+        };
+        // Fire and forget the API call
+        fetch("/api/apps/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        }).catch(() => {});
+        return updated;
+      });
+    },
+    [],
+  );
+
+  const stopApp = useCallback(
+    async (appId: string) => {
+      setStopping((prev) => new Set(prev).add(appId));
+      try {
+        await fetch(`/api/apps/${encodeURIComponent(appId)}/stop`, { method: "POST" });
+        setTimeout(fetchApps, 2000);
+      } finally {
+        setStopping((prev) => {
+          const next = new Set(prev);
+          next.delete(appId);
+          return next;
+        });
+      }
+    },
+    [fetchApps],
+  );
+
+  useEffect(() => {
+    if (!apps) return;
+    const currentStatuses: Record<string, "running" | "stopped"> = {};
+    for (const app of apps) {
+      currentStatuses[app.id] = app.status;
+    }
+    // An app must maintain its status for 2 consecutive polls to move sections
+    const newConfirmed = { ...confirmedStatus };
+    for (const [id, status] of Object.entries(currentStatuses)) {
+      if (prevStatusRef.current[id] === status) {
+        // Same as previous poll — confirm it
+        newConfirmed[id] = status;
+      }
+      // If different from previous, don't update confirmed yet (wait for next poll)
+    }
+    prevStatusRef.current = currentStatuses;
+    setConfirmedStatus(newConfirmed);
+  }, [apps]);
 
   const addTodo = useCallback(async (appId: string, text: string) => {
     const optimistic: Todo = {
@@ -287,264 +420,390 @@ export function DashboardClient({ logFiles, initialTodos }: DashboardClientProps
   const knownAppIds = apps ? new Set(apps.map((a) => a.id)) : new Set<string>();
   const orphanLogs = logFiles.filter((f) => !knownAppIds.has(f.app));
 
+  const getEffectiveStatus = useCallback(
+    (app: AppInfo): "running" | "stopped" => {
+      // Use confirmed status for section placement, fall back to current
+      return confirmedStatus[app.id] ?? app.status;
+    },
+    [confirmedStatus],
+  );
+
+  const activeApps = useMemo(
+    () => apps?.filter((a) => getEffectiveStatus(a) === "running") ?? [],
+    [apps, getEffectiveStatus],
+  );
+  const inactiveApps = useMemo(
+    () => apps?.filter((a) => getEffectiveStatus(a) === "stopped") ?? [],
+    [apps, getEffectiveStatus],
+  );
+
+  const setupButton = (
+    <button
+      type="button"
+      onClick={() => setSetupOpen(true)}
+      className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+    >
+      <Settings className="h-4 w-4" />
+      Setup Environment
+    </button>
+  );
+
+  const renderActiveCard = (app: AppInfo) => {
+    const appLogs = logsByApp.get(app.id) ?? [];
+    const appTodos = todosByApp[app.id] ?? [];
+    const pendingCount = appTodos.filter((t) => !t.resolved).length;
+    return (
+      <Card
+        key={app.id}
+        className={cn(
+          "relative border-l-4 transition-all hover:shadow-md hover:-translate-y-0.5",
+          ACCENT_COLORS[app.id] ?? "border-l-primary",
+        )}
+      >
+        {/* Upper zone -- click to open app */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: conditional role/tabIndex/onKeyDown correctly implemented */}
+        <div
+          role={app.id !== "web" && app.status === "running" ? "link" : undefined}
+          tabIndex={app.id !== "web" && app.status === "running" ? 0 : -1}
+          className={cn(
+            "w-full text-left",
+            app.id !== "web" && app.status === "running" && "cursor-pointer",
+          )}
+          onClick={() => {
+            if (app.id !== "web" && app.status === "running") {
+              window.open(app.url, "_blank", "noopener,noreferrer");
+            }
+          }}
+          onKeyDown={(e) => {
+            if (app.id !== "web" && app.status === "running" && (e.key === "Enter" || e.key === " ")) {
+              e.preventDefault();
+              window.open(app.url, "_blank", "noopener,noreferrer");
+            }
+          }}
+        >
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {app.favicon ? (
+                  <Image src={app.favicon} alt="" width={20} height={20} className="rounded" />
+                ) : (
+                  <span className="text-primary">{ICON_MAP[app.icon]}</span>
+                )}
+                <CardTitle className="text-base">{app.name}</CardTitle>
+                {app.maturity && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <span
+                        className={cn(
+                          "h-2.5 w-2.5 rounded-full",
+                          MATURITY_DOT_COLORS[app.maturity.color],
+                        )}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="w-40">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-medium">{app.maturity.label}</span>
+                        <span className="text-muted-foreground">{app.maturity.percentage}%</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-muted">
+                        <div
+                          className={cn("h-full rounded-full", MATURITY_BAR_COLORS[app.maturity.color])}
+                          style={{ width: `${app.maturity.percentage}%` }}
+                        />
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {app.id !== "web" && (
+                  <SettingsPopover
+                    appId={app.id}
+                    settings={settings.apps[app.id] ?? { autoStart: false, autoRestart: true }}
+                    onToggle={toggleSetting}
+                  />
+                )}
+                <Badge variant="outline" className="font-mono text-xs">
+                  :{app.port}
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <div className="px-6 pb-4">
+            <p className="text-sm text-muted-foreground mb-3">{app.description}</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={cn(
+                    "h-2.5 w-2.5 rounded-full",
+                    app.status === "running"
+                      ? "bg-success shadow-[0_0_6px_hsl(var(--success)/0.5)]"
+                      : "bg-muted-foreground/40",
+                  )}
+                />
+                <span className="text-xs text-muted-foreground capitalize">{app.status}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                {app.id === "web" ? (
+                  <span className="text-xs text-muted-foreground italic">You are here</span>
+                ) : app.status === "running" ? (
+                  <>
+                    <button
+                      type="button"
+                      className="text-xs text-destructive hover:underline flex items-center gap-1 disabled:opacity-50"
+                      disabled={stopping.has(app.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        stopApp(app.id);
+                      }}
+                    >
+                      {stopping.has(app.id) ? "Stopping\u2026" : "Stop"}
+                      <Power className="h-3 w-3" />
+                    </button>
+                    <a
+                      href={app.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Open <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
+                    disabled={restarting.has(app.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      restartApp(app.id);
+                    }}
+                  >
+                    {restarting.has(app.id) ? "Starting\u2026" : "Start"}
+                    <RotateCw className={cn("h-3 w-3", restarting.has(app.id) && "animate-spin")} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Logs collapsible */}
+        {appLogs.length > 0 && (
+          <Collapsible>
+            <div className="px-6 pb-4">
+              <CollapsibleTrigger className="flex items-center gap-1.5 pt-3 border-t w-full text-xs text-muted-foreground hover:text-foreground transition-colors group">
+                <ScrollText className="h-3.5 w-3.5" />
+                <span>
+                  {appLogs.length} log {appLogs.length === 1 ? "file" : "files"}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent>
+              <div className="px-6 pb-4 space-y-1.5">
+                {appLogs.map((file) => (
+                  <Link
+                    key={file.path}
+                    href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
+                    className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                  >
+                    <span className="font-medium">{file.date ? formatDate(file.date) : "Legacy"}</span>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="font-mono">{formatSize(file.size)}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Todos collapsible */}
+        <Collapsible>
+          <div className="px-6 pb-4">
+            <CollapsibleTrigger
+              className={cn(
+                "flex items-center gap-1.5 w-full text-xs text-muted-foreground hover:text-foreground transition-colors group",
+                appLogs.length === 0 && "pt-3 border-t",
+              )}
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              <span>
+                {pendingCount} pending / {appTodos.length} total
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="px-6 pb-4 space-y-1">
+              {appTodos.map((todo) => (
+                <div
+                  key={todo.id}
+                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+                >
+                  <Checkbox
+                    checked={todo.resolved}
+                    onCheckedChange={(checked) => toggleTodo(app.id, todo.id, checked === true)}
+                  />
+                  <span className={cn(todo.resolved && "line-through text-muted-foreground")}>
+                    {todo.text}
+                  </span>
+                </div>
+              ))}
+              <TodoAddForm onAdd={(text) => addTodo(app.id, text)} />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    );
+  };
+
   return (
     <TooltipProvider>
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
-          {/* Applications */}
-          <section className="mb-10">
+          <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
+
+          {/* Loading skeletons */}
+          {apps === null && (
+            <section className="mb-10">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Applications</h2>
+                {setupButton}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <AppCardSkeleton index={0} />
+                <AppCardSkeleton index={1} />
+                <AppCardSkeleton index={2} />
+                <AppCardSkeleton index={3} />
+                <AppCardSkeleton index={4} />
+                <AppCardSkeleton index={5} />
+                <AppCardSkeleton index={6} />
+              </div>
+            </section>
+          )}
+
+          {/* Active Applications */}
+          {activeApps.length > 0 && (
+            <section className="mb-10">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Active</h2>
+                {setupButton}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {activeApps.map((app) => renderActiveCard(app))}
+              </div>
+            </section>
+          )}
+
+          {/* Standalone setup button when no active apps */}
+          {apps !== null && activeApps.length === 0 && (
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Applications</h2>
-              <button
-                type="button"
-                onClick={() => setSetupOpen(true)}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Settings className="h-4 w-4" />
-                Setup Environment
-              </button>
+              {setupButton}
             </div>
-            <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              {apps === null ? (
-                <>
-                  <AppCardSkeleton index={0} />
-                  <AppCardSkeleton index={1} />
-                  <AppCardSkeleton index={2} />
-                  <AppCardSkeleton index={3} />
-                  <AppCardSkeleton index={4} />
-                  <AppCardSkeleton index={5} />
-                  <AppCardSkeleton index={6} />
-                </>
-              ) : (
-                apps.map((app) => {
-                  const appLogs = logsByApp.get(app.id) ?? [];
-                  const appTodos = todosByApp[app.id] ?? [];
-                  const pendingCount = appTodos.filter((t) => !t.resolved).length;
-                  return (
-                    <Card
-                      key={app.id}
-                      className={cn(
-                        "relative border-l-4 transition-all hover:shadow-md hover:-translate-y-0.5",
-                        ACCENT_COLORS[app.id] ?? "border-l-primary",
-                      )}
-                    >
-                      {/* Upper zone — click to open app */}
-                      {/* biome-ignore lint/a11y/noStaticElementInteractions: conditional role/tabIndex/onKeyDown correctly implemented */}
-                      <div
-                        role={app.id !== "web" && app.status === "running" ? "link" : undefined}
-                        tabIndex={app.id !== "web" && app.status === "running" ? 0 : -1}
-                        className={cn(
-                          "w-full text-left",
-                          app.id !== "web" && app.status === "running" && "cursor-pointer",
-                        )}
-                        onClick={() => {
-                          if (app.id !== "web" && app.status === "running") {
-                            window.open(app.url, "_blank", "noopener,noreferrer");
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (app.id !== "web" && app.status === "running" && (e.key === "Enter" || e.key === " ")) {
-                            e.preventDefault();
-                            window.open(app.url, "_blank", "noopener,noreferrer");
-                          }
-                        }}
-                      >
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {app.favicon ? (
-                                <Image src={app.favicon} alt="" width={20} height={20} className="rounded" />
-                              ) : (
-                                <span className="text-primary">{ICON_MAP[app.icon]}</span>
-                              )}
-                              <CardTitle className="text-base">{app.name}</CardTitle>
-                              {app.maturity && (
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <span
-                                      className={cn(
-                                        "h-2.5 w-2.5 rounded-full",
-                                        MATURITY_DOT_COLORS[app.maturity.color],
-                                      )}
-                                    />
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="w-40">
-                                    <div className="flex items-center justify-between text-xs mb-1">
-                                      <span className="font-medium">{app.maturity.label}</span>
-                                      <span className="text-muted-foreground">{app.maturity.percentage}%</span>
-                                    </div>
-                                    <div className="h-1.5 w-full rounded-full bg-muted">
-                                      <div
-                                        className={cn("h-full rounded-full", MATURITY_BAR_COLORS[app.maturity.color])}
-                                        style={{ width: `${app.maturity.percentage}%` }}
-                                      />
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                            </div>
-                            <Badge variant="outline" className="font-mono text-xs">
-                              :{app.port}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <div className="px-6 pb-4">
-                          <p className="text-sm text-muted-foreground mb-3">{app.description}</p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className={cn(
-                                  "h-2.5 w-2.5 rounded-full",
-                                  app.status === "running"
-                                    ? "bg-success shadow-[0_0_6px_hsl(var(--success)/0.5)]"
-                                    : "bg-muted-foreground/40",
-                                )}
-                              />
-                              <span className="text-xs text-muted-foreground capitalize">{app.status}</span>
-                            </div>
-                            {app.id === "web" ? (
-                              <span className="text-xs text-muted-foreground italic">You are here</span>
-                            ) : app.status === "running" ? (
-                              <a
-                                href={app.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-primary hover:underline flex items-center gap-1"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Open <ExternalLink className="h-3 w-3" />
-                              </a>
-                            ) : (
-                              <button
-                                type="button"
-                                className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
-                                disabled={restarting.has(app.id)}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  restartApp(app.id);
-                                }}
-                              >
-                                {restarting.has(app.id) ? "Starting\u2026" : "Start"}
-                                <RotateCw className={cn("h-3 w-3", restarting.has(app.id) && "animate-spin")} />
-                              </button>
-                            )}
-                          </div>
+          )}
+
+          {/* Inactive Applications */}
+          {inactiveApps.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Inactive</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {inactiveApps.map((app) => (
+                  <Card
+                    key={app.id}
+                    className={cn(
+                      "border-l-4 opacity-75 hover:opacity-100 transition-all",
+                      ACCENT_COLORS[app.id] ?? "border-l-primary",
+                    )}
+                  >
+                    <CardHeader className="py-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {app.favicon ? (
+                            <Image src={app.favicon} alt="" width={16} height={16} className="rounded opacity-60" />
+                          ) : (
+                            <span className="text-muted-foreground">{ICON_MAP[app.icon]}</span>
+                          )}
+                          <span className="text-sm font-medium">{app.name}</span>
                         </div>
-                      </div>
-
-                      {/* Logs collapsible */}
-                      {appLogs.length > 0 && (
-                        <Collapsible>
-                          <div className="px-6 pb-4">
-                            <CollapsibleTrigger className="flex items-center gap-1.5 pt-3 border-t w-full text-xs text-muted-foreground hover:text-foreground transition-colors group">
-                              <ScrollText className="h-3.5 w-3.5" />
-                              <span>
-                                {appLogs.length} log {appLogs.length === 1 ? "file" : "files"}
-                              </span>
-                              <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
-                            </CollapsibleTrigger>
-                          </div>
-                          <CollapsibleContent>
-                            <div className="px-6 pb-4 space-y-1.5">
-                              {appLogs.map((file) => (
-                                <Link
-                                  key={file.path}
-                                  href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
-                                  className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
-                                >
-                                  <span className="font-medium">{file.date ? formatDate(file.date) : "Legacy"}</span>
-                                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                    <span className="font-mono">{formatSize(file.size)}</span>
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      )}
-
-                      {/* Todos collapsible */}
-                      <Collapsible>
-                        <div className="px-6 pb-4">
-                          <CollapsibleTrigger
-                            className={cn(
-                              "flex items-center gap-1.5 w-full text-xs text-muted-foreground hover:text-foreground transition-colors group",
-                              appLogs.length === 0 && "pt-3 border-t",
-                            )}
-                          >
-                            <CheckSquare className="h-3.5 w-3.5" />
-                            <span>
-                              {pendingCount} pending / {appTodos.length} total
-                            </span>
-                            <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
-                          </CollapsibleTrigger>
-                        </div>
-                        <CollapsibleContent>
-                          <div className="px-6 pb-4 space-y-1">
-                            {appTodos.map((todo) => (
-                              <div
-                                key={todo.id}
-                                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-                              >
-                                <Checkbox
-                                  checked={todo.resolved}
-                                  onCheckedChange={(checked) => toggleTodo(app.id, todo.id, checked === true)}
-                                />
-                                <span className={cn(todo.resolved && "line-through text-muted-foreground")}>
-                                  {todo.text}
-                                </span>
-                              </div>
-                            ))}
-                            <TodoAddForm onAdd={(text) => addTodo(app.id, text)} />
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </Card>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Empty state */}
-            {logFiles.length === 0 && apps !== null && (
-              <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground mt-6">
-                <ScrollText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p className="text-lg font-medium">No log files found</p>
-                <p className="text-sm mt-1">Start a ClaudeKit app to generate logs in ~/.devkit/logs/</p>
-              </div>
-            )}
-
-            {/* Orphan logs */}
-            {orphanLogs.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Other Logs</h3>
-                <div className="grid gap-2">
-                  {orphanLogs.map((file) => (
-                    <Link
-                      key={file.path}
-                      href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
-                      className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <ScrollText className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{file.app}</span>
-                        {file.date && <span className="text-xs text-muted-foreground">{formatDate(file.date)}</span>}
-                        {!file.date && (
-                          <Badge variant="outline" className="text-xs">
-                            Legacy
+                        <div className="flex items-center gap-1.5">
+                          {app.id !== "web" && (
+                            <SettingsPopover
+                              appId={app.id}
+                              settings={settings.apps[app.id] ?? { autoStart: false, autoRestart: true }}
+                              onToggle={toggleSetting}
+                            />
+                          )}
+                          <Badge variant="outline" className="font-mono text-xs">
+                            :{app.port}
                           </Badge>
-                        )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="font-mono">{formatSize(file.size)}</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                    </CardHeader>
+                    <CardContent className="pt-0 pb-3">
+                      <p className="text-xs text-muted-foreground mb-2">{app.description}</p>
+                      {app.id !== "web" && (
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
+                          disabled={restarting.has(app.id)}
+                          onClick={() => restartApp(app.id)}
+                        >
+                          {restarting.has(app.id) ? "Starting\u2026" : "Start"}
+                          <Play className="h-3 w-3" />
+                        </button>
+                      )}
+                      {app.id === "web" && (
+                        <span className="text-xs text-muted-foreground italic">You are here</span>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            )}
-          </section>
+            </section>
+          )}
+
+          {/* Empty state */}
+          {logFiles.length === 0 && apps !== null && (
+            <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground mt-6">
+              <ScrollText className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-lg font-medium">No log files found</p>
+              <p className="text-sm mt-1">Start a ClaudeKit app to generate logs in ~/.devkit/logs/</p>
+            </div>
+          )}
+
+          {/* Orphan logs */}
+          {orphanLogs.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">Other Logs</h3>
+              <div className="grid gap-2">
+                {orphanLogs.map((file) => (
+                  <Link
+                    key={file.path}
+                    href={file.date ? `/logs/${file.app}?date=${file.date}` : `/logs/${file.app}`}
+                    className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-accent transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ScrollText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{file.app}</span>
+                      {file.date && <span className="text-xs text-muted-foreground">{formatDate(file.date)}</span>}
+                      {!file.date && (
+                        <Badge variant="outline" className="text-xs">
+                          Legacy
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="font-mono">{formatSize(file.size)}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </TooltipProvider>

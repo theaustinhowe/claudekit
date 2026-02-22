@@ -1,6 +1,7 @@
 import { statSync } from "node:fs";
 import { listLogFiles } from "@devkit/logger";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
+import { readSettings } from "@/lib/app-settings";
 import { readAllTodos } from "@/lib/todos";
 
 interface LogFileInfo {
@@ -37,5 +38,6 @@ const APP_IDS = ["gadget", "gogo-web", "b4u", "inspector", "storybook", "gogo-or
 export default function DashboardPage() {
   const files = getLogFileInfos();
   const initialTodos = readAllTodos(APP_IDS);
-  return <DashboardClient logFiles={files} initialTodos={initialTodos} />;
+  const initialSettings = readSettings();
+  return <DashboardClient logFiles={files} initialTodos={initialTodos} initialSettings={initialSettings} />;
 }

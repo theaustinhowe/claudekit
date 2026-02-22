@@ -18,8 +18,8 @@ import { Textarea } from "@devkit/ui/components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import { Bot, Clock, Loader2, Send, Square, User } from "lucide-react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import type { StreamEntry } from "@/components/generator/streaming-display";
-import { parseStreamLog, StreamingDisplay } from "@/components/generator/streaming-display";
+import type { StreamEntry } from "@devkit/ui/components/streaming-display";
+import { parseStreamLog, StreamingDisplay } from "@devkit/ui/components/streaming-display";
 import type { DesignMessage } from "@/lib/types";
 
 interface ChatPanelProps {

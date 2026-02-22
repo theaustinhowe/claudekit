@@ -71,7 +71,7 @@ import { ManualFindingForm, type ManualFindingFormData } from "@/components/repo
 import { GitHubTabContent } from "@/components/repos/repo-github-content";
 import { RepoIntegrationsContent } from "@/components/repos/repo-integrations-content";
 import { QuickImproveDropdown, QuickImproveTerminal, useQuickImprove } from "@/components/repos/repo-quick-improve";
-import { SessionTerminal } from "@/components/sessions/session-terminal";
+import { SessionTerminal } from "@devkit/ui/components/session-terminal";
 import { useTabNavigation } from "@/hooks/use-tab-navigation";
 import {
   createManualFinding,
