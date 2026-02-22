@@ -4,17 +4,29 @@ import { Button } from "@claudekit/ui/components/button";
 import { RotateCcw, Save, Upload, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { saveClaudeSettingsJson, saveDefaultClaudeSettings } from "@/lib/actions/claude-config";
+import {
+  saveClaudeSettingsJson,
+  saveDefaultClaudeSettings,
+  saveSharedClaudeSettingsJson,
+} from "@/lib/actions/claude-config";
 
 interface SettingsRawEditorProps {
   repoId: string;
   initialJson: string;
   jsonContent: string;
   onJsonChange: (json: string) => void;
+  scope?: "local" | "shared";
   onSaved?: () => void;
 }
 
-export function SettingsRawEditor({ repoId, initialJson, jsonContent, onJsonChange, onSaved }: SettingsRawEditorProps) {
+export function SettingsRawEditor({
+  repoId,
+  initialJson,
+  jsonContent,
+  onJsonChange,
+  scope = "local",
+  onSaved,
+}: SettingsRawEditorProps) {
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -45,7 +57,11 @@ export function SettingsRawEditor({ repoId, initialJson, jsonContent, onJsonChan
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveClaudeSettingsJson(repoId, jsonContent);
+      if (scope === "shared") {
+        await saveSharedClaudeSettingsJson(repoId, jsonContent);
+      } else {
+        await saveClaudeSettingsJson(repoId, jsonContent);
+      }
       toast.success("Settings saved!");
       onSaved?.();
     } catch (e) {

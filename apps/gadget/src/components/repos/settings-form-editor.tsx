@@ -14,6 +14,7 @@ import {
   Box,
   Brain,
   ChevronRight,
+  ChevronsUpDown,
   Database,
   EyeOff,
   Gauge,
@@ -21,8 +22,10 @@ import {
   Info,
   Monitor,
   Plug,
+  Puzzle,
   RotateCcw,
   Save,
+  Search,
   Shield,
   Terminal,
   Upload,
@@ -30,7 +33,11 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { saveClaudeSettingsJson, saveDefaultClaudeSettings } from "@/lib/actions/claude-config";
+import {
+  saveClaudeSettingsJson,
+  saveDefaultClaudeSettings,
+  saveSharedClaudeSettingsJson,
+} from "@/lib/actions/claude-config";
 import {
   type FieldDef,
   getFieldValue,
@@ -41,6 +48,7 @@ import {
   setFieldValue,
 } from "@/lib/services/claude-settings-schema";
 import { formatNumber } from "@/lib/utils";
+import { HooksEditor } from "./settings-form/hooks-editor";
 import { KeyValueEditor } from "./settings-form/key-value-editor";
 import { PermissionRulesEditor } from "./settings-form/permission-rules-editor";
 import { StringArrayEditor } from "./settings-form/string-array-editor";
@@ -57,26 +65,82 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   monitor: Monitor,
   "eye-off": EyeOff,
   database: Database,
+  puzzle: Puzzle,
 };
+
+function isFieldConfigured(settings: Record<string, unknown>, field: FieldDef): boolean {
+  const value = getFieldValue(settings, field.path);
+  if (value === undefined || value === null || value === "") return false;
+  if (value === false) return false;
+  if (Array.isArray(value) && value.length === 0) return false;
+  if (typeof value === "object" && value !== null && !Array.isArray(value) && Object.keys(value).length === 0)
+    return false;
+  return true;
+}
+
+function getConfiguredCount(category: SettingsCategory, settings: Record<string, unknown>): number {
+  return category.fields.filter((f) => isFieldConfigured(settings, f)).length;
+}
 
 interface SettingsFormEditorProps {
   repoId: string;
   initialJson: string;
+  scope?: "local" | "shared";
   onSaved?: () => void;
 }
 
-export function SettingsFormEditor({ repoId, initialJson, onSaved }: SettingsFormEditorProps) {
+export function SettingsFormEditor({ repoId, initialJson, scope = "local", onSaved }: SettingsFormEditorProps) {
   const initial = useMemo(() => parseJsonToFormState(initialJson), [initialJson]);
   const [settings, setSettings] = useState<Record<string, unknown>>(initial.settings);
   const [unknownFields] = useState<Record<string, unknown>>(initial.unknownFields);
   const [saving, setSaving] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
+    const expanded = new Set<string>();
+    for (const category of SETTINGS_CATEGORIES) {
+      if (getConfiguredCount(category, initial.settings) > 0) {
+        expanded.add(category.id);
+      }
+    }
+    return expanded;
+  });
 
   const isDirty = useMemo(() => {
     return (
       serializeFormToJson(settings, unknownFields) !== serializeFormToJson(initial.settings, initial.unknownFields)
     );
   }, [settings, unknownFields, initial]);
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return SETTINGS_CATEGORIES;
+    const query = searchQuery.toLowerCase();
+    return SETTINGS_CATEGORIES.map((category) => {
+      const matchingFields = category.fields.filter(
+        (f) =>
+          f.label.toLowerCase().includes(query) ||
+          f.description.toLowerCase().includes(query) ||
+          f.path.toLowerCase().includes(query),
+      );
+      if (matchingFields.length === 0) return null;
+      return { ...category, fields: matchingFields };
+    }).filter((c): c is SettingsCategory => c !== null);
+  }, [searchQuery]);
+
+  const isSearching = searchQuery.trim().length > 0;
+
+  const allExpanded = useMemo(() => {
+    const categories = isSearching ? filteredCategories : SETTINGS_CATEGORIES;
+    return categories.length > 0 && categories.every((c) => expandedSections.has(c.id));
+  }, [expandedSections, isSearching, filteredCategories]);
+
+  const toggleExpandAll = useCallback(() => {
+    if (allExpanded) {
+      setExpandedSections(new Set());
+    } else {
+      const allIds = new Set(SETTINGS_CATEGORIES.map((c) => c.id));
+      setExpandedSections(allIds);
+    }
+  }, [allExpanded]);
 
   const updateField = useCallback((path: string, value: unknown) => {
     setSettings((prev) => setFieldValue(prev, path, value));
@@ -98,7 +162,11 @@ export function SettingsFormEditor({ repoId, initialJson, onSaved }: SettingsFor
     setSaving(true);
     try {
       const json = serializeFormToJson(settings, unknownFields);
-      await saveClaudeSettingsJson(repoId, json);
+      if (scope === "shared") {
+        await saveSharedClaudeSettingsJson(repoId, json);
+      } else {
+        await saveClaudeSettingsJson(repoId, json);
+      }
       toast.success("Settings saved!");
       onSaved?.();
     } catch (e) {
@@ -246,15 +314,36 @@ export function SettingsFormEditor({ repoId, initialJson, onSaved }: SettingsFor
           </div>
         );
       }
+
+      case "hooks": {
+        const hooksObj =
+          typeof value === "object" && value !== null
+            ? (value as Record<string, { matcher?: string; hooks: { type: "command"; command: string }[] }[]>)
+            : {};
+        return (
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{field.label}</Label>
+            <p className="text-xs text-muted-foreground">{field.description}</p>
+            <HooksEditor value={hooksObj} onChange={(v) => updateField(field.path, v)} />
+          </div>
+        );
+      }
     }
   };
 
   const renderSection = (category: SettingsCategory) => {
     const Icon = CATEGORY_ICONS[category.icon] ?? Shield;
-    const isExpanded = expandedSections.has(category.id);
+    const isExpanded = isSearching || expandedSections.has(category.id);
     const sortedFields = [...category.fields].sort((a, b) => a.label.localeCompare(b.label));
     const booleanFields = sortedFields.filter((f) => f.type === "boolean");
     const otherFields = sortedFields.filter((f) => f.type !== "boolean");
+
+    // Use the original category to compute configured count (not filtered fields)
+    const originalCategory = SETTINGS_CATEGORIES.find((c) => c.id === category.id);
+    const totalFields = originalCategory ? originalCategory.fields.length : category.fields.length;
+    const configuredCount = originalCategory
+      ? getConfiguredCount(originalCategory, settings)
+      : getConfiguredCount(category, settings);
 
     return (
       <div key={category.id} className="rounded-lg border bg-card overflow-hidden">
@@ -266,8 +355,8 @@ export function SettingsFormEditor({ repoId, initialJson, onSaved }: SettingsFor
         >
           <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
           <span className="text-sm font-semibold flex-1">{category.label}</span>
-          <span className="text-xs text-muted-foreground mr-1">
-            {category.fields.length} {category.fields.length === 1 ? "setting" : "settings"}
+          <span className={cn("text-xs mr-1", configuredCount > 0 ? "text-primary" : "text-muted-foreground")}>
+            {configuredCount} of {totalFields} configured
           </span>
           <ChevronRight
             className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", isExpanded && "rotate-90")}
@@ -295,8 +384,25 @@ export function SettingsFormEditor({ repoId, initialJson, onSaved }: SettingsFor
 
   return (
     <div className="space-y-2">
+      {/* Search and expand/collapse controls */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search settings..."
+            className="h-8 pl-8 text-sm"
+          />
+        </div>
+        <Button variant="ghost" size="sm" onClick={toggleExpandAll} className="shrink-0 text-xs">
+          <ChevronsUpDown className="w-3.5 h-3.5 mr-1.5" />
+          {allExpanded ? "Collapse all" : "Expand all"}
+        </Button>
+      </div>
+
       {/* Sections */}
-      <div className="space-y-2">{SETTINGS_CATEGORIES.map((category) => renderSection(category))}</div>
+      <div className="space-y-2">{filteredCategories.map((category) => renderSection(category))}</div>
 
       {unknownCount > 0 && (
         <p className="text-xs text-muted-foreground">

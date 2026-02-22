@@ -109,7 +109,9 @@ interface RepoDetailClientProps {
   aiFiles: AIFile[];
   claudeConfig?: {
     settingsJson: string | null;
+    sharedSettingsJson: string | null;
     claudeMd: string | null;
+    rules: { name: string; content: string }[];
     repoPath: string;
   };
   defaultClaudeSettings?: string | null;

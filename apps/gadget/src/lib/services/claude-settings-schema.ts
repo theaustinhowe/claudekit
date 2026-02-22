@@ -10,7 +10,8 @@ export type FieldType =
   | "textarea"
   | "string-array"
   | "permission-rules"
-  | "key-value";
+  | "key-value"
+  | "hooks";
 
 export interface FieldDef {
   path: string;
@@ -61,7 +62,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         label: "Default Permission Mode",
         description: "Default behavior for tools not covered by allow/deny/ask rules.",
         type: "select",
-        options: ["", "default", "plan", "acceptEdits", "bypassPermissions"],
+        options: ["", "default", "plan", "acceptEdits", "bypassPermissions", "delegate", "dontAsk"],
       },
       {
         path: "permissions.additionalDirectories",
@@ -83,6 +84,12 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         description: "Disable all hook scripts from running.",
         type: "boolean",
       },
+      {
+        path: "hooks",
+        label: "Hooks",
+        description: "Shell commands that run in response to Claude Code events (PreToolUse, PostToolUse, Stop, etc.).",
+        type: "hooks",
+      },
     ],
   },
   {
@@ -95,7 +102,14 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         label: "Model",
         description: "Default model to use for Claude Code sessions.",
         type: "select",
-        options: ["", "claude-sonnet-4-5-20250929", "claude-opus-4-6", "claude-haiku-4-5-20251001"],
+        options: [
+          "",
+          "claude-sonnet-4-6",
+          "claude-opus-4-6",
+          "claude-haiku-4-5-20251001",
+          "claude-sonnet-4-5-20250929",
+          "claude-opus-4-5-20250918",
+        ],
       },
       {
         path: "alwaysThinkingEnabled",
@@ -180,6 +194,19 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         type: "string",
         placeholder: "e.g. 16000",
         envKey: "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
+      },
+      {
+        path: "fastMode",
+        label: "Fast Mode",
+        description: "Use fast output mode (same model, faster output)",
+        type: "boolean",
+      },
+      {
+        path: "effortLevel",
+        label: "Effort Level",
+        description: "Top-level effort level setting",
+        type: "select",
+        options: ["", "low", "medium", "high"],
       },
     ],
   },
@@ -332,6 +359,35 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         placeholder: "e.g. 80",
         envKey: "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
       },
+      {
+        path: "_env.CLAUDE_CODE_DISABLE_1M_CONTEXT",
+        label: "Disable 1M Context",
+        description: "Disable 1M token context window",
+        type: "boolean",
+        envKey: "CLAUDE_CODE_DISABLE_1M_CONTEXT",
+      },
+      {
+        path: "_env.CLAUDE_CODE_ENABLE_TASKS",
+        label: "Enable Tasks",
+        description: "Enable the task management feature",
+        type: "boolean",
+        envKey: "CLAUDE_CODE_ENABLE_TASKS",
+      },
+      {
+        path: "_env.CLAUDE_CODE_SIMPLE",
+        label: "Simple Mode",
+        description: "Run Claude Code in simplified mode",
+        type: "boolean",
+        envKey: "CLAUDE_CODE_SIMPLE",
+      },
+      {
+        path: "_env.CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS",
+        label: "File Read Max Output Tokens",
+        description: "Max output tokens for file reads",
+        type: "string",
+        placeholder: "e.g. 16000",
+        envKey: "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS",
+      },
     ],
   },
   {
@@ -389,6 +445,26 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         label: "Enable Weaker Nested Sandbox",
         description: "Use a less restrictive sandbox for nested processes (may be needed for some tools).",
         type: "boolean",
+      },
+      {
+        path: "sandbox.allowUnsandboxedCommands",
+        label: "Allow Unsandboxed Commands",
+        description: "Allow certain commands to run outside the sandbox",
+        type: "boolean",
+      },
+      {
+        path: "sandbox.network.httpProxyPort",
+        label: "HTTP Proxy Port",
+        description: "Port for the sandbox HTTP proxy",
+        type: "string",
+        placeholder: "e.g. 8080",
+      },
+      {
+        path: "sandbox.network.socksProxyPort",
+        label: "SOCKS Proxy Port",
+        description: "Port for the sandbox SOCKS proxy",
+        type: "string",
+        placeholder: "e.g. 1080",
       },
     ],
   },
@@ -504,6 +580,26 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         type: "boolean",
         envKey: "CLAUDE_CODE_DISABLE_TERMINAL_TITLE",
       },
+      {
+        path: "skipWebFetchPreflight",
+        label: "Skip WebFetch Preflight",
+        description: "Skip preflight checks for WebFetch tool",
+        type: "boolean",
+      },
+      {
+        path: "statusLine.type",
+        label: "Status Line Type",
+        description: "Type of status line",
+        type: "select",
+        options: ["", "command"],
+      },
+      {
+        path: "statusLine.command",
+        label: "Status Line Command",
+        description: "Shell command for custom status line",
+        type: "string",
+        placeholder: "e.g. echo 'Custom status'",
+      },
     ],
   },
   {
@@ -538,6 +634,25 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         description: "Disable background task execution.",
         type: "boolean",
         envKey: "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS",
+      },
+    ],
+  },
+  {
+    id: "plugins",
+    label: "Plugins",
+    icon: "puzzle",
+    fields: [
+      {
+        path: "enabledPlugins",
+        label: "Enabled Plugins",
+        description: "Enabled Claude Code plugins",
+        type: "key-value",
+      },
+      {
+        path: "extraKnownMarketplaces",
+        label: "Extra Marketplaces",
+        description: "Additional plugin marketplace sources",
+        type: "key-value",
       },
     ],
   },
