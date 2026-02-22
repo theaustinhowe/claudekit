@@ -33,8 +33,6 @@ export const inspectorLayoutConfig: AppLayoutConfig = {
     { label: "Splitter", href: "/splitter", icon: GitBranch },
     { label: "Resolver", href: "/resolver", icon: MessageSquareCode },
   ],
-  usageWidget: (
-    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
-  ),
+  usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
   port: 2400,
 };

@@ -45,8 +45,6 @@ export const gadgetLayoutConfig: AppLayoutConfig = {
     { label: "Repos", href: "/repositories", icon: FolderGit2 },
     { label: "Projects", href: "/projects", icon: FolderKanban },
   ],
-  usageWidget: (
-    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
-  ),
+  usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
   port: 2100,
 };

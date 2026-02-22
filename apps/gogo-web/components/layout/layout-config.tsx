@@ -26,8 +26,6 @@ export const gogoLayoutConfig: AppLayoutConfig = {
     { icon: Search, label: "Research", href: "/research" },
     { icon: FolderTree, label: "Workspaces", href: "/worktrees" },
   ],
-  usageWidget: (
-    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
-  ),
+  usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
   port: 2200,
 };

@@ -10,8 +10,6 @@ export const b4uLayoutConfig: AppLayoutConfig = {
     wordmark: <Image src="/logo.png" alt="B4U" width={859} height={529} className="h-10 w-auto" />,
   },
   nav: [],
-  usageWidget: (
-    <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />
-  ),
+  usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
   port: 2300,
 };
