@@ -43,6 +43,7 @@ function getOrCreateBuffer(jobId: string): JobLogBuffer {
 
 /**
  * Emit a log entry for a job and broadcast to WebSocket subscribers.
+ *
  * If the job has an active session (via @devkit/session), the log is routed
  * through the session manager's ring buffer + batch flush. Otherwise, it falls
  * back to the local buffer (for pre-session logs like workspace setup).
