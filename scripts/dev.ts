@@ -77,15 +77,15 @@ function startApp(app: App) {
       console.log(`${prefix} exited with code ${code}`);
       appendToLog(app.filter, `${timestamp()} [exit] code=${code}`);
 
-      // Check autoRestart setting
-      const exitSettings = readSettings();
-      const exitAppSettings = getAppSettings(app.name, exitSettings);
-      if (!exitAppSettings.autoRestart) {
-        console.log(`${prefix} auto-restart disabled by settings`);
-        return;
-      }
-
       if (code !== 0 && code !== null) {
+        // Check autoRestart setting
+        const exitSettings = readSettings();
+        const exitAppSettings = getAppSettings(app.name, exitSettings);
+        if (!exitAppSettings.autoRestart) {
+          console.log(`${prefix} auto-restart disabled by settings`);
+          return;
+        }
+
         const uptime = Date.now() - startTime;
         if (uptime > UPTIME_RESET_MS) {
           restartCount = 0;
@@ -121,6 +121,8 @@ for (const app of apps) {
   const appSettings = getAppSettings(app.name, fgSettings);
   const willStart = fgSettings === null || app.name === "web" || appSettings.autoStart;
   const padding = " ".repeat(20 - app.name.length);
-  console.log(`  ${app.color}${app.name}${RESET}:${padding}http://localhost:${app.port}${willStart ? "" : `  ${DIM}(skipped)${RESET}`}`);
+  console.log(
+    `  ${app.color}${app.name}${RESET}:${padding}http://localhost:${app.port}${willStart ? "" : `  ${DIM}(skipped)${RESET}`}`,
+  );
 }
 console.log();

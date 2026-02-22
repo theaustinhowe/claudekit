@@ -421,9 +421,10 @@ pruneOldLogs();
 const startupSettings = readSettings();
 for (const app of apps) {
   const appSettings = getAppSettings(app.id, startupSettings);
-  const shouldStart = startupSettings === null // legacy mode: start all
-    || app.id === "web" // web always starts
-    || appSettings.autoStart;
+  const shouldStart =
+    startupSettings === null || // legacy mode: start all
+    app.id === "web" || // web always starts
+    appSettings.autoStart;
   const entry: ManagedApp = {
     app,
     proc: null,

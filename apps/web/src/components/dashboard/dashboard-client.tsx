@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@devkit/ui/components/
 import { Checkbox } from "@devkit/ui/components/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@devkit/ui/components/collapsible";
 import { Input } from "@devkit/ui/components/input";
+import { Label } from "@devkit/ui/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
 import { Skeleton } from "@devkit/ui/components/skeleton";
+import { Switch } from "@devkit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@devkit/ui/components/tooltip";
 import {
   BookOpen,
@@ -27,9 +30,6 @@ import {
   Video,
   Wrench,
 } from "lucide-react";
-import { Label } from "@devkit/ui/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@devkit/ui/components/popover";
-import { Switch } from "@devkit/ui/components/switch";
 import Image from "next/image";
 import Link from "next/link";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -208,7 +208,9 @@ function SettingsPopover({
         <div className="space-y-3">
           <p className="text-sm font-medium">App Settings</p>
           <div className="flex items-center justify-between">
-            <Label htmlFor={`${appId}-autostart`} className="text-xs">Auto-start</Label>
+            <Label htmlFor={`${appId}-autostart`} className="text-xs">
+              Auto-start
+            </Label>
             <Switch
               id={`${appId}-autostart`}
               checked={settings.autoStart}
@@ -216,7 +218,9 @@ function SettingsPopover({
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label htmlFor={`${appId}-autorestart`} className="text-xs">Auto-restart</Label>
+            <Label htmlFor={`${appId}-autorestart`} className="text-xs">
+              Auto-restart
+            </Label>
             <Switch
               id={`${appId}-autorestart`}
               checked={settings.autoRestart}
@@ -233,9 +237,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
   const [apps, setApps] = useState<AppInfo[] | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
   const [todosByApp, setTodosByApp] = useState<Record<string, Todo[]>>(initialTodos);
-  const [settings, setSettings] = useState<AppSettings>(
-    initialSettings ?? { version: 1, apps: {} },
-  );
+  const [settings, setSettings] = useState<AppSettings>(initialSettings ?? { version: 1, apps: {} });
   const [stopping, setStopping] = useState<Set<string>>(new Set());
   // Track confirmed statuses for debounced section transitions
   const [confirmedStatus, setConfirmedStatus] = useState<Record<string, "running" | "stopped">>({});
@@ -276,32 +278,28 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     [fetchApps],
   );
 
-  const toggleSetting = useCallback(
-    async (appId: string, key: "autoStart" | "autoRestart", value: boolean) => {
-      setSettings((prev) => {
-        const updated: AppSettings = {
-          ...prev,
-          apps: {
-            ...prev.apps,
-            [appId]: {
-              autoStart: prev.apps[appId]?.autoStart ?? false,
-              autoRestart: prev.apps[appId]?.autoRestart ?? true,
-              ...prev.apps[appId],
-              [key]: value,
-            },
+  const toggleSetting = useCallback(async (appId: string, key: "autoStart" | "autoRestart", value: boolean) => {
+    setSettings((prev) => {
+      const updated: AppSettings = {
+        ...prev,
+        apps: {
+          ...prev.apps,
+          [appId]: {
+            ...{ autoStart: false, autoRestart: true },
+            ...prev.apps[appId],
+            [key]: value,
           },
-        };
-        // Fire and forget the API call
-        fetch("/api/apps/settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updated),
-        }).catch(() => {});
-        return updated;
-      });
-    },
-    [],
-  );
+        },
+      };
+      // Fire and forget the API call
+      fetch("/api/apps/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      }).catch(() => {});
+      return updated;
+    });
+  }, []);
 
   const stopApp = useCallback(
     async (appId: string) => {
@@ -327,16 +325,18 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
       currentStatuses[app.id] = app.status;
     }
     // An app must maintain its status for 2 consecutive polls to move sections
-    const newConfirmed = { ...confirmedStatus };
-    for (const [id, status] of Object.entries(currentStatuses)) {
-      if (prevStatusRef.current[id] === status) {
-        // Same as previous poll — confirm it
-        newConfirmed[id] = status;
+    setConfirmedStatus((prev) => {
+      const newConfirmed = { ...prev };
+      for (const [id, status] of Object.entries(currentStatuses)) {
+        if (prevStatusRef.current[id] === status) {
+          // Same as previous poll — confirm it
+          newConfirmed[id] = status;
+        }
+        // If different from previous, don't update confirmed yet (wait for next poll)
       }
-      // If different from previous, don't update confirmed yet (wait for next poll)
-    }
+      return newConfirmed;
+    });
     prevStatusRef.current = currentStatuses;
-    setConfirmedStatus(newConfirmed);
   }, [apps]);
 
   const addTodo = useCallback(async (appId: string, text: string) => {
@@ -465,10 +465,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
         <div
           role={app.id !== "web" && app.status === "running" ? "link" : undefined}
           tabIndex={app.id !== "web" && app.status === "running" ? 0 : -1}
-          className={cn(
-            "w-full text-left",
-            app.id !== "web" && app.status === "running" && "cursor-pointer",
-          )}
+          className={cn("w-full text-left", app.id !== "web" && app.status === "running" && "cursor-pointer")}
           onClick={() => {
             if (app.id !== "web" && app.status === "running") {
               window.open(app.url, "_blank", "noopener,noreferrer");
@@ -493,12 +490,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                 {app.maturity && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <span
-                        className={cn(
-                          "h-2.5 w-2.5 rounded-full",
-                          MATURITY_DOT_COLORS[app.maturity.color],
-                        )}
-                      />
+                      <span className={cn("h-2.5 w-2.5 rounded-full", MATURITY_DOT_COLORS[app.maturity.color])} />
                     </TooltipTrigger>
                     <TooltipContent side="top" className="w-40">
                       <div className="flex items-center justify-between text-xs mb-1">
@@ -647,9 +639,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                     checked={todo.resolved}
                     onCheckedChange={(checked) => toggleTodo(app.id, todo.id, checked === true)}
                   />
-                  <span className={cn(todo.resolved && "line-through text-muted-foreground")}>
-                    {todo.text}
-                  </span>
+                  <span className={cn(todo.resolved && "line-through text-muted-foreground")}>{todo.text}</span>
                 </div>
               ))}
               <TodoAddForm onAdd={(text) => addTodo(app.id, text)} />
@@ -692,9 +682,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                 <h2 className="text-lg font-semibold">Active</h2>
                 {setupButton}
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {activeApps.map((app) => renderActiveCard(app))}
-              </div>
+              <div className="grid gap-4 sm:grid-cols-2">{activeApps.map((app) => renderActiveCard(app))}</div>
             </section>
           )}
 
@@ -756,9 +744,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                           <Play className="h-3 w-3" />
                         </button>
                       )}
-                      {app.id === "web" && (
-                        <span className="text-xs text-muted-foreground italic">You are here</span>
-                      )}
+                      {app.id === "web" && <span className="text-xs text-muted-foreground italic">You are here</span>}
                     </CardContent>
                   </Card>
                 ))}
