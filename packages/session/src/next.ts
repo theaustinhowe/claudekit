@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SSEReplayCallbacks } from "./sse";
 import { createSessionSSEResponse } from "./sse";
-import type { SessionManager } from "./types";
+import type { SessionManager, SessionRowBase } from "./types";
 
 type RouteContext = { params: Promise<Record<string, string>> };
 
@@ -54,6 +54,52 @@ export function createCancelHandler(opts: {
     } catch (err) {
       console.error(`[cancel] Error cancelling session ${sessionId}:`, err);
       return NextResponse.json({ error: "Failed to cancel session" }, { status: 500 });
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Session list handler
+// ---------------------------------------------------------------------------
+
+export interface ListSessionsFilter {
+  status?: string[];
+  contextId?: string;
+  contextType?: string;
+  sessionType?: string;
+  limit?: number;
+}
+
+/**
+ * Create a GET handler for listing sessions.
+ * Apps inject their own `listSessions` DB query function.
+ */
+export function createSessionsListHandler(opts: {
+  listSessions: (filter?: ListSessionsFilter) => Promise<SessionRowBase[]>;
+}): (request: Request) => Promise<Response> {
+  const { listSessions } = opts;
+
+  return async (request: Request) => {
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status");
+    const contextId = searchParams.get("contextId");
+    const contextType = searchParams.get("contextType");
+    const sessionType = searchParams.get("type");
+    const limit = searchParams.get("limit");
+
+    try {
+      const sessions = await listSessions({
+        status: status ? status.split(",") : undefined,
+        contextId: contextId ?? undefined,
+        contextType: contextType ?? undefined,
+        sessionType: sessionType ?? undefined,
+        limit: limit ? Number(limit) : undefined,
+      });
+
+      return NextResponse.json(sessions);
+    } catch (err) {
+      console.error("[sessions] Error listing sessions:", err);
+      return NextResponse.json({ error: "Failed to list sessions" }, { status: 500 });
     }
   };
 }

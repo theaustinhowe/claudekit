@@ -1,30 +1,17 @@
+import { createSessionsListHandler } from "@devkit/session/next";
 import { type NextRequest, NextResponse } from "next/server";
 import { listSessions } from "@/lib/actions/sessions";
 import { createSession, startSession } from "@/lib/services/session-manager";
 import { sessionRunners } from "@/lib/services/session-runners";
-import type { SessionStatus, SessionType } from "@/lib/types";
+import type { SessionType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/sessions — List sessions with optional filters
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status");
-  const contextId = searchParams.get("contextId");
-  const contextType = searchParams.get("contextType") as "repo" | "project" | null;
-  const sessionType = searchParams.get("type") as SessionType | null;
-  const limit = searchParams.get("limit");
-
-  const sessions = await listSessions({
-    status: status ? (status.split(",") as SessionStatus[]) : undefined,
-    contextId: contextId ?? undefined,
-    contextType: contextType ?? undefined,
-    sessionType: sessionType ?? undefined,
-    limit: limit ? Number(limit) : undefined,
-  });
-
-  return NextResponse.json(sessions);
-}
+export const GET = createSessionsListHandler({
+  // biome-ignore lint/suspicious/noExplicitAny: bridge between shared and app-specific filter/row types
+  listSessions: listSessions as any,
+});
 
 // POST /api/sessions — Create and start a new session
 export async function POST(request: NextRequest) {

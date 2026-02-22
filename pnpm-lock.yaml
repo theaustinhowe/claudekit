@@ -711,6 +711,9 @@ importers:
       '@devkit/hooks':
         specifier: workspace:*
         version: link:../hooks
+      '@devkit/session':
+        specifier: workspace:*
+        version: link:../session
       '@storybook/react':
         specifier: ^10.2.8
         version: 10.2.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.2.8(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)

@@ -1,7 +1,11 @@
 "use client";
 
+import { SessionIndicator } from "@devkit/ui/components/session-indicator";
+import { SessionPanel } from "@devkit/ui/components/session-panel";
+import { SessionProvider } from "@devkit/ui/components/session-provider";
 import { AppLayout } from "@devkit/ui/components/shared-layout";
 import { useMemo } from "react";
+import { b4uSessionConfig } from "@/lib/session-config";
 import { PhaseStepper } from "./app-header";
 import { SessionList } from "./app-sidebar";
 import { b4uLayoutConfig } from "./layout-config";
@@ -30,8 +34,16 @@ export function LayoutShell({ children, onSelectRun, onDeleteRun, onNewThread }:
   );
 
   return (
-    <AppLayout config={b4uLayoutConfig} sidebarContent={SidebarContent} contentBanner={<PhaseStepper />}>
-      {children}
-    </AppLayout>
+    <SessionProvider config={b4uSessionConfig}>
+      <AppLayout
+        config={b4uLayoutConfig}
+        sidebarContent={SidebarContent}
+        contentBanner={<PhaseStepper />}
+        statusIndicator={<SessionIndicator />}
+      >
+        {children}
+      </AppLayout>
+      <SessionPanel />
+    </SessionProvider>
   );
 }

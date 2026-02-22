@@ -8,6 +8,8 @@ export type {
   SessionManager,
   SessionManagerConfig,
   SessionPersistence,
+  SessionRowBase,
   SessionRunner,
+  SessionStatusBase,
   SessionSubscriber,
 } from "./types";

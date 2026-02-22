@@ -8,7 +8,6 @@ export default defineConfig({
     },
   },
   test: {
-    passWithNoTests: true,
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {

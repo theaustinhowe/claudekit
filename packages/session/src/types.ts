@@ -1,3 +1,30 @@
+// ---------------------------------------------------------------------------
+// Base types shared across all apps (used by @devkit/ui session components)
+// ---------------------------------------------------------------------------
+
+export type SessionStatusBase = "pending" | "running" | "done" | "error" | "cancelled";
+
+export interface SessionRowBase {
+  id: string;
+  session_type: string;
+  status: SessionStatusBase;
+  label: string;
+  progress: number;
+  phase: string | null;
+  pid: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  error_message: string | null;
+  context_type?: string | null;
+  context_id?: string | null;
+  [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// Session event types
+// ---------------------------------------------------------------------------
+
 export type SessionEventType = "init" | "progress" | "log" | "chunk" | "done" | "error" | "cancelled" | "heartbeat";
 
 export interface SessionEvent {
