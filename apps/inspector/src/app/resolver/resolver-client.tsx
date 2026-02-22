@@ -181,29 +181,32 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
           Fixing {selectedComments.size} comment{selectedComments.size !== 1 ? "s" : ""} on PR #{selectedPR?.number}
         </p>
         <div className="w-full max-w-md space-y-6">
-          <Progress value={progress} className="h-2" />
-          <div className="space-y-2">
-            {fixSteps.map((s, i) => (
+          <Progress value={stream.progress ?? 0} className="h-2" />
+          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
+          <div className="space-y-1.5 max-h-48 overflow-y-auto">
+            {stream.logs.slice(-8).map((entry, i) => (
               <motion.div
-                key={s}
+                key={`${i}-${entry.log}`}
                 initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: i <= step ? 1 : 0.3, x: 0 }}
+                animate={{ opacity: 1, x: 0 }}
                 className="flex items-center gap-2 text-sm"
               >
-                {i < step ? (
-                  <Check className="h-4 w-4 text-status-success" />
-                ) : i === step ? (
-                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent" />
+                {entry.log.includes("[SUCCESS]") ? (
+                  <Check className="h-4 w-4 text-status-success shrink-0" />
                 ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-muted" />
+                  <div className="h-4 w-4 rounded-full border-2 border-primary animate-spin border-t-transparent shrink-0" />
                 )}
-                <span className={i <= step ? "text-foreground" : "text-muted-foreground"}>{s}</span>
+                <span className="text-muted-foreground truncate">{entry.log}</span>
               </motion.div>
             ))}
           </div>
-          {isPending && step >= fixSteps.length && (
-            <p className="text-center text-sm text-muted-foreground animate-pulse">Running Claude analysis...</p>
+          {stream.elapsed > 0 && (
+            <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>
           )}
+          <Button variant="outline" className="w-full" onClick={stream.cancel}>
+            <Square className="h-3 w-3 mr-2" />
+            Cancel
+          </Button>
         </div>
       </div>
     );
