@@ -119,7 +119,7 @@ export function SessionPanel() {
   return (
     <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
       <SheetContent side="right" className="w-[380px] sm:max-w-[380px] p-0">
-        <SheetHeader className="px-4 py-3 border-b border-border">
+        <SheetHeader className="mx-0 mt-0 px-4 py-3 border-b border-border">
           <SheetTitle className="text-base">Sessions</SheetTitle>
           <SheetDescription className="text-xs">
             {activeSessions.length > 0
@@ -128,7 +128,7 @@ export function SessionPanel() {
           </SheetDescription>
         </SheetHeader>
 
-        <SheetBody>
+        <SheetBody className="mx-0 px-0">
           <div className="overflow-y-auto flex-1">
             {/* Active sessions */}
             {activeSessions.length > 0 && (

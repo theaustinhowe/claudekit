@@ -1,6 +1,6 @@
 "use client";
 
-import { Clapperboard, Eye, LayoutDashboard, Search, Swords } from "lucide-react";
+import { Clapperboard, Compass, Eye, LayoutDashboard, Search, Swords } from "lucide-react";
 import { Fragment } from "react";
 import { cn } from "../../utils";
 import type { ClaudeKitAppLink } from "./types";
@@ -8,6 +8,7 @@ import type { ClaudeKitAppLink } from "./types";
 const DEFAULT_APPS: ClaudeKitAppLink[] = [
   { label: "Dashboard", port: 2000, icon: LayoutDashboard },
   { label: "Gadget", port: 2100, icon: Search },
+  { label: "Inside", port: 2150, icon: Compass },
   { label: "GoGo", port: 2200, icon: Swords },
   { label: "B4U", port: 2300, icon: Clapperboard },
   { label: "Inspector", port: 2400, icon: Eye },

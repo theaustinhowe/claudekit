@@ -234,14 +234,14 @@ export function ClaudeUsageDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  usage: ClaudeUsageStats;
+  usage?: ClaudeUsageStats;
   rateLimits: ClaudeRateLimits | null;
 }) {
-  const recentDays = usage.dailyActivity.slice(-7);
+  const recentDays = usage?.dailyActivity.slice(-7) ?? [];
   const maxMessages = Math.max(...recentDays.map((d) => d.messageCount), 1);
 
-  const peakHour = getPeakHour(usage.hourCounts);
-  const totalToolCalls = usage.dailyActivity.reduce((sum, d) => sum + d.toolCallCount, 0);
+  const peakHour = getPeakHour(usage?.hourCounts ?? {});
+  const totalToolCalls = usage?.dailyActivity.reduce((sum, d) => sum + d.toolCallCount, 0) ?? 0;
 
   const modelLimitEntries = rateLimits ? Object.entries(rateLimits.modelLimits) : [];
 
@@ -303,7 +303,7 @@ export function ClaudeUsageDialog({
           )}
 
           {/* Overview stats */}
-          <Section
+          {usage && <Section
             title={`Stats${usage.firstSessionDate ? ` since ${formatFirstSessionDate(usage.firstSessionDate)}` : ""}`}
             icon={<BarChart3 className="w-3.5 h-3.5" />}
           >
@@ -369,10 +369,10 @@ export function ClaudeUsageDialog({
                 </div>
               )}
             </div>
-          </Section>
+          </Section>}
 
           {/* Cost */}
-          {usage.recentDailyCosts?.some((d) => d.totalCostUSD > 0) && (
+          {usage?.recentDailyCosts?.some((d) => d.totalCostUSD > 0) && (
             <Section title="Estimated Cost (7 days)" icon={<DollarSign className="w-3.5 h-3.5" />}>
               <div className="p-3 rounded-lg border bg-amber-500/5">
                 <div className="flex items-center justify-between mb-3">
@@ -410,7 +410,7 @@ export function ClaudeUsageDialog({
           )}
 
           {/* Model Usage */}
-          <Section title="Model Usage" icon={<Bot className="w-3.5 h-3.5" />}>
+          {usage && <Section title="Model Usage" icon={<Bot className="w-3.5 h-3.5" />}>
             <div className="space-y-3">
               {Object.entries(usage.modelUsage).map(([model, tokens]) => (
                 <div key={model} className="p-3 rounded-lg border bg-muted/30">
@@ -429,10 +429,10 @@ export function ClaudeUsageDialog({
                 </div>
               ))}
             </div>
-          </Section>
+          </Section>}
 
           {/* Cache Efficiency */}
-          {Object.keys(usage.modelUsage).length > 0 && (
+          {usage && Object.keys(usage.modelUsage).length > 0 && (
             <Section title="Cache Efficiency" icon={<Layers className="w-3.5 h-3.5" />}>
               <CacheEfficiency modelUsage={usage.modelUsage} />
             </Section>
@@ -456,11 +456,11 @@ export function HeaderUsageWidget({
   rateLimits,
   onClick,
 }: {
-  usage: ClaudeUsageStats;
+  usage?: ClaudeUsageStats;
   rateLimits: ClaudeRateLimits | null;
   onClick: () => void;
 }) {
-  const todayCostUSD = usage.todayCost?.totalCostUSD;
+  const todayCostUSD = usage?.todayCost?.totalCostUSD;
   const countdown = useCountdown(rateLimits?.fiveHour.resetsAt);
 
   if (rateLimits) {
@@ -502,7 +502,9 @@ export function HeaderUsageWidget({
     );
   }
 
-  // Fallback: no OAuth data, show session/message counts
+  // Fallback: no OAuth data, show session/message counts (requires usage stats)
+  if (!usage) return null;
+
   const totalOutputTokens = Object.values(usage.modelUsage).reduce((sum, m) => sum + m.outputTokens, 0);
 
   return (

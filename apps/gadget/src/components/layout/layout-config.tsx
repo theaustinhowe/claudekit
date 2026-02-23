@@ -24,6 +24,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Policies", href: "/policies", icon: Shield },
       { label: "Toolbox", href: "/toolbox", icon: Hammer },
+      { label: "Settings", href: "/settings", icon: Settings },
     ],
   },
 ];
@@ -35,7 +36,7 @@ export const gadgetLayoutConfig: AppLayoutConfig = {
     wordmark: <Image src="/images/logo.png" alt="Gadget" width={1054} height={413} className="h-10 w-auto" />,
   },
   nav: navGroups,
-  bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
+  bottomNav: [],
   mobileNav: [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "New Scan", href: "/scans", icon: ScanSearch },

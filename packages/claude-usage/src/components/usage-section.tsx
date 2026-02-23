@@ -16,18 +16,24 @@ export function UsageSection({
     getRateLimits,
   });
 
+  const hasData = claudeUsage || rateLimits;
+
   return (
     <>
       <div className="flex-1 hidden sm:block">
-        {claudeUsage && (
-          <HeaderUsageWidget usage={claudeUsage} rateLimits={rateLimits} onClick={() => setUsageDialogOpen(true)} />
+        {hasData && (
+          <HeaderUsageWidget
+            usage={claudeUsage ?? undefined}
+            rateLimits={rateLimits}
+            onClick={() => setUsageDialogOpen(true)}
+          />
         )}
       </div>
-      {claudeUsage && (
+      {hasData && (
         <ClaudeUsageDialog
           open={usageDialogOpen}
           onOpenChange={setUsageDialogOpen}
-          usage={claudeUsage}
+          usage={claudeUsage ?? undefined}
           rateLimits={rateLimits}
         />
       )}
