@@ -25,7 +25,9 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
           "relative flex w-full touch-none select-none items-center data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed",
           className,
         )}
-        onValueChange={onValueChange ? (v: readonly number[]) => onValueChange([...v]) : undefined}
+        onValueChange={
+          onValueChange ? (v: number | readonly number[]) => onValueChange(Array.isArray(v) ? [...v] : [v]) : undefined
+        }
         value={value}
         defaultValue={defaultValue}
         {...props}
