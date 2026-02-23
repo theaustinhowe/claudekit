@@ -11,12 +11,12 @@ interface StepSharedProps {
 
 export function StepShared({ variables, values, onChange }: StepSharedProps) {
   return (
-    <div className="space-y-6 py-4">
+    <div className="space-y-4 pb-4">
       <p className="text-sm text-muted-foreground">
         These variables are shared across multiple apps. Setting them here will write to all relevant{" "}
         <code className="text-xs bg-muted px-1 py-0.5 rounded">.env.local</code> files.
       </p>
-      <div className="space-y-5">
+      <div className="divide-y divide-border/50">
         {variables.map((v) => (
           <EnvField
             key={v.key}

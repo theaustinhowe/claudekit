@@ -109,7 +109,7 @@ export function StepReview({ wizardData, values }: StepReviewProps) {
                 <div key={v.key} className="flex items-center gap-2 px-3 py-1.5 text-xs">
                   <span className={cn("font-mono", !v.value && v.required && "text-warning")}>{v.key}</span>
                   {!v.value && v.required && <AlertTriangle className="h-3 w-3 text-warning" />}
-                  <span className="ml-auto font-mono text-muted-foreground truncate max-w-[200px]">
+                  <span className="ml-auto font-mono text-muted-foreground truncate max-w-[300px]">
                     {v.value ? (showValues ? v.value : SENSITIVE_PATTERNS.test(v.key) ? "••••••••" : v.value) : "—"}
                   </span>
                 </div>

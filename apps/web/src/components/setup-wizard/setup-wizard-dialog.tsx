@@ -79,12 +79,14 @@ export function SetupWizardDialog({ trigger }: SetupWizardDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl">
         <TooltipProvider delayDuration={300}>
-          <DialogHeader>
+          <DialogHeader className="space-y-3 pb-4">
+            <div className="space-y-1">
+              <DialogTitle>Environment Setup</DialogTitle>
+              <DialogDescription>Configure environment variables for all claudekit apps.</DialogDescription>
+            </div>
             <StepIndicator currentStep={step} />
-            <DialogTitle>Environment Setup</DialogTitle>
-            <DialogDescription>Configure environment variables for all claudekit apps.</DialogDescription>
           </DialogHeader>
 
           <DialogBody>
@@ -107,17 +109,15 @@ export function SetupWizardDialog({ trigger }: SetupWizardDialogProps) {
 
           <DialogFooter>
             <div className="flex items-center justify-between w-full">
-              <div>
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={isSaving}>
+                {isLastStep ? "Cancel" : "Skip"}
+              </Button>
+              <div className="flex items-center gap-2">
                 {step > 0 && (
                   <Button variant="ghost" size="sm" onClick={() => setStep((s) => s - 1)} disabled={isSaving}>
                     Back
                   </Button>
                 )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={isSaving}>
-                  {isLastStep ? "Cancel" : "Skip"}
-                </Button>
                 {isLastStep ? (
                   <Button size="sm" onClick={handleSave} disabled={isLoading || isSaving}>
                     {isSaving ? (

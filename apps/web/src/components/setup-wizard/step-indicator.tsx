@@ -7,7 +7,7 @@ const STEPS = ["Shared", "App-Specific", "Review"] as const;
 
 export function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex items-center justify-center gap-2 mb-2">
+    <div className="flex items-center justify-center gap-2">
       {STEPS.map((label, index) => {
         const isCompleted = index < currentStep;
         const isActive = index === currentStep;

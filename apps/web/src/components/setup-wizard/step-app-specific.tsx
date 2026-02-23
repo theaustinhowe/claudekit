@@ -2,8 +2,8 @@
 
 import { cn } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
-import { BookOpen, ChevronDown, Cpu, GitPullRequest, Rocket, Video } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
+import { BookOpen, Cpu, GitPullRequest, Rocket, Video } from "lucide-react";
 import type { EnvVariable } from "@/lib/env-parser";
 import { EnvField } from "./env-field";
 
@@ -33,50 +33,65 @@ export function StepAppSpecific({ appVariables, values, onChange }: StepAppSpeci
   }
 
   return (
-    <div className="space-y-3 py-4">
-      <p className="text-sm text-muted-foreground">These variables are specific to individual apps.</p>
-      {appIds.map((appId) => {
-        const { label, variables } = appVariables[appId];
-        const configuredCount = variables.filter((v) => values[v.key]).length;
-        return (
-          <Collapsible key={appId} defaultOpen={variables.length <= 4}>
-            <div className="border rounded-lg">
-              <CollapsibleTrigger className="flex items-center gap-2 w-full px-4 py-3 hover:bg-accent/50 transition-colors group">
-                <span className="text-primary">{APP_ICONS[appId]}</span>
-                <span className="font-medium text-sm">{label}</span>
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1">
+    <div className="py-4">
+      <p className="text-sm text-muted-foreground mb-3">These variables are specific to individual apps.</p>
+      <Tabs defaultValue={appIds[0]} className="flex gap-4 min-h-[300px]">
+        {/* Sidebar tab list */}
+        <TabsList
+          className={cn(
+            "flex flex-col items-stretch justify-start h-auto w-[160px] shrink-0",
+            "rounded-lg bg-muted/50 p-1.5 gap-1",
+          )}
+        >
+          {appIds.map((appId) => {
+            const { label, variables } = appVariables[appId];
+            const configuredCount = variables.filter((v) => values[v.key]).length;
+            return (
+              <TabsTrigger
+                key={appId}
+                value={appId}
+                className={cn(
+                  "flex items-center gap-2 justify-start w-full px-3 py-2 rounded-md text-left",
+                  "data-[active]:bg-background data-[active]:shadow-xs",
+                )}
+              >
+                <span className="text-primary shrink-0">{APP_ICONS[appId]}</span>
+                <span className="text-xs font-medium truncate">{label}</span>
+                <Badge variant="outline" className="text-[10px] px-1 py-0 ml-auto shrink-0">
                   {configuredCount}/{variables.length}
                 </Badge>
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 ml-auto text-muted-foreground transition-transform group-data-[open]:rotate-180",
-                  )}
-                />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="px-4 pb-4 space-y-5 border-t">
-                  <div className="pt-4 space-y-5">
-                    {variables.map((v) => (
-                      <EnvField
-                        key={v.key}
-                        variableKey={v.key}
-                        description={v.description}
-                        required={v.required}
-                        placeholder={v.placeholder}
-                        defaultValue={v.defaultValue}
-                        url={v.url}
-                        hint={v.hint}
-                        value={values[v.key] ?? ""}
-                        onChange={onChange}
-                      />
-                    ))}
-                  </div>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {/* Content panels */}
+        <div className="flex-1 min-w-0">
+          {appIds.map((appId) => {
+            const { variables } = appVariables[appId];
+            return (
+              <TabsContent key={appId} value={appId} className="mt-0 border rounded-lg overflow-y-auto max-h-[400px]">
+                <div className="divide-y divide-border/50">
+                  {variables.map((v) => (
+                    <EnvField
+                      key={v.key}
+                      variableKey={v.key}
+                      description={v.description}
+                      required={v.required}
+                      placeholder={v.placeholder}
+                      defaultValue={v.defaultValue}
+                      url={v.url}
+                      hint={v.hint}
+                      value={values[v.key] ?? ""}
+                      onChange={onChange}
+                    />
+                  ))}
                 </div>
-              </CollapsibleContent>
-            </div>
-          </Collapsible>
-        );
-      })}
+              </TabsContent>
+            );
+          })}
+        </div>
+      </Tabs>
     </div>
   );
 }
