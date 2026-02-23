@@ -1,6 +1,7 @@
 import { UsageSection } from "@claudekit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavGroup } from "@claudekit/ui/components/shared-layout";
-import { Brain, GitBranch, GitPullRequest, LayoutDashboard, MessageSquareCode, Settings, Users } from "lucide-react";
+import { Brain, GitBranch, LayoutDashboard, MessageSquareCode, Settings, Users } from "lucide-react";
+import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 
 const navGroups: NavGroup[] = [
@@ -21,8 +22,8 @@ const navGroups: NavGroup[] = [
 export const inspectorLayoutConfig: AppLayoutConfig = {
   appId: "inspector",
   logo: {
-    icon: <GitPullRequest className="w-6 h-6 text-primary" />,
-    wordmark: <span className="text-xl font-bold tracking-tight">Inspector</span>,
+    icon: <Image src="/favicon-16x16.png" alt="Inspector" width={16} height={16} className="w-6 h-6" />,
+    wordmark: <Image src="/logo.png" alt="Inspector" width={512} height={512} className="h-10 w-auto" />,
   },
   nav: navGroups,
   bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
