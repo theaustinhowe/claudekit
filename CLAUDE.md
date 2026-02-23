@@ -64,26 +64,15 @@ pnpm check            # typecheck + lint + test + build
 
 ### DuckDB
 
-All apps use `@claudekit/duckdb` for database access:
-- `createDatabase(config)` — factory with optional `globalThis` caching for Next.js HMR survival
-- `queryAll<T>`, `queryOne<T>`, `execute` — query helpers with async mutex
-- `withTransaction` — automatic BEGIN/COMMIT/ROLLBACK
-- `buildUpdate` — dynamic UPDATE from partial objects
-- `runMigrations(conn, { migrationsDir })` — numbered `.sql` migrations tracked in `_migrations` table
-- Each app has its own migrations directory and seed scripts
+All apps use `@claudekit/duckdb` for database access. See `packages/duckdb/CLAUDE.md` for full API and gotchas.
 
 ### Session System
 
-Long-running operations use `@claudekit/session`:
-- `createSessionManager(config)` — factory with DI persistence callbacks
-- Ring buffer (500 events), batch log flush (2s), heartbeat (15s)
-- Apps provide `loadSession`, `updateSession`, `persistLogs` callbacks
+Long-running operations use `@claudekit/session`. See `packages/session/CLAUDE.md` for lifecycle details.
 
 ### Claude CLI
 
-`@claudekit/claude-runner` wraps Claude CLI invocation:
-- `runClaude(options)` — spawn with stream-json parsing, abort, PID tracking
-- `parseStreamJsonEvent(evt, cwd)` — standalone event parser for any transport
+`@claudekit/claude-runner` wraps Claude CLI invocation. See `packages/claude-runner/CLAUDE.md` for usage.
 
 ### Server/Client Split (Next.js apps)
 

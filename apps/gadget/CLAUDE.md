@@ -196,18 +196,11 @@ Key service files:
 - Security headers configured in `next.config.ts` (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy)
 
 ### DuckDB
+
+See `packages/duckdb/CLAUDE.md` for general DuckDB query patterns and gotchas. App-specific notes:
 - `getDb()` is async — always `const db = await getDb()`
-- `queryOne<T>()` returns `T | undefined`, not `T | null` — wrap with `?? null` if null return type needed
-- DB helpers use `?` placeholders which auto-convert to DuckDB's `$1, $2, ...` format
-- DuckDB returns native `BOOLEAN` values — no need for `Boolean()` casts
-- Transactions: use `withTransaction(conn, async (conn) => { ... })` helper for automatic BEGIN/COMMIT/ROLLBACK
-- Dynamic updates: use `buildUpdate(table, id, data, jsonFields)` for partial-object UPDATE statements
-- `INSERT OR IGNORE` → `INSERT INTO ... ON CONFLICT DO NOTHING`
-- `INSERT OR REPLACE` → `INSERT INTO ... ON CONFLICT (key) DO UPDATE SET ...`
-- `datetime('now')` → `CAST(current_timestamp AS VARCHAR)`
-- `GROUP BY` must list ALL selected non-aggregated columns (unlike SQLite)
 - JSON fields (policies' `expected_versions`, `banned_dependencies`, etc.) stored as TEXT, parsed with `JSON.parse` on read
-- DuckDB doesn't support concurrent prepared statements on one connection — the helpers module has a built-in async mutex
+- No migrations system — all tables use `CREATE IF NOT EXISTS` in schema.ts. Use `pnpm db:reset` for breaking schema changes
 
 ### Session System
 - All long-running operations go through the session system — do NOT create standalone streaming routes
