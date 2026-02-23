@@ -1,4 +1,4 @@
-export interface AppDefinition {
+interface AppDefinition {
   id: string;
   name: string;
   description: string;
@@ -8,7 +8,7 @@ export interface AppDefinition {
   maturityPercentage?: number;
 }
 
-export interface MaturityInfo {
+interface MaturityInfo {
   label: string;
   percentage: number;
   color: "green" | "yellow" | "red";

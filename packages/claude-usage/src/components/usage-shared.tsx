@@ -303,73 +303,75 @@ export function ClaudeUsageDialog({
           )}
 
           {/* Overview stats */}
-          {usage && <Section
-            title={`Stats${usage.firstSessionDate ? ` since ${formatFirstSessionDate(usage.firstSessionDate)}` : ""}`}
-            icon={<BarChart3 className="w-3.5 h-3.5" />}
-          >
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: "Sessions", value: usage.totalSessions.toLocaleString() },
-                  { label: "Messages", value: usage.totalMessages.toLocaleString() },
-                  { label: "Tool Calls", value: totalToolCalls.toLocaleString() },
-                  { label: "Peak Hour", value: peakHour },
-                ].map((item) => (
-                  <div key={item.label} className="p-3 rounded-lg bg-muted/50 border">
-                    <p className="text-xs text-muted-foreground">{item.label}</p>
-                    <p className="text-lg font-bold">{item.value}</p>
-                  </div>
-                ))}
-              </div>
+          {usage && (
+            <Section
+              title={`Stats${usage.firstSessionDate ? ` since ${formatFirstSessionDate(usage.firstSessionDate)}` : ""}`}
+              icon={<BarChart3 className="w-3.5 h-3.5" />}
+            >
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Sessions", value: usage.totalSessions.toLocaleString() },
+                    { label: "Messages", value: usage.totalMessages.toLocaleString() },
+                    { label: "Tool Calls", value: totalToolCalls.toLocaleString() },
+                    { label: "Peak Hour", value: peakHour },
+                  ].map((item) => (
+                    <div key={item.label} className="p-3 rounded-lg bg-muted/50 border">
+                      <p className="text-xs text-muted-foreground">{item.label}</p>
+                      <p className="text-lg font-bold">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
 
-              {recentDays.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2">Recent Activity (7 days)</p>
-                  <div className="flex items-end gap-1.5" style={{ height: 80 }}>
-                    {recentDays.map((day) => {
-                      const pct = Math.max((day.messageCount / maxMessages) * 100, 4);
-                      const dateLabel = parseLocalDate(day.date).toLocaleDateString(undefined, {
-                        weekday: "short",
-                      });
-                      return (
-                        <div
-                          key={day.date}
-                          className="group/bar flex-1 flex flex-col items-center gap-1.5 h-full relative"
-                        >
-                          <div className="flex-1 w-full flex items-end">
-                            <div
-                              className="w-full rounded-t bg-primary/70 hover:bg-primary transition-colors"
-                              style={{ height: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-[9px] text-muted-foreground leading-none">{dateLabel}</span>
-                          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity z-50">
-                            <div className="bg-popover border rounded-md shadow-md px-3 py-2 text-xs whitespace-nowrap space-y-0.5">
-                              <p className="font-medium pb-0.5">
-                                {parseLocalDate(day.date).toLocaleDateString(undefined, {
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </p>
-                              <p className="text-muted-foreground tabular-nums">
-                                {day.messageCount.toLocaleString()} messages
-                              </p>
-                              <p className="text-muted-foreground tabular-nums">
-                                {day.sessionCount.toLocaleString()} sessions
-                              </p>
-                              <p className="text-muted-foreground tabular-nums">
-                                {day.toolCallCount.toLocaleString()} tool calls
-                              </p>
+                {recentDays.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">Recent Activity (7 days)</p>
+                    <div className="flex items-end gap-1.5" style={{ height: 80 }}>
+                      {recentDays.map((day) => {
+                        const pct = Math.max((day.messageCount / maxMessages) * 100, 4);
+                        const dateLabel = parseLocalDate(day.date).toLocaleDateString(undefined, {
+                          weekday: "short",
+                        });
+                        return (
+                          <div
+                            key={day.date}
+                            className="group/bar flex-1 flex flex-col items-center gap-1.5 h-full relative"
+                          >
+                            <div className="flex-1 w-full flex items-end">
+                              <div
+                                className="w-full rounded-t bg-primary/70 hover:bg-primary transition-colors"
+                                style={{ height: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-[9px] text-muted-foreground leading-none">{dateLabel}</span>
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity z-50">
+                              <div className="bg-popover border rounded-md shadow-md px-3 py-2 text-xs whitespace-nowrap space-y-0.5">
+                                <p className="font-medium pb-0.5">
+                                  {parseLocalDate(day.date).toLocaleDateString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                  })}
+                                </p>
+                                <p className="text-muted-foreground tabular-nums">
+                                  {day.messageCount.toLocaleString()} messages
+                                </p>
+                                <p className="text-muted-foreground tabular-nums">
+                                  {day.sessionCount.toLocaleString()} sessions
+                                </p>
+                                <p className="text-muted-foreground tabular-nums">
+                                  {day.toolCallCount.toLocaleString()} tool calls
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </Section>}
+                )}
+              </div>
+            </Section>
+          )}
 
           {/* Cost */}
           {usage?.recentDailyCosts?.some((d) => d.totalCostUSD > 0) && (
@@ -410,26 +412,28 @@ export function ClaudeUsageDialog({
           )}
 
           {/* Model Usage */}
-          {usage && <Section title="Model Usage" icon={<Bot className="w-3.5 h-3.5" />}>
-            <div className="space-y-3">
-              {Object.entries(usage.modelUsage).map(([model, tokens]) => (
-                <div key={model} className="p-3 rounded-lg border bg-muted/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">{formatModelName(model)}</span>
-                    <Badge variant="outline" className="text-[10px]">
-                      {formatTokenCount(tokens.inputTokens + tokens.outputTokens)} tokens
-                    </Badge>
+          {usage && (
+            <Section title="Model Usage" icon={<Bot className="w-3.5 h-3.5" />}>
+              <div className="space-y-3">
+                {Object.entries(usage.modelUsage).map(([model, tokens]) => (
+                  <div key={model} className="p-3 rounded-lg border bg-muted/30">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium">{formatModelName(model)}</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {formatTokenCount(tokens.inputTokens + tokens.outputTokens)} tokens
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <span>In: {formatTokenCount(tokens.inputTokens)}</span>
+                      <span>Out: {formatTokenCount(tokens.outputTokens)}</span>
+                      <span>Cache read: {formatTokenCount(tokens.cacheReadInputTokens)}</span>
+                      <span>Cache write: {formatTokenCount(tokens.cacheCreationInputTokens)}</span>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                    <span>In: {formatTokenCount(tokens.inputTokens)}</span>
-                    <span>Out: {formatTokenCount(tokens.outputTokens)}</span>
-                    <span>Cache read: {formatTokenCount(tokens.cacheReadInputTokens)}</span>
-                    <span>Cache write: {formatTokenCount(tokens.cacheCreationInputTokens)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Section>}
+                ))}
+              </div>
+            </Section>
+          )}
 
           {/* Cache Efficiency */}
           {usage && Object.keys(usage.modelUsage).length > 0 && (

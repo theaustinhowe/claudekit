@@ -128,11 +128,7 @@ export function SettingsClient({ defaultProjectPath: initialPath }: SettingsClie
           <div className="space-y-2">
             <Label>Default Project Path</Label>
             <p className="text-sm text-muted-foreground">Base directory for new projects</p>
-            <DirectoryPicker
-              value={projectPath}
-              onChange={handlePathChange}
-              placeholder="~/Projects"
-            />
+            <DirectoryPicker value={projectPath} onChange={handlePathChange} placeholder="~/Projects" />
           </div>
         </CardContent>
       </Card>
