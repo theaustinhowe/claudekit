@@ -2,6 +2,8 @@ import path from "node:path";
 import type { StorybookConfig } from "@storybook/react-vite";
 import tailwindcss from "@tailwindcss/vite";
 
+const __dirname = import.meta.dirname;
+
 const config: StorybookConfig = {
   stories: ["../src/components/**/*.stories.tsx"],
   framework: "@storybook/react-vite",

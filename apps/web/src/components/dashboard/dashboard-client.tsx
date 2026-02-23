@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
@@ -33,6 +34,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
 
 interface PerAppSettings {
@@ -265,8 +267,15 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     async (appId: string) => {
       setRestarting((prev) => new Set(prev).add(appId));
       try {
-        await fetch(`/api/apps/${encodeURIComponent(appId)}/restart`, { method: "POST" });
+        const res = await fetch(`/api/apps/${encodeURIComponent(appId)}/restart`, { method: "POST" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          toast.error(data.error ?? `Failed to start ${appId}`);
+          return;
+        }
         setTimeout(fetchApps, 2000);
+      } catch {
+        toast.error("Could not reach the app manager");
       } finally {
         setRestarting((prev) => {
           const next = new Set(prev);
@@ -305,8 +314,15 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     async (appId: string) => {
       setStopping((prev) => new Set(prev).add(appId));
       try {
-        await fetch(`/api/apps/${encodeURIComponent(appId)}/stop`, { method: "POST" });
+        const res = await fetch(`/api/apps/${encodeURIComponent(appId)}/stop`, { method: "POST" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          toast.error(data.error ?? `Failed to stop ${appId}`);
+          return;
+        }
         setTimeout(fetchApps, 2000);
+      } catch {
+        toast.error("Could not reach the app manager");
       } finally {
         setStopping((prev) => {
           const next = new Set(prev);
@@ -448,6 +464,8 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     </button>
   );
 
+  const [todoSheetApp, setTodoSheetApp] = useState<string | null>(null);
+
   const renderActiveCard = (app: AppInfo) => {
     const appLogs = logsByApp.get(app.id) ?? [];
     const appTodos = todosByApp[app.id] ?? [];
@@ -487,6 +505,10 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                   <span className="text-primary">{ICON_MAP[app.icon]}</span>
                 )}
                 <CardTitle className="text-base">{app.name}</CardTitle>
+                <span className="text-xs text-muted-foreground/60 font-mono">:{app.port}</span>
+                {app.id !== "web" && app.status === "running" && (
+                  <ExternalLink className="h-3 w-3 text-muted-foreground/40" />
+                )}
                 {app.maturity && (
                   <Tooltip>
                     <TooltipTrigger>
@@ -508,6 +530,63 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                 )}
               </div>
               <div className="flex items-center gap-1.5">
+                {app.id !== "web" &&
+                  (app.status === "running" ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                          disabled={stopping.has(app.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            stopApp(app.id);
+                          }}
+                        >
+                          {stopping.has(app.id) ? (
+                            <RotateCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Power className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">{stopping.has(app.id) ? "Stopping\u2026" : "Stop"}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                          disabled={restarting.has(app.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            restartApp(app.id);
+                          }}
+                        >
+                          {restarting.has(app.id) ? (
+                            <RotateCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {restarting.has(app.id) ? "Starting\u2026" : "Start"}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                <button
+                  type="button"
+                  className="relative h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTodoSheetApp(app.id);
+                  }}
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                  {pendingCount > 0 && <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />}
+                </button>
                 {app.id !== "web" && (
                   <SettingsPopover
                     appId={app.id}
@@ -515,9 +594,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                     onToggle={toggleSetting}
                   />
                 )}
-                <Badge variant="outline" className="font-mono text-xs">
-                  :{app.port}
-                </Badge>
               </div>
             </div>
           </CardHeader>
@@ -535,48 +611,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                 />
                 <span className="text-xs text-muted-foreground capitalize">{app.status}</span>
               </div>
-              <div className="flex items-center gap-3">
-                {app.id === "web" ? (
-                  <span className="text-xs text-muted-foreground italic">You are here</span>
-                ) : app.status === "running" ? (
-                  <>
-                    <button
-                      type="button"
-                      className="text-xs text-destructive hover:underline flex items-center gap-1 disabled:opacity-50"
-                      disabled={stopping.has(app.id)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        stopApp(app.id);
-                      }}
-                    >
-                      {stopping.has(app.id) ? "Stopping\u2026" : "Stop"}
-                      <Power className="h-3 w-3" />
-                    </button>
-                    <a
-                      href={app.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline flex items-center gap-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Open <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
-                    disabled={restarting.has(app.id)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      restartApp(app.id);
-                    }}
-                  >
-                    {restarting.has(app.id) ? "Starting\u2026" : "Start"}
-                    <RotateCw className={cn("h-3 w-3", restarting.has(app.id) && "animate-spin")} />
-                  </button>
-                )}
-              </div>
+              {app.id === "web" && <span className="text-xs text-muted-foreground italic">You are here</span>}
             </div>
           </div>
         </div>
@@ -611,41 +646,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
             </CollapsibleContent>
           </Collapsible>
         )}
-
-        {/* Todos collapsible */}
-        <Collapsible>
-          <div className="px-6 pb-4">
-            <CollapsibleTrigger
-              className={cn(
-                "flex items-center gap-1.5 w-full text-xs text-muted-foreground hover:text-foreground transition-colors group",
-                appLogs.length === 0 && "pt-3 border-t",
-              )}
-            >
-              <CheckSquare className="h-3.5 w-3.5" />
-              <span>
-                {pendingCount} pending / {appTodos.length} total
-              </span>
-              <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[open]:rotate-180" />
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent>
-            <div className="px-6 pb-4 space-y-1">
-              {appTodos.map((todo) => (
-                <div
-                  key={todo.id}
-                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-                >
-                  <Checkbox
-                    checked={todo.resolved}
-                    onCheckedChange={(checked) => toggleTodo(app.id, todo.id, checked === true)}
-                  />
-                  <span className={cn(todo.resolved && "line-through text-muted-foreground")}>{todo.text}</span>
-                </div>
-              ))}
-              <TodoAddForm onAdd={(text) => addTodo(app.id, text)} />
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
       </Card>
     );
   };
@@ -655,6 +655,36 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
           <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
+
+          {/* Todo drawer */}
+          <Sheet open={todoSheetApp !== null} onOpenChange={(open) => !open && setTodoSheetApp(null)}>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>
+                  {todoSheetApp ? (apps?.find((a) => a.id === todoSheetApp)?.name ?? todoSheetApp) : ""} Todos
+                </SheetTitle>
+              </SheetHeader>
+              <SheetBody>
+                {todoSheetApp && (
+                  <div className="space-y-1 py-2">
+                    {(todosByApp[todoSheetApp] ?? []).map((todo) => (
+                      <div
+                        key={todo.id}
+                        className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+                      >
+                        <Checkbox
+                          checked={todo.resolved}
+                          onCheckedChange={(checked) => toggleTodo(todoSheetApp, todo.id, checked === true)}
+                        />
+                        <span className={cn(todo.resolved && "line-through text-muted-foreground")}>{todo.text}</span>
+                      </div>
+                    ))}
+                    <TodoAddForm onAdd={(text) => addTodo(todoSheetApp, text)} />
+                  </div>
+                )}
+              </SheetBody>
+            </SheetContent>
+          </Sheet>
 
           {/* Loading skeletons */}
           {apps === null && (
@@ -716,8 +746,30 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                             <span className="text-muted-foreground">{ICON_MAP[app.icon]}</span>
                           )}
                           <span className="text-sm font-medium">{app.name}</span>
+                          <span className="text-xs text-muted-foreground/60 font-mono">:{app.port}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
+                          {app.id !== "web" && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="h-7 w-7 inline-flex items-center justify-center rounded-md text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                                  disabled={restarting.has(app.id)}
+                                  onClick={() => restartApp(app.id)}
+                                >
+                                  {restarting.has(app.id) ? (
+                                    <RotateCw className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Play className="h-3.5 w-3.5" />
+                                  )}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                {restarting.has(app.id) ? "Starting\u2026" : "Start"}
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                           {app.id !== "web" && (
                             <SettingsPopover
                               appId={app.id}
@@ -725,25 +777,11 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                               onToggle={toggleSetting}
                             />
                           )}
-                          <Badge variant="outline" className="font-mono text-xs">
-                            :{app.port}
-                          </Badge>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0 pb-3">
                       <p className="text-xs text-muted-foreground mb-2">{app.description}</p>
-                      {app.id !== "web" && (
-                        <button
-                          type="button"
-                          className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
-                          disabled={restarting.has(app.id)}
-                          onClick={() => restartApp(app.id)}
-                        >
-                          {restarting.has(app.id) ? "Starting\u2026" : "Start"}
-                          <Play className="h-3 w-3" />
-                        </button>
-                      )}
                       {app.id === "web" && <span className="text-xs text-muted-foreground italic">You are here</span>}
                     </CardContent>
                   </Card>
@@ -762,7 +800,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
           )}
 
           {/* Orphan logs */}
-          {orphanLogs.length > 0 && (
+          {apps !== null && orphanLogs.length > 0 && (
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-muted-foreground mb-3">Other Logs</h3>
               <div className="grid gap-2">

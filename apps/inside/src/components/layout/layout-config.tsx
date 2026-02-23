@@ -7,13 +7,11 @@ import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/acti
 const navGroups: NavGroup[] = [
   {
     items: [
-      { label: "Projects", href: "/", icon: FolderKanban },
       { label: "New", href: "/new", icon: Sparkles },
+      { label: "Projects", href: "/", icon: FolderKanban },
+      { label: "Archived", href: "/archived", icon: Archive },
+      { label: "Settings", href: "/settings", icon: Settings },
     ],
-  },
-  {
-    label: "More",
-    items: [{ label: "Archived", href: "/archived", icon: Archive }],
   },
 ];
 
@@ -24,11 +22,11 @@ export const insideLayoutConfig: AppLayoutConfig = {
     wordmark: <Image src="/logo.png" alt="Inside" width={887} height={617} className="h-10 w-auto" />,
   },
   nav: navGroups,
-  bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
   mobileNav: [
-    { label: "Projects", href: "/", icon: FolderKanban },
     { label: "New", href: "/new", icon: Sparkles },
+    { label: "Projects", href: "/", icon: FolderKanban },
     { label: "Archived", href: "/archived", icon: Archive },
+    { label: "Settings", href: "/settings", icon: Settings },
   ],
   usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
   port: 2150,

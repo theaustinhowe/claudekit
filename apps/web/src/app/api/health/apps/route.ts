@@ -17,6 +17,15 @@ interface AppInfo {
 
 const APP_DEFINITIONS: Omit<AppInfo, "url" | "status">[] = [
   {
+    id: "inside",
+    name: "Inside",
+    description: "Project creation, scaffolding, design workspace",
+    port: 2150,
+    icon: "Sparkles",
+    favicon: "/app-icons/inside.png",
+    maturity: { label: "Alpha", percentage: 40, color: "red" },
+  },
+  {
     id: "gadget",
     name: "Gadget",
     description: "Repository auditor, AI integrations, project scaffolding",
@@ -53,13 +62,12 @@ const APP_DEFINITIONS: Omit<AppInfo, "url" | "status">[] = [
     maturity: { label: "Beta", percentage: 55, color: "yellow" },
   },
   {
-    id: "inside",
-    name: "Inside",
-    description: "Project creation, scaffolding, design workspace",
-    port: 2150,
-    icon: "Sparkles",
-    favicon: "/app-icons/inside.png",
-    maturity: { label: "Alpha", percentage: 40, color: "red" },
+    id: "gogo-orchestrator",
+    name: "GoGo Orchestrator",
+    description: "Backend orchestrator for GoGo job execution",
+    port: 2201,
+    icon: "Cpu",
+    maturity: { label: "Alpha", percentage: 35, color: "red" },
   },
   {
     id: "storybook",
@@ -68,14 +76,6 @@ const APP_DEFINITIONS: Omit<AppInfo, "url" | "status">[] = [
     port: 6006,
     icon: "BookOpen",
     maturity: { label: "Stable", percentage: 90, color: "green" },
-  },
-  {
-    id: "gogo-orchestrator",
-    name: "GoGo Orchestrator",
-    description: "Backend orchestrator for GoGo job execution",
-    port: 2201,
-    icon: "Cpu",
-    maturity: { label: "Alpha", percentage: 35, color: "red" },
   },
   {
     id: "web",
