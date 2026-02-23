@@ -5,7 +5,7 @@ import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { ScrollArea } from "@claudekit/ui/components/scroll-area";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
-import { TooltipProvider } from "@claudekit/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { formatDistanceToNow } from "date-fns";
 import {
   Activity,
@@ -240,9 +240,16 @@ export default function HealthPage() {
         <div className="flex-1" />
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Uptime: {health?.uptimeFormatted}</span>
-          <Button variant="ghost" size="icon" onClick={fetchHealth}>
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={fetchHealth}>
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Refresh</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 

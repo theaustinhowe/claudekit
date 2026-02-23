@@ -5,6 +5,7 @@ import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Check, Copy, QrCode, RefreshCw, Smartphone, Wifi } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
@@ -182,9 +183,16 @@ export function ConnectDevice() {
             <div className="flex items-center gap-2 text-sm">
               <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
               <code className="bg-muted px-2 py-1 rounded font-mono text-sm">{currentUrl}</code>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopyUrl}>
-                {copiedUrl ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopyUrl}>
+                      {copiedUrl ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{copiedUrl ? "Copied!" : "Copy URL"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         )}

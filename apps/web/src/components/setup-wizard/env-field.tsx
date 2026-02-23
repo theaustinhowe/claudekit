@@ -88,13 +88,18 @@ export function EnvField({
           className={cn("pr-9 font-mono text-sm", !value && required && "border-warning/50")}
         />
         {isSensitive && (
-          <button
-            type="button"
-            onClick={() => setShowValue((prev) => !prev)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {showValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setShowValue((prev) => !prev)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{showValue ? "Hide value" : "Show value"}</TooltipContent>
+          </Tooltip>
         )}
       </div>
     </div>

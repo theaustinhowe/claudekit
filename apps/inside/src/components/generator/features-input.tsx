@@ -95,6 +95,7 @@ export function FeaturesInput({
                 type="button"
                 onClick={() => removeCustom(feature)}
                 className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                aria-label="Remove feature"
               >
                 <X className="h-3 w-3" />
               </button>

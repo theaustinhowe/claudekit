@@ -14,6 +14,7 @@ import {
 } from "@claudekit/ui/components/dialog";
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { CheckCircle2, ExternalLink, Eye, EyeOff, Github, HelpCircle, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import type { VerifyGitHubResponse } from "@/lib/api";
@@ -46,98 +47,105 @@ export function GitHubStep({ token, onTokenChange, onContinue, isVerifying, veri
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <Label htmlFor="github-token">Personal Access Token</Label>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>How to Create a GitHub Personal Access Token</DialogTitle>
-                  <DialogDescription>
-                    Follow these steps to generate a token with the required permissions.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogBody>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-3 text-sm">
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                          1
-                        </span>
-                        <p>
-                          Go to GitHub <span className="font-medium">Settings</span> →{" "}
-                          <span className="font-medium">Developer settings</span> →{" "}
-                          <span className="font-medium">Personal access tokens</span> →{" "}
-                          <span className="font-medium">Tokens (classic)</span>
-                        </p>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                          2
-                        </span>
-                        <p>
-                          Click <span className="font-medium">"Generate new token (classic)"</span>
-                        </p>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                          3
-                        </span>
-                        <p>Set a descriptive name (e.g., "GoGo")</p>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                          4
-                        </span>
-                        <div>
-                          <p className="mb-2">Select the required scopes:</p>
-                          <ul className="ml-1 space-y-1 text-muted-foreground">
-                            <li className="flex items-center gap-2">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                              <code className="bg-muted px-1.5 py-0.5 rounded text-xs">repo</code>
-                              <span className="text-xs">Full control of private repositories</span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                              <code className="bg-muted px-1.5 py-0.5 rounded text-xs">workflow</code>
-                              <span className="text-xs">Update GitHub Action workflows</span>
-                            </li>
-                          </ul>
+            <TooltipProvider>
+              <Dialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>How to create a token</TooltipContent>
+                </Tooltip>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>How to Create a GitHub Personal Access Token</DialogTitle>
+                    <DialogDescription>
+                      Follow these steps to generate a token with the required permissions.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogBody>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-3 text-sm">
+                        <div className="flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                            1
+                          </span>
+                          <p>
+                            Go to GitHub <span className="font-medium">Settings</span> →{" "}
+                            <span className="font-medium">Developer settings</span> →{" "}
+                            <span className="font-medium">Personal access tokens</span> →{" "}
+                            <span className="font-medium">Tokens (classic)</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                            2
+                          </span>
+                          <p>
+                            Click <span className="font-medium">"Generate new token (classic)"</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                            3
+                          </span>
+                          <p>Set a descriptive name (e.g., "GoGo")</p>
+                        </div>
+                        <div className="flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                            4
+                          </span>
+                          <div>
+                            <p className="mb-2">Select the required scopes:</p>
+                            <ul className="ml-1 space-y-1 text-muted-foreground">
+                              <li className="flex items-center gap-2">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                                <code className="bg-muted px-1.5 py-0.5 rounded text-xs">repo</code>
+                                <span className="text-xs">Full control of private repositories</span>
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                                <code className="bg-muted px-1.5 py-0.5 rounded text-xs">workflow</code>
+                                <span className="text-xs">Update GitHub Action workflows</span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                            5
+                          </span>
+                          <p>
+                            Click <span className="font-medium">"Generate token"</span> and copy it immediately — you
+                            won't see it again!
+                          </p>
                         </div>
                       </div>
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                          5
-                        </span>
-                        <p>
-                          Click <span className="font-medium">"Generate token"</span> and copy it immediately — you
-                          won't see it again!
-                        </p>
-                      </div>
                     </div>
-                  </div>
-                </DialogBody>
-                <DialogFooter>
-                  <Button asChild>
-                    <a
-                      href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=GoGo"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Create Token on GitHub
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </a>
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  </DialogBody>
+                  <DialogFooter>
+                    <Button asChild>
+                      <a
+                        href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=GoGo"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Create Token on GitHub
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </a>
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </TooltipProvider>
           </div>
           <div className="relative">
             <Input
@@ -148,15 +156,22 @@ export function GitHubStep({ token, onTokenChange, onContinue, isVerifying, veri
               onChange={(e) => onTokenChange(e.target.value)}
               className="pr-10"
             />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0 h-full px-3"
-              onClick={() => setShowToken(!showToken)}
-            >
-              {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowToken(!showToken)}
+                  >
+                    {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{showToken ? "Hide token" : "Show token"}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <p className="text-sm text-muted-foreground">
             Create a{" "}
