@@ -1,0 +1,65 @@
+{
+  // Formatter — use Biome for everything it supports
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+
+  // Biome handles these — disable built-in / competing formatters
+  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[javascriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[css]": { "editor.defaultFormatter": "biomejs.biome" },
+
+  // Match biome.json settings
+  "editor.tabSize": 2,
+  "editor.rulers": [120],
+
+  // TypeScript
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // Tailwind CSS — scan all apps and the UI package
+  "tailwindCSS.experimental.configFile": {
+    "apps/web/tailwind.config.ts": "apps/web/src/**",
+    "apps/gadget/tailwind.config.ts": "apps/gadget/src/**",
+    "apps/inside/tailwind.config.ts": "apps/inside/src/**",
+    "apps/gogo-web/tailwind.config.ts": "apps/gogo-web/src/**",
+    "apps/b4u/tailwind.config.ts": "apps/b4u/src/**",
+    "apps/inspector/tailwind.config.ts": "apps/inspector/src/**",
+    "packages/ui/tailwind.config.ts": "packages/ui/src/**"
+  },
+
+  // File nesting for cleaner explorer
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, tsconfig*.json, biome.json, knip.json",
+    "*.ts": "${capture}.test.ts",
+    "*.tsx": "${capture}.test.tsx"
+  },
+
+  // Hide noisy files from explorer
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/*.duckdb": true,
+    "**/*.duckdb.wal": true,
+    "**/.DS_Store": true,
+    "**/coverage": true
+  },
+
+  // Search exclusions
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "pnpm-lock.yaml": true,
+    "**/coverage": true
+  }
+}
