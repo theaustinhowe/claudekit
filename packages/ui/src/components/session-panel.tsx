@@ -7,7 +7,6 @@ import { useCallback, useState } from "react";
 import { cn, formatElapsed } from "../utils";
 import { Button } from "./button";
 import { Progress } from "./progress";
-import { SessionBadge } from "./session-badge";
 import { useSessionPanel } from "./session-provider";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "./sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
@@ -15,6 +14,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tool
 // ---------------------------------------------------------------------------
 // SessionRowItem (internal)
 // ---------------------------------------------------------------------------
+
+const statusColors: Record<string, string> = {
+  running: "bg-emerald-500",
+  pending: "bg-muted-foreground",
+  done: "bg-emerald-500",
+  error: "bg-red-500",
+  cancelled: "bg-muted-foreground",
+};
 
 function SessionRowItem({ session }: { session: SessionRowBase }) {
   const [cancelling, setCancelling] = useState(false);
@@ -41,67 +48,86 @@ function SessionRowItem({ session }: { session: SessionRowBase }) {
     setCancelling(false);
   }, [session.id, apiBase]);
 
+  const dotColor = statusColors[session.status] ?? "bg-muted-foreground";
+
   return (
-    <div className="flex flex-col gap-1.5 px-4 py-3 border-b border-border last:border-b-0">
-      <div className="flex items-center gap-2">
-        <SessionBadge status={session.status} elapsed={isActive ? elapsed : undefined} />
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate">{session.label}</div>
-          <div className="text-[11px] text-muted-foreground">{typeLabel}</div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <TooltipProvider>
-            {contextLink && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="View context" asChild>
-                    <Link href={contextLink}>
-                      <ExternalLink className="w-3 h-3" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>View context</TooltipContent>
-              </Tooltip>
-            )}
-            {isActive && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "h-6 w-6 text-red-500 hover:text-red-400 hover:bg-red-500/10",
-                      cancelling && "opacity-50",
-                    )}
-                    disabled={cancelling}
-                    onClick={handleCancel}
-                    aria-label="Cancel session"
-                  >
-                    <Square className="w-3 h-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Cancel</TooltipContent>
-              </Tooltip>
-            )}
-          </TooltipProvider>
-        </div>
+    <div className="flex gap-3 px-4 py-3 border-b border-border last:border-b-0">
+      {/* Status indicator */}
+      <div className="flex flex-col items-center pt-1.5 shrink-0">
+        <span className={cn("relative flex h-2 w-2 rounded-full", dotColor)}>
+          {session.status === "running" && (
+            <span className={cn("animate-ping absolute inset-0 rounded-full opacity-75", dotColor)} />
+          )}
+        </span>
       </div>
 
-      {/* Progress bar for running sessions */}
-      {isActive && session.progress > 0 && <Progress value={session.progress} className="h-1" />}
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        {/* Top line: label + actions */}
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate leading-snug">{session.label}</div>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+              <span>{typeLabel}</span>
+              {elapsed > 0 && (
+                <>
+                  <span className="text-border">·</span>
+                  <span>{formatElapsed(elapsed)}</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <TooltipProvider>
+              {contextLink && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="View context" asChild>
+                      <Link href={contextLink}>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View context</TooltipContent>
+                </Tooltip>
+              )}
+              {isActive && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-6 w-6 text-red-500 hover:text-red-400 hover:bg-red-500/10",
+                        cancelling && "opacity-50",
+                      )}
+                      disabled={cancelling}
+                      onClick={handleCancel}
+                      aria-label="Cancel session"
+                    >
+                      <Square className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Cancel</TooltipContent>
+                </Tooltip>
+              )}
+            </TooltipProvider>
+          </div>
+        </div>
 
-      {/* Phase text */}
-      {isActive && session.phase && <span className="text-[10px] text-muted-foreground truncate">{session.phase}</span>}
+        {/* Progress bar */}
+        {isActive && session.progress > 0 && <Progress value={session.progress} className="h-1" />}
 
-      {/* Error message */}
-      {session.status === "error" && session.error_message && (
-        <span className="text-[10px] text-red-500 truncate">{session.error_message}</span>
-      )}
+        {/* Phase text */}
+        {isActive && session.phase && (
+          <span className="text-[11px] text-muted-foreground truncate">{session.phase}</span>
+        )}
 
-      {/* Completed elapsed */}
-      {!isActive && elapsed > 0 && (
-        <span className="text-[10px] text-muted-foreground">Completed in {formatElapsed(elapsed)}</span>
-      )}
+        {/* Error message */}
+        {session.status === "error" && session.error_message && (
+          <span className="text-[11px] text-red-500 truncate">{session.error_message}</span>
+        )}
+      </div>
     </div>
   );
 }
