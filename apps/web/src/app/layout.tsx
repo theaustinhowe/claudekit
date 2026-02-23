@@ -3,6 +3,7 @@ import { Toaster } from "@claudekit/ui/components/sonner";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Header } from "@/components/header";
+import { HeaderActions } from "@/components/header-actions";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-background text-foreground antialiased">
         <ThemeFOUCScript />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <Header />
+          <Header actions={<HeaderActions />} />
           {children}
           <Toaster />
         </ThemeProvider>

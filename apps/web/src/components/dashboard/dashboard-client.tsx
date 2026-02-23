@@ -22,7 +22,6 @@ import {
   Rocket,
   RotateCw,
   ScrollText,
-  Settings,
   Settings2,
   Video,
   Wrench,
@@ -31,7 +30,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
 import { TodoSheet } from "@/components/todos/todo-sheet";
 import { useTodos } from "@/components/todos/use-todos";
 import type { Todo } from "@/lib/todos";
@@ -359,16 +357,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     [apps, getEffectiveStatus],
   );
 
-  const setupButton = (
-    <button
-      type="button"
-      className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-    >
-      <Settings className="h-4 w-4" />
-      Setup Environment
-    </button>
-  );
-
   const [todoSheetApp, setTodoSheetApp] = useState<string | null>(null);
 
   const renderActiveCard = (app: AppInfo) => {
@@ -582,10 +570,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
           {/* Loading skeletons */}
           {apps === null && (
             <section className="mb-10">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Applications</h2>
-                <SetupWizardDialog trigger={setupButton} />
-              </div>
+              <h2 className="text-lg font-semibold mb-4">Applications</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <AppCardSkeleton index={0} />
                 <AppCardSkeleton index={1} />
@@ -601,21 +586,13 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
           {/* Active Applications */}
           {activeApps.length > 0 && (
             <section className="mb-10">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Active</h2>
-                <SetupWizardDialog trigger={setupButton} />
-              </div>
+              <h2 className="text-lg font-semibold mb-4">Active</h2>
               <div className="grid gap-4 sm:grid-cols-2">{activeApps.map((app) => renderActiveCard(app))}</div>
             </section>
           )}
 
-          {/* Standalone setup button when no active apps */}
-          {apps !== null && activeApps.length === 0 && (
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Applications</h2>
-              <SetupWizardDialog trigger={setupButton} />
-            </div>
-          )}
+          {/* Section heading when no active apps */}
+          {apps !== null && activeApps.length === 0 && <h2 className="text-lg font-semibold mb-4">Applications</h2>}
 
           {/* Inactive Applications */}
           {inactiveApps.length > 0 && (
