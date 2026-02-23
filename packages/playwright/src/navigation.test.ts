@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
-import { navigateTo, waitForSettle } from "./navigation.js";
+import { navigateTo, waitForSettle } from "./navigation";
 
 function createMockPage() {
   return {

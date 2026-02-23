@@ -1,5 +1,5 @@
 import type { Page } from "playwright";
-import type { NavigationOptions } from "./types.js";
+import type { NavigationOptions } from "./types";
 
 const DEFAULT_TIMEOUT = 30_000;
 

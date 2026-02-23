@@ -1,6 +1,6 @@
-import { createBrowserSession } from "./browser.js";
-import { navigateTo } from "./navigation.js";
-import type { ScreenshotOptions, ScreenshotResult } from "./types.js";
+import { createBrowserSession } from "./browser";
+import { navigateTo } from "./navigation";
+import type { ScreenshotOptions, ScreenshotResult } from "./types";
 
 const DEFAULT_VIEWPORT = { width: 1280, height: 800 };
 

@@ -4,7 +4,7 @@ vi.mock("@playwright/test", () => ({
   defineConfig: vi.fn((config) => config),
 }));
 
-import { createBaseConfig } from "./base-config.js";
+import { createBaseConfig } from "./base-config";
 
 let savedCI: string | undefined;
 

@@ -58,12 +58,20 @@ describe("detectLanguage", () => {
 
 describe("isBinaryFile", () => {
   describe("binary extensions", () => {
-    it.each([".png", ".jpg", ".jpeg", ".gif", ".wasm", ".zip", ".pdf", ".duckdb", ".exe", ".woff2"])(
-      "%s is binary",
-      (ext) => {
-        expect(isBinaryFile(`file${ext}`)).toBe(true);
-      },
-    );
+    it.each([
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".wasm",
+      ".zip",
+      ".pdf",
+      ".duckdb",
+      ".exe",
+      ".woff2",
+    ])("%s is binary", (ext) => {
+      expect(isBinaryFile(`file${ext}`)).toBe(true);
+    });
   });
 
   describe("non-binary extensions", () => {

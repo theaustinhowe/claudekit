@@ -7,7 +7,7 @@ vi.mock("playwright", () => ({
 }));
 
 import { chromium } from "playwright";
-import { createBrowserSession, createVideoSession } from "./browser.js";
+import { createBrowserSession, createVideoSession } from "./browser";
 
 const mockedLaunch = chromium.launch as unknown as MockInstance;
 

@@ -1057,7 +1057,7 @@ export async function openInFinder(repoId: string, subPath?: string): Promise<bo
   return openFolderInFinder(target);
 }
 
-export async function openFolderInFinder(targetPath: string): Promise<boolean> {
+async function openFolderInFinder(targetPath: string): Promise<boolean> {
   try {
     await fs.access(targetPath);
     const stat = await fs.stat(targetPath);

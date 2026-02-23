@@ -22,7 +22,6 @@
     "@claudekit/duckdb": "workspace:*",
     "@claudekit/hooks": "workspace:*",
     "@claudekit/logger": "workspace:*",
-    "@claudekit/playwright": "workspace:*",
     "@claudekit/session": "workspace:*",
     "@claudekit/ui": "workspace:*",
     "@duckdb/node-api": "1.4.4-r.1",

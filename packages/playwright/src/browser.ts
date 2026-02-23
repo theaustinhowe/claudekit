@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import type { BrowserOptions, BrowserSession, VideoRecordingOptions, VideoSession } from "./types.js";
+import type { BrowserOptions, BrowserSession, VideoRecordingOptions, VideoSession } from "./types";
 
 const DEFAULT_VIEWPORT = { width: 1280, height: 800 };
 

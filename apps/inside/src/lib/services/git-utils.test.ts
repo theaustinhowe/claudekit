@@ -84,26 +84,22 @@ describe("safeGitCommit", () => {
   });
 
   it("handles 'nothing added to commit' gracefully", () => {
-    mockExecFileSync
-      .mockReturnValueOnce(Buffer.from(""))
-      .mockImplementationOnce(() => {
-        const err = new Error("git commit failed") as Error & { stderr: Buffer };
-        err.stderr = Buffer.from("nothing added to commit");
-        throw err;
-      });
+    mockExecFileSync.mockReturnValueOnce(Buffer.from("")).mockImplementationOnce(() => {
+      const err = new Error("git commit failed") as Error & { stderr: Buffer };
+      err.stderr = Buffer.from("nothing added to commit");
+      throw err;
+    });
 
     const result = safeGitCommit("/tmp/repo", "fix: something");
     expect(result).toEqual({ committed: false });
   });
 
   it("returns error on other failures", () => {
-    mockExecFileSync
-      .mockReturnValueOnce(Buffer.from(""))
-      .mockImplementationOnce(() => {
-        const err = new Error("git commit failed") as Error & { stderr: Buffer };
-        err.stderr = Buffer.from("fatal: not a git repository");
-        throw err;
-      });
+    mockExecFileSync.mockReturnValueOnce(Buffer.from("")).mockImplementationOnce(() => {
+      const err = new Error("git commit failed") as Error & { stderr: Buffer };
+      err.stderr = Buffer.from("fatal: not a git repository");
+      throw err;
+    });
 
     const result = safeGitCommit("/tmp/repo", "fix: something");
     expect(result.committed).toBe(false);
@@ -111,13 +107,11 @@ describe("safeGitCommit", () => {
   });
 
   it("truncates long error messages to 200 chars", () => {
-    mockExecFileSync
-      .mockReturnValueOnce(Buffer.from(""))
-      .mockImplementationOnce(() => {
-        const err = new Error("fail") as Error & { stderr: Buffer };
-        err.stderr = Buffer.from("x".repeat(300));
-        throw err;
-      });
+    mockExecFileSync.mockReturnValueOnce(Buffer.from("")).mockImplementationOnce(() => {
+      const err = new Error("fail") as Error & { stderr: Buffer };
+      err.stderr = Buffer.from("x".repeat(300));
+      throw err;
+    });
 
     const result = safeGitCommit("/tmp/repo", "fix: something");
     expect(result.error).toHaveLength(200);

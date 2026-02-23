@@ -37,7 +37,13 @@ beforeEach(async () => {
 });
 
 function createMockProcess() {
-  const proc = new EventEmitter() as any;
+  const proc = new EventEmitter() as EventEmitter & {
+    stdout: Readable;
+    stderr: Readable;
+    pid: number;
+    exitCode: number | null;
+    kill: ReturnType<typeof vi.fn>;
+  };
   proc.stdout = new Readable({ read() {} });
   proc.stderr = new Readable({ read() {} });
   proc.pid = 12345;
@@ -47,8 +53,11 @@ function createMockProcess() {
 }
 
 function setupPortMock() {
-  const mockServer = new EventEmitter() as any;
-  mockServer.listen = vi.fn().mockImplementation(function (this: any) {
+  const mockServer = new EventEmitter() as EventEmitter & {
+    listen: ReturnType<typeof vi.fn>;
+    close: ReturnType<typeof vi.fn>;
+  };
+  mockServer.listen = vi.fn().mockImplementation(function (this: EventEmitter) {
     process.nextTick(() => this.emit("listening"));
   });
   mockServer.close = vi.fn().mockImplementation((cb: () => void) => cb());
@@ -108,9 +117,10 @@ describe("start / stop lifecycle", () => {
     expect(result.port).toBe(3456);
     const status = devServerManager.getStatus("proj-1");
     expect(status).not.toBeNull();
-    expect(status!.running).toBe(true);
-    expect(status!.port).toBe(3456);
-    expect(status!.pid).toBe(12345);
+    if (!status) throw new Error("status is null");
+    expect(status.running).toBe(true);
+    expect(status.port).toBe(3456);
+    expect(status.pid).toBe(12345);
   });
 
   it("stop kills process and removes from map", async () => {

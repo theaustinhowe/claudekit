@@ -25,9 +25,6 @@ vi.mock("./session-runners/auto-fix", () => ({
   createAutoFixRunner: vi.fn().mockReturnValue({}),
 }));
 
-import { saveAutoFixRun, updateAutoFixRun } from "@/lib/actions/auto-fix";
-import { onLog } from "./dev-server-manager";
-
 // We need to import the module after mocks are set up
 // Use dynamic import + resetModules to get a clean state per test
 let engine: typeof import("./auto-fix-engine");

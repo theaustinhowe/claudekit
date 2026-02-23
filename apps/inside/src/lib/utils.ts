@@ -1,4 +1,4 @@
-export { formatElapsed, generateId, nowTimestamp, parseGitHubUrl, timeAgo } from "@claudekit/ui";
+export { generateId, nowTimestamp, timeAgo } from "@claudekit/ui";
 
 export function expandTilde(filepath: string): string {
   if (filepath.startsWith("~/") || filepath === "~") {

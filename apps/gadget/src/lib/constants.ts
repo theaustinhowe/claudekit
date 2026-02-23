@@ -82,8 +82,6 @@ export const IMAGE_MIME_TYPES: Record<string, string> = {
   ".svg": "image/svg+xml",
 };
 
-export const IMAGE_EXTENSIONS = new Set(Object.keys(IMAGE_MIME_TYPES));
-
 // --- Session Constants ---
 
 export const SESSION_EVENT_BUFFER_SIZE = 500;

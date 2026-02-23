@@ -213,16 +213,6 @@ export type SessionType = "scaffold" | "upgrade" | "auto_fix" | "upgrade_init" |
 
 export type SessionStatus = "pending" | "running" | "done" | "error" | "cancelled";
 
-export interface SessionEvent {
-  type: "progress" | "log" | "done" | "error" | "cancelled" | "heartbeat" | "init";
-  message?: string;
-  progress?: number;
-  phase?: string;
-  log?: string;
-  logType?: "tool" | "thinking" | "status";
-  data?: Record<string, unknown>;
-}
-
 export interface SessionRow {
   id: string;
   session_type: SessionType;

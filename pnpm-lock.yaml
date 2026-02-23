@@ -123,9 +123,6 @@ importers:
       '@claudekit/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@claudekit/playwright':
-        specifier: workspace:*
-        version: link:../../packages/playwright
       '@claudekit/session':
         specifier: workspace:*
         version: link:../../packages/session
@@ -351,9 +348,6 @@ importers:
       '@claudekit/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
-      '@claudekit/logger':
-        specifier: workspace:*
-        version: link:../../packages/logger
       '@claudekit/playwright':
         specifier: workspace:*
         version: link:../../packages/playwright

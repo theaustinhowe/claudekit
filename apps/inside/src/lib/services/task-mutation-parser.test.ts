@@ -13,7 +13,10 @@ import {
   insertUpgradeTask,
   updateUpgradeTask,
 } from "@/lib/actions/upgrade-tasks";
+import type { UpgradeTask } from "@/lib/types";
 import { applyTaskMutations, parseTaskMutations } from "./task-mutation-parser";
+
+type MockTask = Pick<UpgradeTask, "id" | "order_index">;
 
 const mockDelete = vi.mocked(deleteSingleUpgradeTask);
 const mockGetTasks = vi.mocked(getUpgradeTasks);
@@ -31,9 +34,10 @@ describe("parseTaskMutations", () => {
 
     const result = parseTaskMutations(content);
     expect(result.mutations).not.toBeNull();
-    expect(result.mutations!.updates).toEqual([{ id: "1", title: "Updated" }]);
-    expect(result.mutations!.additions).toEqual([]);
-    expect(result.mutations!.removals).toEqual([]);
+    if (!result.mutations) throw new Error("mutations is null");
+    expect(result.mutations.updates).toEqual([{ id: "1", title: "Updated" }]);
+    expect(result.mutations.additions).toEqual([]);
+    expect(result.mutations.removals).toEqual([]);
   });
 
   it("returns null mutations for content with no mutation block", () => {
@@ -43,7 +47,7 @@ describe("parseTaskMutations", () => {
   });
 
   it("returns null mutations for malformed JSON", () => {
-    const content = '<!-- task_mutations: {invalid json} -->';
+    const content = "<!-- task_mutations: {invalid json} -->";
     const result = parseTaskMutations(content);
     expect(result.mutations).toBeNull();
     expect(result.cleanContent).toBe(content);
@@ -65,7 +69,7 @@ describe("parseTaskMutations", () => {
   });
 
   it("handles missing keys — defaults to empty arrays", () => {
-    const content = '<!-- task_mutations: {} -->';
+    const content = "<!-- task_mutations: {} -->";
     const result = parseTaskMutations(content);
     expect(result.mutations).toEqual({ updates: [], additions: [], removals: [] });
   });
@@ -73,16 +77,18 @@ describe("parseTaskMutations", () => {
   it("handles mutations with only removals", () => {
     const content = '<!-- task_mutations: {"removals": ["task-1", "task-2"]} -->';
     const result = parseTaskMutations(content);
-    expect(result.mutations!.removals).toEqual(["task-1", "task-2"]);
-    expect(result.mutations!.updates).toEqual([]);
-    expect(result.mutations!.additions).toEqual([]);
+    if (!result.mutations) throw new Error("mutations is null");
+    expect(result.mutations.removals).toEqual(["task-1", "task-2"]);
+    expect(result.mutations.updates).toEqual([]);
+    expect(result.mutations.additions).toEqual([]);
   });
 
   it("handles non-array values — defaults to empty arrays", () => {
     const content = '<!-- task_mutations: {"updates": "not-an-array", "additions": 42} -->';
     const result = parseTaskMutations(content);
-    expect(result.mutations!.updates).toEqual([]);
-    expect(result.mutations!.additions).toEqual([]);
+    if (!result.mutations) throw new Error("mutations is null");
+    expect(result.mutations.updates).toEqual([]);
+    expect(result.mutations.additions).toEqual([]);
   });
 });
 
@@ -115,11 +121,11 @@ describe("applyTaskMutations", () => {
 
   it("resolves after_id to correct order_index", async () => {
     mockGetTasks.mockResolvedValue([
-      { id: "t1", order_index: 0 } as any,
-      { id: "t2", order_index: 1 } as any,
-      { id: "t3", order_index: 2 } as any,
+      { id: "t1", order_index: 0 } as MockTask as UpgradeTask,
+      { id: "t2", order_index: 1 } as MockTask as UpgradeTask,
+      { id: "t3", order_index: 2 } as MockTask as UpgradeTask,
     ]);
-    mockInsert.mockResolvedValue({ id: "t4", order_index: 2 } as any);
+    mockInsert.mockResolvedValue({ id: "t4", order_index: 2 } as MockTask as UpgradeTask);
 
     await applyTaskMutations("proj-1", {
       removals: [],
@@ -127,15 +133,19 @@ describe("applyTaskMutations", () => {
       additions: [{ title: "After T2", description: null, after_id: "t2" }],
     });
 
-    expect(mockInsert).toHaveBeenCalledWith("proj-1", { title: "After T2", description: null, step_type: undefined }, 2);
+    expect(mockInsert).toHaveBeenCalledWith(
+      "proj-1",
+      { title: "After T2", description: null, step_type: undefined },
+      2,
+    );
   });
 
   it("appends to end when after_id is not found", async () => {
     mockGetTasks.mockResolvedValue([
-      { id: "t1", order_index: 0 } as any,
-      { id: "t2", order_index: 1 } as any,
+      { id: "t1", order_index: 0 } as MockTask as UpgradeTask,
+      { id: "t2", order_index: 1 } as MockTask as UpgradeTask,
     ]);
-    mockInsert.mockResolvedValue({ id: "t3", order_index: 2 } as any);
+    mockInsert.mockResolvedValue({ id: "t3", order_index: 2 } as MockTask as UpgradeTask);
 
     await applyTaskMutations("proj-1", {
       removals: [],

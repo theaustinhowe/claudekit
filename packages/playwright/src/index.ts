@@ -1,6 +1,6 @@
-export { createBrowserSession, createVideoSession } from "./browser.js";
-export { navigateTo, waitForSettle } from "./navigation.js";
-export { captureScreenshot } from "./screenshot.js";
+export { createBrowserSession, createVideoSession } from "./browser";
+export { navigateTo, waitForSettle } from "./navigation";
+export { captureScreenshot } from "./screenshot";
 export type {
   Browser,
   BrowserContext,
@@ -13,5 +13,5 @@ export type {
   VideoRecordingOptions,
   VideoSession,
   ViewportSize,
-} from "./types.js";
-export { finalizeVideo } from "./video.js";
+} from "./types";
+export { finalizeVideo } from "./video";

@@ -9,7 +9,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import fs from "node:fs";
-import { finalizeVideo } from "./video.js";
+import { finalizeVideo } from "./video";
 
 const mockedReaddirSync = fs.readdirSync as unknown as ReturnType<typeof vi.fn>;
 const mockedRenameSync = fs.renameSync as unknown as ReturnType<typeof vi.fn>;

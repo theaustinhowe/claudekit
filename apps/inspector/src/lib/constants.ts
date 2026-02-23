@@ -6,12 +6,6 @@ export const SESSION_EVENT_BUFFER_SIZE = 500;
 export const SESSION_LOG_FLUSH_INTERVAL_MS = 2_000;
 export const SESSION_HEARTBEAT_INTERVAL_MS = 15_000;
 
-export const SESSION_TYPE_LABELS: Record<string, string> = {
-  skill_analysis: "Skill Analysis",
-  split_analysis: "Split Analysis",
-  comment_fix: "Comment Fix",
-};
-
 export const SIZE_THRESHOLDS = {
   S: 100,
   M: 500,

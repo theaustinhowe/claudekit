@@ -199,17 +199,3 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     latestVersionSource: { type: "npm", package: "playwright" },
   },
 ];
-
-export const DEFAULT_TOOL_IDS = DEFAULT_TOOLS.map((t) => t.id);
-
-export function getToolById(id: string): ToolDefinition | undefined {
-  return DEFAULT_TOOLS.find((t) => t.id === id);
-}
-
-export const TOOL_CATEGORY_LABELS: Record<ToolCategory, string> = {
-  "ai-tool": "AI Tools",
-  "package-manager": "Package Managers",
-  runtime: "Runtimes",
-  "dev-tool": "Dev Tools",
-  vcs: "Version Control",
-};

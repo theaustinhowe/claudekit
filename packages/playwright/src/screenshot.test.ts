@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 
-vi.mock("./browser.js", () => ({
+vi.mock("./browser", () => ({
   createBrowserSession: vi.fn(),
 }));
 
-vi.mock("./navigation.js", () => ({
+vi.mock("./navigation", () => ({
   navigateTo: vi.fn(),
 }));
 
-import { createBrowserSession } from "./browser.js";
-import { navigateTo } from "./navigation.js";
-import { captureScreenshot } from "./screenshot.js";
+import { createBrowserSession } from "./browser";
+import { navigateTo } from "./navigation";
+import { captureScreenshot } from "./screenshot";
 
 const mockedCreateBrowserSession = createBrowserSession as unknown as MockInstance;
 const mockedNavigateTo = navigateTo as unknown as MockInstance;
