@@ -14,7 +14,6 @@ import {
   CheckSquare,
   ChevronDown,
   Cpu,
-  ExternalLink,
   GitPullRequest,
   Monitor,
   Play,
@@ -31,9 +30,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { MaturityDialog } from "@/components/dashboard/maturity-dialog";
+import { MaturityPopover } from "@/components/dashboard/maturity-popover";
 import { TodoSheet } from "@/components/todos/todo-sheet";
 import { useTodos } from "@/components/todos/use-todos";
+import { getMaturity } from "@/lib/app-definitions";
 import type { Todo } from "@/lib/todos";
 
 interface PerAppSettings {
@@ -89,18 +89,6 @@ const ACCENT_COLORS: Record<string, string> = {
   web: "border-l-emerald-500",
 };
 
-const MATURITY_DOT_COLORS: Record<string, string> = {
-  green: "bg-green-500",
-  yellow: "bg-yellow-500",
-  red: "bg-red-500",
-};
-
-const MATURITY_BAR_COLORS: Record<string, string> = {
-  green: "bg-green-500",
-  yellow: "bg-yellow-500",
-  red: "bg-red-500",
-};
-
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -123,18 +111,21 @@ function AppCardSkeleton({ index }: { index: number }) {
           <div className="flex items-center gap-2">
             <Skeleton className="h-5 w-5 rounded" />
             <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-4 w-10 rounded-full" />
           </div>
-          <Skeleton className="h-5 w-12 rounded-full" />
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <Skeleton className="h-4 w-full mb-3" />
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Skeleton className="h-2.5 w-2.5 rounded-full" />
-            <Skeleton className="h-4 w-14" />
-          </div>
-          <Skeleton className="h-4 w-10" />
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-2.5 w-2.5 rounded-full" />
+          <Skeleton className="h-3.5 w-14" />
+          <Skeleton className="h-2 w-2 rounded-full" />
+          <Skeleton className="h-3.5 w-20" />
         </div>
       </CardContent>
     </Card>
@@ -275,6 +266,24 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     });
   }, []);
 
+  const updateMaturity = useCallback((appId: string, percentage: number) => {
+    setApps((prev) => {
+      if (!prev) return prev;
+      return prev.map((a) => (a.id === appId ? { ...a, maturity: getMaturity(percentage) } : a));
+    });
+    // Fire-and-forget: GET current overrides, merge, PUT
+    fetch("/api/apps/maturity")
+      .then((res) => res.json())
+      .then((current: Record<string, number>) => {
+        return fetch("/api/apps/maturity", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...current, [appId]: percentage }),
+        });
+      })
+      .catch(() => {});
+  }, []);
+
   const stopApp = useCallback(
     async (appId: string) => {
       setStopping((prev) => new Set(prev).add(appId));
@@ -362,33 +371,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
   );
 
   const [todoSheetApp, setTodoSheetApp] = useState<string | null>(null);
-  const [maturityEditApp, setMaturityEditApp] = useState<string | null>(null);
-
-  const handleMaturitySave = useCallback(
-    async (appId: string, maturity: { label: string; percentage: number; color: "green" | "yellow" | "red" }) => {
-      // Optimistic update
-      setApps((prev) => prev?.map((a) => (a.id === appId ? { ...a, maturity } : a)) ?? null);
-      try {
-        // Fetch current persisted data, merge, and save
-        const res = await fetch("/api/apps/maturity");
-        const current = res.ok ? await res.json() : {};
-        const updated = { ...current, [appId]: maturity };
-        const putRes = await fetch("/api/apps/maturity", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updated),
-        });
-        if (!putRes.ok) {
-          toast.error("Failed to save maturity");
-          fetchApps(); // rollback
-        }
-      } catch {
-        toast.error("Failed to save maturity");
-        fetchApps(); // rollback
-      }
-    },
-    [fetchApps],
-  );
 
   const renderActiveCard = (app: AppInfo) => {
     const appLogs = logsByApp.get(app.id) ?? [];
@@ -410,13 +392,13 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
           className={cn("w-full text-left", app.id !== "web" && app.status === "running" && "cursor-pointer")}
           onClick={() => {
             if (app.id !== "web" && app.status === "running") {
-              window.open(app.url, "_blank", "noopener,noreferrer");
+              window.location.href = app.url;
             }
           }}
           onKeyDown={(e) => {
             if (app.id !== "web" && app.status === "running" && (e.key === "Enter" || e.key === " ")) {
               e.preventDefault();
-              window.open(app.url, "_blank", "noopener,noreferrer");
+              window.location.href = app.url;
             }
           }}
         >
@@ -429,43 +411,9 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                   <span className="text-primary">{ICON_MAP[app.icon]}</span>
                 )}
                 <CardTitle className="text-base">{app.name}</CardTitle>
-                <span className="text-xs text-muted-foreground/60 font-mono">:{app.port}</span>
-                {app.id !== "web" && app.status === "running" && (
-                  <ExternalLink className="h-3 w-3 text-muted-foreground/40" />
-                )}
-                {app.maturity && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMaturityEditApp(app.id);
-                        }}
-                      >
-                        <span
-                          className={cn(
-                            "inline-block h-2.5 w-2.5 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current transition-shadow",
-                            MATURITY_DOT_COLORS[app.maturity.color],
-                          )}
-                        />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="w-40">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-medium">{app.maturity.label}</span>
-                        <span className="text-muted-foreground">{app.maturity.percentage}%</span>
-                      </div>
-                      <div className="h-1.5 w-full rounded-full bg-muted">
-                        <div
-                          className={cn("h-full rounded-full", MATURITY_BAR_COLORS[app.maturity.color])}
-                          style={{ width: `${app.maturity.percentage}%` }}
-                        />
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+                <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0 text-muted-foreground/60">
+                  :{app.port}
+                </Badge>
               </div>
               <div className="flex items-center gap-1.5">
                 {app.id !== "web" &&
@@ -553,6 +501,17 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                   )}
                 />
                 <span className="text-xs text-muted-foreground capitalize">{app.status}</span>
+                {app.maturity && (
+                  <>
+                    <span className="text-muted-foreground/40 text-xs">&middot;</span>
+                    <MaturityPopover
+                      percentage={app.maturity.percentage}
+                      color={app.maturity.color}
+                      label={app.maturity.label}
+                      onCommit={(pct) => updateMaturity(app.id, pct)}
+                    />
+                  </>
+                )}
               </div>
               {app.id === "web" && <span className="text-xs text-muted-foreground italic">You are here</span>}
             </div>
@@ -597,22 +556,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     <TooltipProvider>
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
-          {/* Maturity edit dialog */}
-          {maturityEditApp &&
-            (() => {
-              const editApp = apps?.find((a) => a.id === maturityEditApp);
-              if (!editApp?.maturity) return null;
-              return (
-                <MaturityDialog
-                  open
-                  onOpenChange={(open) => !open && setMaturityEditApp(null)}
-                  appName={editApp.name}
-                  maturity={editApp.maturity}
-                  onSave={(m) => handleMaturitySave(editApp.id, m)}
-                />
-              );
-            })()}
-
           {/* Todo drawer */}
           {todoSheetApp && (
             <TodoSheet
@@ -640,6 +583,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                 <AppCardSkeleton index={4} />
                 <AppCardSkeleton index={5} />
                 <AppCardSkeleton index={6} />
+                <AppCardSkeleton index={7} />
               </div>
             </section>
           )}
@@ -677,40 +621,12 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                             <span className="text-muted-foreground">{ICON_MAP[app.icon]}</span>
                           )}
                           <span className="text-sm font-medium">{app.name}</span>
-                          <span className="text-xs text-muted-foreground/60 font-mono">:{app.port}</span>
-                          {app.maturity && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="inline-flex items-center justify-center"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setMaturityEditApp(app.id);
-                                  }}
-                                >
-                                  <span
-                                    className={cn(
-                                      "inline-block h-2 w-2 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current transition-shadow",
-                                      MATURITY_DOT_COLORS[app.maturity.color],
-                                    )}
-                                  />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="w-40">
-                                <div className="flex items-center justify-between text-xs mb-1">
-                                  <span className="font-medium">{app.maturity.label}</span>
-                                  <span className="text-muted-foreground">{app.maturity.percentage}%</span>
-                                </div>
-                                <div className="h-1.5 w-full rounded-full bg-muted">
-                                  <div
-                                    className={cn("h-full rounded-full", MATURITY_BAR_COLORS[app.maturity.color])}
-                                    style={{ width: `${app.maturity.percentage}%` }}
-                                  />
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
+                          <Badge
+                            variant="outline"
+                            className="font-mono text-[10px] px-1.5 py-0 text-muted-foreground/60"
+                          >
+                            :{app.port}
+                          </Badge>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {app.id !== "web" && (
@@ -746,7 +662,27 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                     </CardHeader>
                     <CardContent className="pt-0 pb-3">
                       <p className="text-xs text-muted-foreground mb-2">{app.description}</p>
-                      {app.id === "web" && <span className="text-xs text-muted-foreground italic">You are here</span>}
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+                        <span className="text-xs text-muted-foreground">Stopped</span>
+                        {app.maturity && (
+                          <>
+                            <span className="text-muted-foreground/40 text-xs">&middot;</span>
+                            <MaturityPopover
+                              percentage={app.maturity.percentage}
+                              color={app.maturity.color}
+                              label={app.maturity.label}
+                              onCommit={(pct) => updateMaturity(app.id, pct)}
+                            />
+                          </>
+                        )}
+                        {app.id === "web" && (
+                          <>
+                            <span className="text-muted-foreground/40 text-xs">&middot;</span>
+                            <span className="text-xs text-muted-foreground italic">You are here</span>
+                          </>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

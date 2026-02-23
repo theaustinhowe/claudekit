@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { APP_DEFINITIONS } from "@/lib/app-definitions";
+import { APP_DEFINITIONS, getMaturity } from "@/lib/app-definitions";
 import { getAppSettings, type PerAppSettings, readSettings } from "@/lib/app-settings";
-import { readMaturity } from "@/lib/maturity";
+import { readMaturityOverrides } from "@/lib/maturity";
 
 interface AppInfo {
   id: string;
@@ -50,16 +50,17 @@ export async function GET() {
     // Daemon not running
   }
 
-  const maturityOverrides = readMaturity();
+  const maturityOverrides = readMaturityOverrides();
 
   const results: AppInfo[] = await Promise.all(
     APP_DEFINITIONS.map(async (app) => {
       const isRunning = await checkAppHealth(app.port);
+      const effectivePercentage = maturityOverrides[app.id] ?? app.maturityPercentage;
       return {
         ...app,
         url: `http://localhost:${app.port}`,
         status: isRunning ? ("running" as const) : ("stopped" as const),
-        maturity: maturityOverrides[app.id] ?? app.maturity,
+        maturity: effectivePercentage != null ? getMaturity(effectivePercentage) : undefined,
         settings: app.id !== "web" ? getAppSettings(app.id, settings) : undefined,
         managedByDaemon: daemonStatus ? (daemonStatus[app.id]?.running ?? false) : undefined,
       };

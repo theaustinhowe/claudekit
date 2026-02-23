@@ -5,7 +5,19 @@ export interface AppDefinition {
   port: number;
   icon: string;
   favicon?: string;
-  maturity?: { label: string; percentage: number; color: "green" | "yellow" | "red" };
+  maturityPercentage?: number;
+}
+
+export interface MaturityInfo {
+  label: string;
+  percentage: number;
+  color: "green" | "yellow" | "red";
+}
+
+export function getMaturity(percentage: number): MaturityInfo {
+  if (percentage >= 80) return { label: "Stable", percentage, color: "green" };
+  if (percentage >= 40) return { label: "Beta", percentage, color: "yellow" };
+  return { label: "Alpha", percentage, color: "red" };
 }
 
 export const APP_DEFINITIONS: AppDefinition[] = [
@@ -16,7 +28,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     port: 2150,
     icon: "Sparkles",
     favicon: "/app-icons/inside.png",
-    maturity: { label: "Alpha", percentage: 40, color: "red" },
+    maturityPercentage: 40,
   },
   {
     id: "gadget",
@@ -25,7 +37,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     port: 2100,
     icon: "Wrench",
     favicon: "/app-icons/gadget.png",
-    maturity: { label: "Beta", percentage: 65, color: "yellow" },
+    maturityPercentage: 65,
   },
   {
     id: "gogo-web",
@@ -34,7 +46,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     port: 2200,
     icon: "Rocket",
     favicon: "/app-icons/gogo-web.png",
-    maturity: { label: "Alpha", percentage: 40, color: "red" },
+    maturityPercentage: 40,
   },
   {
     id: "b4u",
@@ -43,7 +55,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     port: 2300,
     icon: "Video",
     favicon: "/app-icons/b4u.png",
-    maturity: { label: "Prototype", percentage: 20, color: "red" },
+    maturityPercentage: 20,
   },
   {
     id: "inspector",
@@ -52,7 +64,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     port: 2400,
     icon: "GitPullRequest",
     favicon: "/app-icons/inspector.png",
-    maturity: { label: "Beta", percentage: 55, color: "yellow" },
+    maturityPercentage: 55,
   },
   {
     id: "gogo-orchestrator",
@@ -60,7 +72,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     description: "Backend orchestrator for GoGo job execution",
     port: 2201,
     icon: "Cpu",
-    maturity: { label: "Alpha", percentage: 35, color: "red" },
+    maturityPercentage: 35,
   },
   {
     id: "storybook",
@@ -68,7 +80,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     description: "Interactive component library and documentation",
     port: 6006,
     icon: "BookOpen",
-    maturity: { label: "Stable", percentage: 90, color: "green" },
+    maturityPercentage: 90,
   },
   {
     id: "web",
@@ -77,7 +89,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     port: 2000,
     icon: "Monitor",
     favicon: "/app-icons/web.png",
-    maturity: { label: "Stable", percentage: 85, color: "green" },
+    maturityPercentage: 85,
   },
 ];
 

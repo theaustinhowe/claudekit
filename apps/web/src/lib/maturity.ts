@@ -2,14 +2,6 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-export interface MaturityInfo {
-  label: string;
-  percentage: number;
-  color: "green" | "yellow" | "red";
-}
-
-export type MaturityData = Record<string, MaturityInfo>;
-
 const SETTINGS_DIR = join(homedir(), ".claudekit");
 const MATURITY_PATH = join(SETTINGS_DIR, "maturity.json");
 
@@ -19,26 +11,21 @@ function ensureDir() {
   }
 }
 
-/**
- * Read persisted maturity overrides from disk.
- * Returns an empty object if the file doesn't exist or is corrupt.
- */
-export function readMaturity(): MaturityData {
+/** Read maturity percentage overrides from disk. Returns `{}` if missing or corrupt. */
+export function readMaturityOverrides(): Record<string, number> {
   if (!existsSync(MATURITY_PATH)) return {};
   try {
     const raw = readFileSync(MATURITY_PATH, "utf-8");
-    const parsed = JSON.parse(raw) as MaturityData;
-    if (typeof parsed !== "object" || parsed === null) return {};
-    return parsed;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
+    return parsed as Record<string, number>;
   } catch {
     return {};
   }
 }
 
-/**
- * Write maturity data to disk atomically (temp file + rename).
- */
-export function writeMaturity(data: MaturityData): void {
+/** Write maturity percentage overrides to disk atomically (temp file + rename). */
+export function writeMaturityOverrides(data: Record<string, number>): void {
   ensureDir();
   const tmp = `${MATURITY_PATH}.tmp.${process.pid}`;
   writeFileSync(tmp, JSON.stringify(data, null, 2));
