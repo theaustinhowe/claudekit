@@ -28,9 +28,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ app
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ app: string }> }) {
   const { app } = await params;
-  const body = (await req.json()) as { id?: string; resolved?: boolean };
-  if (!body.id || typeof body.resolved !== "boolean") {
-    return NextResponse.json({ error: "id and resolved are required" }, { status: 400 });
+  const body = (await req.json()) as { id?: string; resolved?: boolean; text?: string };
+  if (!body.id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+  if (typeof body.resolved !== "boolean" && typeof body.text !== "string") {
+    return NextResponse.json({ error: "resolved or text is required" }, { status: 400 });
   }
 
   const todos = readTodos(app);
@@ -39,7 +42,40 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ap
     return NextResponse.json({ error: "todo not found" }, { status: 404 });
   }
 
-  todo.resolved = body.resolved;
+  if (typeof body.resolved === "boolean") {
+    todo.resolved = body.resolved;
+  }
+  if (typeof body.text === "string" && body.text.trim().length > 0) {
+    todo.text = body.text.trim();
+    todo.updatedAt = new Date().toISOString();
+  }
+
   writeTodos(app, todos);
   return NextResponse.json(todo);
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ app: string }> }) {
+  const { app } = await params;
+  const body = (await req.json()) as { id?: string; clearCompleted?: boolean };
+
+  const todos = readTodos(app);
+
+  if (body.clearCompleted) {
+    const remaining = todos.filter((t) => !t.resolved);
+    writeTodos(app, remaining);
+    return NextResponse.json(remaining);
+  }
+
+  if (!body.id) {
+    return NextResponse.json({ error: "id or clearCompleted is required" }, { status: 400 });
+  }
+
+  const index = todos.findIndex((t) => t.id === body.id);
+  if (index === -1) {
+    return NextResponse.json({ error: "todo not found" }, { status: 404 });
+  }
+
+  todos.splice(index, 1);
+  writeTodos(app, todos);
+  return NextResponse.json({ ok: true });
 }

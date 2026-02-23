@@ -3,12 +3,9 @@
 import { cn } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
-import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
-import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
-import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
@@ -21,7 +18,6 @@ import {
   GitPullRequest,
   Monitor,
   Play,
-  Plus,
   Power,
   Rocket,
   RotateCw,
@@ -33,9 +29,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
+import { TodoSheet } from "@/components/todos/todo-sheet";
+import { useTodos } from "@/components/todos/use-todos";
+import type { Todo } from "@/lib/todos";
 
 interface PerAppSettings {
   autoStart: boolean;
@@ -45,13 +44,6 @@ interface PerAppSettings {
 interface AppSettings {
   version: 1;
   apps: Record<string, PerAppSettings>;
-}
-
-interface Todo {
-  id: string;
-  text: string;
-  resolved: boolean;
-  createdAt: string;
 }
 
 interface AppInfo {
@@ -147,39 +139,6 @@ function AppCardSkeleton({ index }: { index: number }) {
   );
 }
 
-function TodoAddForm({ onAdd }: { onAdd: (text: string) => void }) {
-  const [text, setText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    onAdd(trimmed);
-    setText("");
-    inputRef.current?.focus();
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-1.5 mt-2">
-      <Input
-        ref={inputRef}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Add a todo..."
-        className="h-7 text-xs"
-      />
-      <button
-        type="submit"
-        disabled={!text.trim()}
-        className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
-      >
-        <Plus className="h-3.5 w-3.5" />
-      </button>
-    </form>
-  );
-}
-
 interface DashboardClientProps {
   logFiles: LogFileInfo[];
   initialTodos: Record<string, Todo[]>;
@@ -197,15 +156,20 @@ function SettingsPopover({
 }) {
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Settings2 className="h-3.5 w-3.5" />
-        </button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+            </button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Settings</TooltipContent>
+      </Tooltip>
       <PopoverContent className="w-56" align="end" onClick={(e) => e.stopPropagation()}>
         <div className="space-y-3">
           <p className="text-sm font-medium">App Settings</p>
@@ -238,7 +202,7 @@ function SettingsPopover({
 export function DashboardClient({ logFiles, initialTodos, initialSettings }: DashboardClientProps) {
   const [apps, setApps] = useState<AppInfo[] | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
-  const [todosByApp, setTodosByApp] = useState<Record<string, Todo[]>>(initialTodos);
+  const { todosByApp, addTodo, toggleTodo, editTodo, deleteTodo, clearCompleted } = useTodos(initialTodos);
   const [settings, setSettings] = useState<AppSettings>(initialSettings ?? { version: 1, apps: {} });
   const [stopping, setStopping] = useState<Set<string>>(new Set());
   // Track confirmed statuses for debounced section transitions
@@ -354,63 +318,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     });
     prevStatusRef.current = currentStatuses;
   }, [apps]);
-
-  const addTodo = useCallback(async (appId: string, text: string) => {
-    const optimistic: Todo = {
-      id: crypto.randomUUID(),
-      text,
-      resolved: false,
-      createdAt: new Date().toISOString(),
-    };
-
-    setTodosByApp((prev) => ({
-      ...prev,
-      [appId]: [...(prev[appId] ?? []), optimistic],
-    }));
-
-    try {
-      const res = await fetch(`/api/todos/${encodeURIComponent(appId)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) throw new Error("Failed to add todo");
-      const created = (await res.json()) as Todo;
-      // Replace optimistic with server response
-      setTodosByApp((prev) => ({
-        ...prev,
-        [appId]: (prev[appId] ?? []).map((t) => (t.id === optimistic.id ? created : t)),
-      }));
-    } catch {
-      // Revert optimistic add
-      setTodosByApp((prev) => ({
-        ...prev,
-        [appId]: (prev[appId] ?? []).filter((t) => t.id !== optimistic.id),
-      }));
-    }
-  }, []);
-
-  const toggleTodo = useCallback(async (appId: string, todoId: string, resolved: boolean) => {
-    setTodosByApp((prev) => ({
-      ...prev,
-      [appId]: (prev[appId] ?? []).map((t) => (t.id === todoId ? { ...t, resolved } : t)),
-    }));
-
-    try {
-      const res = await fetch(`/api/todos/${encodeURIComponent(appId)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: todoId, resolved }),
-      });
-      if (!res.ok) throw new Error("Failed to toggle todo");
-    } catch {
-      // Revert
-      setTodosByApp((prev) => ({
-        ...prev,
-        [appId]: (prev[appId] ?? []).map((t) => (t.id === todoId ? { ...t, resolved: !resolved } : t)),
-      }));
-    }
-  }, []);
 
   const logsByApp = useMemo(() => {
     const map = new Map<string, LogFileInfo[]>();
@@ -576,17 +483,22 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                       </TooltipContent>
                     </Tooltip>
                   ))}
-                <button
-                  type="button"
-                  className="relative h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setTodoSheetApp(app.id);
-                  }}
-                >
-                  <CheckSquare className="h-3.5 w-3.5" />
-                  {pendingCount > 0 && <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />}
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="relative h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTodoSheetApp(app.id);
+                      }}
+                    >
+                      <CheckSquare className="h-3.5 w-3.5" />
+                      {pendingCount > 0 && <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">View todos</TooltipContent>
+                </Tooltip>
                 {app.id !== "web" && (
                   <SettingsPopover
                     appId={app.id}
@@ -657,34 +569,19 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
           <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
 
           {/* Todo drawer */}
-          <Sheet open={todoSheetApp !== null} onOpenChange={(open) => !open && setTodoSheetApp(null)}>
-            <SheetContent side="right">
-              <SheetHeader>
-                <SheetTitle>
-                  {todoSheetApp ? (apps?.find((a) => a.id === todoSheetApp)?.name ?? todoSheetApp) : ""} Todos
-                </SheetTitle>
-              </SheetHeader>
-              <SheetBody>
-                {todoSheetApp && (
-                  <div className="space-y-1 py-2">
-                    {(todosByApp[todoSheetApp] ?? []).map((todo) => (
-                      <div
-                        key={todo.id}
-                        className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-                      >
-                        <Checkbox
-                          checked={todo.resolved}
-                          onCheckedChange={(checked) => toggleTodo(todoSheetApp, todo.id, checked === true)}
-                        />
-                        <span className={cn(todo.resolved && "line-through text-muted-foreground")}>{todo.text}</span>
-                      </div>
-                    ))}
-                    <TodoAddForm onAdd={(text) => addTodo(todoSheetApp, text)} />
-                  </div>
-                )}
-              </SheetBody>
-            </SheetContent>
-          </Sheet>
+          {todoSheetApp && (
+            <TodoSheet
+              open
+              onOpenChange={(open) => !open && setTodoSheetApp(null)}
+              appName={apps?.find((a) => a.id === todoSheetApp)?.name ?? todoSheetApp}
+              todos={todosByApp[todoSheetApp] ?? []}
+              onAdd={(text) => addTodo(todoSheetApp, text)}
+              onToggle={(todoId, resolved) => toggleTodo(todoSheetApp, todoId, resolved)}
+              onEdit={(todoId, text) => editTodo(todoSheetApp, todoId, text)}
+              onDelete={(todoId) => deleteTodo(todoSheetApp, todoId)}
+              onClearCompleted={() => clearCompleted(todoSheetApp)}
+            />
+          )}
 
           {/* Loading skeletons */}
           {apps === null && (

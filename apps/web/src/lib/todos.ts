@@ -2,11 +2,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-interface Todo {
+export interface Todo {
   id: string;
   text: string;
   resolved: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 const TODOS_DIR = join(homedir(), ".claudekit", "todos");
