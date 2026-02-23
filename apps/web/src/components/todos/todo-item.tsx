@@ -1,8 +1,8 @@
 import { cn } from "@claudekit/ui";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Input } from "@claudekit/ui/components/input";
-import { Pencil, Trash2 } from "lucide-react";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { Check, Pencil, Trash2, X } from "lucide-react";
+import { type KeyboardEvent, type MouseEvent, useEffect, useRef, useState } from "react";
 import type { Todo } from "@/lib/todos";
 
 interface TodoItemProps {
@@ -16,18 +16,25 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const inputRef = useRef<HTMLInputElement>(null);
+  const settledRef = useRef(false);
 
   useEffect(() => {
     if (editing) {
-      // requestAnimationFrame to win any focus races (e.g. dropdown restore)
+      settledRef.current = false;
+      // Double-rAF: first frame to let React commit, second to let the
+      // Sheet dialog's focus-trap finish restoring focus after the pencil
+      // button was removed.  Only then do we grab focus for the input.
       requestAnimationFrame(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+          settledRef.current = true;
+        });
       });
     }
   }, [editing]);
 
-  // Sync editText when todo.text changes externally
+  // Sync editText when todo.text changes externally while not editing
   useEffect(() => {
     if (!editing) setEditText(todo.text);
   }, [todo.text, editing]);
@@ -57,6 +64,19 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
     }
   };
 
+  const handleBlur = () => {
+    // Only save-on-blur once focus has fully settled after entering edit mode.
+    // The Sheet's dialog focus-trap can cause a spurious blur during the
+    // transition; ignoring it here prevents the edit from closing instantly.
+    if (settledRef.current) {
+      saveEdit();
+    }
+  };
+
+  // Prevent save/cancel buttons from stealing input focus (which would
+  // trigger handleBlur before onClick fires).
+  const keepFocus = (e: MouseEvent) => e.preventDefault();
+
   const startEditing = () => {
     setEditText(todo.text);
     setEditing(true);
@@ -66,14 +86,32 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
     <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-accent/50 transition-colors">
       <Checkbox checked={todo.resolved} onCheckedChange={(checked) => onToggle(checked === true)} />
       {editing ? (
-        <Input
-          ref={inputRef}
-          value={editText}
-          onChange={(e) => setEditText(e.target.value)}
-          onBlur={saveEdit}
-          onKeyDown={handleKeyDown}
-          className="h-8 text-sm flex-1"
-        />
+        <div className="flex items-center gap-1 flex-1">
+          <Input
+            ref={inputRef}
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className="h-7 text-sm flex-1"
+          />
+          <button
+            type="button"
+            onMouseDown={keepFocus}
+            onClick={saveEdit}
+            className="h-7 w-7 shrink-0 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <Check className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onMouseDown={keepFocus}
+            onClick={cancelEdit}
+            className="h-7 w-7 shrink-0 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       ) : (
         <>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: double-click to edit is a progressive enhancement, pencil button is the primary affordance */}
