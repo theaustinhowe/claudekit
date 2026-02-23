@@ -24,10 +24,11 @@ export function ConnectDevice() {
     try {
       const response = await fetchNetworkInfo();
       if (response.data) {
-        setNetworkInfo(response.data);
-        // Auto-select the first IP
-        if (response.data.ips.length > 0 && !selectedIp) {
-          setSelectedIp(response.data.ips[0]);
+        const { data } = response;
+        setNetworkInfo(data);
+        // Auto-select the first IP (functional update avoids stale closure)
+        if (data.ips.length > 0) {
+          setSelectedIp((prev) => prev ?? data.ips[0]);
         }
       } else if (response.error) {
         setError(response.error);
@@ -37,7 +38,7 @@ export function ConnectDevice() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedIp]);
+  }, []);
 
   useEffect(() => {
     fetchInfo();

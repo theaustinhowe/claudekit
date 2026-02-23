@@ -41,7 +41,7 @@ describe("GET /api/health/apps", () => {
     const data = await response.json();
 
     const ids = data.map((a: { id: string }) => a.id);
-    expect(ids).toEqual(["gadget", "gogo-web", "b4u", "inspector", "inside", "storybook", "gogo-orchestrator", "web"]);
+    expect(ids).toEqual(["inside", "gadget", "gogo-web", "b4u", "inspector", "gogo-orchestrator", "storybook", "web"]);
   });
 
   it("builds correct urls from ports", async () => {
