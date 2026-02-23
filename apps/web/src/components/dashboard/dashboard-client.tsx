@@ -23,6 +23,7 @@ import {
   RotateCw,
   ScrollText,
   Settings2,
+  Sparkles,
   Video,
   Wrench,
 } from "lucide-react";
@@ -30,6 +31,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { MaturityDialog } from "@/components/dashboard/maturity-dialog";
 import { TodoSheet } from "@/components/todos/todo-sheet";
 import { useTodos } from "@/components/todos/use-todos";
 import type { Todo } from "@/lib/todos";
@@ -73,6 +75,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   GitPullRequest: <GitPullRequest className="h-5 w-5" />,
   BookOpen: <BookOpen className="h-5 w-5" />,
   Monitor: <Monitor className="h-5 w-5" />,
+  Sparkles: <Sparkles className="h-5 w-5" />,
 };
 
 const ACCENT_COLORS: Record<string, string> = {
@@ -82,6 +85,7 @@ const ACCENT_COLORS: Record<string, string> = {
   b4u: "border-l-amber-500",
   inspector: "border-l-rose-500",
   storybook: "border-l-pink-500",
+  inside: "border-l-orange-500",
   web: "border-l-emerald-500",
 };
 
@@ -358,6 +362,33 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
   );
 
   const [todoSheetApp, setTodoSheetApp] = useState<string | null>(null);
+  const [maturityEditApp, setMaturityEditApp] = useState<string | null>(null);
+
+  const handleMaturitySave = useCallback(
+    async (appId: string, maturity: { label: string; percentage: number; color: "green" | "yellow" | "red" }) => {
+      // Optimistic update
+      setApps((prev) => prev?.map((a) => (a.id === appId ? { ...a, maturity } : a)) ?? null);
+      try {
+        // Fetch current persisted data, merge, and save
+        const res = await fetch("/api/apps/maturity");
+        const current = res.ok ? await res.json() : {};
+        const updated = { ...current, [appId]: maturity };
+        const putRes = await fetch("/api/apps/maturity", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        });
+        if (!putRes.ok) {
+          toast.error("Failed to save maturity");
+          fetchApps(); // rollback
+        }
+      } catch {
+        toast.error("Failed to save maturity");
+        fetchApps(); // rollback
+      }
+    },
+    [fetchApps],
+  );
 
   const renderActiveCard = (app: AppInfo) => {
     const appLogs = logsByApp.get(app.id) ?? [];
@@ -404,8 +435,22 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                 )}
                 {app.maturity && (
                   <Tooltip>
-                    <TooltipTrigger>
-                      <span className={cn("h-2.5 w-2.5 rounded-full", MATURITY_DOT_COLORS[app.maturity.color])} />
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMaturityEditApp(app.id);
+                        }}
+                      >
+                        <span
+                          className={cn(
+                            "inline-block h-2.5 w-2.5 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current transition-shadow",
+                            MATURITY_DOT_COLORS[app.maturity.color],
+                          )}
+                        />
+                      </button>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="w-40">
                       <div className="flex items-center justify-between text-xs mb-1">
@@ -552,6 +597,22 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     <TooltipProvider>
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
+          {/* Maturity edit dialog */}
+          {maturityEditApp &&
+            (() => {
+              const editApp = apps?.find((a) => a.id === maturityEditApp);
+              if (!editApp?.maturity) return null;
+              return (
+                <MaturityDialog
+                  open
+                  onOpenChange={(open) => !open && setMaturityEditApp(null)}
+                  appName={editApp.name}
+                  maturity={editApp.maturity}
+                  onSave={(m) => handleMaturitySave(editApp.id, m)}
+                />
+              );
+            })()}
+
           {/* Todo drawer */}
           {todoSheetApp && (
             <TodoSheet
@@ -617,6 +678,39 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
                           )}
                           <span className="text-sm font-medium">{app.name}</span>
                           <span className="text-xs text-muted-foreground/60 font-mono">:{app.port}</span>
+                          {app.maturity && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center justify-center"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMaturityEditApp(app.id);
+                                  }}
+                                >
+                                  <span
+                                    className={cn(
+                                      "inline-block h-2 w-2 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current transition-shadow",
+                                      MATURITY_DOT_COLORS[app.maturity.color],
+                                    )}
+                                  />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="w-40">
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                  <span className="font-medium">{app.maturity.label}</span>
+                                  <span className="text-muted-foreground">{app.maturity.percentage}%</span>
+                                </div>
+                                <div className="h-1.5 w-full rounded-full bg-muted">
+                                  <div
+                                    className={cn("h-full rounded-full", MATURITY_BAR_COLORS[app.maturity.color])}
+                                    style={{ width: `${app.maturity.percentage}%` }}
+                                  />
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5">
                           {app.id !== "web" && (

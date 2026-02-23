@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
+import { MANAGED_APP_IDS } from "@/lib/app-definitions";
 import { type AppSettings, readSettings, writeSettings } from "@/lib/app-settings";
-
-const APP_IDS = ["gadget", "gogo-web", "gogo-orchestrator", "b4u", "inspector", "storybook"];
 
 export async function GET() {
   const settings = readSettings();
@@ -9,12 +8,12 @@ export async function GET() {
     // Return defaults for all apps (legacy mode)
     const defaults: AppSettings = {
       version: 1,
-      apps: Object.fromEntries(APP_IDS.map((id) => [id, { autoStart: false, autoRestart: true }])),
+      apps: Object.fromEntries(MANAGED_APP_IDS.map((id) => [id, { autoStart: false, autoRestart: true }])),
     };
     return NextResponse.json(defaults);
   }
   // Fill in defaults for any missing apps
-  for (const id of APP_IDS) {
+  for (const id of MANAGED_APP_IDS) {
     if (!settings.apps[id]) {
       settings.apps[id] = { autoStart: false, autoRestart: true };
     }
