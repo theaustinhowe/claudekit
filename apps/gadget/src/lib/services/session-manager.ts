@@ -10,7 +10,7 @@ import type { SessionType } from "@/lib/types";
 export async function createSession(opts: {
   sessionType: SessionType;
   label: string;
-  contextType?: "repo" | "project" | null;
+  contextType?: "repo" | null;
   contextId?: string | null;
   contextName?: string | null;
   metadata?: Record<string, unknown>;

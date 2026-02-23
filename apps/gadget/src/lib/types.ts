@@ -98,10 +98,6 @@ export interface Policy {
   allowed_package_managers: PackageManager[];
   preferred_package_manager: PackageManager;
   ignore_patterns: string[];
-  generator_defaults: {
-    template?: string;
-    features: string[];
-  };
   repo_types: RepoType[];
   is_builtin: boolean;
   created_at: string;

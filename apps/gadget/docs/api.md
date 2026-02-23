@@ -292,8 +292,7 @@ Create a new policy.
   "banned_dependencies": [{ "name": "moment", "replacement": "dayjs", "reason": "Large bundle size" }],
   "allowed_package_managers": ["pnpm", "npm"],
   "preferred_package_manager": "pnpm",
-  "ignore_patterns": ["*.test.ts"],
-  "generator_defaults": { "template": "nextjs", "features": ["typescript"] }
+  "ignore_patterns": ["*.test.ts"]
 }
 ```
 
@@ -306,7 +305,6 @@ Create a new policy.
 | `allowed_package_managers` | `PackageManager[]` | no | `[]` |
 | `preferred_package_manager` | `PackageManager` | no | `"pnpm"` |
 | `ignore_patterns` | `string[]` | no | `[]` |
-| `generator_defaults` | `{ template?, features }` | no | `{}` |
 
 **Response** `201`:
 ```json
@@ -993,7 +991,6 @@ Extends `Repo` with:
 | `allowed_package_managers` | `PackageManager[]` |
 | `preferred_package_manager` | `PackageManager` |
 | `ignore_patterns` | `string[]` |
-| `generator_defaults` | `{ template?, features }` |
 | `repo_types` | `RepoType[]` |
 | `is_builtin` | boolean |
 | `created_at` | string (ISO 8601) |

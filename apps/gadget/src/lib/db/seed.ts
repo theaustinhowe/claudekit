@@ -41,7 +41,6 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
         allowedPMs: ["pnpm", "bun"],
         preferredPM: "pnpm",
         ignorePatterns: ["node_modules", "dist", ".next", ".vercel"],
-        genDefaults: { template: "nextjs-web", features: ["typescript", "tailwind", "biome"] },
         repoTypes: ["nextjs"],
       },
       {
@@ -60,7 +59,6 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
         allowedPMs: ["npm", "pnpm", "bun"],
         preferredPM: "npm",
         ignorePatterns: ["node_modules", "dist", "build"],
-        genDefaults: { template: "node-service", features: ["typescript", "biome", "jest"] },
         repoTypes: ["node"],
       },
       {
@@ -72,7 +70,6 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
         allowedPMs: ["pnpm", "npm"],
         preferredPM: "pnpm",
         ignorePatterns: ["node_modules", "dist", "lib"],
-        genDefaults: { template: "library", features: ["typescript", "vitest", "biome"] },
         repoTypes: ["library", "react"],
       },
       {
@@ -84,7 +81,6 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
         allowedPMs: ["pnpm"],
         preferredPM: "pnpm",
         ignorePatterns: ["node_modules", "dist"],
-        genDefaults: { template: "monorepo", features: ["typescript", "biome"] },
         repoTypes: ["monorepo"],
       },
       {
@@ -108,7 +104,6 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
         allowedPMs: ["pnpm", "npm", "bun"],
         preferredPM: "pnpm",
         ignorePatterns: ["node_modules", "dist", ".next", "build"],
-        genDefaults: { template: "nextjs-web", features: ["typescript", "tanstack-query", "biome"] },
         repoTypes: ["tanstack"],
       },
     ];
@@ -116,8 +111,8 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
     for (const p of policies) {
       await execute(
         conn,
-        `INSERT INTO policies (id, name, description, expected_versions, banned_dependencies, allowed_package_managers, preferred_package_manager, ignore_patterns, generator_defaults, repo_types, is_builtin)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
+        `INSERT INTO policies (id, name, description, expected_versions, banned_dependencies, allowed_package_managers, preferred_package_manager, ignore_patterns, repo_types, is_builtin)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, true)
          ON CONFLICT DO NOTHING`,
         [
           p.id,
@@ -128,7 +123,6 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
           JSON.stringify(p.allowedPMs),
           p.preferredPM,
           JSON.stringify(p.ignorePatterns),
-          JSON.stringify(p.genDefaults),
           JSON.stringify(p.repoTypes),
         ],
       );

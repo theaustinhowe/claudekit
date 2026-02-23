@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
   await execute(
     db,
     `
-    INSERT INTO policies (id, name, description, expected_versions, banned_dependencies, allowed_package_managers, preferred_package_manager, ignore_patterns, generator_defaults)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO policies (id, name, description, expected_versions, banned_dependencies, allowed_package_managers, preferred_package_manager, ignore_patterns)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `,
     [
       id,
@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
       JSON.stringify(body.allowed_package_managers || []),
       body.preferred_package_manager || "pnpm",
       JSON.stringify(body.ignore_patterns || []),
-      JSON.stringify(body.generator_defaults || {}),
     ],
   );
 
@@ -49,7 +48,7 @@ export async function PUT(request: NextRequest) {
     UPDATE policies
     SET name = ?, description = ?, expected_versions = ?, banned_dependencies = ?,
         allowed_package_managers = ?, preferred_package_manager = ?,
-        ignore_patterns = ?, generator_defaults = ?, updated_at = ?
+        ignore_patterns = ?, updated_at = ?
     WHERE id = ?
   `,
     [
@@ -60,7 +59,6 @@ export async function PUT(request: NextRequest) {
       JSON.stringify(body.allowed_package_managers || []),
       body.preferred_package_manager || "pnpm",
       JSON.stringify(body.ignore_patterns || []),
-      JSON.stringify(body.generator_defaults || {}),
       nowTimestamp(),
       body.id,
     ],

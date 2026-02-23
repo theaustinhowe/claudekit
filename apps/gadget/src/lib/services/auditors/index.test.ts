@@ -65,7 +65,6 @@ const mockPolicy: Policy = {
   allowed_package_managers: [],
   preferred_package_manager: "pnpm",
   ignore_patterns: [],
-  generator_defaults: { features: [] },
   repo_types: [],
   is_builtin: false,
   created_at: "2026-01-01T00:00:00.000Z",

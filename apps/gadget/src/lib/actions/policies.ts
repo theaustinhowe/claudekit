@@ -25,7 +25,6 @@ export async function createPolicy(data: {
   allowed_package_managers?: string[];
   preferred_package_manager?: string;
   ignore_patterns?: string[];
-  generator_defaults?: { template?: string; features: string[] };
   repo_types?: string[];
 }): Promise<Policy> {
   const db = await getDb();
@@ -34,8 +33,8 @@ export async function createPolicy(data: {
   await execute(
     db,
     `
-    INSERT INTO policies (id, name, description, expected_versions, banned_dependencies, allowed_package_managers, preferred_package_manager, ignore_patterns, generator_defaults, repo_types, is_builtin)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false)
+    INSERT INTO policies (id, name, description, expected_versions, banned_dependencies, allowed_package_managers, preferred_package_manager, ignore_patterns, repo_types, is_builtin)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, false)
   `,
     [
       id,
@@ -46,7 +45,6 @@ export async function createPolicy(data: {
       JSON.stringify(data.allowed_package_managers || []),
       data.preferred_package_manager || "pnpm",
       JSON.stringify(data.ignore_patterns || []),
-      JSON.stringify(data.generator_defaults || { features: [] }),
       JSON.stringify(data.repo_types || []),
     ],
   );
@@ -66,7 +64,6 @@ export async function updatePolicy(
     allowed_package_managers: string[];
     preferred_package_manager: string;
     ignore_patterns: string[];
-    generator_defaults: { template?: string; features: string[] };
     repo_types: string[];
   }>,
 ): Promise<Policy | null> {
@@ -79,7 +76,6 @@ export async function updatePolicy(
     "banned_dependencies",
     "allowed_package_managers",
     "ignore_patterns",
-    "generator_defaults",
     "repo_types",
   ]);
   const update = buildUpdate("policies", id, data, jsonFields);

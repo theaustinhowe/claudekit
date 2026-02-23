@@ -168,7 +168,6 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
       allowed_package_managers: policy.allowed_package_managers,
       preferred_package_manager: policy.preferred_package_manager,
       ignore_patterns: policy.ignore_patterns,
-      generator_defaults: policy.generator_defaults,
       repo_types: policy.repo_types,
     };
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -202,7 +201,6 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
         allowed_package_managers: data.allowed_package_managers ?? ["pnpm"],
         preferred_package_manager: data.preferred_package_manager ?? "pnpm",
         ignore_patterns: data.ignore_patterns,
-        generator_defaults: data.generator_defaults,
         repo_types: data.repo_types,
       });
       toast.success("Policy imported");

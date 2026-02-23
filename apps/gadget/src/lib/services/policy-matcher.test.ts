@@ -11,7 +11,6 @@ function makePolicy(overrides: Partial<Policy> & { id: string; repo_types: Polic
     allowed_package_managers: [],
     preferred_package_manager: "pnpm",
     ignore_patterns: [],
-    generator_defaults: { features: [] },
     is_builtin: false,
     created_at: "",
     updated_at: "",

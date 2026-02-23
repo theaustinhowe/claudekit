@@ -7,7 +7,7 @@ import { generateId, nowTimestamp } from "@/lib/utils";
 interface CreateSessionOpts {
   sessionType: SessionType;
   label: string;
-  contextType?: "repo" | "project" | null;
+  contextType?: "repo" | null;
   contextId?: string | null;
   contextName?: string | null;
   metadata?: Record<string, unknown>;
@@ -16,7 +16,7 @@ interface CreateSessionOpts {
 interface ListSessionsFilter {
   status?: SessionStatus | SessionStatus[];
   contextId?: string;
-  contextType?: "repo" | "project";
+  contextType?: "repo";
   sessionType?: SessionType;
   limit?: number;
 }

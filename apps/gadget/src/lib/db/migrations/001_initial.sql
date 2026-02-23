@@ -53,7 +53,6 @@ CREATE TABLE IF NOT EXISTS policies (
   allowed_package_managers JSON DEFAULT '[]',
   preferred_package_manager TEXT DEFAULT 'pnpm',
   ignore_patterns JSON DEFAULT '[]',
-  generator_defaults JSON DEFAULT '{}',
   repo_types JSON DEFAULT '[]',
   is_builtin BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now(),

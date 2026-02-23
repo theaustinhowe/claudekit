@@ -24,7 +24,6 @@ function makePolicy(overrides: Record<string, unknown> = {}) {
     allowed_package_managers: [] as string[],
     preferred_package_manager: "pnpm",
     ignore_patterns: [] as string[],
-    generator_defaults: { features: [] as string[] },
     repo_types: [] as string[],
     is_builtin: false,
     created_at: "",

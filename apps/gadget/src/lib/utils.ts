@@ -31,7 +31,6 @@ export function parsePolicy(row: Record<string, unknown>): Policy {
     allowed_package_managers: parseField(row.allowed_package_managers, []),
     preferred_package_manager: row.preferred_package_manager as Policy["preferred_package_manager"],
     ignore_patterns: parseField(row.ignore_patterns, []),
-    generator_defaults: parseField(row.generator_defaults, { features: [] }),
     repo_types: parseField(row.repo_types, []),
     is_builtin: row.is_builtin as boolean,
     created_at: row.created_at as string,

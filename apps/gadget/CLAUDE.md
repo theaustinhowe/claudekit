@@ -26,7 +26,7 @@ See `.env.local.example`. Key variables:
 
 ## Architecture
 
-**Gadget** is a **Next.js 16 App Router** local-first dev tool (not a SaaS). It audits repositories against policies, manages AI integrations (Claude skills, MCP servers, agents), generates fix diffs, scaffolds new projects, and provides upgrade task management with screenshot capture. All imports use the `@/` alias for `src/`.
+**Gadget** is a **Next.js 16 App Router** local-first dev tool (not a SaaS). It audits repositories against policies, manages AI integrations (Claude skills, MCP servers, agents), and generates fix diffs. All imports use the `@/` alias for `src/`.
 
 ### Directory Layout
 
@@ -39,13 +39,12 @@ src/
 │   ├── repositories/             # Alternate repo routes
 │   ├── scans/                    # Scan history + new scan wizard
 │   ├── policies/                 # Policy management
-│   ├── projects/                 # Project creation, scaffolding, chat, archived
 │   ├── ai-integrations/          # Skills, MCP servers, agents
 │   ├── patterns/                 # Patterns library
 │   ├── concepts/                 # Concept management + sources
 │   ├── toolbox/                  # CLI tool checker
 │   ├── settings/                 # App settings
-│   └── api/                      # 27 REST endpoints
+│   └── api/                      # 18 REST endpoints
 ├── components/
 │   ├── ui/                       # shadcn/ui primitives (24 components)
 │   ├── layout/                   # Shell, sidebar, header, nav
@@ -53,7 +52,6 @@ src/
 │   ├── repos/                    # Repo detail tabs, Claude config editor
 │   ├── policies/                 # Policy form + listing
 │   ├── scans/                    # Scan wizard
-│   ├── generator/                # Project scaffolding, chat, design workspace, upgrades
 │   ├── sessions/                 # Session badge, terminal, panel, indicator, context
 │   ├── code/                     # Code browser, file viewer, diff, commit views
 │   ├── settings/                 # Settings tabs, API keys
@@ -65,7 +63,7 @@ src/
 │   ├── actions/                  # 22 Server Action files ("use server")
 │   ├── services/                 # Business logic, scanners, auditors, session system
 │   │   ├── auditors/             # 4 auditors: dependencies, ai-files, structure, custom-rules
-│   │   └── session-runners/      # 12 per-type session runner factories + index
+│   │   └── session-runners/      # 7 per-type session runner factories + index
 │   ├── types.ts                  # All domain types
 │   ├── constants.ts              # Sentinel IDs, discovery patterns, labels, session config
 │   └── utils.ts                  # cn(), generateId(), nowTimestamp(), parsePolicy(), etc.
@@ -91,15 +89,10 @@ src/
 The session system provides a unified abstraction for all long-running operations. All streaming operations go through sessions — there are no standalone streaming API routes.
 
 - **`src/lib/services/session-manager.ts`** — `globalThis`-cached singleton managing in-memory `LiveSession` objects. Handles create, start, cancel, subscribe, cleanup. Fans out `SessionEvent`s to SSE subscribers and batches log persistence to DuckDB.
-- **`src/lib/services/session-runners/`** — 12 runner factories (one per `SessionType`):
+- **`src/lib/services/session-runners/`** — 7 runner factories (one per `SessionType`):
   - `scan` — repository scanning
   - `quick-improve` — quick repo improvements via Claude
   - `finding-fix` — finding-specific fixes via Claude
-  - `chat` — chat sessions with Claude
-  - `scaffold` — project scaffolding via Claude
-  - `upgrade` — upgrade task execution via Claude
-  - `upgrade-init` — upgrade initialization
-  - `auto-fix` — automated error detection and fixing
   - `fix-apply` — apply fix operations
   - `ai-file-gen` — AI file generation
   - `cleanup` — resource cleanup
@@ -120,11 +113,11 @@ Every page follows the same pattern:
 
 All DB reads/writes go through `"use server"` functions in 22 action files. These call `await getDb()` to get a DuckDB connection, then use async helper functions (`queryAll`, `queryOne`, `execute`).
 
-Key action files: `repos.ts`, `scans.ts`, `findings.ts`, `fixes.ts`, `policies.ts`, `concepts.ts`, `concept-sources.ts`, `settings.ts`, `claude-config.ts`, `claude-usage.ts`, `generator-projects.ts`, `env-keys.ts`, `toolbox.ts`, `policy-templates.ts`, `custom-rules.ts`, `manual-findings.ts`, `code-browser.ts`, `prototype-files.ts`, `auto-fix.ts`, `screenshots.ts`, `upgrade-tasks.ts`, `sessions.ts`.
+Key action files: `repos.ts`, `scans.ts`, `findings.ts`, `fixes.ts`, `policies.ts`, `concepts.ts`, `concept-sources.ts`, `settings.ts`, `claude-config.ts`, `claude-usage.ts`, `env-keys.ts`, `toolbox.ts`, `policy-templates.ts`, `custom-rules.ts`, `manual-findings.ts`, `code-browser.ts`, `prototype-files.ts`, `auto-fix.ts`, `screenshots.ts`, `upgrade-tasks.ts`, `sessions.ts`.
 
 ### Route Handlers (API)
 
-27 REST endpoints under `src/app/api/`:
+18 REST endpoints under `src/app/api/`:
 - `scans/` — streaming scan execution (ReadableStream progress)
 - `repos/` — repository CRUD
 - `repos/[repoId]/raw/` — raw repo data access
@@ -134,15 +127,6 @@ Key action files: `repos.ts`, `scans.ts`, `findings.ts`, `fixes.ts`, `policies.t
 - `fs/browse/` — filesystem browsing
 - `toolbox/check/` — CLI tool checking
 - `claude-usage/` — Claude API usage tracking
-- `projects/` — project creation and listing
-- `projects/[projectId]/` — project detail
-- `projects/[projectId]/raw/` — raw project data access
-- `projects/[projectId]/dev-server/` — dev server management
-- `projects/[projectId]/auto-fix/` — auto-fix management
-- `projects/[projectId]/export/` — project export
-- `projects/[projectId]/screenshots/` — project screenshot capture and listing
-- `projects/[projectId]/screenshots/[screenshotId]/` — individual screenshot access
-- `projects/[projectId]/upgrade/` — upgrade task management
 - `sessions/` — create and start sessions
 - `sessions/[sessionId]/` — session detail
 - `sessions/[sessionId]/stream/` — SSE event stream
@@ -152,7 +136,7 @@ Key action files: `repos.ts`, `scans.ts`, `findings.ts`, `fixes.ts`, `policies.t
 
 Key service files:
 - **`session-manager.ts`** — unified session lifecycle management (create, start, cancel, subscribe, cleanup)
-- **`session-runners/`** — 12 per-type runner factories dispatched via `sessionRunners` registry in `index.ts`
+- **`session-runners/`** — 7 per-type runner factories dispatched via `sessionRunners` registry in `index.ts`
 - **`claude-runner.ts`** — invoke Claude CLI (`runClaude()`) with stream-json parsing, abort support, PID tracking
 - **`process-runner.ts`** — generic bash process spawning with abort support and stdout/stderr streaming
 - **`claude-usage-api.ts`** — Claude usage API integration
@@ -161,7 +145,6 @@ Key service files:
 - **`fix-planner.ts`** — converts findings into fix actions with file diffs (before/after)
 - **`apply-engine.ts`** — snapshots files, applies fixes atomically (write to temp then rename), supports restore
 - **`auto-fix-engine.ts`** — automated error detection and fixing via Claude
-- **`generator.ts`** — scaffolds new projects from templates with feature toggles
 - **`reporter.ts`** — exports reports as JSON, Markdown, or PR description format
 - **`concept-scanner.ts`** / **`github-concept-scanner.ts`** / **`mcp-list-scanner.ts`** / **`claude-config-scanner.ts`** — discover concepts from various sources
 - **`claude-config.ts`** / **`claude-settings-schema.ts`** / **`claude-session-parser.ts`** — Claude config read/write/parse
@@ -170,12 +153,8 @@ Key service files:
 - **`tool-checker.ts`** — CLI tool detection and version checking
 - **`policy-matcher.ts`** / **`version-resolver.ts`** — policy matching and version resolution
 - **`interface-design.ts`** — AI-powered interface design generation
-- **`scaffold-prompt.ts`** — prompt generation for project scaffolding
 - **`language-detector.ts`** — programming language detection
 - **`finding-prompt-builder.ts`** / **`finding-classifier.ts`** — AI-powered finding analysis
-- **`dev-server-manager.ts`** — manages project dev server lifecycle
-- **`spec-exporter.ts`** — export project specs to files
-- **`screenshot-service.ts`** — capture and manage project screenshots via Playwright
 - **`quick-improve-prompts.ts`** — prompt generation for quick repo improvements
 
 ### UI Stack

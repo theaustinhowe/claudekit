@@ -97,7 +97,6 @@ describe("parsePolicy", () => {
       banned_dependencies: '[{"name": "lodash", "reason": "too big"}]',
       allowed_package_managers: '["pnpm", "npm"]',
       ignore_patterns: '["node_modules"]',
-      generator_defaults: '{"template": "nextjs"}',
       repo_types: '["nextjs"]',
     };
     const policy = parsePolicy(row);
@@ -105,7 +104,6 @@ describe("parsePolicy", () => {
     expect(policy.banned_dependencies).toEqual([{ name: "lodash", reason: "too big" }]);
     expect(policy.allowed_package_managers).toEqual(["pnpm", "npm"]);
     expect(policy.ignore_patterns).toEqual(["node_modules"]);
-    expect(policy.generator_defaults).toEqual({ template: "nextjs" });
     expect(policy.repo_types).toEqual(["nextjs"]);
   });
 
@@ -117,7 +115,6 @@ describe("parsePolicy", () => {
       banned_dependencies: "",
       allowed_package_managers: "",
       ignore_patterns: "",
-      generator_defaults: "",
       repo_types: "",
     };
     const policy = parsePolicy(row);
@@ -125,7 +122,6 @@ describe("parsePolicy", () => {
     expect(policy.banned_dependencies).toEqual([]);
     expect(policy.allowed_package_managers).toEqual([]);
     expect(policy.ignore_patterns).toEqual([]);
-    expect(policy.generator_defaults).toEqual({ features: [] });
     expect(policy.repo_types).toEqual([]);
   });
 });

@@ -108,7 +108,6 @@ The `?` placeholders are auto-converted to DuckDB's `$1, $2, ...` positional par
 | `allowed_package_managers` | TEXT | JSON array of PM strings |
 | `preferred_package_manager` | TEXT | Default `pnpm` |
 | `ignore_patterns` | TEXT | JSON array of glob patterns |
-| `generator_defaults` | TEXT | JSON object with template + features |
 | `repo_types` | TEXT | JSON array of repo type strings |
 | `is_builtin` | BOOLEAN | Default `false` |
 | `created_at` | TEXT | Auto-set |

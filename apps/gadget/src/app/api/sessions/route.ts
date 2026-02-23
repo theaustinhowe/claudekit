@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   } = body as {
     type: SessionType;
     label: string;
-    contextType?: "repo" | "project";
+    contextType?: "repo";
     contextId?: string;
     contextName?: string;
     metadata?: Record<string, unknown>;

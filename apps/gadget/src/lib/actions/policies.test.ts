@@ -15,7 +15,6 @@ vi.mock("@/lib/utils", () => ({
     banned_dependencies: JSON.parse((row.banned_dependencies as string) || "[]"),
     allowed_package_managers: JSON.parse((row.allowed_package_managers as string) || "[]"),
     ignore_patterns: JSON.parse((row.ignore_patterns as string) || "[]"),
-    generator_defaults: JSON.parse((row.generator_defaults as string) || "{}"),
     repo_types: JSON.parse((row.repo_types as string) || "[]"),
   })),
 }));
@@ -43,7 +42,7 @@ describe("getPolicies", () => {
         banned_dependencies: "[]",
         allowed_package_managers: "[]",
         ignore_patterns: "[]",
-        generator_defaults: "{}",
+
         repo_types: "[]",
       },
     ]);
@@ -73,7 +72,6 @@ describe("createPolicy", () => {
       banned_dependencies: "[]",
       allowed_package_managers: '["pnpm"]',
       ignore_patterns: "[]",
-      generator_defaults: "{}",
       repo_types: "[]",
     });
 
@@ -110,7 +108,7 @@ describe("createPolicy", () => {
       banned_dependencies: "[]",
       allowed_package_managers: "[]",
       ignore_patterns: "[]",
-      generator_defaults: '{"features":[]}',
+
       repo_types: "[]",
     });
 
@@ -134,7 +132,7 @@ describe("updatePolicy", () => {
         banned_dependencies: "[]",
         allowed_package_managers: "[]",
         ignore_patterns: "[]",
-        generator_defaults: "{}",
+
         repo_types: "[]",
       })
       .mockResolvedValueOnce({
@@ -144,7 +142,7 @@ describe("updatePolicy", () => {
         banned_dependencies: "[]",
         allowed_package_managers: "[]",
         ignore_patterns: "[]",
-        generator_defaults: "{}",
+
         repo_types: "[]",
       });
 
@@ -172,7 +170,7 @@ describe("updatePolicy", () => {
         banned_dependencies: "[]",
         allowed_package_managers: "[]",
         ignore_patterns: "[]",
-        generator_defaults: "{}",
+
         repo_types: "[]",
       })
       .mockResolvedValueOnce({
@@ -182,7 +180,7 @@ describe("updatePolicy", () => {
         banned_dependencies: "[]",
         allowed_package_managers: "[]",
         ignore_patterns: "[]",
-        generator_defaults: "{}",
+
         repo_types: "[]",
       });
 

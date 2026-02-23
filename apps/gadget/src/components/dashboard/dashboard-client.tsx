@@ -6,13 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/componen
 import {
   Activity,
   ArrowRight,
-  Bot,
   Brush,
   CheckCircle,
   Clock,
   FolderGit2,
   Hammer,
-  MessageSquare,
   Play,
   ScanSearch,
   ScrollText,
@@ -20,7 +18,6 @@ import {
   Sparkles,
   Terminal,
   Wrench,
-  Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
@@ -132,17 +129,6 @@ function GettingStartedChecklist({ onboarding }: { onboarding: OnboardingState }
           ))}
         </CardContent>
       </Card>
-
-      <div className="mt-4 text-center">
-        <Link
-          href="/projects"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-        >
-          <Sparkles className="w-4 h-4" />
-          Or, generate a new project
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
     </motion.div>
   );
 }
@@ -263,12 +249,7 @@ const sessionTypeIcons: Record<string, React.ComponentType<{ className?: string 
   scan: ScanSearch,
   quick_improve: Sparkles,
   finding_fix: Wrench,
-  chat: MessageSquare,
-  scaffold: Hammer,
-  upgrade: Zap,
-  auto_fix: Bot,
   fix_apply: Hammer,
-  upgrade_init: Zap,
   ai_file_gen: Sparkles,
   cleanup: Brush,
   toolbox_command: Terminal,
@@ -277,13 +258,8 @@ const sessionTypeIcons: Record<string, React.ComponentType<{ className?: string 
 /** Map session types to the relevant page link */
 function getSessionLink(session: SessionRow): string | null {
   if (!session.context_type || !session.context_id) return null;
-  const base =
-    session.context_type === "repo"
-      ? `/repositories/${session.context_id}`
-      : session.context_type === "project"
-        ? `/projects/${session.context_id}`
-        : null;
-  return base;
+  if (session.context_type === "repo") return `/repositories/${session.context_id}`;
+  return null;
 }
 
 function SessionFeedItem({ session }: { session: SessionRow }) {
@@ -421,12 +397,6 @@ function WorkspacePulse({ stats, isClean }: { stats: DashboardStats; isClean: bo
                 <Button variant="default" size="sm" className="gap-1.5 h-7 text-xs">
                   <Play className="w-3.5 h-3.5" />
                   {isClean ? "Run a fresh scan" : "Run a scan"}
-                </Button>
-              </Link>
-              <Link href="/projects">
-                <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  New project
                 </Button>
               </Link>
               {isClean && (
