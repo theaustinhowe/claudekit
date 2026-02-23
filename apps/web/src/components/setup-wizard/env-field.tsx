@@ -96,7 +96,7 @@ export function EnvField({
       {hasDetails && (
         <CollapsibleContent>
           <div className="flex flex-col gap-1.5 text-xs text-muted-foreground pt-2 pl-4">
-            {sources?.length > 0 && (
+            {Boolean(sources?.length) && (
               <div>
                 {sources.map((s) => (
                   <Badge key={s.appId} variant="secondary" className="text-[10px] px-1.5 py-0">

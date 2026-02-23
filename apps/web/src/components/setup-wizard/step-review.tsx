@@ -2,7 +2,8 @@
 
 import { cn } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
-import { AlertTriangle, Eye, EyeOff, FileText } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+import { AlertTriangle, ChevronRight, Eye, EyeOff, FileText } from "lucide-react";
 import { useState } from "react";
 import type { SetupWizardData } from "@/lib/env-parser";
 
@@ -94,28 +95,31 @@ export function StepReview({ wizardData, values }: StepReviewProps) {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {files.map((file) => (
-          <div key={file.path} className="border rounded-lg overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted/50">
+          <Collapsible key={file.path} className="group/file border rounded-lg overflow-hidden">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2 bg-muted/50 hover:bg-muted/80 transition-colors">
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-150 group-data-[open]/file:rotate-90" />
               <FileText className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="font-mono text-xs font-medium">{file.path}</span>
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">
                 {file.variables.length} vars
               </Badge>
-            </div>
-            <div className="divide-y">
-              {file.variables.map((v) => (
-                <div key={v.key} className="flex items-center gap-2 px-3 py-1.5 text-xs">
-                  <span className={cn("font-mono", !v.value && v.required && "text-warning")}>{v.key}</span>
-                  {!v.value && v.required && <AlertTriangle className="h-3 w-3 text-warning" />}
-                  <span className="ml-auto font-mono text-muted-foreground truncate max-w-[300px]">
-                    {v.value ? (showValues ? v.value : SENSITIVE_PATTERNS.test(v.key) ? "••••••••" : v.value) : "—"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="divide-y">
+                {file.variables.map((v) => (
+                  <div key={v.key} className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                    <span className={cn("font-mono", !v.value && v.required && "text-warning")}>{v.key}</span>
+                    {!v.value && v.required && <AlertTriangle className="h-3 w-3 text-warning" />}
+                    <span className="ml-auto font-mono text-muted-foreground truncate max-w-[300px]">
+                      {v.value ? (showValues ? v.value : SENSITIVE_PATTERNS.test(v.key) ? "••••••••" : v.value) : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         ))}
       </div>
 
