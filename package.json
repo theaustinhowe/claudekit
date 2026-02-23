@@ -23,6 +23,7 @@
     "test:coverage": "tsx scripts/test.ts --coverage",
     "db:reset": "tsx scripts/db-reset.ts",
     "knip": "knip",
+    "clean": "tsx scripts/clean.ts",
     "check": "pnpm typecheck && pnpm lint && pnpm test && NODE_ENV=production pnpm build",
     "storybook": "pnpm --filter @claudekit/ui storybook"
   },
