@@ -9,6 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@claudekit/ui/components/dialog";
 import { TooltipProvider } from "@claudekit/ui/components/tooltip";
 import { Loader2 } from "lucide-react";
@@ -22,11 +23,11 @@ import { StepReview } from "./step-review";
 import { StepShared } from "./step-shared";
 
 interface SetupWizardDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  trigger: React.ReactNode;
 }
 
-export function SetupWizardDialog({ open, onOpenChange }: SetupWizardDialogProps) {
+export function SetupWizardDialog({ trigger }: SetupWizardDialogProps) {
+  const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Record<string, string>>({});
   const [wizardData, setWizardData] = useState<SetupWizardData | null>(null);
@@ -60,7 +61,7 @@ export function SetupWizardDialog({ open, onOpenChange }: SetupWizardDialogProps
         toast.success(`Saved to ${result.filesWritten.length} files`, {
           description: result.filesWritten.join(", "),
         });
-        onOpenChange(false);
+        setOpen(false);
       } else {
         toast.error("Some files failed to save", {
           description: result.errors.join("\n"),
@@ -71,12 +72,13 @@ export function SetupWizardDialog({ open, onOpenChange }: SetupWizardDialogProps
     } finally {
       setIsSaving(false);
     }
-  }, [values, onOpenChange]);
+  }, [values]);
 
   const isLastStep = step === 2;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-2xl">
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
@@ -113,7 +115,7 @@ export function SetupWizardDialog({ open, onOpenChange }: SetupWizardDialogProps
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isSaving}>
+                <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={isSaving}>
                   {isLastStep ? "Cancel" : "Skip"}
                 </Button>
                 {isLastStep ? (

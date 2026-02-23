@@ -201,7 +201,6 @@ function SettingsPopover({
 
 export function DashboardClient({ logFiles, initialTodos, initialSettings }: DashboardClientProps) {
   const [apps, setApps] = useState<AppInfo[] | null>(null);
-  const [setupOpen, setSetupOpen] = useState(false);
   const { todosByApp, addTodo, toggleTodo, editTodo, deleteTodo, clearCompleted } = useTodos(initialTodos);
   const [settings, setSettings] = useState<AppSettings>(initialSettings ?? { version: 1, apps: {} });
   const [stopping, setStopping] = useState<Set<string>>(new Set());
@@ -363,7 +362,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
   const setupButton = (
     <button
       type="button"
-      onClick={() => setSetupOpen(true)}
       className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
     >
       <Settings className="h-4 w-4" />
@@ -566,8 +564,6 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
     <TooltipProvider>
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
-          <SetupWizardDialog open={setupOpen} onOpenChange={setSetupOpen} />
-
           {/* Todo drawer */}
           {todoSheetApp && (
             <TodoSheet
@@ -588,7 +584,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
             <section className="mb-10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Applications</h2>
-                {setupButton}
+                <SetupWizardDialog trigger={setupButton} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <AppCardSkeleton index={0} />
@@ -607,7 +603,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
             <section className="mb-10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Active</h2>
-                {setupButton}
+                <SetupWizardDialog trigger={setupButton} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">{activeApps.map((app) => renderActiveCard(app))}</div>
             </section>
@@ -617,7 +613,7 @@ export function DashboardClient({ logFiles, initialTodos, initialSettings }: Das
           {apps !== null && activeApps.length === 0 && (
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Applications</h2>
-              {setupButton}
+              <SetupWizardDialog trigger={setupButton} />
             </div>
           )}
 
