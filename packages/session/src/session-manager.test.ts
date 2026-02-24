@@ -958,6 +958,109 @@ describe("createSessionManager", () => {
   });
 
   // ---------------------------------------------------------------------------
+  // emitEvent
+  // ---------------------------------------------------------------------------
+
+  describe("emitEvent", () => {
+    it("should return false for non-existent sessionId", () => {
+      const manager = createSessionManager({ persistence, useGlobalCache: false });
+
+      const result = manager.emitEvent("does-not-exist", { type: "progress", progress: 50 });
+
+      expect(result).toBe(false);
+    });
+
+    it("should return false for a completed (done) session", async () => {
+      vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
+
+      const runner: SessionRunner = async () => ({ result: {} });
+      const manager = createSessionManager({ persistence, useGlobalCache: false });
+
+      const live = await manager.startSession("s1", runner);
+      await live.completionPromise;
+
+      expect(live.status).toBe("done");
+
+      const result = manager.emitEvent("s1", { type: "progress", progress: 50 });
+      expect(result).toBe(false);
+    });
+
+    it("should return false for an errored session", async () => {
+      vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
+
+      const runner: SessionRunner = async () => {
+        throw new Error("fail");
+      };
+      const manager = createSessionManager({ persistence, useGlobalCache: false });
+
+      const live = await manager.startSession("s1", runner);
+      await live.completionPromise;
+
+      expect(live.status).toBe("error");
+
+      const result = manager.emitEvent("s1", { type: "progress", progress: 50 });
+      expect(result).toBe(false);
+    });
+
+    it("should return false for a cancelled session", async () => {
+      vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
+
+      const runner: SessionRunner = async ({ signal }) => {
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
+        });
+      };
+      const manager = createSessionManager({ persistence, useGlobalCache: false });
+
+      const live = await manager.startSession("s1", runner);
+      await manager.cancelSession("s1");
+      await live.completionPromise;
+
+      expect(live.status).toBe("cancelled");
+
+      const result = manager.emitEvent("s1", { type: "progress", progress: 50 });
+      expect(result).toBe(false);
+    });
+
+    it("should return true and fan out event for a running session", async () => {
+      vi.mocked(persistence.loadSession).mockResolvedValue(defaultSessionRow());
+
+      let resolveRunner!: (v: { result?: Record<string, unknown> }) => void;
+      const runner: SessionRunner = () =>
+        new Promise((resolve) => {
+          resolveRunner = resolve;
+        });
+      const manager = createSessionManager({ persistence, useGlobalCache: false });
+
+      const live = await manager.startSession("s1", runner);
+
+      const received: SessionEvent[] = [];
+      manager.subscribe("s1", (event) => received.push(event));
+
+      // Clear replayed events
+      received.length = 0;
+
+      const result = manager.emitEvent("s1", { type: "progress", progress: 75, message: "external event" });
+      expect(result).toBe(true);
+
+      expect(received).toHaveLength(1);
+      expect(received[0].type).toBe("progress");
+      expect(received[0].progress).toBe(75);
+      expect(received[0].message).toBe("external event");
+
+      // Also verify it's in the ring buffer
+      const lastEvent = live.events[live.events.length - 1];
+      expect(lastEvent.type).toBe("progress");
+      expect(lastEvent.progress).toBe(75);
+
+      resolveRunner({ result: {} });
+      await live.completionPromise;
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // globalThis caching
   // ---------------------------------------------------------------------------
 

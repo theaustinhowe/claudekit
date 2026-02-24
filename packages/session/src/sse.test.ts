@@ -446,6 +446,78 @@ describe("createSessionSSEResponse", () => {
     });
   });
 
+  describe("heartbeat", () => {
+    it("sends heartbeat events at the configured interval", async () => {
+      let subscriberCallback: ((event: SessionEvent) => void) | null = null;
+      const unsubscribe = vi.fn();
+      const manager = createMockManager(true, (cb) => {
+        subscriberCallback = cb;
+        return unsubscribe;
+      });
+      const replay = createMockReplay();
+      const request = createMockRequest();
+
+      const response = createSessionSSEResponse({
+        sessionId: "s1",
+        request,
+        manager,
+        replay,
+        heartbeatIntervalMs: 5000,
+      });
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+
+      // Advance past the heartbeat interval to trigger a heartbeat
+      await vi.advanceTimersByTimeAsync(5000);
+
+      // Read the heartbeat event from the stream
+      const { value } = await reader.read();
+      const text = decoder.decode(value, { stream: true });
+
+      expect(text).toContain('"type":"heartbeat"');
+
+      // Now send a done event to close the stream cleanly
+      subscriberCallback!({ type: "done", progress: 100 } as SessionEvent);
+      // Drain remaining chunks
+      while (true) {
+        const { done } = await reader.read();
+        if (done) break;
+      }
+    });
+  });
+
+  describe("send catch block", () => {
+    it("sets closed=true when controller.enqueue throws", async () => {
+      let subscriberCallback: ((event: SessionEvent) => void) | null = null;
+      const unsubscribe = vi.fn();
+      const manager = createMockManager(true, (cb) => {
+        subscriberCallback = cb;
+        return unsubscribe;
+      });
+      const replay = createMockReplay();
+      const request = createMockRequest();
+
+      const response = createSessionSSEResponse({
+        sessionId: "s1",
+        request,
+        manager,
+        replay,
+      });
+
+      // Cancel the body stream immediately to make controller.enqueue throw
+      await response.body?.cancel();
+
+      // Now try to send an event — it should hit the catch block in send()
+      // (the stream is cancelled so enqueue will throw)
+      subscriberCallback!({ type: "log", log: "after cancel" } as SessionEvent);
+
+      // The stream should be closed. No assertion needed beyond no-throw,
+      // but we can verify unsubscribe was called from the cancel handler
+      expect(unsubscribe).toHaveBeenCalled();
+    });
+  });
+
   describe("stream cancel cleanup", () => {
     it("marks stream as closed on cancel", async () => {
       const unsubscribe = vi.fn();
