@@ -85,8 +85,8 @@ export function createChatRunner(metadata: Record<string, unknown>, contextId?: 
     onProgress({ type: "progress", log: "Prompt", logType: "phase-separator" });
     collectedLogs.push({ log: "Prompt", logType: "phase-separator" });
     for (const line of fullPrompt.split("\n")) {
-      onProgress({ type: "progress", log: line, logType: "status" });
-      collectedLogs.push({ log: line, logType: "status" });
+      onProgress({ type: "progress", log: line, logType: "prompt" });
+      collectedLogs.push({ log: line, logType: "prompt" });
     }
     onProgress({ type: "progress", log: "Output", logType: "phase-separator" });
     collectedLogs.push({ log: "Output", logType: "phase-separator" });

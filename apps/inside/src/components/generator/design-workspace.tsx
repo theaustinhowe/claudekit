@@ -111,6 +111,11 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   const [activeUpgradeTaskTitle, setActiveUpgradeTaskTitle] = useState<string | null>(null);
   const [upgradeInitPhase, setUpgradeInitPhase] = useState<string | null>(null);
 
+  // Persisted task logs (for hydrating completed/failed task entries on load)
+  const [initialTaskLogs, setInitialTaskLogs] = useState<
+    Record<string, Array<{ log: string; logType: string }>> | undefined
+  >(undefined);
+
   // Queue state for upgrade mode
   const [messageQueue, setMessageQueue] = useState<string[]>([]);
   const messageQueueRef = useRef<string[]>([]);
@@ -368,6 +373,9 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
           if (data?.tasks) {
             setUpgradeTasks(data.tasks);
             setPreviewTab("tasks");
+            if (data.taskLogs) {
+              setInitialTaskLogs(data.taskLogs);
+            }
           }
         })
         .catch(() => {});
@@ -787,6 +795,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
                     onActiveTaskChange={handleActiveTaskChange}
                     onTaskFinished={handleTaskFinished}
                     canStartTask={!isProcessingQueue}
+                    initialTaskLogs={initialTaskLogs}
                   />
                 )
               ) : undefined

@@ -16,12 +16,13 @@ import {
   Square,
   X,
 } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { cn, formatElapsed } from "../utils";
 import { Badge } from "./badge";
 import { Button } from "./button";
 import { Progress } from "./progress";
+import { parseStreamLog, resetStreamIdCounter, type StreamEntry, StreamingDisplay } from "./streaming-display";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 
 // ---------------------------------------------------------------------------
@@ -88,89 +89,6 @@ function isRunningStatus(status: TerminalStatus): boolean {
 
 function isCardVariant(variant: string): boolean {
   return variant === "card";
-}
-
-// ---------------------------------------------------------------------------
-// TerminalLogLine
-// ---------------------------------------------------------------------------
-
-function TerminalLogLine({ entry, card }: { entry: LogEntry; card: boolean }) {
-  const { log, logType } = entry;
-  const isStderr = log.startsWith("[stderr]");
-
-  if (card) {
-    // Card variant uses inline styles matching the B4U approach
-    const style: React.CSSProperties = {
-      fontSize: 12,
-      lineHeight: 1.5,
-      padding: "1px 0",
-      whiteSpace: "pre-wrap",
-      wordBreak: "break-word",
-    };
-
-    switch (logType) {
-      case "tool":
-        style.color = "hsl(var(--info))";
-        style.fontFamily = "var(--font-mono)";
-        break;
-      case "thinking":
-        style.color = "hsl(var(--muted-foreground) / 0.7)";
-        style.fontStyle = "italic";
-        break;
-      case "phase-separator":
-        return (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 0",
-              color: "hsl(var(--muted-foreground))",
-              fontSize: 11,
-            }}
-          >
-            <div style={{ flex: 1, height: 1, background: "hsl(var(--border))" }} />
-            <span>{log}</span>
-            <div style={{ flex: 1, height: 1, background: "hsl(var(--border))" }} />
-          </div>
-        );
-      default:
-        if (isStderr) {
-          style.color = "hsl(var(--destructive))";
-        } else {
-          style.color = "hsl(var(--muted-foreground))";
-        }
-        break;
-    }
-
-    return <div style={style}>{log}</div>;
-  }
-
-  // terminal / compact variant uses Tailwind classes
-  if (logType === "phase-separator") {
-    return (
-      <div className="flex items-center gap-2 py-1.5 mt-1">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider shrink-0">{log}</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        "whitespace-pre-wrap break-words text-[12px] leading-relaxed",
-        logType === "tool" && "text-info font-mono",
-        logType === "thinking" && "text-muted-foreground italic",
-        logType === "status" && "text-foreground",
-        isStderr && "text-destructive",
-        !["tool", "thinking", "status"].includes(logType) && !isStderr && "text-muted-foreground",
-      )}
-    >
-      {log}
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -574,6 +492,15 @@ export function SessionTerminal({
 
   const resolvedMaxHeight = maxHeight ?? (variant === "terminal" ? "100%" : variant === "compact" ? "400px" : "320px");
 
+  const parsedEntries = useMemo(() => {
+    resetStreamIdCounter();
+    const result: StreamEntry[] = [];
+    for (const entry of logs) {
+      result.push(...parseStreamLog(entry.log, entry.logType));
+    }
+    return result;
+  }, [logs]);
+
   const handleCopy = useCallback(async () => {
     const text = logs.map((l) => l.log).join("\n");
     try {
@@ -663,18 +590,12 @@ export function SessionTerminal({
                 padding: "8px 12px",
               }}
             >
-              {logs.length === 0 ? (
+              {parsedEntries.length === 0 ? (
                 <div className="text-xs text-muted-foreground" style={{ padding: "8px 0" }}>
                   {isRunning ? "Waiting for output..." : "No logs available"}
                 </div>
               ) : (
-                logs.map((entry, i) => (
-                  <TerminalLogLine
-                    key={/* biome-ignore lint/suspicious/noArrayIndexKey: log entries are append-only */ i}
-                    entry={entry}
-                    card
-                  />
-                ))
+                <StreamingDisplay entries={parsedEntries} variant="terminal" live={isRunning} />
               )}
 
               {/* Error display */}
@@ -743,13 +664,7 @@ export function SessionTerminal({
             aria-label={ariaLabel ?? title ?? "Session output"}
             className="flex-1 overflow-y-auto p-3 space-y-0 min-h-0"
           >
-            {logs.map((entry, i) => (
-              <TerminalLogLine
-                key={/* biome-ignore lint/suspicious/noArrayIndexKey: log entries are append-only */ i}
-                entry={entry}
-                card={false}
-              />
-            ))}
+            <StreamingDisplay entries={parsedEntries} variant="terminal" live={isRunning} />
 
             {status === "error" && error && (
               <div className="flex items-center gap-2 text-destructive mt-3 text-xs">

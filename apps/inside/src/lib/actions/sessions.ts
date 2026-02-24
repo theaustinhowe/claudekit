@@ -118,6 +118,50 @@ export async function getSessionLogsFromDb(sessionId: string, limit = 200): Prom
   );
 }
 
+export async function getUpgradeTaskLogs(
+  projectId: string,
+  taskIds: string[],
+): Promise<Record<string, Array<{ log: string; logType: string }>>> {
+  if (taskIds.length === 0) return {};
+
+  const db = await getDb();
+  const result: Record<string, Array<{ log: string; logType: string }>> = {};
+
+  // Find the most recent session per taskId
+  // metadata_json is stored as a JSON string, use json_extract_string to read taskId
+  const placeholders = taskIds.map(() => "?").join(", ");
+  const sessions = await queryAll<{ id: string; task_id: string }>(
+    db,
+    `SELECT s.id, json_extract_string(s.metadata_json, '$.taskId') AS task_id
+     FROM sessions s
+     WHERE s.context_id = ?
+       AND s.session_type = 'upgrade'
+       AND json_extract_string(s.metadata_json, '$.taskId') IN (${placeholders})
+     ORDER BY s.started_at DESC`,
+    [projectId, ...taskIds],
+  );
+
+  // Take first match per taskId (most recent due to ORDER BY DESC)
+  const sessionByTaskId = new Map<string, string>();
+  for (const s of sessions) {
+    if (!sessionByTaskId.has(s.task_id)) {
+      sessionByTaskId.set(s.task_id, s.id);
+    }
+  }
+
+  // Fetch logs for each session (limit 500 per task, same as SSE replay)
+  for (const [taskId, sessionId] of sessionByTaskId) {
+    const logs = await queryAll<{ log: string; log_type: string }>(
+      db,
+      "SELECT log, log_type FROM session_logs WHERE session_id = ? ORDER BY created_at ASC, id ASC LIMIT 500",
+      [sessionId],
+    );
+    result[taskId] = logs.map((l) => ({ log: l.log, logType: l.log_type }));
+  }
+
+  return result;
+}
+
 export async function insertSessionLogs(
   sessionId: string,
   logs: Array<{ log: string; logType: string }>,

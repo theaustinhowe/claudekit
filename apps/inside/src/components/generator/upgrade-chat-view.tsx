@@ -32,6 +32,8 @@ interface UpgradeChatViewProps {
   onActiveTaskChange?: (taskId: string | null, taskTitle: string | null) => void;
   onTaskFinished?: (taskId: string, status: UpgradeTaskStatus) => void;
   canStartTask?: boolean;
+  /** Persisted session logs for completed/failed tasks, keyed by taskId */
+  initialTaskLogs?: Record<string, Array<{ log: string; logType: string }>>;
 }
 
 export function UpgradeChatView({
@@ -43,6 +45,7 @@ export function UpgradeChatView({
   onActiveTaskChange,
   onTaskFinished,
   canStartTask = true,
+  initialTaskLogs,
 }: UpgradeChatViewProps) {
   const [taskEntries, setTaskEntries] = useState<Record<string, StreamEntry[]>>({});
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -83,6 +86,28 @@ export function UpgradeChatView({
       setStatusMap(updated);
     }
   }, [tasks]);
+
+  // Hydrate taskEntries from persisted session logs on initial load
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current || !initialTaskLogs) return;
+    if (Object.keys(initialTaskLogs).length === 0) return;
+
+    hydratedRef.current = true;
+    const hydrated: Record<string, StreamEntry[]> = {};
+    for (const [taskId, logs] of Object.entries(initialTaskLogs)) {
+      const entries: StreamEntry[] = [];
+      for (const { log, logType } of logs) {
+        entries.push(...parseStreamLog(log, logType));
+      }
+      if (entries.length > 0) {
+        hydrated[taskId] = entries;
+      }
+    }
+    if (Object.keys(hydrated).length > 0) {
+      setTaskEntries((prev) => ({ ...hydrated, ...prev }));
+    }
+  }, [initialTaskLogs]);
 
   const completed = Object.values(statusMap).filter((s) => s === "completed").length;
   const failed = Object.values(statusMap).filter((s) => s === "failed").length;

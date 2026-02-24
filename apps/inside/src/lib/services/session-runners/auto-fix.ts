@@ -47,9 +47,9 @@ Instructions:
     // Emit the prompt so the terminal shows what Claude is working on
     onProgress({ type: "progress", log: "Prompt", logType: "phase-separator" });
     for (const line of prompt.split("\n")) {
-      const logEntry = { log: line, logType: "status" };
+      const logEntry = { log: line, logType: "prompt" };
       logs.push(logEntry);
-      onProgress({ type: "log", log: line, logType: "status" });
+      onProgress({ type: "log", log: line, logType: "prompt" });
     }
     onProgress({ type: "progress", log: "Output", logType: "phase-separator" });
 

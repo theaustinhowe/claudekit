@@ -1,6 +1,16 @@
 "use client";
 
-import { CheckCircle2, ChevronDown, ChevronRight, Eye, FileCode, FolderOpen, Terminal, Zap } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  FileCode,
+  FolderOpen,
+  MessageSquareText,
+  Terminal,
+  Zap,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
 
@@ -11,7 +21,15 @@ import { Badge } from "./badge";
 // Types
 // ---------------------------------------------------------------------------
 
-export type StreamEntryKind = "file-write" | "file-edit" | "bash-command" | "read-op" | "thinking" | "status";
+export type StreamEntryKind =
+  | "file-write"
+  | "file-edit"
+  | "bash-command"
+  | "read-op"
+  | "thinking"
+  | "status"
+  | "phase-separator"
+  | "prompt";
 
 export interface StreamEntry {
   id: number;
@@ -21,6 +39,7 @@ export interface StreamEntry {
   command?: string;
   thinkingText?: string;
   statusText?: string;
+  phaseLabel?: string;
   rawText: string;
 }
 
@@ -28,7 +47,8 @@ type GroupedStreamItem =
   | { type: "single"; entry: StreamEntry }
   | { type: "file-group"; dir: string; entries: StreamEntry[] }
   | { type: "thinking-group"; entries: StreamEntry[] }
-  | { type: "read-group"; entries: StreamEntry[] };
+  | { type: "read-group"; entries: StreamEntry[] }
+  | { type: "prompt-group"; label: string; entries: StreamEntry[] };
 
 // ---------------------------------------------------------------------------
 // Helpers — file icon colors
@@ -79,6 +99,31 @@ export function resetStreamIdCounter(): void {
 
 export function parseStreamLog(log: string, logType: string): StreamEntry[] {
   const entries: StreamEntry[] = [];
+
+  // Phase separator: single entry for the whole log
+  if (logType === "phase-separator") {
+    entries.push({
+      id: ++_streamIdCounter,
+      kind: "phase-separator",
+      phaseLabel: log,
+      rawText: log,
+    });
+    return entries;
+  }
+
+  // Prompt lines: each line becomes a prompt entry
+  if (logType === "prompt") {
+    for (const raw of log.split("\n")) {
+      entries.push({
+        id: ++_streamIdCounter,
+        kind: "prompt",
+        statusText: raw,
+        rawText: raw,
+      });
+    }
+    return entries;
+  }
+
   const lines = log.split("\n");
 
   for (const raw of lines) {
@@ -234,6 +279,58 @@ function groupStreamEntries(entries: StreamEntry[]): GroupedStreamItem[] {
 
   while (i < entries.length) {
     const entry = entries[i];
+
+    // Group phase-separator + consecutive prompt/status entries into a prompt-group
+    // Also detect status entries that look like prompt separators (backwards compat with old sessions
+    // where parseStreamLog didn't handle phase-separator logType)
+    const isPromptSeparator =
+      (entry.kind === "phase-separator" && entry.phaseLabel?.startsWith("Prompt")) ||
+      (entry.kind === "status" && entry.statusText?.startsWith("Prompt"));
+    if (isPromptSeparator) {
+      const label = entry.phaseLabel || entry.statusText || "Prompt";
+      const promptEntries: StreamEntry[] = [];
+      let j = i + 1;
+      while (j < entries.length) {
+        const next = entries[j];
+        // Stop at phase-separators (e.g. "Output") or status entries that look like separators
+        if (next.kind === "phase-separator") break;
+        if (next.kind === "status" && (next.statusText?.startsWith("Output") || next.statusText?.startsWith("---"))) {
+          break;
+        }
+        if (next.kind === "prompt" || next.kind === "status") {
+          promptEntries.push(next);
+          j++;
+        } else {
+          break;
+        }
+      }
+      if (promptEntries.length > 0) {
+        groups.push({ type: "prompt-group", label, entries: promptEntries });
+        i = j;
+        continue;
+      }
+      // No prompt entries followed — render separator standalone
+    }
+
+    // Standalone phase-separator (e.g. "Output")
+    // Also detect status entries that look like "Output" separators (backwards compat)
+    if (entry.kind === "phase-separator" || (entry.kind === "status" && entry.statusText === "Output")) {
+      // Normalize to phase-separator for rendering
+      const normalized =
+        entry.kind === "phase-separator"
+          ? entry
+          : { ...entry, kind: "phase-separator" as const, phaseLabel: entry.statusText };
+      groups.push({ type: "single", entry: normalized });
+      i++;
+      continue;
+    }
+
+    // Standalone prompt entries (not grouped)
+    if (entry.kind === "prompt") {
+      groups.push({ type: "single", entry });
+      i++;
+      continue;
+    }
 
     // Group consecutive file writes/edits in the same directory
     if (entry.kind === "file-write" || entry.kind === "file-edit") {
@@ -563,6 +660,69 @@ function ReadOpEntry({ entry, variant }: { entry: StreamEntry; variant: Variant 
   );
 }
 
+function PhaseSeparatorEntry({ entry }: { entry: StreamEntry; variant: Variant }) {
+  return (
+    <div className="flex items-center gap-2 py-2 mt-1">
+      <div className="flex-1 h-px bg-border" />
+      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider shrink-0">
+        {entry.phaseLabel}
+      </span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
+
+function PromptGroupSection({ label, entries, variant }: { label: string; entries: StreamEntry[]; variant: Variant }) {
+  const [expanded, setExpanded] = useState(false);
+  const nonEmptyEntries = entries.filter((e) => (e.statusText ?? e.rawText ?? "").trim());
+
+  return (
+    <div className="my-1">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className={cn(
+          "flex items-center gap-1.5 text-xs transition-colors rounded-md px-2 py-1",
+          variant === "chat"
+            ? "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50",
+        )}
+      >
+        {expanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+        <MessageSquareText className="w-3 h-3 shrink-0" />
+        <span>
+          {label} ({nonEmptyEntries.length} line{nonEmptyEntries.length !== 1 ? "s" : ""})
+        </span>
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="pl-5 space-y-0 border-l border-border ml-1.5">
+              {nonEmptyEntries.map((e) => (
+                <div
+                  key={e.id}
+                  className={cn(
+                    "text-xs leading-relaxed py-0.5 whitespace-pre-wrap break-words",
+                    variant === "chat" ? "text-muted-foreground/70" : "text-muted-foreground",
+                  )}
+                >
+                  {e.statusText ?? e.rawText}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function ThinkingEntry({ entry, variant }: { entry: StreamEntry; variant: Variant }) {
   const isChat = variant === "chat";
 
@@ -628,6 +788,16 @@ function StreamEntryList({ grouped, variant }: { grouped: GroupedStreamItem[]; v
         if (group.type === "read-group") {
           return <ReadGroupSection key={group.entries[0].id} entries={group.entries} variant={variant} />;
         }
+        if (group.type === "prompt-group") {
+          return (
+            <PromptGroupSection
+              key={group.entries[0].id}
+              label={group.label}
+              entries={group.entries}
+              variant={variant}
+            />
+          );
+        }
         const entry = group.entry;
         if (entry.kind === "file-write" || entry.kind === "file-edit") {
           return <FileWriteRow key={entry.id} entry={entry} variant={variant} />;
@@ -642,6 +812,12 @@ function StreamEntryList({ grouped, variant }: { grouped: GroupedStreamItem[]; v
           return <ReadOpEntry key={entry.id} entry={entry} variant={variant} />;
         }
         if (entry.kind === "status") {
+          return <StatusEntry key={entry.id} entry={entry} variant={variant} />;
+        }
+        if (entry.kind === "phase-separator") {
+          return <PhaseSeparatorEntry key={entry.id} entry={entry} variant={variant} />;
+        }
+        if (entry.kind === "prompt") {
           return <StatusEntry key={entry.id} entry={entry} variant={variant} />;
         }
         return null;
