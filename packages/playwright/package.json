@@ -10,6 +10,7 @@
     "./testing": "./src/testing.ts"
   },
   "scripts": {
+    "postinstall": "npx playwright install chromium",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
