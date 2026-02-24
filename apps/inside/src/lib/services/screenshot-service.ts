@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { captureScreenshot as playwrightScreenshot } from "@claudekit/playwright";
 import { expandTilde } from "@/lib/utils";
 
 const SCREENSHOTS_DIR = path.join(expandTilde("~"), ".inside", "screenshots");
@@ -20,9 +21,6 @@ export async function captureScreenshot(projectId: string, port: number): Promis
     const fileName = `${timestamp}.png`;
     const filePath = path.join(projectDir, fileName);
 
-    // Dynamic import with variable to prevent Turbopack from statically analyzing
-    const pkg = "@claudekit/playwright";
-    const { captureScreenshot: playwrightScreenshot } = await import(/* webpackIgnore: true */ pkg);
     await playwrightScreenshot(`http://localhost:${port}`, {
       viewport: { width: 1280, height: 800 },
       path: filePath,
@@ -37,7 +35,8 @@ export async function captureScreenshot(projectId: string, port: number): Promis
       height: 800,
       fileSize: stats.size,
     };
-  } catch {
+  } catch (err) {
+    console.error("[screenshot-service] capture failed:", err);
     return null;
   }
 }
