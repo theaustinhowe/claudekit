@@ -24,6 +24,11 @@ const db = createDatabase({
       [nowTimestamp()],
     );
 
+    // Recover orphaned projects stuck in 'scaffolding' after a server restart
+    await execute(conn, "UPDATE generator_projects SET status = 'error', updated_at = ? WHERE status = 'scaffolding'", [
+      nowTimestamp(),
+    ]);
+
     // Prune old session logs (older than 7 days)
     const logCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     await execute(conn, "DELETE FROM session_logs WHERE created_at < ?", [logCutoff]);

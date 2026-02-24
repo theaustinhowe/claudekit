@@ -147,6 +147,8 @@ export function createSessionManager(config: SessionManagerConfig): SessionManag
         await flushLogs(session, persistence);
 
         session.status = "done";
+        fanOut(session, { type: "done", progress: 100, data: result });
+
         const completedAt = new Date().toISOString();
         await persistence.updateSession(sessionId, {
           status: "done",
@@ -154,8 +156,6 @@ export function createSessionManager(config: SessionManagerConfig): SessionManag
           completed_at: completedAt,
           result_json: JSON.stringify(result ?? {}),
         });
-
-        fanOut(session, { type: "done", progress: 100, data: result });
       } catch (err) {
         if (session.logFlushTimer) clearInterval(session.logFlushTimer);
         session.logFlushTimer = null;
@@ -165,23 +165,25 @@ export function createSessionManager(config: SessionManagerConfig): SessionManag
 
         if (isAbort) {
           session.status = "cancelled";
+          fanOut(session, { type: "cancelled", message: "Session cancelled" });
+
           const completedAt = new Date().toISOString();
           await persistence.updateSession(sessionId, {
             status: "cancelled",
             completed_at: completedAt,
             error_message: "Cancelled by user",
           });
-          fanOut(session, { type: "cancelled", message: "Session cancelled" });
         } else {
           const errorMsg = err instanceof Error ? err.message : String(err);
           session.status = "error";
+          fanOut(session, { type: "error", message: errorMsg });
+
           const completedAt = new Date().toISOString();
           await persistence.updateSession(sessionId, {
             status: "error",
             completed_at: completedAt,
             error_message: errorMsg,
           });
-          fanOut(session, { type: "error", message: errorMsg });
         }
 
         if (session.cleanupFn) {

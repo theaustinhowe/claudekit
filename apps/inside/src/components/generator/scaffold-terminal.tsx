@@ -3,10 +3,11 @@
 import type { SessionStreamEvent } from "@claudekit/hooks";
 import { useSessionStream } from "@claudekit/hooks";
 import { Badge } from "@claudekit/ui/components/badge";
+import { Button } from "@claudekit/ui/components/button";
 import { SessionTerminal } from "@claudekit/ui/components/session-terminal";
 import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
 import { parseStreamLog, resetStreamIdCounter } from "@claudekit/ui/components/streaming-display";
-import { CheckCircle2, FileCode } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileCode } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -81,6 +82,7 @@ export function ScaffoldTerminal({
   onStatusChange,
 }: ScaffoldTerminalProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [parsedLogs, setParsedLogs] = useState<StreamEntry[]>([]);
 
   const fileCount = useMemo(
@@ -145,6 +147,7 @@ export function ScaffoldTerminal({
       }
 
       try {
+        setCreateError(null);
         const res = await fetch("/api/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -164,8 +167,8 @@ export function ScaffoldTerminal({
 
         const data = await res.json();
         setSessionId(data.sessionId);
-      } catch {
-        // Session creation failed — will show error via session status
+      } catch (err) {
+        setCreateError(err instanceof Error ? err.message : "Failed to start scaffolding session");
       }
     },
     [projectId, projectName],
@@ -212,6 +215,22 @@ export function ScaffoldTerminal({
     session.cancel();
     onCancel();
   }, [session, onCancel]);
+
+  // Session creation failed — show error with retry
+  if (createError && !sessionId) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-4 p-8">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="w-5 h-5" />
+          <span className="text-sm font-medium">Failed to start scaffolding</span>
+        </div>
+        <p className="text-xs text-muted-foreground text-center max-w-md">{createError}</p>
+        <Button variant="outline" size="sm" onClick={() => createNewSession()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">

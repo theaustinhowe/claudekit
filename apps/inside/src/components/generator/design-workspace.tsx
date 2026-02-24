@@ -287,6 +287,66 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
     }
   }, []);
 
+  // Polling fallback: if SSE drops during scaffolding, poll project status to detect completion
+  useEffect(() => {
+    if (!scaffolding) return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/projects/${project.id}/status`);
+        if (!res.ok || cancelled) return;
+        const { status } = await res.json();
+
+        if (status === "designing" || status === "upgrading" || status === "exported" || status === "archived") {
+          // Scaffold completed but SSE missed it — transition now
+          setScaffolding(false);
+          setProjectStatus("designing");
+          startDevServer();
+          updateGeneratorProject(project.id, { status: "designing" }).catch(() => {});
+
+          try {
+            const msg = await createDesignMessage({
+              project_id: project.id,
+              role: "assistant",
+              content: `Your project **${project.title}** has been scaffolded!\n\nThe dev server is starting up and you'll see a preview on the right shortly. You can now describe any changes you'd like to make.`,
+              suggestions: [
+                "Refine the layout and spacing",
+                "Add more pages or sections",
+                "Improve the color scheme and typography",
+                "Add animations and transitions",
+              ],
+            });
+            setMessages((prev) => [...prev, msg]);
+          } catch {
+            // Non-critical
+          }
+        } else if (status === "error") {
+          setScaffolding(false);
+          setProjectStatus("error");
+        }
+      } catch {
+        // Poll failed — will retry next interval
+      }
+    };
+
+    // First poll after 10s (give SSE a chance), then every 15s
+    const initialTimer = setTimeout(() => {
+      if (cancelled) return;
+      poll();
+      intervalRef = setInterval(poll, 15_000);
+    }, 10_000);
+
+    let intervalRef: ReturnType<typeof setInterval> | undefined;
+
+    return () => {
+      cancelled = true;
+      clearTimeout(initialTimer);
+      if (intervalRef) clearInterval(intervalRef);
+    };
+  }, [scaffolding, project.id, project.title, startDevServer]);
+
   // Load auto-fix state on mount
   // biome-ignore lint/correctness/useExhaustiveDependencies: only on mount
   useEffect(() => {
@@ -494,7 +554,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   // Scaffolding view — full-width terminal
   if (scaffolding) {
     return (
-      <div className="h-[calc(100vh-3.5rem)] flex flex-col">
+      <div className="h-full flex flex-col">
         <div className="border-b px-4 py-2 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <h2 className="font-semibold text-sm">{project.title}</h2>
@@ -521,7 +581,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             )}
           </div>
         </div>
-        <div className="flex-1 p-4 overflow-hidden">
+        <div className="flex-1 p-4 overflow-hidden min-h-0">
           <ScaffoldTerminal
             projectId={project.id}
             onComplete={handleScaffoldComplete}
@@ -557,7 +617,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
 
   // Design / Upgrade view — split pane with chat/tasks + preview
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col" data-workspace-status={projectStatus}>
+    <div className="h-full flex flex-col" data-workspace-status={projectStatus}>
       {/* Toolbar */}
       <div className="border-b px-4 py-2 flex items-center justify-between shrink-0 workspace-accent">
         <div className="flex items-center gap-2.5">

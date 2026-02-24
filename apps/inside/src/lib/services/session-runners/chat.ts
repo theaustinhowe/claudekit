@@ -75,13 +75,25 @@ export function createChatRunner(metadata: Record<string, unknown>, contextId?: 
     let fullContent = "";
     const collectedLogs: { log: string; logType: string }[] = [];
 
+    const fullPrompt =
+      designContext +
+      upgradeContext +
+      userMessage +
+      '\n\nAfter completing the requested changes, end your response with exactly 3 follow-up suggestion options the user might want to try next, formatted as: <!-- suggestions: ["suggestion 1", "suggestion 2", "suggestion 3"] -->';
+
+    // Emit the prompt so the terminal shows what Claude is working on
+    onProgress({ type: "progress", log: "Prompt", logType: "phase-separator" });
+    collectedLogs.push({ log: "Prompt", logType: "phase-separator" });
+    for (const line of fullPrompt.split("\n")) {
+      onProgress({ type: "progress", log: line, logType: "status" });
+      collectedLogs.push({ log: line, logType: "status" });
+    }
+    onProgress({ type: "progress", log: "Output", logType: "phase-separator" });
+    collectedLogs.push({ log: "Output", logType: "phase-separator" });
+
     const result = await runClaude({
       cwd: projectDir,
-      prompt:
-        designContext +
-        upgradeContext +
-        userMessage +
-        '\n\nAfter completing the requested changes, end your response with exactly 3 follow-up suggestion options the user might want to try next, formatted as: <!-- suggestions: ["suggestion 1", "suggestion 2", "suggestion 3"] -->',
+      prompt: fullPrompt,
       allowedTools: "Write,Edit,Bash,Read,Glob,Grep,WebFetch",
       disallowedTools: "",
       timeoutMs: 10 * 60_000,

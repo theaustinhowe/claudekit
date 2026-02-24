@@ -79,6 +79,13 @@ export function createUpgradeRunner(metadata: Record<string, unknown>, contextId
 
         let claudeOutput = "";
 
+        // Emit the prompt so the terminal shows what Claude is working on
+        onProgress({ type: "progress", log: `Prompt — ${task.title}`, logType: "phase-separator" });
+        for (const line of taskPrompt.split("\n")) {
+          onProgress({ type: "progress", log: line, logType: "status" });
+        }
+        onProgress({ type: "progress", log: "Output", logType: "phase-separator" });
+
         const result = await runClaude({
           cwd: projectDir,
           prompt: taskPrompt,

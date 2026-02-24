@@ -73,6 +73,16 @@ export function createScaffoldRunner(metadata: Record<string, unknown>, contextI
 
     const collectedLogs: { log: string; logType: string }[] = [];
 
+    // Emit the prompt so the terminal shows what Claude is working on
+    onProgress({ type: "progress", log: "Prompt", logType: "phase-separator" });
+    collectedLogs.push({ log: "Prompt", logType: "phase-separator" });
+    for (const line of prompt.split("\n")) {
+      onProgress({ type: "progress", log: line, logType: "status" });
+      collectedLogs.push({ log: line, logType: "status" });
+    }
+    onProgress({ type: "progress", log: "Output", logType: "phase-separator" });
+    collectedLogs.push({ log: "Output", logType: "phase-separator" });
+
     const result = await runClaude({
       cwd: parentDir,
       prompt,

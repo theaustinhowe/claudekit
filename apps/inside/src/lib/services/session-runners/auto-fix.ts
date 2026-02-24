@@ -44,6 +44,15 @@ Instructions:
 - Do NOT add comments explaining the fix
 - The dev server has hot-reload, so just edit the files and it will pick up changes`;
 
+    // Emit the prompt so the terminal shows what Claude is working on
+    onProgress({ type: "progress", log: "Prompt", logType: "phase-separator" });
+    for (const line of prompt.split("\n")) {
+      const logEntry = { log: line, logType: "status" };
+      logs.push(logEntry);
+      onProgress({ type: "log", log: line, logType: "status" });
+    }
+    onProgress({ type: "progress", log: "Output", logType: "phase-separator" });
+
     try {
       const result = await runClaude({
         cwd: projectDir,
