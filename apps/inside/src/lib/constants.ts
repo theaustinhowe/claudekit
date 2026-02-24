@@ -76,6 +76,110 @@ export const PAYMENT_OPTIONS = [
   { id: "lemon-squeezy", label: "Lemon Squeezy" },
 ];
 
+// --- Next Steps for Upgrade Completion ---
+
+export interface NextStep {
+  label: string;
+  description: string;
+  url: string;
+}
+
+export const SERVICE_NEXT_STEPS: Record<string, NextStep> = {
+  "supabase-db": {
+    label: "Supabase Database",
+    description: "Add your Supabase project URL and anon key to `.env.local`",
+    url: "https://supabase.com/dashboard/projects",
+  },
+  "supabase-auth": {
+    label: "Supabase Auth",
+    description: "Configure auth providers and add Supabase keys to `.env.local`",
+    url: "https://supabase.com/dashboard/projects",
+  },
+  clerk: {
+    label: "Clerk",
+    description: "Create a Clerk application and add your API keys to `.env.local`",
+    url: "https://dashboard.clerk.com",
+  },
+  "next-auth": {
+    label: "NextAuth.js",
+    description: "Configure authentication providers in your NextAuth config",
+    url: "https://next-auth.js.org/getting-started",
+  },
+  lucia: {
+    label: "Lucia",
+    description: "Set up your database adapter and session configuration",
+    url: "https://lucia-auth.com/getting-started",
+  },
+  stripe: {
+    label: "Stripe",
+    description: "Add your Stripe publishable and secret keys to `.env.local`",
+    url: "https://dashboard.stripe.com",
+  },
+  "lemon-squeezy": {
+    label: "Lemon Squeezy",
+    description: "Add your Lemon Squeezy API key and store ID to `.env.local`",
+    url: "https://app.lemonsqueezy.com",
+  },
+  resend: {
+    label: "Resend",
+    description: "Add your Resend API key to `.env.local`",
+    url: "https://resend.com",
+  },
+  sendgrid: {
+    label: "SendGrid",
+    description: "Add your SendGrid API key to `.env.local`",
+    url: "https://app.sendgrid.com",
+  },
+  postmark: {
+    label: "Postmark",
+    description: "Add your Postmark server token to `.env.local`",
+    url: "https://account.postmarkapp.com",
+  },
+  posthog: {
+    label: "PostHog",
+    description: "Add your PostHog project API key to `.env.local`",
+    url: "https://app.posthog.com",
+  },
+  "google-analytics": {
+    label: "Google Analytics",
+    description: "Add your GA measurement ID to `.env.local`",
+    url: "https://analytics.google.com",
+  },
+  "vercel-analytics": {
+    label: "Vercel Analytics",
+    description: "Enable analytics in your Vercel project settings",
+    url: "https://vercel.com/analytics",
+  },
+  nhost: {
+    label: "Nhost",
+    description: "Add your Nhost subdomain and region to `.env.local`",
+    url: "https://app.nhost.io",
+  },
+  postgres: {
+    label: "PostgreSQL",
+    description: "Set your database connection string in `.env.local`",
+    url: "https://neon.tech",
+  },
+};
+
+export const PLATFORM_NEXT_STEPS: Record<string, NextStep> = {
+  nextjs: {
+    label: "Deploy to Vercel",
+    description: "Deploy your Next.js app to Vercel for production hosting",
+    url: "https://vercel.com/new",
+  },
+  "react-spa": {
+    label: "Deploy to Netlify",
+    description: "Deploy your React SPA to Netlify for static hosting",
+    url: "https://app.netlify.com/start",
+  },
+  "node-api": {
+    label: "Deploy to Railway",
+    description: "Deploy your Node.js API to Railway for backend hosting",
+    url: "https://railway.app/new",
+  },
+};
+
 export const IMAGE_MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",

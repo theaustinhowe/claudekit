@@ -45,6 +45,7 @@ import { ScaffoldLogDialog } from "@/components/generator/scaffold-log-dialog";
 import { type ScaffoldStats, type ScaffoldStatus, ScaffoldTerminal } from "@/components/generator/scaffold-terminal";
 import { UpgradeBanner } from "@/components/generator/upgrade-banner";
 import { UpgradeChatView } from "@/components/generator/upgrade-chat-view";
+import { UpgradeCompleteView } from "@/components/generator/upgrade-complete-view";
 import { UpgradeDialog } from "@/components/generator/upgrade-dialog";
 import { createDesignMessage, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import type {
@@ -110,6 +111,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   const [upgradeInitSessionId, setUpgradeInitSessionId] = useState<string | null>(null);
   const [activeUpgradeTaskTitle, setActiveUpgradeTaskTitle] = useState<string | null>(null);
   const [upgradeInitPhase, setUpgradeInitPhase] = useState<string | null>(null);
+  const [upgradeCompleted, setUpgradeCompleted] = useState(false);
 
   // Persisted task logs (for hydrating completed/failed task entries on load)
   const [initialTaskLogs, setInitialTaskLogs] = useState<
@@ -211,6 +213,21 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
       setDevServer({ port: 0, status: "error" });
     }
   }, [project.id]);
+
+  // Safety net: if scaffold-terminal reports "done" via onStatusChange but the
+  // SSE onComplete callback never fires (connection dropped, event missed),
+  // force the transition after a short delay.
+  useEffect(() => {
+    if (scaffoldStatus === "done" && scaffolding) {
+      const timer = setTimeout(() => {
+        setScaffolding(false);
+        setProjectStatus("designing");
+        startDevServer();
+        updateGeneratorProject(project.id, { status: "designing" }).catch(() => {});
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [scaffoldStatus, scaffolding, startDevServer, project.id]);
 
   const restartDevServer = useCallback(async () => {
     // Stop existing server first
@@ -376,6 +393,16 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             if (data.taskLogs) {
               setInitialTaskLogs(data.taskLogs);
             }
+            // If archived and all tasks done, show completion view immediately
+            if (
+              project.status === "archived" &&
+              (data.tasks as UpgradeTask[]).length > 0 &&
+              (data.tasks as UpgradeTask[]).every(
+                (t: UpgradeTask) => t.status === "completed" || t.status === "skipped",
+              )
+            ) {
+              setUpgradeCompleted(true);
+            }
           }
         })
         .catch(() => {});
@@ -536,13 +563,16 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   }, [project.id, project.project_name]);
 
   const handleUpgradeComplete = useCallback(async () => {
-    // Capture a final screenshot before stopping the server
+    // Capture a final screenshot
     if (devServer?.status === "ready" && devServer.port > 0) {
       fetch(`/api/projects/${project.id}/screenshots`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ port: devServer.port, label: "Post-upgrade" }),
       }).catch(() => {});
+
+      // Open the app in a new browser tab so the user sees what was built
+      window.open(`http://localhost:${devServer.port}`, "_blank");
     }
 
     // Persist archived status to DB
@@ -551,12 +581,9 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
       exported_at: new Date().toISOString(),
     });
 
-    // Stop the dev server
-    fetch(`/api/projects/${project.id}/dev-server`, { method: "DELETE" }).catch(() => {});
-    setDevServer(null);
-
+    // Keep dev server running so the user can interact with their app
     setProjectStatus("archived");
-    toast.success("Upgrade complete! Project is now archived.");
+    setUpgradeCompleted(true);
   }, [devServer?.status, devServer?.port, project.id]);
 
   // Scaffolding view — full-width terminal
@@ -774,10 +801,18 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             activeTab={previewTab}
             onTabChange={setPreviewTab}
             showTasksTab={isUpgrading}
-            disableAppTab={isUpgrading || !devServer?.port}
+            disableAppTab={(isUpgrading && !upgradeCompleted) || !devServer?.port}
             tasksContent={
               isUpgrading ? (
-                upgradeTasks.length === 0 && upgradeInitSessionId ? (
+                upgradeCompleted ? (
+                  <UpgradeCompleteView
+                    project={project}
+                    port={devServer?.port ?? null}
+                    onOpenBrowser={() => {
+                      if (devServer?.port) window.open(`http://localhost:${devServer.port}`, "_blank");
+                    }}
+                  />
+                ) : upgradeTasks.length === 0 && upgradeInitSessionId ? (
                   <div className="flex-1 flex items-center justify-center p-8 h-full">
                     <div className="text-center space-y-3">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
