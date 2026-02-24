@@ -22,10 +22,6 @@ Generates fix actions with before/after file diffs, risk assessment (low/medium/
 
 Applies fixes atomically — writes to temp files then renames. Creates snapshots before every change with full rollback support. Supports dry-run mode and docs-only filtering.
 
-### Project Creation
-
-Create new projects through a chat-based design flow. Describe your idea, refine the UI spec through conversation, scaffold files via Claude CLI, run a dev server, and auto-fix errors — all from one interface.
-
 ### Session-Based Execution
 
 Long-running operations run through a unified session system with real-time SSE streaming, cancellation support, and persistent history. Twelve session types: scan, scaffold, chat, auto-fix, upgrade, upgrade-init, quick-improve, finding-fix, fix-apply, AI file generation, cleanup, and toolbox commands.
@@ -179,10 +175,6 @@ pnpm dev        # schema and seed data are recreated on startup
 | `/repositories` | Repository list with counts |
 | `/repositories/[repoId]` | Repository detail — findings, fixes, Claude config editor |
 | `/policies` | Audit policy list and editor |
-| `/projects` | Project listing |
-| `/projects/new` | Create a new project via chat-based design |
-| `/projects/archived` | Archived projects |
-| `/projects/[projectId]` | Project detail — design chat, scaffolding, dev server, auto-fix |
 | `/ai-integrations` | Discover and manage AI integrations (skills, hooks, commands, agents, MCP servers, plugins) |
 | `/concepts` | Concept management and sources |
 | `/patterns` | Patterns library |
@@ -209,15 +201,6 @@ pnpm dev        # schema and seed data are recreated on startup
 | `/api/fs/browse` | Filesystem browsing |
 | `/api/toolbox/check` | CLI tool detection |
 | `/api/claude-usage` | Claude CLI rate limit monitoring |
-| `/api/projects` | Project creation and listing |
-| `/api/projects/[id]` | Project detail |
-| `/api/projects/[id]/raw` | Raw project data access |
-| `/api/projects/[id]/dev-server` | Dev server management |
-| `/api/projects/[id]/auto-fix` | Auto-fix management |
-| `/api/projects/[id]/export` | Project export |
-| `/api/projects/[id]/screenshots` | Screenshot capture and listing |
-| `/api/projects/[id]/screenshots/[screenshotId]` | Individual screenshot access |
-| `/api/projects/[id]/upgrade` | Upgrade task management |
 | `/api/sessions` | Session creation |
 | `/api/sessions/[id]` | Session detail |
 | `/api/sessions/[id]/stream` | Real-time session log stream (SSE) |
@@ -261,7 +244,6 @@ src/
 │   ├── repositories/           # Repository pages
 │   ├── policies/               # Policy pages
 │   ├── scans/                  # Scan pages
-│   ├── projects/               # Project creation, design, scaffolding
 │   ├── ai-integrations/        # AI integrations page
 │   ├── concepts/               # Concept management
 │   ├── patterns/               # Patterns library

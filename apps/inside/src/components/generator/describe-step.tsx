@@ -114,7 +114,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
         color_scheme: colorScheme,
         custom_features: customFeatures,
       });
-      router.push(`/projects/${project.id}`);
+      router.push(`/${project.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create project");
       setCreating(false);

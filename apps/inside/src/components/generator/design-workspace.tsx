@@ -421,7 +421,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
         throw new Error(err.error || "Delete failed");
       }
       toast.success("Project deleted");
-      router.push("/projects");
+      router.push("/");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Delete failed");
       setDeleting(false);

@@ -199,17 +199,6 @@ Coordination guide for breaking work into specialized agents across the Gadget c
 - `src/app/api/toolbox/check/route.ts` — CLI tool version checks
 - `src/app/api/claude-usage/route.ts` — Claude API usage tracking
 
-**Project endpoints:**
-- `src/app/api/projects/route.ts` — Project creation and listing
-- `src/app/api/projects/[projectId]/route.ts` — Project detail
-- `src/app/api/projects/[projectId]/dev-server/route.ts` — Dev server management
-- `src/app/api/projects/[projectId]/auto-fix/route.ts` — Auto-fix management
-- `src/app/api/projects/[projectId]/export/route.ts` — Project export
-- `src/app/api/projects/[projectId]/raw/route.ts` — Serve raw project files with path traversal protection
-- `src/app/api/projects/[projectId]/screenshots/route.ts` — List and capture project screenshots
-- `src/app/api/projects/[projectId]/screenshots/[screenshotId]/route.ts` — Individual screenshot GET/DELETE
-- `src/app/api/projects/[projectId]/upgrade/route.ts` — Upgrade workflow (git init, repo creation, task generation)
-
 **Session endpoints (unified streaming):**
 - `src/app/api/sessions/route.ts` — Create + start sessions (POST)
 - `src/app/api/sessions/[sessionId]/route.ts` — Session detail (GET)
@@ -244,11 +233,6 @@ Coordination guide for breaking work into specialized agents across the Gadget c
 - `src/app/patterns/page.tsx` — Patterns library
 - `src/app/concepts/page.tsx` — Concept management + sources
 - `src/app/ai-integrations/page.tsx` — AI integrations (skills, MCP, agents)
-- `src/app/projects/page.tsx` — Project listing
-- `src/app/projects/new/page.tsx` — New project creation
-- `src/app/projects/archived/page.tsx` — Archived projects with screenshot previews
-- `src/app/projects/[projectId]/page.tsx` — Project detail (design chat, scaffolding, dev server, upgrade)
-- `src/app/projects/[projectId]/layout.tsx` — Project detail layout
 - `src/app/toolbox/page.tsx` — CLI tool checker
 - `src/app/settings/page.tsx` — App settings
 - `src/app/not-found.tsx` — Custom 404 page
@@ -455,7 +439,6 @@ Client → POST /api/sessions (create + start)
 6. **New auditor?** Types & Config adds finding categories if needed → Services creates auditor + registers in orchestrator → UI updates finding display if new categories need rendering.
 7. **New concept source type?** Types & Config adds to `ConceptSourceType` union → Services creates scanner → Actions adds source management functions in `concept-sources.ts` → UI adds to `add-source-dialog.tsx`.
 8. **New streaming operation?** Create a new session runner (see "Adding a new session runner" above). Do NOT create ad-hoc streaming routes — use the session system.
-9. **New project sub-feature?** Types & Config adds types → Data adds table if persistent → Services adds engine logic → API adds route under `projects/[projectId]/` → UI adds component in `components/generator/` → Pages wires into project detail page.
 
 ---
 
@@ -502,19 +485,6 @@ Client → POST /api/sessions (create + start)
 | 3 | Actions | Add create/scan functions to `src/lib/actions/concept-sources.ts` |
 | 4 | UI | Add option to `src/components/concepts/add-source-dialog.tsx` |
 
-### Adding a Project Sub-Feature (e.g., Screenshots, Upgrade)
-
-| Step | Agent | Action |
-|------|-------|--------|
-| 1 | Types & Config | Add types to `types.ts` (e.g., `ProjectScreenshot`, `UpgradeTask`) |
-| 2 | Data | Add table to `schema.ts` if data is persistent |
-| 3 | Actions | Add action file in `src/lib/actions/` (e.g., `screenshots.ts`, `upgrade-tasks.ts`) |
-| 4 | Services | Add service logic (e.g., `screenshot-service.ts`) |
-| 5 | Services | If long-running, create a session runner in `session-runners/` |
-| 6 | API | Add route(s) under `src/app/api/projects/[projectId]/` |
-| 7 | UI | Add component(s) in `src/components/generator/` |
-| 8 | Pages | Wire into project detail page (`src/app/projects/[projectId]/page.tsx`) |
-
 ---
 
 ## Runtime Flows
@@ -554,26 +524,6 @@ UI: Add concept source → scan
   → Services: discovers skills, hooks, agents, MCP servers, plugins
   → Actions: stores concepts + links in DB
   → UI: shows discovered concepts with install options
-```
-
-### Project Creation Pipeline
-
-```
-UI: New project form → POST /api/projects (creates project record)
-  → UI: Design chat → POST /api/sessions (type: chat)
-    → Session runner: AI refines UI spec
-  → UI: Scaffold → POST /api/sessions (type: scaffold)
-    → Session runner: claude-runner.ts invokes Claude CLI to generate files
-  → UI: Dev server → POST /api/projects/[id]/dev-server
-    → Services: dev-server-manager.ts starts/stops dev server
-  → UI: Screenshots → POST /api/projects/[id]/screenshots
-    → Services: screenshot-service.ts captures via Playwright
-  → UI: Auto-fix → POST /api/sessions (type: auto_fix)
-    → Session runner: detects errors, invokes Claude to fix
-  → UI: Upgrade → POST /api/sessions (type: upgrade)
-    → Session runner: executes upgrade tasks via Claude CLI
-  → UI: Export → POST /api/projects/[id]/export
-    → Services: spec-exporter.ts exports spec to files
 ```
 
 ### Quick Improve Pipeline
