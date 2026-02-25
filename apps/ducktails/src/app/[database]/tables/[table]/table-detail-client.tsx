@@ -2,6 +2,7 @@
 
 import { Button } from "@claudekit/ui/components/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { ChevronLeft, ChevronRight, Columns3, Plus, RefreshCw, Rows3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
@@ -9,9 +10,10 @@ import { toast } from "sonner";
 import { ColumnPicker } from "@/components/data/column-picker";
 import { DataGrid } from "@/components/data/data-grid";
 import { DeleteConfirmDialog } from "@/components/data/delete-confirm-dialog";
-import { RowEditDialog } from "@/components/data/row-edit-dialog";
+import { RowEditSheet } from "@/components/data/row-edit-sheet";
 import { RefreshedAt } from "@/components/refreshed-at";
 import { ColumnSchemaTable } from "@/components/tables/column-schema-table";
+import { useColumnOrder } from "@/hooks/use-column-order";
 import { useColumnVisibility } from "@/hooks/use-column-visibility";
 import { deleteRow, insertRow, updateRow } from "@/lib/actions/data";
 import { refreshSnapshots } from "@/lib/actions/databases";
@@ -63,6 +65,7 @@ export function TableDetailClient({
     tableName,
     allColumnNames,
   );
+  const { orderedColumns, reorder } = useColumnOrder(databaseId, tableName, allColumnNames);
 
   const totalPages = Math.ceil(initialData.totalRows / initialData.pageSize);
 
@@ -160,16 +163,24 @@ export function TableDetailClient({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <RefreshedAt timestamp={refreshedAt} />
           <ColumnPicker
             allColumns={allColumnNames}
             hiddenColumns={hiddenColumns}
             onToggle={toggleColumn}
             onShowAll={showAll}
           />
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleRefresh} disabled={isPending}>
-            <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleRefresh} disabled={isPending}>
+                  <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <RefreshedAt timestamp={refreshedAt} />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {primaryKey.length > 0 ? (
             <Button size="sm" className="h-7 text-xs" onClick={() => setShowInsert(true)}>
               <Plus className="h-3.5 w-3.5 mr-1" />
@@ -235,8 +246,11 @@ export function TableDetailClient({
             onSort={handleSort}
             onEdit={primaryKey.length > 0 ? setEditRow : undefined}
             onDelete={primaryKey.length > 0 ? setDeleteTarget : undefined}
+            onRowClick={primaryKey.length > 0 ? setEditRow : undefined}
             isPending={isPending}
             visibleColumns={visibleColumns}
+            columnOrder={orderedColumns}
+            onColumnReorder={reorder}
             filters={filters}
             onFilterChange={handleFilterChange}
           />
@@ -247,7 +261,7 @@ export function TableDetailClient({
         </TabsContent>
       </Tabs>
 
-      <RowEditDialog
+      <RowEditSheet
         open={showInsert}
         onOpenChange={setShowInsert}
         columns={schema}
@@ -255,7 +269,7 @@ export function TableDetailClient({
         title="Insert Row"
       />
 
-      <RowEditDialog
+      <RowEditSheet
         open={!!editRow}
         onOpenChange={(open) => !open && setEditRow(null)}
         columns={schema}
