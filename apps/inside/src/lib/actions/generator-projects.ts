@@ -132,6 +132,18 @@ export async function deleteGeneratorProject(id: string): Promise<void> {
   deleteScreenshotFiles(id);
 }
 
+export async function getProjectCounts(): Promise<{ active: number; archived: number }> {
+  const db = await getDb();
+  const row = await queryOne<{ active: number; archived: number }>(
+    db,
+    `SELECT
+       count(*) FILTER (WHERE status != 'archived') AS active,
+       count(*) FILTER (WHERE status = 'archived') AS archived
+     FROM generator_projects`,
+  );
+  return row ?? { active: 0, archived: 0 };
+}
+
 // --- Project Specs (replaces ui_specs, mock_data_sets, spec_snapshots) ---
 
 export async function getUiSpec(projectId: string, version?: number): Promise<UiSpec | null> {

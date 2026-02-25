@@ -3,13 +3,14 @@ import type { AppLayoutConfig, NavGroup } from "@claudekit/ui/components/shared-
 import { Archive, FolderKanban, Settings, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
+import { ActiveCountBadge, ArchivedCountBadge } from "./nav-count-badge";
 
 const navGroups: NavGroup[] = [
   {
     items: [
       { label: "New", href: "/new", icon: Sparkles },
-      { label: "Projects", href: "/", icon: FolderKanban },
-      { label: "Archived", href: "/archived", icon: Archive },
+      { label: "Projects", href: "/", icon: FolderKanban, badge: <ActiveCountBadge /> },
+      { label: "Archived", href: "/archived", icon: Archive, badge: <ArchivedCountBadge /> },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
   },
@@ -24,8 +25,8 @@ export const insideLayoutConfig: AppLayoutConfig = {
   nav: navGroups,
   mobileNav: [
     { label: "New", href: "/new", icon: Sparkles },
-    { label: "Projects", href: "/", icon: FolderKanban },
-    { label: "Archived", href: "/archived", icon: Archive },
+    { label: "Projects", href: "/", icon: FolderKanban, badge: <ActiveCountBadge /> },
+    { label: "Archived", href: "/archived", icon: Archive, badge: <ArchivedCountBadge /> },
     { label: "Settings", href: "/settings", icon: Settings },
   ],
   usageWidget: <UsageSection getUsageStats={getClaudeUsageStatsAction} getRateLimits={getClaudeRateLimitsAction} />,
