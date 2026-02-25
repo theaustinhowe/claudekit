@@ -1,9 +1,5 @@
-import { Button } from "@claudekit/ui/components/button";
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ProjectCard } from "@/components/generator/project-card";
-import { PageBanner } from "@/components/layout/page-banner";
 import { getGeneratorProjects } from "@/lib/actions/generator-projects";
 import { getLatestScreenshot } from "@/lib/actions/screenshots";
 import type { GeneratorProjectStatus } from "@/lib/types";
@@ -35,18 +31,6 @@ export default async function ArchivedProjectsPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageBanner
-        title="Archived Projects"
-        count={archivedProjects.length}
-        actions={
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/">
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
-              Active Projects
-            </Link>
-          </Button>
-        }
-      />
       <div className="flex-1 overflow-auto">
         <div className="p-6 max-w-4xl mx-auto">
           {archivedProjects.length === 0 ? (

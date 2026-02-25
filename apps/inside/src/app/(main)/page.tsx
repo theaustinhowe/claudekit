@@ -1,10 +1,9 @@
 import { Button } from "@claudekit/ui/components/button";
-import { Archive, FolderKanban, Sparkles } from "lucide-react";
+import { FolderKanban, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DescribeStep } from "@/components/generator/describe-step";
 import { ProjectCard } from "@/components/generator/project-card";
-import { PageBanner } from "@/components/layout/page-banner";
 import { getGeneratorProjects } from "@/lib/actions/generator-projects";
 import { getLatestScreenshot } from "@/lib/actions/screenshots";
 import { getSetting } from "@/lib/actions/settings";
@@ -34,7 +33,6 @@ export default async function ProjectsPage() {
   ]);
 
   const activeProjects = projects.filter((p) => p.status !== "archived");
-  const archivedCount = projects.length - activeProjects.length;
 
   const screenshotMap = new Map<string, string | null>();
   await Promise.all(
@@ -47,7 +45,6 @@ export default async function ProjectsPage() {
   if (projects.length === 0) {
     return (
       <div className="flex h-full flex-col">
-        <PageBanner title="Projects" />
         <div className="flex-1 overflow-auto">
           <div className="p-6">
             <DescribeStep defaultPath={defaultPath} installedPMs={installedPMs} />
@@ -59,28 +56,6 @@ export default async function ProjectsPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageBanner
-        title="Projects"
-        count={activeProjects.length}
-        actions={
-          <>
-            {archivedCount > 0 && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/archived">
-                  <Archive className="w-3.5 h-3.5" />
-                  Archived ({archivedCount})
-                </Link>
-              </Button>
-            )}
-            <Button size="sm" asChild>
-              <Link href="/new">
-                <Sparkles className="w-4 h-4" />
-                New Project
-              </Link>
-            </Button>
-          </>
-        }
-      />
       <div className="flex-1 overflow-auto">
         <div className="p-6 max-w-4xl mx-auto">
           {activeProjects.length === 0 ? (
