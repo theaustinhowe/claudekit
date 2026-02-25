@@ -366,7 +366,7 @@ function groupStreamEntries(entries: StreamEntry[]): GroupedStreamItem[] {
           if (fe.kind === "thinking") continue;
           const d = fe.filePath ? dirOf(fe.filePath) : ".";
           if (!dirMap.has(d)) dirMap.set(d, []);
-          dirMap.get(d)!.push(fe);
+          dirMap.get(d)?.push(fe);
         }
         const dirs = Array.from(dirMap, ([dir, entries]) => ({ dir, entries }));
         groups.push({ type: "file-batch", dirs, allEntries: fileEntries });
@@ -568,7 +568,7 @@ function FileBatchSection({
   const created = allEntries.filter((e) => e.kind === "file-write").length;
   const edited = allEntries.filter((e) => e.kind === "file-edit").length;
 
-  const defaultExpanded = isChat ? (live ? true : false) : totalFiles <= 4;
+  const defaultExpanded = isChat ? !!live : totalFiles <= 4;
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -633,7 +633,7 @@ function FileBatchSection({
 function BashGroupSection({ entries, variant, live }: { entries: StreamEntry[]; variant: Variant; live?: boolean }) {
   const isChat = variant === "chat";
   const bashOnly = entries.filter((e) => e.kind === "bash-command");
-  const defaultExpanded = isChat ? (live ? true : false) : live ? true : false;
+  const defaultExpanded = isChat ? !!live : !!live;
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (

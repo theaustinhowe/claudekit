@@ -36,13 +36,16 @@ vi.mock("node:path", async () => {
   return actual;
 });
 
+import fs from "node:fs";
 import { execute, queryAll, queryOne } from "@/lib/db";
 import {
   getAllConcepts,
   getConceptStats,
   getConceptsForRepo,
   getLinkedConceptsForRepo,
+  installConcept,
   linkConcept,
+  syncConceptToRepo,
   unlinkConcept,
 } from "./concepts";
 
@@ -165,5 +168,185 @@ describe("getLinkedConceptsForRepo", () => {
     const result = await getLinkedConceptsForRepo("repo-1");
     expect(result).toHaveLength(1);
     expect(result[0].concept_metadata).toEqual({ key: "val" });
+  });
+});
+
+describe("syncConceptToRepo", () => {
+  it("returns error when concept not found", async () => {
+    mockQueryOne.mockResolvedValue(undefined);
+
+    const result = await syncConceptToRepo("nonexistent", "repo-1");
+    expect(result).toEqual({ success: false, message: "Concept not found" });
+  });
+
+  it("returns error when target repo not found", async () => {
+    // getConceptById returns a concept
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: "c-1",
+        name: "My Skill",
+        concept_type: "skill",
+        relative_path: ".claude/commands/test.md",
+        content: "content",
+        metadata: "{}",
+        link_count: 0,
+        source_id: null,
+      })
+      .mockResolvedValueOnce(undefined); // target repo lookup
+
+    const result = await syncConceptToRepo("c-1", "nonexistent");
+    expect(result).toEqual({ success: false, message: "Target repo not found" });
+  });
+
+  it("syncs a skill concept to disk", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: "c-1",
+        name: "My Skill",
+        concept_type: "skill",
+        relative_path: ".claude/commands/test.md",
+        content: "skill content",
+        metadata: "{}",
+        link_count: 0,
+        source_id: null,
+      })
+      .mockResolvedValueOnce({ local_path: "/target/repo" }); // target repo
+    mockExecute.mockResolvedValue(undefined);
+
+    const result = await syncConceptToRepo("c-1", "repo-1");
+    expect(result.success).toBe(true);
+    expect(fs.mkdirSync).toHaveBeenCalled();
+    expect(fs.writeFileSync).toHaveBeenCalledWith("/target/repo/.claude/commands/test.md", "skill content", "utf-8");
+  });
+
+  it("syncs a hook concept to disk", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: "c-2",
+        name: "My Hook",
+        concept_type: "hook",
+        relative_path: "",
+        content: "",
+        metadata: '{"hook_name":"PreCommit","config":{"command":"lint"}}',
+        link_count: 0,
+        source_id: null,
+      })
+      .mockResolvedValueOnce({ local_path: "/target/repo" });
+    mockExecute.mockResolvedValue(undefined);
+    vi.mocked(fs.readFileSync).mockImplementation(() => {
+      throw new Error("ENOENT");
+    });
+
+    const result = await syncConceptToRepo("c-2", "repo-1");
+    expect(result.success).toBe(true);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      "/target/repo/.claude/settings.json",
+      expect.stringContaining("PreCommit"),
+      "utf-8",
+    );
+  });
+
+  it("syncs an mcp_server concept to disk", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: "c-3",
+        name: "My MCP",
+        concept_type: "mcp_server",
+        relative_path: "",
+        content: "",
+        metadata: '{"server_name":"my-server","config":{"url":"http://localhost"}}',
+        link_count: 0,
+        source_id: null,
+      })
+      .mockResolvedValueOnce({ local_path: "/target/repo" });
+    mockExecute.mockResolvedValue(undefined);
+    vi.mocked(fs.readFileSync).mockImplementation(() => {
+      throw new Error("ENOENT");
+    });
+
+    const result = await syncConceptToRepo("c-3", "repo-1");
+    expect(result.success).toBe(true);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      "/target/repo/.mcp.json",
+      expect.stringContaining("my-server"),
+      "utf-8",
+    );
+  });
+
+  it("syncs a plugin concept to disk", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: "c-4",
+        name: "My Plugin",
+        concept_type: "plugin",
+        relative_path: "",
+        content: '{"name":"test"}',
+        metadata: "{}",
+        link_count: 0,
+        source_id: null,
+      })
+      .mockResolvedValueOnce({ local_path: "/target/repo" });
+    mockExecute.mockResolvedValue(undefined);
+
+    const result = await syncConceptToRepo("c-4", "repo-1");
+    expect(result.success).toBe(true);
+    expect(fs.mkdirSync).toHaveBeenCalledWith("/target/repo/.claude-plugin", { recursive: true });
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      "/target/repo/.claude-plugin/plugin.json",
+      '{"name":"test"}',
+      "utf-8",
+    );
+  });
+
+  it("returns error when write fails", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: "c-1",
+        name: "My Skill",
+        concept_type: "skill",
+        relative_path: ".claude/commands/test.md",
+        content: "content",
+        metadata: "{}",
+        link_count: 0,
+        source_id: null,
+      })
+      .mockResolvedValueOnce({ local_path: "/target/repo" });
+    vi.mocked(fs.mkdirSync).mockImplementation(() => {
+      throw new Error("Permission denied");
+    });
+
+    const result = await syncConceptToRepo("c-1", "repo-1");
+    expect(result).toEqual({ success: false, message: "Permission denied" });
+  });
+});
+
+describe("installConcept", () => {
+  it("returns link error when link fails", async () => {
+    mockQueryOne.mockResolvedValue(undefined); // concept not found → link fails
+
+    const result = await installConcept("nonexistent", "repo-1");
+    expect(result).toEqual({ success: false, message: "Concept not found" });
+  });
+
+  it("links and syncs on success", async () => {
+    // linkConcept: concept lookup, repo not origin, target repo lookup
+    mockQueryOne
+      .mockResolvedValueOnce({ id: "c-1", repo_id: "__library__", name: "Skill" }) // link: concept
+      .mockResolvedValueOnce({ id: "repo-1" }) // link: target repo
+      .mockResolvedValueOnce({
+        id: "c-1",
+        name: "Skill",
+        concept_type: "skill",
+        relative_path: ".claude/commands/s.md",
+        content: "content",
+        metadata: "{}",
+        link_count: 0,
+        source_id: null,
+      }) // sync: getConceptById
+      .mockResolvedValueOnce({ local_path: "/repo" }); // sync: target repo
+    mockExecute.mockResolvedValue(undefined);
+
+    const result = await installConcept("c-1", "repo-1");
+    expect(result.success).toBe(true);
   });
 });

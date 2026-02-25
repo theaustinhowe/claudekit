@@ -71,7 +71,7 @@ describe("getLatestScreenshot", () => {
     mockQueryOne.mockResolvedValue({ id: "s1", file_path: "/test.png" } as never);
     const result = await getLatestScreenshot("proj-1");
     expect(result).not.toBeNull();
-    expect(result!.id).toBe("s1");
+    expect(result?.id).toBe("s1");
   });
 
   it("returns null when no screenshots exist", async () => {

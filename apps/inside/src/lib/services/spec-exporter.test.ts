@@ -121,7 +121,7 @@ describe("generateExportFiles", () => {
 
     const pkgFile = files.find((f) => f.path === "package.json");
     expect(pkgFile).toBeDefined();
-    const pkg = JSON.parse(pkgFile!.content);
+    const pkg = JSON.parse(pkgFile?.content);
     expect(pkg.dependencies.next).toBeDefined();
     expect(pkg.dependencies.react).toBeDefined();
     expect(pkg.scripts.dev).toBe("next dev");
@@ -132,7 +132,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile!.content);
+    const pkg = JSON.parse(pkgFile?.content);
     expect(pkg.dependencies.next).toBeUndefined();
     expect(pkg.scripts.dev).toContain("tsx");
   });
@@ -142,7 +142,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile!.content);
+    const pkg = JSON.parse(pkgFile?.content);
     expect(pkg.devDependencies.tailwindcss).toBeDefined();
   });
 
@@ -151,7 +151,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile!.content);
+    const pkg = JSON.parse(pkgFile?.content);
     expect(pkg.devDependencies["@biomejs/biome"]).toBeDefined();
   });
 
@@ -160,7 +160,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile!.content);
+    const pkg = JSON.parse(pkgFile?.content);
     expect(pkg.devDependencies.vitest).toBeDefined();
     expect(pkg.scripts.test).toBe("vitest");
   });
@@ -170,7 +170,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile!.content);
+    const pkg = JSON.parse(pkgFile?.content);
     expect(pkg.dependencies["class-variance-authority"]).toBeDefined();
     expect(pkg.dependencies["lucide-react"]).toBeDefined();
   });
@@ -182,7 +182,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile!.content);
+    const pkg = JSON.parse(pkgFile?.content);
     expect(pkg.dependencies["@supabase/supabase-js"]).toBeDefined();
     expect(pkg.dependencies.stripe).toBeDefined();
     expect(pkg.dependencies.resend).toBeDefined();
@@ -194,7 +194,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), []);
     const tsFile = files.find((f) => f.path === "tsconfig.json");
     expect(tsFile).toBeDefined();
-    const tsconfig = JSON.parse(tsFile!.content);
+    const tsconfig = JSON.parse(tsFile?.content);
     expect(tsconfig.compilerOptions.target).toBe("ES2022");
   });
 
@@ -202,7 +202,7 @@ describe("generateExportFiles", () => {
     const project = makeProject({ constraints: ["typescript-strict"] });
     const files = generateExportFiles(project, makeSpec(), []);
     const tsFile = files.find((f) => f.path === "tsconfig.json");
-    const tsconfig = JSON.parse(tsFile!.content);
+    const tsconfig = JSON.parse(tsFile?.content);
     expect(tsconfig.compilerOptions.strict).toBe(true);
   });
 
@@ -210,7 +210,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), []);
     const gitignore = files.find((f) => f.path === ".gitignore");
     expect(gitignore).toBeDefined();
-    expect(gitignore!.content).toContain("node_modules");
+    expect(gitignore?.content).toContain("node_modules");
   });
 
   it("generates next.config.ts for nextjs projects", () => {
@@ -246,7 +246,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
     const envFile = files.find((f) => f.path === ".env.local.example");
     expect(envFile).toBeDefined();
-    expect(envFile!.content).toContain("SUPABASE_URL");
+    expect(envFile?.content).toContain("SUPABASE_URL");
   });
 
   it("generates .env.local.example for stripe service", () => {
@@ -254,7 +254,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
     const envFile = files.find((f) => f.path === ".env.local.example");
     expect(envFile).toBeDefined();
-    expect(envFile!.content).toContain("STRIPE_SECRET_KEY");
+    expect(envFile?.content).toContain("STRIPE_SECRET_KEY");
   });
 
   it("does not generate .env.local.example when no services", () => {
@@ -269,52 +269,52 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), spec, []);
     const specFile = files.find((f) => f.path === "ui-spec.json");
     expect(specFile).toBeDefined();
-    expect(JSON.parse(specFile!.content)).toEqual(spec);
+    expect(JSON.parse(specFile?.content)).toEqual(spec);
   });
 
   it("generates README.md with route table", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), []);
     const readme = files.find((f) => f.path === "README.md");
     expect(readme).toBeDefined();
-    expect(readme!.content).toContain("test-app");
-    expect(readme!.content).toContain("/");
-    expect(readme!.content).toContain("Home");
+    expect(readme?.content).toContain("test-app");
+    expect(readme?.content).toContain("/");
+    expect(readme?.content).toContain("Home");
   });
 
   it("generates CLAUDE.md", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), []);
     const claudemd = files.find((f) => f.path === "CLAUDE.md");
     expect(claudemd).toBeDefined();
-    expect(claudemd!.content).toContain("test-app");
-    expect(claudemd!.content).toContain("Header");
+    expect(claudemd?.content).toContain("test-app");
+    expect(claudemd?.content).toContain("Header");
   });
 
   it("generates tasks.md", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), []);
     const tasks = files.find((f) => f.path === "tasks.md");
     expect(tasks).toBeDefined();
-    expect(tasks!.content).toContain("Phase 1");
-    expect(tasks!.content).toContain("Phase 2");
+    expect(tasks?.content).toContain("Phase 1");
+    expect(tasks?.content).toContain("Phase 2");
   });
 
   it("generates types.ts from mock data", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), makeMockData());
     const typesFile = files.find((f) => f.path === "src/lib/types.ts");
     expect(typesFile).toBeDefined();
-    expect(typesFile!.content).toContain("interface User");
-    expect(typesFile!.content).toContain("id: string");
-    expect(typesFile!.content).toContain("email?: string");
-    expect(typesFile!.content).toContain("age?: number");
-    expect(typesFile!.content).toContain("active: boolean");
-    expect(typesFile!.content).toContain("data?: unknown");
+    expect(typesFile?.content).toContain("interface User");
+    expect(typesFile?.content).toContain("id: string");
+    expect(typesFile?.content).toContain("email?: string");
+    expect(typesFile?.content).toContain("age?: number");
+    expect(typesFile?.content).toContain("active: boolean");
+    expect(typesFile?.content).toContain("data?: unknown");
   });
 
   it("generates mock-data.ts from mock data", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), makeMockData());
     const dataFile = files.find((f) => f.path === "src/lib/mock-data.ts");
     expect(dataFile).toBeDefined();
-    expect(dataFile!.content).toContain("userData");
-    expect(dataFile!.content).toContain("User[]");
+    expect(dataFile?.content).toContain("userData");
+    expect(dataFile?.content).toContain("User[]");
   });
 
   it("does not generate types or mock-data without mock entities", () => {
@@ -328,7 +328,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
     const utils = files.find((f) => f.path === "src/lib/utils.ts");
     expect(utils).toBeDefined();
-    expect(utils!.content).toContain("cn(");
+    expect(utils?.content).toContain("cn(");
   });
 
   it("generates layout and page for nextjs", () => {
@@ -348,7 +348,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
     const css = files.find((f) => f.path === "src/app/globals.css");
     expect(css).toBeDefined();
-    expect(css!.content).toContain("tailwindcss");
+    expect(css?.content).toContain("tailwindcss");
   });
 
   it("generates component stubs", () => {
@@ -369,8 +369,8 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), spec, []);
     const comp = files.find((f) => f.path === "src/components/layout/header.tsx");
     expect(comp).toBeDefined();
-    expect(comp!.content).toContain("HeaderProps");
-    expect(comp!.content).toContain("title");
+    expect(comp?.content).toContain("HeaderProps");
+    expect(comp?.content).toContain("title");
   });
 
   it("generates client component with use client directive", () => {
@@ -391,7 +391,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), spec, []);
     const comp = files.find((f) => f.path === "src/components/ui/counter.tsx");
     expect(comp).toBeDefined();
-    expect(comp!.content).toContain('"use client"');
+    expect(comp?.content).toContain('"use client"');
   });
 
   it("generates pages with non-root routes", () => {
@@ -412,7 +412,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), spec, []);
     const page = files.find((f) => f.path === "src/app/dashboard/page.tsx");
     expect(page).toBeDefined();
-    expect(page!.content).toContain("Dashboard");
+    expect(page?.content).toContain("Dashboard");
   });
 
   it("generates tasks.md with service integration tasks", () => {
@@ -420,17 +420,17 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), makeMockData());
     const tasks = files.find((f) => f.path === "tasks.md");
     expect(tasks).toBeDefined();
-    expect(tasks!.content).toContain("stripe");
-    expect(tasks!.content).toContain("resend");
-    expect(tasks!.content).toContain("User");
+    expect(tasks?.content).toContain("stripe");
+    expect(tasks?.content).toContain("resend");
+    expect(tasks?.content).toContain("User");
   });
 
   it("includes tailwind and shadcn tasks in tasks.md", () => {
     const project = makeProject({ constraints: ["tailwind", "shadcn"] });
     const files = generateExportFiles(project, makeSpec(), []);
     const tasks = files.find((f) => f.path === "tasks.md");
-    expect(tasks!.content).toContain("Tailwind");
-    expect(tasks!.content).toContain("shadcn");
+    expect(tasks?.content).toContain("Tailwind");
+    expect(tasks?.content).toContain("shadcn");
   });
 });
 

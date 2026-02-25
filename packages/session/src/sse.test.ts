@@ -465,7 +465,7 @@ describe("createSessionSSEResponse", () => {
         heartbeatIntervalMs: 5000,
       });
 
-      const reader = response.body!.getReader();
+      const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       // Advance past the heartbeat interval to trigger a heartbeat
@@ -478,7 +478,7 @@ describe("createSessionSSEResponse", () => {
       expect(text).toContain('"type":"heartbeat"');
 
       // Now send a done event to close the stream cleanly
-      subscriberCallback!({ type: "done", progress: 100 } as SessionEvent);
+      subscriberCallback?.({ type: "done", progress: 100 } as SessionEvent);
       // Drain remaining chunks
       while (true) {
         const { done } = await reader.read();
@@ -510,7 +510,7 @@ describe("createSessionSSEResponse", () => {
 
       // Now try to send an event — it should hit the catch block in send()
       // (the stream is cancelled so enqueue will throw)
-      subscriberCallback!({ type: "log", log: "after cancel" } as SessionEvent);
+      subscriberCallback?.({ type: "log", log: "after cancel" } as SessionEvent);
 
       // The stream should be closed. No assertion needed beyond no-throw,
       // but we can verify unsubscribe was called from the cancel handler

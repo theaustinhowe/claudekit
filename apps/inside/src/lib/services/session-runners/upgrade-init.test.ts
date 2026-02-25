@@ -215,7 +215,7 @@ describe("createUpgradeInitRunner", () => {
     const runner = createUpgradeInitRunner({}, "proj-1");
     const result = await runner(makeContext());
 
-    expect(result.result.tasks).toEqual([{ id: "t1", title: "Task 1" }]);
+    expect(result.result?.tasks).toEqual([{ id: "t1", title: "Task 1" }]);
   });
 
   it("handles aborted signal", async () => {

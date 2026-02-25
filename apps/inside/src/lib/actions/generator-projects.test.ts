@@ -164,7 +164,7 @@ describe("getGeneratorProject", () => {
 
     const result = await getGeneratorProject("proj-1");
     expect(result).not.toBeNull();
-    expect(result!.id).toBe("proj-1");
+    expect(result?.id).toBe("proj-1");
   });
 
   it("returns null when not found", async () => {

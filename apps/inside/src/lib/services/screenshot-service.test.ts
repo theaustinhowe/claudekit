@@ -39,11 +39,11 @@ describe("captureScreenshot", () => {
     const result = await captureScreenshot("proj-1", 3000);
 
     expect(result).not.toBeNull();
-    expect(result!.width).toBe(1280);
-    expect(result!.height).toBe(800);
-    expect(result!.fileSize).toBe(12345);
-    expect(result!.filePath).toContain("proj-1");
-    expect(result!.filePath).toContain(".png");
+    expect(result?.width).toBe(1280);
+    expect(result?.height).toBe(800);
+    expect(result?.fileSize).toBe(12345);
+    expect(result?.filePath).toContain("proj-1");
+    expect(result?.filePath).toContain(".png");
   });
 
   it("creates project directory", async () => {

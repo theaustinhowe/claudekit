@@ -105,9 +105,9 @@ describe("getProjectFileContent", () => {
 
     const result = await getProjectFileContent("/tmp", "my-app", "src/index.ts");
     expect(result).not.toBeNull();
-    expect(result!.content).toBe('console.log("hello")');
-    expect(result!.language).toBe("typescript");
-    expect(result!.isBinary).toBe(false);
+    expect(result?.content).toBe('console.log("hello")');
+    expect(result?.language).toBe("typescript");
+    expect(result?.isBinary).toBe(false);
   });
 
   it("returns null when file does not exist", async () => {
@@ -128,8 +128,8 @@ describe("getProjectFileContent", () => {
 
     const result = await getProjectFileContent("/tmp", "my-app", "image.png");
     expect(result).not.toBeNull();
-    expect(result!.isBinary).toBe(true);
-    expect(result!.content).toBe("");
+    expect(result?.isBinary).toBe(true);
+    expect(result?.content).toBe("");
   });
 
   it("rejects path traversal attempts", async () => {

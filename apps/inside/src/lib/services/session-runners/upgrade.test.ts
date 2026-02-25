@@ -137,8 +137,8 @@ describe("createUpgradeRunner", () => {
 
     expect(mockUpdateTask).toHaveBeenCalledWith("task-1", expect.objectContaining({ status: "in_progress" }));
     expect(mockUpdateTask).toHaveBeenCalledWith("task-1", expect.objectContaining({ status: "completed" }));
-    expect(result.result.completedCount).toBe(1);
-    expect(result.result.failedCount).toBe(0);
+    expect(result.result?.completedCount).toBe(1);
+    expect(result.result?.failedCount).toBe(0);
   });
 
   it("archives project on full success (non-single-task mode)", async () => {
@@ -162,7 +162,7 @@ describe("createUpgradeRunner", () => {
     const result = await runner(makeContext());
 
     expect(mockUpdateTask).toHaveBeenCalledWith("task-1", expect.objectContaining({ status: "failed" }));
-    expect(result.result.failedCount).toBe(1);
+    expect(result.result?.failedCount).toBe(1);
   });
 
   it("stops processing on failure", async () => {
@@ -196,7 +196,7 @@ describe("createUpgradeRunner", () => {
       const runner = createUpgradeRunner({ taskId: "task-1" }, "proj-1");
       const result = await runner(makeContext());
 
-      expect(result.result.completedCount).toBe(1);
+      expect(result.result?.completedCount).toBe(1);
       // Should not make final commit in single-task mode
       expect(mockSafeGitCommit).not.toHaveBeenCalledWith(expect.any(String), "Upgrade: remaining changes");
     });
@@ -276,7 +276,7 @@ describe("createUpgradeRunner", () => {
       "task-1",
       expect.objectContaining({ status: "failed", claude_output: "Network timeout" }),
     );
-    expect(result.result.failedCount).toBe(1);
+    expect(result.result?.failedCount).toBe(1);
   });
 
   it("uses existing implementation_prompt if available", async () => {
@@ -294,6 +294,6 @@ describe("createUpgradeRunner", () => {
     const runner = createUpgradeRunner({}, "proj-1");
     const result = await runner(makeContext());
 
-    expect(result.result.completedCount).toBe(1);
+    expect(result.result?.completedCount).toBe(1);
   });
 });

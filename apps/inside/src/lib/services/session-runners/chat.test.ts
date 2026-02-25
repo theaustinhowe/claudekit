@@ -170,7 +170,7 @@ describe("createChatRunner", () => {
       const result = await runner(makeContext());
 
       expect(mockApplyTaskMutations).toHaveBeenCalledWith("proj-1", expect.any(Object));
-      expect(result.result.taskMutationsApplied).toBe(true);
+      expect(result.result?.taskMutationsApplied).toBe(true);
     });
 
     it("does not apply mutations when not in upgrade mode", async () => {

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { ToolDefinition } from "./tools";
 import { DEFAULT_TOOLS } from "./tools";
 
 describe("DEFAULT_TOOLS", () => {
@@ -52,7 +51,7 @@ describe("DEFAULT_TOOLS", () => {
   it("nvm has shellFunction set to true", () => {
     const nvm = DEFAULT_TOOLS.find((t) => t.id === "nvm");
     expect(nvm).toBeDefined();
-    expect(nvm!.shellFunction).toBe(true);
+    expect(nvm?.shellFunction).toBe(true);
   });
 
   it("tools with regex parser have versionRegex", () => {
