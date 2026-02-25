@@ -1,6 +1,6 @@
 "use client";
 
-import { Clapperboard, Compass, Eye, LayoutDashboard, Search, Swords } from "lucide-react";
+import { BookOpen, Clapperboard, Compass, Database, Eye, LayoutDashboard, Search, Swords } from "lucide-react";
 import { Fragment } from "react";
 import { cn } from "../../utils";
 import type { ClaudeKitAppLink } from "./types";
@@ -12,6 +12,8 @@ const DEFAULT_APPS: ClaudeKitAppLink[] = [
   { label: "GoGo", port: 2200, icon: Swords },
   { label: "B4U", port: 2300, icon: Clapperboard },
   { label: "Inspector", port: 2400, icon: Eye },
+  { label: "DuckTails", port: 2050, icon: Database },
+  { label: "Storybook", port: 6006, icon: BookOpen },
 ];
 
 export function SharedFooter({ currentPort }: { currentPort: number }) {
