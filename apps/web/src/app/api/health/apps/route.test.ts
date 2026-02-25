@@ -16,7 +16,7 @@ describe("GET /api/health/apps", () => {
     const response = await GET();
     const data = await response.json();
 
-    expect(data).toHaveLength(8);
+    expect(data).toHaveLength(9);
     for (const app of data) {
       expect(app.status).toBe("running");
     }
@@ -28,7 +28,7 @@ describe("GET /api/health/apps", () => {
     const response = await GET();
     const data = await response.json();
 
-    expect(data).toHaveLength(8);
+    expect(data).toHaveLength(9);
     for (const app of data) {
       expect(app.status).toBe("stopped");
     }
@@ -41,7 +41,17 @@ describe("GET /api/health/apps", () => {
     const data = await response.json();
 
     const ids = data.map((a: { id: string }) => a.id);
-    expect(ids).toEqual(["inside", "gadget", "gogo-web", "b4u", "inspector", "gogo-orchestrator", "storybook", "web"]);
+    expect(ids).toEqual([
+      "inside",
+      "gadget",
+      "gogo-web",
+      "gogo-orchestrator",
+      "b4u",
+      "inspector",
+      "storybook",
+      "ducktails",
+      "web",
+    ]);
   });
 
   it("builds correct urls from ports", async () => {
@@ -58,6 +68,7 @@ describe("GET /api/health/apps", () => {
       inspector: 2400,
       inside: 2150,
       storybook: 6006,
+      ducktails: 2050,
       web: 2000,
     };
 

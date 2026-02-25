@@ -50,7 +50,7 @@ export async function seedDatabase(conn: DuckDBConnection): Promise<void> {
     // Seed settings
     const settings = [
       ["theme", "system"],
-      ["default_project_path", "~/Projects"],
+      ["default_project_path", process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY || "~/Projects"],
     ];
 
     for (const [key, value] of settings) {

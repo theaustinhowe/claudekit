@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "New Project" };
 export default async function NewProjectPage() {
   const pmTools = DEFAULT_TOOLS.filter((t) => ["pnpm", "npm", "bun"].includes(t.id));
   const [defaultPath, installedPMs] = await Promise.all([
-    getSetting("default_project_path").then((v) => v ?? "~/Projects"),
+    getSetting("default_project_path").then((v) => v ?? process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects"),
     checkTools(pmTools),
   ]);
 

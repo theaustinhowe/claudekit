@@ -13,7 +13,7 @@ import {
 const ENV_FILES = [
   { label: "Root", appId: "root", example: ".env.example", local: ".env.local" },
   { label: "B4U", appId: "b4u", example: "apps/b4u/.env.example", local: "apps/b4u/.env.local" },
-  { label: "Gadget", appId: "gadget", example: "apps/gadget/.env.local.example", local: "apps/gadget/.env.local" },
+  { label: "Gadget", appId: "gadget", example: "apps/gadget/.env.example", local: "apps/gadget/.env.local" },
   { label: "GoGo Web", appId: "gogo-web", example: "apps/gogo-web/.env.example", local: "apps/gogo-web/.env.local" },
   {
     label: "GoGo Orchestrator",
@@ -27,6 +27,7 @@ const ENV_FILES = [
     example: "apps/inspector/.env.example",
     local: "apps/inspector/.env.local",
   },
+  { label: "Inside", appId: "inside", example: "apps/inside/.env.example", local: "apps/inside/.env.local" },
 ];
 
 /** Walk up from cwd looking for pnpm-workspace.yaml to find monorepo root. */

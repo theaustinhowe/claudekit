@@ -18,7 +18,7 @@ pnpm knip         # Detect unused exports, dependencies, and files
 
 ## Environment Variables
 
-See `.env.local.example`. Key variables:
+See `.env.example`. Key variables:
 - `MCP_API_TOKEN` — required for MCP programmatic access (Bearer token auth)
 - `DATABASE_PATH` — override database location (default: `~/.gadget/data.duckdb`)
 - `GITHUB_PERSONAL_ACCESS_TOKEN` — for GitHub API integration

@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
   const pmTools = DEFAULT_TOOLS.filter((t) => ["pnpm", "npm", "bun"].includes(t.id));
   const [projects, defaultPath, installedPMs] = await Promise.all([
     getGeneratorProjects(),
-    getSetting("default_project_path").then((v) => v ?? "~/Projects"),
+    getSetting("default_project_path").then((v) => v ?? process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects"),
     checkTools(pmTools),
   ]);
 

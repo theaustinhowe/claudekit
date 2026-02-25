@@ -84,7 +84,7 @@ describe("loadSetupData", () => {
     await expect(loadSetupData()).rejects.toThrow("Could not find monorepo root");
   });
 
-  it("reads all 6 .env.example files from ENV_FILES config", async () => {
+  it("reads all 7 .env.example files from ENV_FILES config", async () => {
     setupWorkspaceRoot();
     mockParseEnvExample.mockReturnValue([]);
     mockDeduplicateVariables.mockReturnValue({ sharedVariables: [], appVariables: {} });
@@ -94,10 +94,11 @@ describe("loadSetupData", () => {
     const readPaths = mockReadFile.mock.calls.map((c) => c[0].toString());
     expect(readPaths).toContain(`${FAKE_ROOT}/.env.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/b4u/.env.example`);
-    expect(readPaths).toContain(`${FAKE_ROOT}/apps/gadget/.env.local.example`);
+    expect(readPaths).toContain(`${FAKE_ROOT}/apps/gadget/.env.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gogo-web/.env.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/gogo-orchestrator/.env.example`);
     expect(readPaths).toContain(`${FAKE_ROOT}/apps/inspector/.env.example`);
+    expect(readPaths).toContain(`${FAKE_ROOT}/apps/inside/.env.example`);
   });
 
   it("passes each file content to parseEnvExample", async () => {
@@ -108,7 +109,7 @@ describe("loadSetupData", () => {
         if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
         throw new Error("ENOENT");
       }
-      if (p.endsWith(".env.example") || p.endsWith(".env.local.example")) return exampleContent as never;
+      if (p.endsWith(".env.example")) return exampleContent as never;
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -117,7 +118,7 @@ describe("loadSetupData", () => {
     await loadSetupData();
 
     expect(mockParseEnvExample).toHaveBeenCalledWith(exampleContent);
-    expect(mockParseEnvExample).toHaveBeenCalledTimes(6);
+    expect(mockParseEnvExample).toHaveBeenCalledTimes(7);
   });
 
   it("skips missing .env.example files silently", async () => {
@@ -244,7 +245,7 @@ describe("saveSetupEnv", () => {
       // buildKeyToApps reads these to map keys → app IDs
       if (p === `${FAKE_ROOT}/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=\nLOG_LEVEL=" as never;
       if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
-      if (p === `${FAKE_ROOT}/apps/gadget/.env.local.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=" as never;
+      if (p === `${FAKE_ROOT}/apps/gadget/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=" as never;
       if (p === `${FAKE_ROOT}/apps/gogo-orchestrator/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=" as never;
       if (p === `${FAKE_ROOT}/apps/gogo-web/.env.example`) return "" as never;
       throw new Error(`ENOENT: ${p}`);
