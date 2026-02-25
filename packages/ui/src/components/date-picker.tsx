@@ -19,12 +19,14 @@ export function DatePicker({
   onChange,
   placeholder = "Pick a date",
   disabled = false,
+  id,
   className,
 }: {
   value?: string;
   onChange: (value: string | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  id?: string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -37,6 +39,7 @@ export function DatePicker({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            id={id}
             variant="outline"
             className={cn("w-full justify-start text-left font-mono text-sm h-9", isValid && "pr-8")}
             disabled={disabled}
