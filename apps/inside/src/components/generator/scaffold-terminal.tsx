@@ -7,6 +7,7 @@ import { Button } from "@claudekit/ui/components/button";
 import { SessionTerminal } from "@claudekit/ui/components/session-terminal";
 import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
 import { parseStreamLog, resetStreamIdCounter } from "@claudekit/ui/components/streaming-display";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { AlertCircle, CheckCircle2, FileCode } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -232,19 +233,26 @@ export function ScaffoldTerminal({
     );
   }
 
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 relative min-h-0">
-        {/* File counter badge overlay */}
-        {fileCount > 0 && (
-          <div className="absolute top-2 right-16 z-10">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 gap-1">
+  const fileCountBadge =
+    fileCount > 0 ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 gap-1 cursor-default">
               <FileCode className="w-3 h-3" />
               {fileCount}
             </Badge>
-          </div>
-        )}
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {fileCount} file{fileCount !== 1 ? "s" : ""} touched
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : undefined;
 
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex-1 relative min-h-0">
         <SessionTerminal
           logs={session.logs}
           progress={session.progress}
@@ -254,6 +262,7 @@ export function ScaffoldTerminal({
           elapsed={session.elapsed}
           title="Scaffolding with Claude Code"
           variant="terminal"
+          headerExtra={fileCountBadge}
           onCancel={handleCancel}
           onRetry={handleRetry}
         />
