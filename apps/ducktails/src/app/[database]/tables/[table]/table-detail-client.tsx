@@ -4,16 +4,35 @@ import { Button } from "@claudekit/ui/components/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@claudekit/ui/components/tabs";
 import { ChevronLeft, ChevronRight, Columns3, Plus, RefreshCw, Rows3 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { ColumnPicker } from "@/components/data/column-picker";
 import { DataGrid } from "@/components/data/data-grid";
 import { DeleteConfirmDialog } from "@/components/data/delete-confirm-dialog";
 import { RowEditDialog } from "@/components/data/row-edit-dialog";
 import { RefreshedAt } from "@/components/refreshed-at";
 import { ColumnSchemaTable } from "@/components/tables/column-schema-table";
+import { useColumnVisibility } from "@/hooks/use-column-visibility";
 import { deleteRow, insertRow, updateRow } from "@/lib/actions/data";
 import { refreshSnapshots } from "@/lib/actions/databases";
-import type { ColumnInfo, DataPage } from "@/lib/types";
+import type { ColumnFilter, ColumnInfo, DataPage, FilterOperator } from "@/lib/types";
+
+/** Build URLSearchParams preserving sort + filter state */
+function buildParams(
+  sort: { column?: string; direction?: string },
+  filters: ColumnFilter[],
+  page: number,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  if (sort.column) params.set("sort", sort.column);
+  if (sort.direction) params.set("dir", sort.direction);
+  params.set("page", String(page));
+  for (const f of filters) {
+    const val = f.value !== undefined ? `${f.operator}:${f.value}` : `${f.operator}:`;
+    params.set(`f_${f.column}`, val);
+  }
+  return params;
+}
 
 export function TableDetailClient({
   databaseId,
@@ -22,6 +41,7 @@ export function TableDetailClient({
   primaryKey,
   initialData,
   refreshedAt,
+  filters = [],
 }: {
   databaseId: string;
   tableName: string;
@@ -29,12 +49,20 @@ export function TableDetailClient({
   primaryKey: string[];
   initialData: DataPage;
   refreshedAt: number;
+  filters?: ColumnFilter[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editRow, setEditRow] = useState<Record<string, unknown> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Record<string, unknown> | null>(null);
   const [showInsert, setShowInsert] = useState(false);
+
+  const allColumnNames = useMemo(() => schema.map((c) => c.column_name), [schema]);
+  const { hiddenColumns, visibleColumns, toggleColumn, showAll } = useColumnVisibility(
+    databaseId,
+    tableName,
+    allColumnNames,
+  );
 
   const totalPages = Math.ceil(initialData.totalRows / initialData.pageSize);
 
@@ -44,22 +72,36 @@ export function TableDetailClient({
     });
   };
 
+  const currentSort = useMemo(
+    () => ({ column: initialData.sortColumn, direction: initialData.sortDirection }),
+    [initialData.sortColumn, initialData.sortDirection],
+  );
+
   const handleSort = (column: string) => {
     const newDir = initialData.sortColumn === column && initialData.sortDirection === "asc" ? "desc" : "asc";
-    const params = new URLSearchParams();
-    params.set("sort", column);
-    params.set("dir", newDir);
-    params.set("page", "1");
-    navigate(params);
+    navigate(buildParams({ column, direction: newDir }, filters, 1));
   };
 
   const handlePageChange = (page: number) => {
-    const params = new URLSearchParams();
-    if (initialData.sortColumn) params.set("sort", initialData.sortColumn);
-    if (initialData.sortDirection) params.set("dir", initialData.sortDirection);
-    params.set("page", String(page));
-    navigate(params);
+    navigate(buildParams(currentSort, filters, page));
   };
+
+  const handleFilterChange = useCallback(
+    (column: string, operator: FilterOperator, value?: string) => {
+      // Build new filters list
+      const next = filters.filter((f) => f.column !== column);
+      // Only add if there's a meaningful value (or it's a valueless operator)
+      const isValueless = ["is_null", "is_not_null", "is_true", "is_false"].includes(operator);
+      if (isValueless || (value !== undefined && value !== "")) {
+        next.push({ column, operator, value });
+      }
+      const params = buildParams(currentSort, next, 1); // reset to page 1
+      startTransition(() => {
+        router.push(`/${databaseId}/tables/${tableName}?${params.toString()}`);
+      });
+    },
+    [filters, currentSort, databaseId, tableName, router],
+  );
 
   const handleRefresh = () => {
     startTransition(async () => {
@@ -119,14 +161,22 @@ export function TableDetailClient({
         </div>
         <div className="flex items-center gap-2">
           <RefreshedAt timestamp={refreshedAt} />
+          <ColumnPicker
+            allColumns={allColumnNames}
+            hiddenColumns={hiddenColumns}
+            onToggle={toggleColumn}
+            onShowAll={showAll}
+          />
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleRefresh} disabled={isPending}>
             <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
           </Button>
-          {primaryKey.length > 0 && (
+          {primaryKey.length > 0 ? (
             <Button size="sm" className="h-7 text-xs" onClick={() => setShowInsert(true)}>
               <Plus className="h-3.5 w-3.5 mr-1" />
               Insert
             </Button>
+          ) : (
+            <span className="text-xs text-muted-foreground">Read-only (no primary key)</span>
           )}
         </div>
       </div>
@@ -186,6 +236,9 @@ export function TableDetailClient({
             onEdit={primaryKey.length > 0 ? setEditRow : undefined}
             onDelete={primaryKey.length > 0 ? setDeleteTarget : undefined}
             isPending={isPending}
+            visibleColumns={visibleColumns}
+            filters={filters}
+            onFilterChange={handleFilterChange}
           />
         </TabsContent>
 

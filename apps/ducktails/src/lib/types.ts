@@ -32,6 +32,25 @@ export interface QueryResult {
   error?: string;
 }
 
+export type FilterOperator =
+  | "contains"
+  | "eq"
+  | "neq"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "is_null"
+  | "is_not_null"
+  | "is_true"
+  | "is_false";
+
+export interface ColumnFilter {
+  column: string;
+  operator: FilterOperator;
+  value?: string;
+}
+
 export interface DataPage {
   columns: ColumnInfo[];
   rows: Record<string, unknown>[];

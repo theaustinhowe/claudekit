@@ -9,8 +9,9 @@ import {
 } from "@claudekit/ui/components/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@claudekit/ui/components/table";
 import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import type { DataPage } from "@/lib/types";
+import type { ColumnFilter, ColumnInfo, DataPage, FilterOperator } from "@/lib/types";
 import { formatCellValue } from "@/lib/utils";
+import { ColumnFilterRow } from "./column-filter-row";
 
 export function DataGrid({
   data,
@@ -18,21 +19,39 @@ export function DataGrid({
   onEdit,
   onDelete,
   isPending,
+  visibleColumns,
+  filters,
+  onFilterChange,
 }: {
   data: DataPage;
   onSort: (column: string) => void;
   onEdit?: (row: Record<string, unknown>) => void;
   onDelete?: (row: Record<string, unknown>) => void;
   isPending?: boolean;
+  visibleColumns?: string[];
+  filters?: ColumnFilter[];
+  onFilterChange?: (column: string, operator: FilterOperator, value?: string) => void;
 }) {
   const hasActions = onEdit || onDelete;
+
+  // Filter columns to only visible ones
+  const columns: ColumnInfo[] = visibleColumns
+    ? data.columns.filter((c) => visibleColumns.includes(c.column_name))
+    : data.columns;
+
+  // Filter the active filters to only visible columns
+  const visibleFilters = filters
+    ? visibleColumns
+      ? filters.filter((f) => visibleColumns.includes(f.column))
+      : filters
+    : [];
 
   return (
     <div className={isPending ? "opacity-50 pointer-events-none" : ""}>
       <Table>
         <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
           <TableRow className="hover:bg-transparent">
-            {data.columns.map((col) => (
+            {columns.map((col) => (
               <TableHead key={col.column_name} className="whitespace-nowrap h-8 text-xs">
                 <button
                   type="button"
@@ -54,12 +73,20 @@ export function DataGrid({
             ))}
             {hasActions && <TableHead className="w-8 h-8" />}
           </TableRow>
+          {onFilterChange && (
+            <ColumnFilterRow
+              columns={columns}
+              filters={visibleFilters}
+              onFilterChange={onFilterChange}
+              hasActions={!!hasActions}
+            />
+          )}
         </TableHeader>
         <TableBody>
           {data.rows.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={data.columns.length + (hasActions ? 1 : 0)}
+                colSpan={columns.length + (hasActions ? 1 : 0)}
                 className="text-center py-12 text-muted-foreground text-sm"
               >
                 No data
@@ -69,7 +96,7 @@ export function DataGrid({
             data.rows.map((row, idx) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: rows don't have stable IDs
               <TableRow key={idx} className="group">
-                {data.columns.map((col) => {
+                {columns.map((col) => {
                   const val = row[col.column_name];
                   const isNull = val === null || val === undefined;
                   return (

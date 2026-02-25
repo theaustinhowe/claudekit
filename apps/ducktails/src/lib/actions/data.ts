@@ -3,7 +3,7 @@
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getConnection, getWritableConnection } from "@/lib/db/connection-manager";
 import { getDatabaseEntry } from "@/lib/db/registry";
-import type { ColumnInfo, DataPage } from "@/lib/types";
+import type { ColumnFilter, ColumnInfo, DataPage } from "@/lib/types";
 import { quoteIdentifier, validateIdentifier } from "@/lib/utils";
 
 export async function getTableData(
@@ -14,13 +14,14 @@ export async function getTableData(
     pageSize?: number;
     sortColumn?: string;
     sortDirection?: "asc" | "desc";
+    filters?: ColumnFilter[];
   } = {},
 ): Promise<DataPage> {
   const entry = getDatabaseEntry(databaseId);
   if (!entry) throw new Error(`Unknown database: ${databaseId}`);
   if (!validateIdentifier(tableName)) throw new Error(`Invalid table name: ${tableName}`);
 
-  const { page = 1, pageSize = 50, sortColumn, sortDirection = "asc" } = options;
+  const { page = 1, pageSize = 50, sortColumn, sortDirection = "asc", filters } = options;
 
   const conn = await getConnection(entry.path);
 
@@ -31,10 +32,64 @@ export async function getTableData(
     [tableName],
   );
 
+  // Build WHERE clause from filters
+  const whereFragments: string[] = [];
+  const whereParams: unknown[] = [];
+  if (filters && filters.length > 0) {
+    for (const f of filters) {
+      if (!validateIdentifier(f.column)) continue;
+      const col = quoteIdentifier(f.column);
+      switch (f.operator) {
+        case "contains":
+          whereFragments.push(`CAST(${col} AS VARCHAR) ILIKE ?`);
+          whereParams.push(`%${f.value ?? ""}%`);
+          break;
+        case "eq":
+          whereFragments.push(`${col} = ?`);
+          whereParams.push(f.value ?? "");
+          break;
+        case "neq":
+          whereFragments.push(`${col} != ?`);
+          whereParams.push(f.value ?? "");
+          break;
+        case "gt":
+          whereFragments.push(`${col} > ?`);
+          whereParams.push(f.value ?? "");
+          break;
+        case "gte":
+          whereFragments.push(`${col} >= ?`);
+          whereParams.push(f.value ?? "");
+          break;
+        case "lt":
+          whereFragments.push(`${col} < ?`);
+          whereParams.push(f.value ?? "");
+          break;
+        case "lte":
+          whereFragments.push(`${col} <= ?`);
+          whereParams.push(f.value ?? "");
+          break;
+        case "is_null":
+          whereFragments.push(`${col} IS NULL`);
+          break;
+        case "is_not_null":
+          whereFragments.push(`${col} IS NOT NULL`);
+          break;
+        case "is_true":
+          whereFragments.push(`${col} = true`);
+          break;
+        case "is_false":
+          whereFragments.push(`${col} = false`);
+          break;
+      }
+    }
+  }
+  const whereClause = whereFragments.length > 0 ? ` WHERE ${whereFragments.join(" AND ")}` : "";
+
   // Get total count
   const countResult = await queryOne<{ cnt: number }>(
     conn,
-    `SELECT COUNT(*)::INTEGER as cnt FROM ${quoteIdentifier(tableName)}`,
+    `SELECT COUNT(*)::INTEGER as cnt FROM ${quoteIdentifier(tableName)}${whereClause}`,
+    whereParams,
   );
   const totalRows = countResult?.cnt ?? 0;
 
@@ -48,8 +103,8 @@ export async function getTableData(
   const offset = (page - 1) * pageSize;
   const rows = await queryAll<Record<string, unknown>>(
     conn,
-    `SELECT * FROM ${quoteIdentifier(tableName)}${orderClause} LIMIT ? OFFSET ?`,
-    [pageSize, offset],
+    `SELECT * FROM ${quoteIdentifier(tableName)}${whereClause}${orderClause} LIMIT ? OFFSET ?`,
+    [...whereParams, pageSize, offset],
   );
 
   return {
