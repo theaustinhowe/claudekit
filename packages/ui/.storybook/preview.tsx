@@ -80,6 +80,11 @@ const preview: Preview = {
   },
   parameters: {
     layout: "centered",
+    options: {
+      storySort: {
+        method: "alphabetical",
+      },
+    },
   },
 };
 
