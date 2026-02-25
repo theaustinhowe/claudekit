@@ -70,7 +70,7 @@ export const APP_DEFINITIONS: AppDefinition[] = [
     id: "ducktails",
     name: "DuckTails",
     description: "DuckDB admin UI — browse, query, and edit all ClaudeKit databases",
-    port: 2500,
+    port: 2050,
     icon: "Database",
     maturityPercentage: 20,
   },

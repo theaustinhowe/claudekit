@@ -31,5 +31,5 @@ export const ducktailsLayoutConfig: AppLayoutConfig = {
     { label: "Inspector", href: "/inspector/tables", icon: Database },
     { label: "B4U", href: "/b4u/tables", icon: Database },
   ],
-  port: 2500,
+  port: 2050,
 };

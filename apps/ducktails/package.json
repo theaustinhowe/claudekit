@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 2500",
+    "dev": "next dev --port 2050",
     "build": "next build",
-    "start": "next start --port 2500",
+    "start": "next start --port 2050",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",

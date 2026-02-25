@@ -6,12 +6,12 @@
 
 ## Port
 
-**2500** — `pnpm dev:ducktails` or `pnpm --filter ducktails dev`
+**2050** — `pnpm dev:ducktails` or `pnpm --filter ducktails dev`
 
 ## Commands
 
 ```bash
-pnpm --filter ducktails dev        # Start dev server on port 2500
+pnpm --filter ducktails dev        # Start dev server on port 2050
 pnpm --filter ducktails build      # Production build
 pnpm --filter ducktails typecheck  # TypeScript check
 pnpm --filter ducktails lint       # Lint check
