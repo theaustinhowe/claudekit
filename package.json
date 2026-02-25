@@ -14,6 +14,7 @@
     "dev:b4u": "pnpm --filter b4u dev",
     "dev:inspector": "pnpm --filter inspector dev",
     "dev:inside": "pnpm --filter inside dev",
+    "dev:ducktails": "pnpm --filter ducktails dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "biome check .",
@@ -24,7 +25,7 @@
     "db:reset": "tsx scripts/db-reset.ts",
     "knip": "knip",
     "clean": "tsx scripts/clean.ts",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && NODE_ENV=production pnpm build",
+    "check": "pnpm typecheck && pnpm lint && pnpm test:coverage && NODE_ENV=production pnpm build",
     "storybook": "pnpm --filter @claudekit/ui storybook"
   },
   "devDependencies": {

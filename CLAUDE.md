@@ -17,6 +17,7 @@ This file provides guidance to Claude Code when working in this monorepo.
 | `apps/gogo-orchestrator` | 2201 | Fastify 5 | Backend orchestrator for GoGo job execution |
 | `apps/b4u` | 2300 | Next.js 16 | Automated repo walkthrough video generator |
 | `apps/inspector` | 2400 | Next.js 16 | GitHub PR analysis, skill building, comment resolution |
+| `apps/ducktails` | 2500 | Next.js 16 | DuckDB admin UI — browse, query, edit all ClaudeKit databases |
 
 ## Shared Packages
 
@@ -44,6 +45,7 @@ pnpm dev:gogo-orch    # Just GoGo orchestrator (port 2201)
 pnpm dev:b4u          # Just B4U (port 2300)
 pnpm dev:inspector    # Just Inspector (port 2400)
 pnpm dev:inside       # Just Inside (port 2150)
+pnpm dev:ducktails    # Just DuckTails (port 2500)
 pnpm build            # Build all packages and apps
 pnpm typecheck        # TypeScript check across everything
 pnpm lint             # Biome check
