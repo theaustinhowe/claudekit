@@ -156,7 +156,7 @@ export function SharedSidebar({
           {SidebarContent ? (
             <SidebarContent collapsed={collapsed} />
           ) : (
-            <DesktopNav groups={groups} bottomNav={config.bottomNav} collapsed={collapsed} />
+            <DesktopNav groups={groups} collapsed={collapsed} />
           )}
         </>
       )}
