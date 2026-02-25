@@ -64,7 +64,13 @@ export function SetupWizardDialog({ trigger, autoOpen }: SetupWizardDialogProps)
       const result = await saveSetupEnv(values);
       if (result.success) {
         toast.success(`Saved to ${result.filesWritten.length} files`, {
-          description: result.filesWritten.map((f) => `• ${f}`).join("\n"),
+          description: (
+            <ul className="mt-1 list-disc pl-4 text-xs">
+              {result.filesWritten.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          ),
         });
         setOpen(false);
       } else {
