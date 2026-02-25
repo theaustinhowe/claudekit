@@ -7,6 +7,7 @@ import {
   Eye,
   FileCode,
   FolderOpen,
+  Lightbulb,
   MessageSquareText,
   Terminal,
   Zap,
@@ -46,6 +47,8 @@ export interface StreamEntry {
 type GroupedStreamItem =
   | { type: "single"; entry: StreamEntry }
   | { type: "file-group"; dir: string; entries: StreamEntry[] }
+  | { type: "file-batch"; dirs: { dir: string; entries: StreamEntry[] }[]; allEntries: StreamEntry[] }
+  | { type: "bash-group"; entries: StreamEntry[] }
   | { type: "thinking-group"; entries: StreamEntry[] }
   | { type: "read-group"; entries: StreamEntry[] }
   | { type: "prompt-group"; label: string; entries: StreamEntry[] };
@@ -332,22 +335,41 @@ function groupStreamEntries(entries: StreamEntry[]): GroupedStreamItem[] {
       continue;
     }
 
-    // Group consecutive file writes/edits in the same directory
+    // Group consecutive file writes/edits across any directory (absorb interleaved thinking)
     if (entry.kind === "file-write" || entry.kind === "file-edit") {
-      const dir = entry.filePath ? dirOf(entry.filePath) : "";
       const fileEntries: StreamEntry[] = [entry];
       let j = i + 1;
       while (j < entries.length) {
         const next = entries[j];
-        if ((next.kind === "file-write" || next.kind === "file-edit") && dirOf(next.filePath ?? "") === dir) {
+        if (next.kind === "file-write" || next.kind === "file-edit") {
           fileEntries.push(next);
           j++;
+        } else if (next.kind === "thinking") {
+          // Absorb thinking if followed by another file op
+          let k = j + 1;
+          while (k < entries.length && entries[k].kind === "thinking") k++;
+          if (k < entries.length && (entries[k].kind === "file-write" || entries[k].kind === "file-edit")) {
+            for (let t = j; t < k; t++) fileEntries.push(entries[t]);
+            fileEntries.push(entries[k]);
+            j = k + 1;
+          } else {
+            break;
+          }
         } else {
           break;
         }
       }
       if (fileEntries.length >= 2) {
-        groups.push({ type: "file-group", dir, entries: fileEntries });
+        // Sub-group by directory
+        const dirMap = new Map<string, StreamEntry[]>();
+        for (const fe of fileEntries) {
+          if (fe.kind === "thinking") continue;
+          const d = fe.filePath ? dirOf(fe.filePath) : ".";
+          if (!dirMap.has(d)) dirMap.set(d, []);
+          dirMap.get(d)!.push(fe);
+        }
+        const dirs = Array.from(dirMap, ([dir, entries]) => ({ dir, entries }));
+        groups.push({ type: "file-batch", dirs, allEntries: fileEntries });
       } else {
         groups.push({ type: "single", entry });
       }
@@ -389,7 +411,40 @@ function groupStreamEntries(entries: StreamEntry[]): GroupedStreamItem[] {
       continue;
     }
 
-    // Group consecutive thinking entries (3+)
+    // Group consecutive bash commands (absorb interleaved thinking)
+    if (entry.kind === "bash-command") {
+      const bashEntries: StreamEntry[] = [entry];
+      let j = i + 1;
+      while (j < entries.length) {
+        const next = entries[j];
+        if (next.kind === "bash-command") {
+          bashEntries.push(next);
+          j++;
+        } else if (next.kind === "thinking") {
+          let k = j + 1;
+          while (k < entries.length && entries[k].kind === "thinking") k++;
+          if (k < entries.length && entries[k].kind === "bash-command") {
+            for (let t = j; t < k; t++) bashEntries.push(entries[t]);
+            bashEntries.push(entries[k]);
+            j = k + 1;
+          } else {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+      const bashOnly = bashEntries.filter((e) => e.kind === "bash-command");
+      if (bashOnly.length >= 2) {
+        groups.push({ type: "bash-group", entries: bashEntries });
+      } else {
+        groups.push({ type: "single", entry });
+      }
+      i = j;
+      continue;
+    }
+
+    // Group consecutive thinking entries (2+)
     if (entry.kind === "thinking") {
       const thinkEntries: StreamEntry[] = [entry];
       let j = i + 1;
@@ -397,7 +452,7 @@ function groupStreamEntries(entries: StreamEntry[]): GroupedStreamItem[] {
         thinkEntries.push(entries[j]);
         j++;
       }
-      if (thinkEntries.length >= 3) {
+      if (thinkEntries.length >= 2) {
         groups.push({ type: "thinking-group", entries: thinkEntries });
       } else {
         for (const te of thinkEntries) {
@@ -421,14 +476,19 @@ function groupStreamEntries(entries: StreamEntry[]): GroupedStreamItem[] {
 
 type Variant = "terminal" | "chat";
 
+function fileActionLabel(kind: StreamEntryKind): string {
+  return kind === "file-edit" ? "Edited" : "Created";
+}
+
 function FileWriteRow({ entry, variant }: { entry: StreamEntry; variant: Variant }) {
   const path = entry.filePath ?? "";
   const dir = dirOf(path);
   const name = fileNameOf(path);
+  const action = fileActionLabel(entry.kind);
 
   if (variant === "chat") {
     return (
-      <div className="flex items-center gap-2 py-0.5 px-2" title={path}>
+      <div className="flex items-center gap-2 py-0.5 px-2" title={`${action} ${path}`}>
         <FileCode className={cn("w-3.5 h-3.5 shrink-0", fileColorClass(path))} />
         <span>
           <span className="text-muted-foreground text-xs truncate">{dir}/</span>
@@ -439,11 +499,11 @@ function FileWriteRow({ entry, variant }: { entry: StreamEntry; variant: Variant
   }
 
   return (
-    <div className="flex items-center gap-2 py-1" title={path}>
-      <FileCode className={cn("w-3.5 h-3.5 shrink-0", fileColorClass(path))} />
+    <div className="flex items-center gap-2 py-1" title={`${action} ${path}`}>
+      <FileCode className="w-3.5 h-3.5 shrink-0 text-zinc-600" />
       <span>
-        <span className="text-zinc-500 text-xs truncate">{dir}/</span>
-        <span className="text-zinc-200 text-xs font-medium truncate">{name}</span>
+        <span className="text-zinc-600 text-xs truncate">{dir}/</span>
+        <span className="text-zinc-400 text-xs font-medium truncate">{name}</span>
       </span>
     </div>
   );
@@ -466,9 +526,13 @@ function FileGroupSection({ dir, entries, variant }: { dir: string; entries: Str
         </Badge>
       </div>
       {entries.map((e) => (
-        <div key={e.id} className="flex items-center gap-2 py-0.5 px-2" title={e.filePath ?? ""}>
-          <FileCode className={cn("w-3 h-3 shrink-0", fileColorClass(e.filePath ?? ""))} />
-          <span className={cn("text-xs font-medium truncate", isChat ? "text-foreground" : "text-zinc-200")}>
+        <div
+          key={e.id}
+          className="flex items-center gap-2 py-0.5 px-2"
+          title={`${fileActionLabel(e.kind)} ${e.filePath ?? ""}`}
+        >
+          <FileCode className={cn("w-3 h-3 shrink-0", isChat ? fileColorClass(e.filePath ?? "") : "text-zinc-600")} />
+          <span className={cn("text-xs font-medium truncate", isChat ? "text-foreground" : "text-zinc-400")}>
             {fileNameOf(e.filePath ?? "")}
           </span>
           {e.kind === "file-edit" && (
@@ -488,26 +552,154 @@ function FileGroupSection({ dir, entries, variant }: { dir: string; entries: Str
   );
 }
 
+function FileBatchSection({
+  dirs,
+  allEntries,
+  variant,
+  live,
+}: {
+  dirs: { dir: string; entries: StreamEntry[] }[];
+  allEntries: StreamEntry[];
+  variant: Variant;
+  live?: boolean;
+}) {
+  const isChat = variant === "chat";
+  const totalFiles = allEntries.filter((e) => e.kind !== "thinking").length;
+  const created = allEntries.filter((e) => e.kind === "file-write").length;
+  const edited = allEntries.filter((e) => e.kind === "file-edit").length;
+
+  const defaultExpanded = isChat ? (live ? true : false) : totalFiles <= 4;
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  return (
+    <div className="my-0.5">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className={cn(
+          "flex items-center gap-1.5 text-xs transition-colors py-0.5",
+          isChat ? "text-muted-foreground hover:text-foreground" : "text-zinc-600 hover:text-zinc-500",
+        )}
+      >
+        {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <FileCode className="w-3 h-3" />
+        <span>
+          {totalFiles} file{totalFiles !== 1 ? "s" : ""}
+        </span>
+        {created > 0 && (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-[10px] px-1.5 py-0 h-4",
+              isChat ? "bg-emerald-500/10 text-emerald-600" : "bg-emerald-500/10 text-emerald-400",
+            )}
+          >
+            {created} created
+          </Badge>
+        )}
+        {edited > 0 && (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-[10px] px-1.5 py-0 h-4",
+              isChat ? "bg-amber-500/10 text-amber-600" : "bg-amber-500/10 text-amber-400",
+            )}
+          >
+            {edited} edited
+          </Badge>
+        )}
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="pl-2 mt-0.5">
+              {dirs.map((d) => (
+                <FileGroupSection key={d.dir} dir={d.dir} entries={d.entries} variant={variant} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function BashGroupSection({ entries, variant, live }: { entries: StreamEntry[]; variant: Variant; live?: boolean }) {
+  const isChat = variant === "chat";
+  const bashOnly = entries.filter((e) => e.kind === "bash-command");
+  const defaultExpanded = isChat ? (live ? true : false) : live ? true : false;
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  return (
+    <div className="my-0.5">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className={cn(
+          "flex items-center gap-1.5 text-xs transition-colors py-0.5",
+          isChat ? "text-muted-foreground hover:text-foreground" : "text-zinc-600 hover:text-zinc-500",
+        )}
+      >
+        {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <Terminal className="w-3 h-3" />
+        <span>
+          Ran {bashOnly.length} command{bashOnly.length !== 1 ? "s" : ""}
+        </span>
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className={cn("pl-5 space-y-0 border-l ml-1.5", isChat ? "border-border" : "border-zinc-800")}>
+              {bashOnly.map((e) => (
+                <BashEntry key={e.id} entry={e} variant={variant} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function BashEntry({ entry, variant }: { entry: StreamEntry; variant: Variant }) {
+  const full = entry.command || "bash";
+  const firstLine = full.split("\n")[0];
+
   if (variant === "chat") {
     return (
-      <div className="flex items-start gap-2 py-0.5 text-xs">
-        <Terminal className="w-3.5 h-3.5 shrink-0 text-muted-foreground mt-0.5" />
-        <code className="text-muted-foreground break-all">{entry.command || "bash"}</code>
+      <div className="flex items-center gap-2 py-0.5 text-xs min-w-0">
+        <Terminal className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+        <code className="text-muted-foreground truncate min-w-0" title={full}>
+          {firstLine}
+        </code>
       </div>
     );
   }
 
   return (
-    <div className="flex items-start gap-2 py-1 text-xs">
-      <Terminal className="w-3.5 h-3.5 shrink-0 text-blue-500/70 mt-0.5" />
-      <code className="text-blue-400/70 break-all">{entry.command || "bash"}</code>
+    <div className="flex items-center gap-2 py-1 text-xs min-w-0">
+      <Terminal className="w-3.5 h-3.5 shrink-0 text-zinc-600" />
+      <code className="text-zinc-600 truncate min-w-0" title={full}>
+        {firstLine}
+      </code>
     </div>
   );
 }
 
 function ThinkingBlock({ entries, variant }: { entries: StreamEntry[]; variant: Variant }) {
-  const [expanded, setExpanded] = useState(variant !== "chat");
+  const [expanded, setExpanded] = useState(false);
   const isChat = variant === "chat";
 
   return (
@@ -521,6 +713,7 @@ function ThinkingBlock({ entries, variant }: { entries: StreamEntry[]; variant: 
         )}
       >
         {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <Lightbulb className="w-3 h-3" />
         <span className="italic">{entries.length} reasoning steps</span>
       </button>
       <AnimatePresence>
@@ -609,7 +802,7 @@ function ReadGroupSection({ entries, variant }: { entries: StreamEntry[]; varian
         onClick={() => setExpanded((e) => !e)}
         className={cn(
           "flex items-center gap-1.5 text-xs transition-colors py-0.5",
-          isChat ? "text-muted-foreground hover:text-foreground" : "text-zinc-500 hover:text-zinc-400",
+          isChat ? "text-muted-foreground/70 hover:text-muted-foreground" : "text-zinc-600 hover:text-zinc-500",
         )}
       >
         {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -773,14 +966,36 @@ function summarizeEntries(entries: StreamEntry[]): string {
 // Inner display (renders all grouped entries)
 // ---------------------------------------------------------------------------
 
-function StreamEntryList({ grouped, variant }: { grouped: GroupedStreamItem[]; variant: Variant }) {
+function StreamEntryList({
+  grouped,
+  variant,
+  live,
+}: {
+  grouped: GroupedStreamItem[];
+  variant: Variant;
+  live?: boolean;
+}) {
   return (
     <div className={variant === "terminal" ? "space-y-0" : "space-y-0.5"}>
       {grouped.map((group) => {
+        if (group.type === "file-batch") {
+          return (
+            <FileBatchSection
+              key={group.allEntries[0].id}
+              dirs={group.dirs}
+              allEntries={group.allEntries}
+              variant={variant}
+              live={live}
+            />
+          );
+        }
         if (group.type === "file-group") {
           return (
             <FileGroupSection key={group.entries[0].id} dir={group.dir} entries={group.entries} variant={variant} />
           );
+        }
+        if (group.type === "bash-group") {
+          return <BashGroupSection key={group.entries[0].id} entries={group.entries} variant={variant} live={live} />;
         }
         if (group.type === "thinking-group") {
           return <ThinkingBlock key={group.entries[0].id} entries={group.entries} variant={variant} />;
@@ -865,7 +1080,7 @@ export function StreamingDisplay({ entries, variant, live }: StreamingDisplayPro
               className="overflow-hidden"
             >
               <div className="pl-3 border-l border-border ml-1.5 mt-0.5">
-                <StreamEntryList grouped={grouped} variant={variant} />
+                <StreamEntryList grouped={grouped} variant={variant} live={live} />
               </div>
             </motion.div>
           )}
@@ -874,5 +1089,5 @@ export function StreamingDisplay({ entries, variant, live }: StreamingDisplayPro
     );
   }
 
-  return <StreamEntryList grouped={grouped} variant={variant} />;
+  return <StreamEntryList grouped={grouped} variant={variant} live={live} />;
 }
