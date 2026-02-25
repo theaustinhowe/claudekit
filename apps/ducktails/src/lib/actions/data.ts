@@ -1,7 +1,7 @@
 "use server";
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
-import { getConnection, getWritableConnection } from "@/lib/db/connection-manager";
+import { closeConnection, getConnection, getWritableConnection } from "@/lib/db/connection-manager";
 import { getDatabaseEntry } from "@/lib/db/registry";
 import type { ColumnFilter, ColumnInfo, DataPage } from "@/lib/types";
 import { quoteIdentifier, validateIdentifier } from "@/lib/utils";
@@ -138,6 +138,7 @@ async function withWritableConn(
     try {
       conn.closeSync();
     } catch {}
+    closeConnection(dbPath);
   }
 }
 
