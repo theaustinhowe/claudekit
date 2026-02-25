@@ -23,7 +23,6 @@ const sampleConfig: AppLayoutConfig = {
       ],
     },
   ],
-  bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
   port: 2000,
 };
 
@@ -35,7 +34,6 @@ const flatConfig: AppLayoutConfig = {
     { label: "Projects", href: "/projects", icon: FolderKanban },
     { label: "Settings", href: "/settings", icon: Settings },
   ],
-  bottomNav: undefined,
 };
 
 const meta: Meta<typeof SharedSidebar> = {

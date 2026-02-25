@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { FolderKanban, Home, Info, Layers, Search, Settings } from "lucide-react";
+import { FolderKanban, Home, Info, Layers, Search } from "lucide-react";
 import { AppLayout } from "./app-layout";
 import type { AppLayoutConfig } from "./types";
 
@@ -23,7 +23,6 @@ const sampleConfig: AppLayoutConfig = {
       ],
     },
   ],
-  bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
   port: 2000,
 };
 

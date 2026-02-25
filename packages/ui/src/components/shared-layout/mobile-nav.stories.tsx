@@ -20,7 +20,6 @@ const sampleConfig: AppLayoutConfig = {
     { label: "Projects", href: "/projects", icon: FolderKanban },
     { label: "Settings", href: "/settings", icon: Settings },
   ],
-  bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
   port: 2000,
 };
 

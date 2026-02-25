@@ -17,6 +17,9 @@ const navGroups: NavGroup[] = [
       { label: "Reviewer Insights", href: "/insights", icon: Users },
     ],
   },
+  {
+    items: [{ label: "Settings", href: "/settings", icon: Settings }],
+  },
 ];
 
 export const inspectorLayoutConfig: AppLayoutConfig = {
@@ -26,7 +29,6 @@ export const inspectorLayoutConfig: AppLayoutConfig = {
     wordmark: <Image src="/logo.png" alt="Inspector" width={512} height={512} className="h-10 w-auto" />,
   },
   nav: navGroups,
-  bottomNav: [{ label: "Settings", href: "/settings", icon: Settings }],
   mobileNav: [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "Skills", href: "/skills", icon: Brain },

@@ -44,7 +44,6 @@ export interface AppLayoutConfig {
   appId: string;
   logo: LogoConfig;
   nav: NavItem[] | NavGroup[];
-  bottomNav?: NavItem[];
   mobileNav?: NavItem[];
   usageWidget?: ReactNode;
   port: number;

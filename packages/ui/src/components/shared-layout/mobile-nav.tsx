@@ -30,21 +30,12 @@ function flattenNav(nav: NavItem[] | NavGroup[]): NavItem[] {
 // Mobile nav for sheet sidebar
 // ---------------------------------------------------------------------------
 
-function MobileSheetNav({
-  nav,
-  bottomNav,
-  onNavigate,
-}: {
-  nav: NavItem[] | NavGroup[];
-  bottomNav?: NavItem[];
-  onNavigate: () => void;
-}) {
+function MobileSheetNav({ nav, onNavigate }: { nav: NavItem[] | NavGroup[]; onNavigate: () => void }) {
   const items = flattenNav(nav);
-  const allItems = bottomNav ? [...items, ...bottomNav] : items;
 
   return (
     <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
-      {allItems.map((item) => (
+      {items.map((item) => (
         <NavLink
           key={item.href}
           href={item.href}
@@ -115,7 +106,7 @@ export function MobileSidebar({
         {MobileSidebarContent ? (
           <MobileSidebarContent onNavigate={onNavigate} />
         ) : (
-          <MobileSheetNav nav={config.nav} bottomNav={config.bottomNav} onNavigate={onNavigate} />
+          <MobileSheetNav nav={config.nav} onNavigate={onNavigate} />
         )}
       </SheetContent>
     </Sheet>

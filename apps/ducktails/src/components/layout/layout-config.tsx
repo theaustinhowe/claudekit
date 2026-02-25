@@ -24,7 +24,6 @@ export const ducktailsLayoutConfig: AppLayoutConfig = {
     wordmark: <span className="text-lg font-bold">DuckTails</span>,
   },
   nav: navGroups,
-  bottomNav: [],
   mobileNav: [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "Gadget", href: "/gadget/tables", icon: Database },

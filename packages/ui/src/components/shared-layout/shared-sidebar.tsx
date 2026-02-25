@@ -82,15 +82,7 @@ function DesktopNavItem({ item, collapsed, isActive }: { item: NavItem; collapse
 // Desktop nav section — renders NavGroup[] with section labels
 // ---------------------------------------------------------------------------
 
-function DesktopNav({
-  groups,
-  bottomNav,
-  collapsed,
-}: {
-  groups: NavGroup[];
-  bottomNav?: NavItem[];
-  collapsed: boolean;
-}) {
+function DesktopNav({ groups, collapsed }: { groups: NavGroup[]; collapsed: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -112,16 +104,6 @@ function DesktopNav({
           </div>
         ))}
       </nav>
-
-      {/* Bottom-pinned items (e.g. Settings) */}
-      {bottomNav && bottomNav.length > 0 && (
-        <div className="border-t border-sidebar-border py-2 px-2">
-          {bottomNav.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
-            return <DesktopNavItem key={item.href} item={item} collapsed={collapsed} isActive={isActive} />;
-          })}
-        </div>
-      )}
     </TooltipProvider>
   );
 }
