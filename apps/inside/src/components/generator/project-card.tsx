@@ -23,7 +23,7 @@ export function ProjectCard({ project, statusColors, screenshotId }: ProjectCard
             {screenshotId ? (
               // biome-ignore lint/performance/noImgElement: dynamic API-served screenshots
               <img
-                src={`/api/${project.id}/screenshots/${screenshotId}`}
+                src={`/api/projects/${project.id}/screenshots/${screenshotId}`}
                 alt=""
                 className="w-full h-full object-cover"
               />
