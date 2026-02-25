@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 
-interface QueryHistoryEntry {
+export interface QueryHistoryEntry {
   sql: string;
   timestamp: number;
 }
@@ -38,6 +38,19 @@ export function useQueryHistory(databaseId: string) {
     [databaseId],
   );
 
+  const removeEntry = useCallback(
+    (timestamp: number) => {
+      setHistory((prev) => {
+        const next = prev.filter((e) => e.timestamp !== timestamp);
+        try {
+          localStorage.setItem(getStorageKey(databaseId), JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    },
+    [databaseId],
+  );
+
   const clearHistory = useCallback(() => {
     setHistory([]);
     try {
@@ -45,5 +58,5 @@ export function useQueryHistory(databaseId: string) {
     } catch {}
   }, [databaseId]);
 
-  return { history, addEntry, clearHistory };
+  return { history, addEntry, removeEntry, clearHistory };
 }

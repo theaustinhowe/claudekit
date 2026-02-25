@@ -55,6 +55,24 @@ export async function getTableRowCount(databaseId: string, tableName: string): P
   return result?.cnt ?? 0;
 }
 
+export async function getSchemaForCompletion(databaseId: string): Promise<Record<string, string[]>> {
+  const entry = getDatabaseEntry(databaseId);
+  if (!entry) throw new Error(`Unknown database: ${databaseId}`);
+
+  const conn = await getConnection(entry.path);
+  const rows = await queryAll<{ table_name: string; column_name: string }>(
+    conn,
+    "SELECT table_name, column_name FROM information_schema.columns WHERE table_schema='main' ORDER BY table_name, ordinal_position",
+  );
+
+  const schema: Record<string, string[]> = {};
+  for (const row of rows) {
+    if (!schema[row.table_name]) schema[row.table_name] = [];
+    schema[row.table_name].push(row.column_name);
+  }
+  return schema;
+}
+
 export async function getTablePrimaryKey(databaseId: string, tableName: string): Promise<string[]> {
   const entry = getDatabaseEntry(databaseId);
   if (!entry) throw new Error(`Unknown database: ${databaseId}`);
