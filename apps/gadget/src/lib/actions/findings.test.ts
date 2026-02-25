@@ -107,7 +107,8 @@ describe("getAIFilesForRepo", () => {
 
 describe("refreshAIFileFindings", () => {
   beforeEach(() => {
-    mockWithTransaction.mockImplementation((_db, fn) => fn());
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
+    mockWithTransaction.mockImplementation((_db: any, fn: any) => fn(_db));
   });
 
   it("returns early when repo not found", async () => {
@@ -142,7 +143,7 @@ describe("refreshAIFileFindings", () => {
         severity: "warning",
         title: "Missing CLAUDE.md",
         details: "No CLAUDE.md found",
-        evidence: null,
+        evidence: undefined,
         suggestedActions: ["Create CLAUDE.md"],
       },
     ] as ReturnType<typeof auditAIFiles>);

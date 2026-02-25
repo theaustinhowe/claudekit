@@ -121,7 +121,7 @@ describe("generateExportFiles", () => {
 
     const pkgFile = files.find((f) => f.path === "package.json");
     expect(pkgFile).toBeDefined();
-    const pkg = JSON.parse(pkgFile?.content);
+    const pkg = JSON.parse(pkgFile?.content ?? "");
     expect(pkg.dependencies.next).toBeDefined();
     expect(pkg.dependencies.react).toBeDefined();
     expect(pkg.scripts.dev).toBe("next dev");
@@ -132,7 +132,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile?.content);
+    const pkg = JSON.parse(pkgFile?.content ?? "");
     expect(pkg.dependencies.next).toBeUndefined();
     expect(pkg.scripts.dev).toContain("tsx");
   });
@@ -142,7 +142,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile?.content);
+    const pkg = JSON.parse(pkgFile?.content ?? "");
     expect(pkg.devDependencies.tailwindcss).toBeDefined();
   });
 
@@ -151,7 +151,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile?.content);
+    const pkg = JSON.parse(pkgFile?.content ?? "");
     expect(pkg.devDependencies["@biomejs/biome"]).toBeDefined();
   });
 
@@ -160,7 +160,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile?.content);
+    const pkg = JSON.parse(pkgFile?.content ?? "");
     expect(pkg.devDependencies.vitest).toBeDefined();
     expect(pkg.scripts.test).toBe("vitest");
   });
@@ -170,7 +170,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile?.content);
+    const pkg = JSON.parse(pkgFile?.content ?? "");
     expect(pkg.dependencies["class-variance-authority"]).toBeDefined();
     expect(pkg.dependencies["lucide-react"]).toBeDefined();
   });
@@ -182,7 +182,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(project, makeSpec(), []);
 
     const pkgFile = files.find((f) => f.path === "package.json");
-    const pkg = JSON.parse(pkgFile?.content);
+    const pkg = JSON.parse(pkgFile?.content ?? "");
     expect(pkg.dependencies["@supabase/supabase-js"]).toBeDefined();
     expect(pkg.dependencies.stripe).toBeDefined();
     expect(pkg.dependencies.resend).toBeDefined();
@@ -194,7 +194,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), makeSpec(), []);
     const tsFile = files.find((f) => f.path === "tsconfig.json");
     expect(tsFile).toBeDefined();
-    const tsconfig = JSON.parse(tsFile?.content);
+    const tsconfig = JSON.parse(tsFile?.content ?? "");
     expect(tsconfig.compilerOptions.target).toBe("ES2022");
   });
 
@@ -202,7 +202,7 @@ describe("generateExportFiles", () => {
     const project = makeProject({ constraints: ["typescript-strict"] });
     const files = generateExportFiles(project, makeSpec(), []);
     const tsFile = files.find((f) => f.path === "tsconfig.json");
-    const tsconfig = JSON.parse(tsFile?.content);
+    const tsconfig = JSON.parse(tsFile?.content ?? "");
     expect(tsconfig.compilerOptions.strict).toBe(true);
   });
 
@@ -269,7 +269,7 @@ describe("generateExportFiles", () => {
     const files = generateExportFiles(makeProject(), spec, []);
     const specFile = files.find((f) => f.path === "ui-spec.json");
     expect(specFile).toBeDefined();
-    expect(JSON.parse(specFile?.content)).toEqual(spec);
+    expect(JSON.parse(specFile?.content ?? "")).toEqual(spec);
   });
 
   it("generates README.md with route table", () => {

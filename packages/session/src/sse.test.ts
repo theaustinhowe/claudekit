@@ -466,22 +466,26 @@ describe("createSessionSSEResponse", () => {
       });
 
       const reader = response.body?.getReader();
+      expect(reader).toBeDefined();
       const decoder = new TextDecoder();
 
       // Advance past the heartbeat interval to trigger a heartbeat
       await vi.advanceTimersByTimeAsync(5000);
 
       // Read the heartbeat event from the stream
-      const { value } = await reader.read();
+      // biome-ignore lint/style/noNonNullAssertion: guarded by expect above
+      const { value } = await reader!.read();
       const text = decoder.decode(value, { stream: true });
 
       expect(text).toContain('"type":"heartbeat"');
 
       // Now send a done event to close the stream cleanly
-      subscriberCallback?.({ type: "done", progress: 100 } as SessionEvent);
+      // biome-ignore lint/style/noNonNullAssertion: assigned via callback in createMockManager
+      subscriberCallback!({ type: "done", progress: 100 } as SessionEvent);
       // Drain remaining chunks
       while (true) {
-        const { done } = await reader.read();
+        // biome-ignore lint/style/noNonNullAssertion: guarded by expect above
+        const { done } = await reader!.read();
         if (done) break;
       }
     });
@@ -510,7 +514,8 @@ describe("createSessionSSEResponse", () => {
 
       // Now try to send an event — it should hit the catch block in send()
       // (the stream is cancelled so enqueue will throw)
-      subscriberCallback?.({ type: "log", log: "after cancel" } as SessionEvent);
+      // biome-ignore lint/style/noNonNullAssertion: assigned via callback in createMockManager
+      subscriberCallback!({ type: "log", log: "after cancel" } as SessionEvent);
 
       // The stream should be closed. No assertion needed beyond no-throw,
       // but we can verify unsubscribe was called from the cancel handler

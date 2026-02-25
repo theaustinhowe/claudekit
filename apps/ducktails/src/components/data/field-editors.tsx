@@ -1,11 +1,15 @@
 "use client";
 
+import { Button } from "@claudekit/ui/components/button";
 import { DatePicker } from "@claudekit/ui/components/date-picker";
 import { Input } from "@claudekit/ui/components/input";
 import { JsonEditor } from "@claudekit/ui/components/json-editor";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Textarea } from "@claudekit/ui/components/textarea";
+import { TimePicker } from "@claudekit/ui/components/time-picker";
 import { TimestampPicker } from "@claudekit/ui/components/timestamp-picker";
+import { Clock } from "lucide-react";
 import type { ColumnInfo } from "@/lib/types";
 
 // ── Type classifiers ──────────────────────────────────────────────
@@ -88,14 +92,19 @@ export function FieldEditor({
   }
 
   if (isTimeType(data_type)) {
+    const timeStr = value != null ? String(value) : undefined;
     return (
-      <Input
-        type="time"
-        step="1"
-        value={value != null ? String(value) : ""}
-        onChange={(e) => onChange(e.target.value || null)}
-        className="font-mono text-sm"
-      />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="justify-start text-left font-mono text-sm h-9 w-full">
+            <Clock className="mr-2 h-3.5 w-3.5 shrink-0" />
+            {timeStr ?? <span className="text-muted-foreground">Pick time</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2" align="start">
+          <TimePicker value={timeStr} onChange={(v) => onChange(v)} />
+        </PopoverContent>
+      </Popover>
     );
   }
 
