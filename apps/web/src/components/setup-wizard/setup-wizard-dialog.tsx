@@ -64,7 +64,7 @@ export function SetupWizardDialog({ trigger, autoOpen }: SetupWizardDialogProps)
       const result = await saveSetupEnv(values);
       if (result.success) {
         toast.success(`Saved to ${result.filesWritten.length} files`, {
-          description: result.filesWritten.join(", "),
+          description: result.filesWritten.map((f) => `• ${f}`).join("\n"),
         });
         setOpen(false);
       } else {
