@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { ThemeFOUCScript } from "@claudekit/hooks";
 import { Toaster } from "@claudekit/ui/components/sonner";
 import type { Metadata } from "next";
@@ -21,13 +23,27 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+function checkNeedsSetup(): boolean {
+  let dir = process.cwd();
+  for (;;) {
+    if (existsSync(join(dir, "pnpm-workspace.yaml"))) {
+      return !existsSync(join(dir, ".env.local"));
+    }
+    const parent = join(dir, "..");
+    if (parent === dir) return false;
+    dir = parent;
+  }
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const needsSetup = checkNeedsSetup();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
         <ThemeFOUCScript />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <Header actions={<HeaderActions />} />
+          <Header actions={<HeaderActions autoOpen={needsSetup} />} />
           {children}
           <Toaster />
         </ThemeProvider>

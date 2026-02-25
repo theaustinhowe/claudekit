@@ -3,9 +3,10 @@
 import { Settings } from "lucide-react";
 import { SetupWizardDialog } from "@/components/setup-wizard/setup-wizard-dialog";
 
-export function HeaderActions() {
+export function HeaderActions({ autoOpen }: { autoOpen?: boolean }) {
   return (
     <SetupWizardDialog
+      autoOpen={autoOpen}
       trigger={
         <button
           type="button"

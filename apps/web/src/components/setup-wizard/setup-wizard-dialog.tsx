@@ -24,10 +24,15 @@ import { StepShared } from "./step-shared";
 
 interface SetupWizardDialogProps {
   trigger: React.ReactNode;
+  autoOpen?: boolean;
 }
 
-export function SetupWizardDialog({ trigger }: SetupWizardDialogProps) {
+export function SetupWizardDialog({ trigger, autoOpen }: SetupWizardDialogProps) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (autoOpen) setOpen(true);
+  }, [autoOpen]);
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Record<string, string>>({});
   const [wizardData, setWizardData] = useState<SetupWizardData | null>(null);
