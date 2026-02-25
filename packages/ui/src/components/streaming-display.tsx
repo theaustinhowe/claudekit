@@ -977,11 +977,11 @@ function StreamEntryList({
 }) {
   return (
     <div className={variant === "terminal" ? "space-y-0" : "space-y-0.5"}>
-      {grouped.map((group) => {
+      {grouped.map((group, idx) => {
         if (group.type === "file-batch") {
           return (
             <FileBatchSection
-              key={group.allEntries[0].id}
+              key={`fb-${group.allEntries[0].id}-${idx}`}
               dirs={group.dirs}
               allEntries={group.allEntries}
               variant={variant}
@@ -991,22 +991,36 @@ function StreamEntryList({
         }
         if (group.type === "file-group") {
           return (
-            <FileGroupSection key={group.entries[0].id} dir={group.dir} entries={group.entries} variant={variant} />
+            <FileGroupSection
+              key={`fg-${group.entries[0].id}-${idx}`}
+              dir={group.dir}
+              entries={group.entries}
+              variant={variant}
+            />
           );
         }
         if (group.type === "bash-group") {
-          return <BashGroupSection key={group.entries[0].id} entries={group.entries} variant={variant} live={live} />;
+          return (
+            <BashGroupSection
+              key={`bg-${group.entries[0].id}-${idx}`}
+              entries={group.entries}
+              variant={variant}
+              live={live}
+            />
+          );
         }
         if (group.type === "thinking-group") {
-          return <ThinkingBlock key={group.entries[0].id} entries={group.entries} variant={variant} />;
+          return <ThinkingBlock key={`tg-${group.entries[0].id}-${idx}`} entries={group.entries} variant={variant} />;
         }
         if (group.type === "read-group") {
-          return <ReadGroupSection key={group.entries[0].id} entries={group.entries} variant={variant} />;
+          return (
+            <ReadGroupSection key={`rg-${group.entries[0].id}-${idx}`} entries={group.entries} variant={variant} />
+          );
         }
         if (group.type === "prompt-group") {
           return (
             <PromptGroupSection
-              key={group.entries[0].id}
+              key={`pg-${group.entries[0].id}-${idx}`}
               label={group.label}
               entries={group.entries}
               variant={variant}
@@ -1015,25 +1029,25 @@ function StreamEntryList({
         }
         const entry = group.entry;
         if (entry.kind === "file-write" || entry.kind === "file-edit") {
-          return <FileWriteRow key={entry.id} entry={entry} variant={variant} />;
+          return <FileWriteRow key={`fw-${entry.id}-${idx}`} entry={entry} variant={variant} />;
         }
         if (entry.kind === "bash-command") {
-          return <BashEntry key={entry.id} entry={entry} variant={variant} />;
+          return <BashEntry key={`bc-${entry.id}-${idx}`} entry={entry} variant={variant} />;
         }
         if (entry.kind === "thinking") {
-          return <ThinkingEntry key={entry.id} entry={entry} variant={variant} />;
+          return <ThinkingEntry key={`th-${entry.id}-${idx}`} entry={entry} variant={variant} />;
         }
         if (entry.kind === "read-op") {
-          return <ReadOpEntry key={entry.id} entry={entry} variant={variant} />;
+          return <ReadOpEntry key={`ro-${entry.id}-${idx}`} entry={entry} variant={variant} />;
         }
         if (entry.kind === "status") {
-          return <StatusEntry key={entry.id} entry={entry} variant={variant} />;
+          return <StatusEntry key={`st-${entry.id}-${idx}`} entry={entry} variant={variant} />;
         }
         if (entry.kind === "phase-separator") {
-          return <PhaseSeparatorEntry key={entry.id} entry={entry} variant={variant} />;
+          return <PhaseSeparatorEntry key={`ps-${entry.id}-${idx}`} entry={entry} variant={variant} />;
         }
         if (entry.kind === "prompt") {
-          return <StatusEntry key={entry.id} entry={entry} variant={variant} />;
+          return <StatusEntry key={`pr-${entry.id}-${idx}`} entry={entry} variant={variant} />;
         }
         return null;
       })}
