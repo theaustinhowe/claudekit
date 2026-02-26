@@ -6,6 +6,7 @@ import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { Textarea } from "@claudekit/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { AlertTriangle, ChevronDown, ChevronRight, FileCode } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RISK_CLASSES, SIZE_CLASSES } from "@/lib/constants";
@@ -74,10 +75,17 @@ export function SubPRCard({ subPR, color, onFileClick, onDescriptionChange }: Su
 
         {subPR.files && subPR.files.length > 0 && (
           <Collapsible open={filesOpen} onOpenChange={setFilesOpen}>
-            <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-              {filesOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              {subPR.files.length} files
-            </CollapsibleTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                    {filesOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {subPR.files.length} files
+                  </CollapsibleTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Toggle files</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <CollapsibleContent>
               <div className="mt-2 space-y-1">
                 {subPR.files.map((f) => (
@@ -99,10 +107,17 @@ export function SubPRCard({ subPR, color, onFileClick, onDescriptionChange }: Su
         )}
 
         <Collapsible open={descOpen} onOpenChange={setDescOpen}>
-          <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-            {descOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            PR Description & Checklist
-          </CollapsibleTrigger>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                  {descOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  PR Description & Checklist
+                </CollapsibleTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Toggle description</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <CollapsibleContent>
             <div className="mt-2 space-y-2">
               <Textarea

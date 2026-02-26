@@ -1,4 +1,5 @@
 import { Input } from "@claudekit/ui/components/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Plus } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 
@@ -28,14 +29,21 @@ export function TodoAddForm({ onAdd }: TodoAddFormProps) {
         placeholder="Add a todo..."
         className="h-8 text-sm"
       />
-      <button
-        type="submit"
-        disabled={!text.trim()}
-        className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-30"
-        aria-label="Add todo"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="submit"
+              disabled={!text.trim()}
+              className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-30"
+              aria-label="Add todo"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Add todo</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </form>
   );
 }

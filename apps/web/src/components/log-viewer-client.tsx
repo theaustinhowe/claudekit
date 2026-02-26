@@ -367,13 +367,18 @@ export function LogViewerClient({ app, date, isToday, initialLogs, availableDate
 
       {/* Scroll to bottom button */}
       {!isAtBottom && (
-        <button
-          type="button"
-          onClick={scrollToBottom}
-          className="fixed bottom-6 right-6 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
-        >
-          <ArrowDown className="h-4 w-4" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={scrollToBottom}
+              className="fixed bottom-6 right-6 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Scroll to bottom</TooltipContent>
+        </Tooltip>
       )}
     </div>
   );

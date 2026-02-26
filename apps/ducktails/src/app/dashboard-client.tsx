@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@claudekit/ui/components/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -29,9 +30,16 @@ export function DashboardClient({ databases, refreshedAt }: { databases: Databas
         </div>
         <div className="flex items-center gap-3">
           <RefreshedAt timestamp={refreshedAt} />
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isPending}>
-            <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isPending}>
+                  <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Refresh</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

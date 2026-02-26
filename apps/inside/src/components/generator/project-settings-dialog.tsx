@@ -2,6 +2,7 @@
 
 import { Badge } from "@claudekit/ui/components/badge";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@claudekit/ui/components/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -75,14 +76,20 @@ function DescriptionSection({ description }: { description: string }) {
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</h3>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
-          title="Copy description"
-        >
-          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Copy description</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <pre className="text-sm leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
         {description}

@@ -5,6 +5,7 @@ import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Input } from "@claudekit/ui/components/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   AlertTriangle,
   Brain,
@@ -177,9 +178,16 @@ function SyncBadge({
         {lastSyncedAt ? `Synced ${formatTimeAgo(lastSyncedAt)}` : "Never synced"}
       </Badge>
       {repoId && (
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleResync} disabled={syncing}>
-          <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleResync} disabled={syncing}>
+                <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Sync</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );
