@@ -95,7 +95,6 @@ export const SESSION_TYPE_LABELS: Record<string, string> = {
   fix_apply: "Fix Apply",
   ai_file_gen: "AI File Gen",
   cleanup: "Cleanup",
-  toolbox_command: "Tool Command",
 };
 
 export const DEFAULT_CLEANUP_FILES: string[] = [

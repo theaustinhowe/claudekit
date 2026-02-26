@@ -3,18 +3,10 @@ import { describe, expect, it } from "vitest";
 import { sessionRunners } from "./index";
 
 describe("session-runners/index", () => {
-  const expectedTypes = [
-    "quick_improve",
-    "finding_fix",
-    "fix_apply",
-    "scan",
-    "ai_file_gen",
-    "cleanup",
-    "toolbox_command",
-  ];
+  const expectedTypes = ["quick_improve", "finding_fix", "fix_apply", "scan", "ai_file_gen", "cleanup"];
 
-  it("registers all 7 session types", () => {
-    expect(Object.keys(sessionRunners)).toHaveLength(7);
+  it("registers all 6 session types", () => {
+    expect(Object.keys(sessionRunners)).toHaveLength(6);
   });
 
   for (const type of expectedTypes) {

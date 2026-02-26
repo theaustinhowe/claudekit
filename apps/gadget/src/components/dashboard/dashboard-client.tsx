@@ -16,7 +16,6 @@ import {
   ScrollText,
   ShieldCheck,
   Sparkles,
-  Terminal,
   Wrench,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -252,7 +251,6 @@ const sessionTypeIcons: Record<string, React.ComponentType<{ className?: string 
   fix_apply: Hammer,
   ai_file_gen: Sparkles,
   cleanup: Brush,
-  toolbox_command: Terminal,
 };
 
 /** Map session types to the relevant page link */

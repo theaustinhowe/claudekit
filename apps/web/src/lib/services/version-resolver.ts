@@ -1,4 +1,4 @@
-import type { LatestVersionSource } from "@/lib/constants/tools";
+import type { LatestVersionSource } from "@/lib/types/toolbox";
 
 const FETCH_TIMEOUT_MS = 8000;
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -47,7 +47,6 @@ async function resolveFromGithubRelease(repo: string): Promise<string | null> {
   if (!res.ok) return null;
   const data = await res.json();
   const tag: string = data.tag_name || "";
-  // Strip leading 'v' prefix
   return tag.replace(/^v/, "");
 }
 
@@ -57,15 +56,11 @@ async function resolveFromUrl(url: string, parser: "nodejs-lts" | "python-eol"):
   const data = await res.json();
 
   if (parser === "nodejs-lts") {
-    // nodejs.org/dist/index.json returns array sorted newest-first
-    // Find the first entry with an LTS string
     const ltsEntry = (data as Array<{ version: string; lts: string | false }>).find((entry) => entry.lts !== false);
     return ltsEntry ? ltsEntry.version.replace(/^v/, "") : null;
   }
 
   if (parser === "python-eol") {
-    // endoflife.date/api/python.json returns array of cycles
-    // First entry is the latest release cycle
     const latest = (data as Array<{ latest: string }>)[0];
     return latest?.latest || null;
   }

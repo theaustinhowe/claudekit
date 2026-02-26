@@ -3,8 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { ToolDefinition } from "@/lib/constants/tools";
-import type { ToolCheckResult } from "@/lib/types";
+import type { ToolCheckResult, ToolDefinition } from "@/lib/types/toolbox";
 import { isNewerVersion, resolveLatestVersion } from "./version-resolver";
 
 const execFileAsync = promisify(execFile);
@@ -12,7 +11,6 @@ const execFileAsync = promisify(execFile);
 const CHECK_TIMEOUT_MS = 5000;
 const MAX_CONCURRENCY = 4;
 
-/** Returns true if the error indicates the tool binary was not found (missing), not a real failure */
 function isNotFoundError(err: NodeJS.ErrnoException): boolean {
   if (err.code === "ENOENT") return true;
   const msg = (err.message || "").toLowerCase();
@@ -64,7 +62,6 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
       }
     }
 
-    // Parse the version command into executable and args
     const parts = tool.versionCommand.split(" ");
     const cmd = parts[0];
     const args = parts.slice(1);
@@ -74,11 +71,9 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
       env: { ...process.env, PATH: process.env.PATH },
     });
 
-    // Some tools output version to stderr (e.g. java)
     const output = stdout || stderr;
     const version = parseVersion(output, tool);
 
-    // Resolve latest version in parallel (non-blocking on failure)
     let latestVersion: string | null = null;
     let updateAvailable = false;
     if (version && tool.latestVersionSource && tool.latestVersionSource.type !== "none") {
@@ -88,7 +83,6 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
       }
     }
 
-    // Collect metadata for Claude Code
     let metadata: Record<string, string | null> | undefined;
     if (tool.id === "claude") {
       metadata = detectClaudeMetadata();
@@ -108,7 +102,6 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
   } catch (err: unknown) {
     const error = err as NodeJS.ErrnoException & { killed?: boolean };
 
-    // Tool binary not found — treat as "missing" (not an error)
     if (isNotFoundError(error)) {
       return {
         toolId: tool.id,
@@ -151,7 +144,6 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
 function detectClaudeMetadata(): Record<string, string | null> {
   const meta: Record<string, string | null> = {};
 
-  // Detect binary path
   try {
     const stdout = execFileSync("which", ["claude"], {
       encoding: "utf-8",
@@ -162,14 +154,12 @@ function detectClaudeMetadata(): Record<string, string | null> {
     meta.binaryPath = null;
   }
 
-  // Read config files for install method, auth, and plan info
   const home = homedir();
 
   let authMethod: string | null = null;
   let planType: string | null = null;
   let installMethod: string | null = null;
 
-  // Check ~/.claude.json for primary config
   const mainConfig = join(home, ".claude.json");
   if (existsSync(mainConfig)) {
     try {
@@ -179,7 +169,6 @@ function detectClaudeMetadata(): Record<string, string | null> {
       }
       if (content.oauthAccount || content.oauth) {
         authMethod = "oauth";
-        // Extract plan/billing info from oauthAccount
         const account = content.oauthAccount || content.oauth;
         if (account.billingType) {
           planType = String(account.billingType).replace(/_/g, " ");
@@ -193,7 +182,6 @@ function detectClaudeMetadata(): Record<string, string | null> {
     }
   }
 
-  // Detect install method from binary path (more accurate than config file)
   if (meta.binaryPath) {
     const binPath = meta.binaryPath;
     if (binPath.includes("homebrew") || binPath.includes("Cellar")) {
@@ -226,7 +214,6 @@ export async function checkTools(tools: ToolDefinition[]): Promise<ToolCheckResu
   const workers = Array.from({ length: Math.min(MAX_CONCURRENCY, tools.length) }, () => worker());
   await Promise.all(workers);
 
-  // Return in original order
   const orderMap = new Map(tools.map((t, i) => [t.id, i]));
   results.sort((a, b) => (orderMap.get(a.toolId) ?? 0) - (orderMap.get(b.toolId) ?? 0));
 

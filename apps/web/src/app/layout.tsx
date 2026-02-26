@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Header } from "@/components/header";
 import { HeaderActions } from "@/components/header-actions";
+import { readToolboxSettings } from "@/lib/toolbox-settings";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -37,13 +38,14 @@ function checkNeedsSetup(): boolean {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const needsSetup = checkNeedsSetup();
+  const toolboxToolIds = readToolboxSettings();
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
         <ThemeFOUCScript />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <Header actions={<HeaderActions autoOpen={needsSetup} />} />
+          <Header actions={<HeaderActions autoOpen={needsSetup} toolboxToolIds={toolboxToolIds} />} />
           {children}
           <Toaster />
         </ThemeProvider>

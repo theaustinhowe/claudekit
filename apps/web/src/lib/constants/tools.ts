@@ -1,32 +1,4 @@
-import type { ToolCategory } from "@/lib/types";
-
-export type VersionParser = "semver-line" | "first-line" | "regex";
-
-export type LatestVersionSource =
-  | { type: "npm"; package: string }
-  | { type: "github-release"; repo: string }
-  | { type: "url"; url: string; parser: "nodejs-lts" | "python-eol" }
-  | { type: "none" };
-
-export interface ToolDefinition {
-  id: string;
-  name: string;
-  category: ToolCategory;
-  description: string;
-  binary: string;
-  versionCommand: string;
-  versionParser: VersionParser;
-  versionRegex?: string;
-  installUrl: string;
-  installCommand?: string;
-  latestCommand?: string;
-  /** Where to fetch the latest stable version from */
-  latestVersionSource?: LatestVersionSource;
-  /** Command to update this tool (if different from installCommand) */
-  updateCommand?: string;
-  /** If true, requires special shell handling (e.g. nvm is a shell function) */
-  shellFunction?: boolean;
-}
+import type { ToolCategory, ToolDefinition } from "@/lib/types/toolbox";
 
 export const DEFAULT_TOOLS: ToolDefinition[] = [
   {

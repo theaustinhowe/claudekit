@@ -1,6 +1,6 @@
 import { UsageSection } from "@claudekit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavGroup } from "@claudekit/ui/components/shared-layout";
-import { FolderGit2, Hammer, LayoutDashboard, Puzzle, ScanSearch, Settings, Shield } from "lucide-react";
+import { FolderGit2, LayoutDashboard, Puzzle, ScanSearch, Settings, Shield } from "lucide-react";
 import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 
@@ -23,7 +23,6 @@ const navGroups: NavGroup[] = [
     label: "Setup",
     items: [
       { label: "Policies", href: "/policies", icon: Shield },
-      { label: "Toolbox", href: "/toolbox", icon: Hammer },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
   },

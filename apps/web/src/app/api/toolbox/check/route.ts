@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "toolIds must be a non-empty array" }, { status: 400 });
     }
 
-    // Cap at total available tools to prevent abuse
     if (toolIds.length > DEFAULT_TOOLS.length) {
       return NextResponse.json({ error: "Too many tool IDs" }, { status: 400 });
     }

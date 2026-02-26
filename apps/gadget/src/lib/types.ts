@@ -230,8 +230,6 @@ export interface ConceptLinkWithConcept extends ConceptLink {
   origin_repo_path: string;
 }
 
-export type ToolCategory = "package-manager" | "runtime" | "dev-tool" | "vcs" | "ai-tool";
-
 export type { ClaudeRateLimits, ClaudeUsageStats } from "@claudekit/claude-usage";
 
 export interface OnboardingState {
@@ -261,18 +259,6 @@ export interface DashboardStats {
   conceptCount: number;
   staleSources: number;
   policyCount: number;
-}
-
-export interface ToolCheckResult {
-  toolId: string;
-  installed: boolean;
-  currentVersion: string | null;
-  latestVersion: string | null;
-  updateAvailable: boolean;
-  error: string | null;
-  checkedAt: string;
-  durationMs: number;
-  metadata?: Record<string, string | null>;
 }
 
 // --- Git Changes Types ---
@@ -336,14 +322,7 @@ export interface CommitDetail {
 
 // --- Session Types ---
 
-export type SessionType =
-  | "scan"
-  | "quick_improve"
-  | "finding_fix"
-  | "fix_apply"
-  | "ai_file_gen"
-  | "cleanup"
-  | "toolbox_command";
+export type SessionType = "scan" | "quick_improve" | "finding_fix" | "fix_apply" | "ai_file_gen" | "cleanup";
 
 export type SessionStatus = "pending" | "running" | "done" | "error" | "cancelled";
 
