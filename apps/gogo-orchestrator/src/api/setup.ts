@@ -14,12 +14,14 @@ function getEnvToken(): string | undefined {
 }
 
 // Validation schemas
-const VerifyGitHubSchema = z.object({
-  token: z.string().min(1).optional(),
-  useEnvToken: z.boolean().optional(),
-}).refine((data) => data.token || data.useEnvToken, {
-  message: "Either token or useEnvToken must be provided",
-});
+const VerifyGitHubSchema = z
+  .object({
+    token: z.string().min(1).optional(),
+    useEnvToken: z.boolean().optional(),
+  })
+  .refine((data) => data.token || data.useEnvToken, {
+    message: "Either token or useEnvToken must be provided",
+  });
 
 const VerifyRepositorySchema = z.object({
   token: z.string().optional(), // Optional if reuseTokenFromRepoId or useEnvToken is provided

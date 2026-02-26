@@ -615,9 +615,7 @@ export async function fetchSetupStatus(): Promise<SetupStatusResponse> {
 }
 
 // Verify GitHub token
-export async function verifyGitHub(
-  tokenOrOptions: string | { useEnvToken: true },
-): Promise<VerifyGitHubResponse> {
+export async function verifyGitHub(tokenOrOptions: string | { useEnvToken: true }): Promise<VerifyGitHubResponse> {
   const body = typeof tokenOrOptions === "string" ? { token: tokenOrOptions } : tokenOrOptions;
   const res = await fetch(`${getApiUrlCached()}/api/setup/verify-github`, {
     method: "POST",

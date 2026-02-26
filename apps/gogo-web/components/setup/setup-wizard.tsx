@@ -430,7 +430,8 @@ export function SetupWizard() {
     const path =
       state.discoveryPath !== "~"
         ? state.discoveryPath
-        : localStorage.getItem(DISCOVERY_PATH_KEY) || (defaultState.discoveryPath !== "~" ? defaultState.discoveryPath : null);
+        : localStorage.getItem(DISCOVERY_PATH_KEY) ||
+          (defaultState.discoveryPath !== "~" ? defaultState.discoveryPath : null);
     if (!path || path === "~") return;
     hasAutoScanned.current = true;
     if (state.discoveryPath !== path) {
