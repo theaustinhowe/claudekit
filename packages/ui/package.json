@@ -27,7 +27,10 @@
   },
   "scripts": {
     "dev": "storybook dev -p 6006 --no-open",
+    "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
     "test": "vitest run",
     "storybook": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build"

@@ -5,8 +5,12 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
     "test": "vitest run"
   },
   "dependencies": {

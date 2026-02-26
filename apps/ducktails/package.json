@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "format": "biome format --write src/",
+    "test": "vitest run"
   },
   "dependencies": {
     "@claudekit/duckdb": "workspace:*",
@@ -41,6 +42,7 @@
     "postcss": "^8.5.6",
     "postcss-load-config": "^6.0.1",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }
