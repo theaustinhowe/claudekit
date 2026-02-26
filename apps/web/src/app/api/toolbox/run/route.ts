@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getToolById } from "@/lib/constants/tools";
+import { getToolById, resolveUpdateCommand } from "@/lib/constants/tools";
 import { runCommand } from "@/lib/services/process-runner";
 
 export async function POST(request: NextRequest) {
@@ -21,11 +21,10 @@ export async function POST(request: NextRequest) {
     }
 
     let command: string | undefined;
-    const brewName = tool.brewPackage ?? tool.binary;
-    if (installMethod === "homebrew") {
-      command = action === "update" ? `brew upgrade ${brewName}` : `brew install ${brewName}`;
+    if (action === "update") {
+      command = resolveUpdateCommand(tool, installMethod ?? null);
     } else {
-      command = action === "update" ? (tool.updateCommand ?? tool.installCommand) : tool.installCommand;
+      command = tool.installCommand;
     }
 
     if (!command) {

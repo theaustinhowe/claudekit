@@ -1,15 +1,44 @@
-import { execFile, execFileSync } from "node:child_process";
+import { exec, execFile, execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { ToolCheckResult, ToolDefinition } from "@/lib/types/toolbox";
+import type { InstallMethod, ToolCheckResult, ToolDefinition } from "@/lib/types/toolbox";
 import { isNewerVersion, resolveLatestVersion } from "./version-resolver";
 
 const execFileAsync = promisify(execFile);
+const execAsync = promisify(exec);
 
 const CHECK_TIMEOUT_MS = 5000;
 const MAX_CONCURRENCY = 4;
+
+/** Build PATH that includes common tool install directories the server might not have at startup. */
+function getAugmentedPath(): string {
+  const home = homedir();
+  const extra = [
+    join(home, ".bun", "bin"),
+    join(home, ".local", "bin"),
+    join(home, ".cargo", "bin"),
+    "/opt/homebrew/bin",
+    "/opt/homebrew/sbin",
+    "/usr/local/bin",
+  ];
+  const current = process.env.PATH ?? "";
+  const existing = new Set(current.split(":"));
+  const additions = extra.filter((p) => !existing.has(p) && existsSync(p));
+  return additions.length > 0 ? `${additions.join(":")}:${current}` : current;
+}
+
+let _augmentedPath: string | null = null;
+function augmentedPath(): string {
+  if (_augmentedPath === null) _augmentedPath = getAugmentedPath();
+  return _augmentedPath;
+}
+
+/** Shared env for all child processes — uses augmented PATH. */
+function checkerEnv(): NodeJS.ProcessEnv {
+  return { ...process.env, PATH: augmentedPath() };
+}
 
 function isNotFoundError(err: NodeJS.ErrnoException): boolean {
   if (err.code === "ENOENT") return true;
@@ -62,14 +91,22 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
       }
     }
 
-    const parts = tool.versionCommand.split(" ");
-    const cmd = parts[0];
-    const args = parts.slice(1);
+    let stdout: string;
+    let stderr: string;
 
-    const { stdout, stderr } = await execFileAsync(cmd, args, {
-      timeout: CHECK_TIMEOUT_MS,
-      env: { ...process.env, PATH: process.env.PATH },
-    });
+    if (tool.shellFunction) {
+      // Shell functions (e.g. nvm) need shell interpretation for quoting/pipes
+      ({ stdout, stderr } = await execAsync(tool.versionCommand, {
+        timeout: CHECK_TIMEOUT_MS,
+        env: checkerEnv(),
+      }));
+    } else {
+      const parts = tool.versionCommand.split(" ");
+      ({ stdout, stderr } = await execFileAsync(parts[0], parts.slice(1), {
+        timeout: CHECK_TIMEOUT_MS,
+        env: checkerEnv(),
+      }));
+    }
 
     const output = stdout || stderr;
     const version = parseVersion(output, tool);
@@ -84,8 +121,26 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
     }
 
     let metadata: Record<string, string | null> | undefined;
+
+    // Detect install method for all tools (unless opted out)
+    if (tool.detectInstallMethod !== false) {
+      const method = detectInstallMethod(tool);
+      metadata = { installMethod: method, binaryPath: null };
+      try {
+        const binaryName = tool.shellFunction ? undefined : tool.binary;
+        if (binaryName) {
+          const stdout = execFileSync("which", [binaryName], { encoding: "utf-8", timeout: 3000, env: checkerEnv() });
+          metadata.binaryPath = stdout.trim();
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Claude-specific metadata (auth, plan)
     if (tool.id === "claude") {
-      metadata = detectClaudeMetadata();
+      const claudeMeta = detectClaudeSpecificMetadata();
+      metadata = { ...metadata, ...claudeMeta };
     }
 
     return {
@@ -141,32 +196,39 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
   }
 }
 
-function detectClaudeMetadata(): Record<string, string | null> {
-  const meta: Record<string, string | null> = {};
+function detectInstallMethod(tool: ToolDefinition): InstallMethod {
+  const binaryName = tool.shellFunction ? undefined : tool.binary;
+  if (!binaryName) return "unknown";
 
   try {
-    const stdout = execFileSync("which", ["claude"], {
-      encoding: "utf-8",
-      timeout: 3000,
-    });
-    meta.binaryPath = stdout.trim();
-  } catch {
-    meta.binaryPath = null;
-  }
+    const stdout = execFileSync("which", [binaryName], { encoding: "utf-8", timeout: 3000, env: checkerEnv() });
+    const binPath = stdout.trim();
+    if (!binPath) return "unknown";
 
+    if (binPath.includes("/opt/homebrew/") || binPath.includes("/usr/local/Cellar/")) return "homebrew";
+    if (binPath.includes("node_modules") || binPath.includes("/npm/")) return "npm";
+    if (binPath.includes(".nvm/versions/")) return "npm";
+    if (binPath.includes(".bun/bin/")) return "curl";
+    if (binPath.includes(".local/bin/") || binPath.includes(".cargo/bin/")) return "curl";
+    if (binPath.startsWith("/usr/bin/")) return "native";
+
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+function detectClaudeSpecificMetadata(): Record<string, string | null> {
+  const meta: Record<string, string | null> = {};
   const home = homedir();
 
   let authMethod: string | null = null;
   let planType: string | null = null;
-  let installMethod: string | null = null;
 
   const mainConfig = join(home, ".claude.json");
   if (existsSync(mainConfig)) {
     try {
       const content = JSON.parse(readFileSync(mainConfig, "utf-8"));
-      if (content.installMethod) {
-        installMethod = String(content.installMethod);
-      }
       if (content.oauthAccount || content.oauth) {
         authMethod = "oauth";
         const account = content.oauthAccount || content.oauth;
@@ -182,16 +244,6 @@ function detectClaudeMetadata(): Record<string, string | null> {
     }
   }
 
-  if (meta.binaryPath) {
-    const binPath = meta.binaryPath;
-    if (binPath.includes("homebrew") || binPath.includes("Cellar")) {
-      installMethod = "homebrew";
-    } else if (binPath.includes("node_modules") || binPath.includes("npm") || binPath.includes("pnpm")) {
-      installMethod = "npm";
-    }
-  }
-
-  meta.installMethod = installMethod;
   meta.authMethod = authMethod;
   meta.planType = planType;
 
@@ -199,6 +251,8 @@ function detectClaudeMetadata(): Record<string, string | null> {
 }
 
 export async function checkTools(tools: ToolDefinition[]): Promise<ToolCheckResult[]> {
+  // Recompute augmented PATH each run in case tools were installed since last check
+  _augmentedPath = null;
   const results: ToolCheckResult[] = [];
   const queue = [...tools];
 

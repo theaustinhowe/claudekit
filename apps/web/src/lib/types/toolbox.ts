@@ -1,5 +1,7 @@
 export type ToolCategory = "package-manager" | "runtime" | "dev-tool" | "vcs" | "ai-tool";
 
+export type InstallMethod = "homebrew" | "npm" | "curl" | "native" | "bundled" | "unknown";
+
 export type VersionParser = "semver-line" | "first-line" | "regex";
 
 export type LatestVersionSource =
@@ -21,7 +23,12 @@ export interface ToolDefinition {
   installCommand?: string;
   latestCommand?: string;
   latestVersionSource?: LatestVersionSource;
+  /** @deprecated Use updateCommands instead */
   updateCommand?: string;
+  /** Per-install-method update commands. Checked before legacy updateCommand. */
+  updateCommands?: Partial<Record<InstallMethod | "default", string>>;
+  /** Whether to auto-detect install method via `which`. Default true. Set false for tools where detection is irrelevant. */
+  detectInstallMethod?: boolean;
   /** Homebrew package name when it differs from binary (e.g. claude-code vs claude) */
   brewPackage?: string;
   shellFunction?: boolean;

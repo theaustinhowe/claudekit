@@ -1,4 +1,4 @@
-import type { ToolCategory, ToolDefinition } from "@/lib/types/toolbox";
+import type { InstallMethod, ToolCategory, ToolDefinition } from "@/lib/types/toolbox";
 
 export const DEFAULT_TOOLS: ToolDefinition[] = [
   {
@@ -12,6 +12,8 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionRegex: "Homebrew ([\\d.]+)",
     installUrl: "https://brew.sh",
     installCommand: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+    updateCommands: { default: "brew update" },
+    detectInstallMethod: false,
     latestVersionSource: { type: "github-release", repo: "Homebrew/brew" },
   },
   {
@@ -24,7 +26,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionParser: "semver-line",
     installUrl: "https://nodejs.org",
     installCommand: "brew install node",
-    updateCommand: "brew upgrade node",
+    updateCommands: { homebrew: "brew upgrade node", default: "brew upgrade node" },
     latestVersionSource: { type: "url", url: "https://nodejs.org/dist/index.json", parser: "nodejs-lts" },
   },
   {
@@ -37,6 +39,8 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionParser: "first-line",
     installUrl: "https://github.com/nvm-sh/nvm",
     installCommand: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash",
+    updateCommands: { default: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash" },
+    detectInstallMethod: false,
     latestVersionSource: { type: "github-release", repo: "nvm-sh/nvm" },
     shellFunction: true,
   },
@@ -50,7 +54,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionParser: "first-line",
     installUrl: "https://pnpm.io/installation",
     installCommand: "npm install -g pnpm",
-    updateCommand: "npm update -g pnpm",
+    updateCommands: { homebrew: "brew upgrade pnpm", npm: "npm update -g pnpm", default: "pnpm self-update" },
     latestVersionSource: { type: "npm", package: "pnpm" },
   },
   {
@@ -62,6 +66,8 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionCommand: "npm --version",
     versionParser: "first-line",
     installUrl: "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
+    installCommand: "npm install -g npm@latest",
+    updateCommands: { homebrew: "brew upgrade node", default: "npm install -g npm@latest" },
     latestVersionSource: { type: "npm", package: "npm" },
   },
   {
@@ -73,7 +79,8 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionCommand: "npx --version",
     versionParser: "first-line",
     installUrl: "https://docs.npmjs.com/cli/v10/commands/npx",
-    installCommand: "npm install -g npm",
+    updateCommands: { default: "npm install -g npm@latest" },
+    detectInstallMethod: false,
     latestVersionSource: { type: "none" },
   },
   {
@@ -86,6 +93,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionParser: "first-line",
     installUrl: "https://bun.sh",
     installCommand: "curl -fsSL https://bun.sh/install | bash",
+    updateCommands: { homebrew: "brew upgrade bun", default: "bun upgrade" },
     latestVersionSource: { type: "github-release", repo: "oven-sh/bun" },
   },
   {
@@ -99,7 +107,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionRegex: "git version ([\\d.]+)",
     installUrl: "https://git-scm.com/downloads",
     installCommand: "brew install git",
-    updateCommand: "brew upgrade git",
+    updateCommands: { homebrew: "brew upgrade git" },
     latestVersionSource: { type: "github-release", repo: "git/git" },
   },
   {
@@ -113,7 +121,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionRegex: "gh version ([\\d.]+)",
     installUrl: "https://cli.github.com",
     installCommand: "brew install gh",
-    updateCommand: "brew upgrade gh",
+    updateCommands: { homebrew: "brew upgrade gh" },
     latestVersionSource: { type: "github-release", repo: "cli/cli" },
   },
   {
@@ -126,7 +134,11 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionParser: "semver-line",
     installUrl: "https://docs.anthropic.com/en/docs/claude-code",
     installCommand: "npm install -g @anthropic-ai/claude-code",
-    updateCommand: "npm update -g @anthropic-ai/claude-code",
+    updateCommands: {
+      homebrew: "brew upgrade claude-code",
+      npm: "npm update -g @anthropic-ai/claude-code",
+      default: "npm update -g @anthropic-ai/claude-code",
+    },
     brewPackage: "claude-code",
     latestVersionSource: { type: "npm", package: "@anthropic-ai/claude-code" },
   },
@@ -141,7 +153,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionRegex: "Python ([\\d.]+)",
     installUrl: "https://www.python.org/downloads/",
     installCommand: "brew install python",
-    updateCommand: "brew upgrade python",
+    updateCommands: { homebrew: "brew upgrade python" },
     latestVersionSource: { type: "url", url: "https://endoflife.date/api/python.json", parser: "python-eol" },
   },
   {
@@ -155,7 +167,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionRegex: "Docker version ([\\d.]+)",
     installUrl: "https://docs.docker.com/get-docker/",
     installCommand: "brew install --cask docker",
-    updateCommand: "brew upgrade --cask docker",
+    updateCommands: { homebrew: "brew upgrade --cask docker" },
     latestVersionSource: { type: "github-release", repo: "moby/moby" },
   },
   {
@@ -169,6 +181,8 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionRegex: "Version ([\\d.]+)",
     installUrl: "https://playwright.dev",
     installCommand: "npx playwright install chromium",
+    updateCommands: { default: "npx playwright install chromium" },
+    detectInstallMethod: false,
     latestVersionSource: { type: "npm", package: "playwright" },
   },
 ];
@@ -177,6 +191,22 @@ export const DEFAULT_TOOL_IDS = DEFAULT_TOOLS.map((t) => t.id);
 
 export function getToolById(id: string): ToolDefinition | undefined {
   return DEFAULT_TOOLS.find((t) => t.id === id);
+}
+
+/** Resolve the correct update command for a tool based on how it was installed. */
+export function resolveUpdateCommand(
+  tool: ToolDefinition,
+  installMethod: InstallMethod | string | null,
+): string | undefined {
+  if (tool.updateCommands) {
+    if (installMethod && installMethod in tool.updateCommands) {
+      return tool.updateCommands[installMethod as InstallMethod];
+    }
+    if (tool.updateCommands.default) {
+      return tool.updateCommands.default;
+    }
+  }
+  return tool.updateCommand;
 }
 
 export const TOOL_CATEGORY_LABELS: Record<ToolCategory, string> = {

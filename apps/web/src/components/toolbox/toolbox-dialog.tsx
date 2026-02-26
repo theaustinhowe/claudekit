@@ -43,8 +43,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DEFAULT_TOOLS, TOOL_CATEGORY_LABELS } from "@/lib/constants/tools";
-import type { ToolCategory, ToolCheckResult, ToolDefinition } from "@/lib/types/toolbox";
+import { DEFAULT_TOOLS, resolveUpdateCommand, TOOL_CATEGORY_LABELS } from "@/lib/constants/tools";
+import type { InstallMethod, ToolCategory, ToolCheckResult, ToolDefinition } from "@/lib/types/toolbox";
 
 interface ToolboxDialogProps {
   trigger: React.ReactNode;
@@ -453,10 +453,9 @@ function ToolRow({
 
   const isInstalled = result?.installed ?? false;
   const hasError = !!result?.error;
-  const isHomebrew = result?.metadata?.installMethod === "homebrew";
-  const brewName = tool.brewPackage ?? tool.binary;
-  const updateCommand = isHomebrew ? `brew upgrade ${brewName}` : (tool.updateCommand ?? tool.installCommand);
-  const expandCommand = updateCommand ?? tool.installCommand ?? null;
+  const installMethod = (result?.metadata?.installMethod as InstallMethod) ?? null;
+  const updateCommand = resolveUpdateCommand(tool, installMethod);
+  const expandCommand = isInstalled ? updateCommand : (tool.installCommand ?? null);
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
