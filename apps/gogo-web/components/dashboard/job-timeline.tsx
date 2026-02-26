@@ -80,7 +80,10 @@ export function JobTimeline({ events, createdAt, currentStatus, className }: Job
 
       if (transition) {
         const reachedAt = new Date(transition.createdAt);
-        const duration = formatDistanceStrict(lastTime, reachedAt);
+        const duration =
+          Number.isNaN(lastTime.getTime()) || Number.isNaN(reachedAt.getTime())
+            ? undefined
+            : formatDistanceStrict(lastTime, reachedAt);
         result.push({
           state,
           label: config.label,
