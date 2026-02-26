@@ -72,15 +72,7 @@ vi.mock("../utils/job-logging.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
-import {
-  commitAllChanges,
-  getCommitLog,
-  getRepoDir,
-  hasCommits,
-  isWorkingTreeClean,
-  pushBranch,
-  removeWorktree,
-} from "./git.js";
+import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch, removeWorktree } from "./git.js";
 import { createIssueCommentForRepo, createPullRequestForRepo, findExistingPrForRepo } from "./github/index.js";
 import { pollReadyToPrJobs, processReadyToPr } from "./pr-flow.js";
 import { applyTransitionAtomic } from "./state-machine.js";

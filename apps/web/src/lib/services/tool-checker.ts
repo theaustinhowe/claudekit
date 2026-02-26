@@ -197,7 +197,7 @@ async function checkTool(tool: ToolDefinition): Promise<ToolCheckResult> {
 }
 
 function detectInstallMethod(tool: ToolDefinition): InstallMethod {
-  const binaryName = tool.shellFunction ? undefined : tool.binary;
+  const binaryName = tool.binary;
   if (!binaryName) return "unknown";
 
   try {
