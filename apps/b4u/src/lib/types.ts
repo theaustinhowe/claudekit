@@ -114,3 +114,43 @@ export interface ChapterMarker {
   flowName: string;
   startTime: string;
 }
+
+// ---------------------------------------------------------------------------
+// Per-Phase Threading
+// ---------------------------------------------------------------------------
+
+export type ThreadStatus = "active" | "completed" | "superseded";
+
+export interface PhaseThread {
+  id: string;
+  runId: string;
+  phase: Phase;
+  revision: number;
+  messages: ChatMessage[];
+  decisions: PhaseDecision[];
+  status: ThreadStatus;
+  createdAt: number;
+}
+
+export interface PhaseDecision {
+  id: string;
+  key: string;
+  label: string;
+  type: "select" | "confirm" | "text";
+  options?: DecisionOption[];
+  value: string | null;
+  decidedAt: number | null;
+}
+
+export interface DecisionOption {
+  label: string;
+  value: string;
+}
+
+export interface PhaseDecisionConfig {
+  key: string;
+  label: string;
+  type: "select" | "confirm" | "text";
+  required: boolean;
+  options?: DecisionOption[];
+}

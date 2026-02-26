@@ -61,17 +61,17 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
           {isCompleted ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 px-3 py-2 text-xs text-primary bg-primary/10 rounded-md">
-                <span>✓</span>
+                <span>{"\u2713"}</span>
                 <span>Approved</span>
               </div>
-              <Tooltip label="Go Back" position="top">
+              <Tooltip label="Start a new revision (previous versions remain viewable)" position="top">
                 <button
                   type="button"
                   onClick={() => controller.handleGoBackToPhase(card.phase)}
                   className="flex items-center gap-1.5 px-2.5 py-2 text-xs transition-colors text-muted-foreground border border-border rounded-md hover:border-primary hover:text-primary"
                 >
                   <Undo2 className="w-3.5 h-3.5" />
-                  Go Back
+                  New Revision
                 </button>
               </Tooltip>
             </div>

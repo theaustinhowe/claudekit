@@ -35,7 +35,8 @@ export function Phase3DataPlan() {
   const notifyChange = useCallback(
     (message: string) => {
       dispatch({
-        type: "ADD_MESSAGE",
+        type: "ADD_THREAD_MESSAGE",
+        phase: 3,
         message: { id: uid(), role: "system", content: message, timestamp: Date.now() },
       });
     },

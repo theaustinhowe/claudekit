@@ -15,12 +15,22 @@ const mockState = {
     6: "locked" as const,
     7: "locked" as const,
   },
-  messages: [] as unknown[],
+  threads: { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] } as Record<number, unknown[]>,
+  activeThreadIds: {
+    1: null as string | null,
+    2: null as string | null,
+    3: null as string | null,
+    4: null as string | null,
+    5: null as string | null,
+    6: null as string | null,
+    7: null as string | null,
+  },
+  viewingPhase: 1 as const,
   isTyping: false,
   projectName: "",
   rightPanelContent: null,
   editMode: null,
-  projectPath: null,
+  projectPath: null as string | null,
   activeSessionId: null,
   fileBrowserOpen: false,
   historySidebarOpen: false,
@@ -93,7 +103,8 @@ describe("useStateSync", () => {
 
     // Reset mock state
     mockState.runId = null;
-    mockState.messages = [];
+    mockState.threads = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
+    mockState.activeThreadIds = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null };
     mockState.currentPhase = 1;
     mockState.projectPath = null;
     mockState.projectName = "";
@@ -152,7 +163,7 @@ describe("useStateSync", () => {
 
   it("does not save state when runId is null", async () => {
     mockState.runId = null;
-    mockState.messages = [{ id: "1", content: "Hello" }];
+    mockState.threads = { 1: [{ id: "t-1" }] as unknown[], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
 
     const mod = await import("./use-state-sync");
     mod.useStateSync();
@@ -165,9 +176,9 @@ describe("useStateSync", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("does not save state when messages are empty", async () => {
+  it("does not save state when no threads exist", async () => {
     mockState.runId = "run-123";
-    mockState.messages = [];
+    mockState.threads = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
 
     const mod = await import("./use-state-sync");
     mod.useStateSync();

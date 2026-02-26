@@ -8,9 +8,10 @@ import { LayoutShell } from "@/components/layout/layout-shell";
 import { RightPanel } from "@/components/phases/right-panel";
 import { useRunParam } from "@/lib/hooks/use-run-param";
 import { useStateSync } from "@/lib/hooks/use-state-sync";
+import { useThreadSync } from "@/lib/hooks/use-thread-sync";
 import { usePhaseController } from "@/lib/phase-controller";
 import { AppContext, appReducer, initialState, useApp } from "@/lib/store";
-import type { ChatMessage, Phase, PhaseStatus } from "@/lib/types";
+import type { Phase, PhaseStatus, PhaseThread } from "@/lib/types";
 
 function AppShell() {
   const controller = usePhaseController();
@@ -20,6 +21,7 @@ function AppShell() {
 
   // Persist state to DB on changes
   useStateSync();
+  useThreadSync();
 
   const restoreRun = useCallback(
     async (runId: string) => {
@@ -27,15 +29,6 @@ function AppShell() {
         const res = await fetch(`/api/runs/${runId}`);
         if (!res.ok) return false;
         const data = await res.json();
-        const messages = (data.messages || []) as ChatMessage[];
-        if (messages.length === 0) {
-          messages.push({
-            id: `restored-${data.runId}`,
-            role: "system",
-            content: `Restored run for ${data.projectName || "project"}. Chat history was not available for this run.`,
-            timestamp: Date.now(),
-          });
-        }
         dispatch({
           type: "RESTORE_RUN",
           runId: data.runId,
@@ -43,7 +36,8 @@ function AppShell() {
           projectName: data.projectName,
           currentPhase: data.currentPhase as Phase,
           phaseStatuses: data.phaseStatuses as Record<Phase, PhaseStatus>,
-          messages,
+          threads: (data.threads ?? {}) as Record<Phase, PhaseThread[]>,
+          activeThreadIds: (data.activeThreadIds ?? {}) as Record<Phase, string | null>,
         });
         return true;
       } catch {

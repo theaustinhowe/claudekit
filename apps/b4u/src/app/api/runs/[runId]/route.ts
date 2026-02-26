@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { execute, getDb, queryAll } from "@/lib/db";
+import type { ChatMessage, Phase, PhaseStatus, PhaseThread } from "@/lib/types";
 
 type SessionRow = {
   id: string;
@@ -15,6 +16,18 @@ type RunStateRow = {
   phase_statuses_json: string;
   project_path: string | null;
   project_name: string | null;
+  threads_json: string | null;
+};
+
+type ThreadRow = {
+  id: string;
+  run_id: string;
+  phase: number;
+  revision: number;
+  messages_json: string;
+  decisions_json: string;
+  status: string;
+  created_at: string;
 };
 
 const SESSION_TYPE_PHASE: Record<string, number> = {
@@ -27,11 +40,48 @@ const SESSION_TYPE_PHASE: Record<string, number> = {
   "final-merge": 7,
 };
 
-type Phase = 1 | 2 | 3 | 4 | 5 | 6 | 7;
-type PhaseStatus = "locked" | "active" | "completed";
-
 function basename(path: string): string {
   return path.split("/").filter(Boolean).pop() || path;
+}
+
+function emptyThreads(): Record<Phase, PhaseThread[]> {
+  return { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
+}
+
+function emptyActiveThreadIds(): Record<Phase, string | null> {
+  return { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null };
+}
+
+/**
+ * Convert legacy flat messages into a synthetic single-thread structure.
+ * Used for backward compat with runs that predate per-phase threading.
+ */
+function convertLegacyMessages(
+  runId: string,
+  messages: ChatMessage[],
+  currentPhase: Phase,
+  phaseStatuses: Record<Phase, PhaseStatus>,
+): { threads: Record<Phase, PhaseThread[]>; activeThreadIds: Record<Phase, string | null> } {
+  const threads = emptyThreads();
+  const activeThreadIds = emptyActiveThreadIds();
+
+  // Put all messages into a single thread on the current phase
+  const threadId = `legacy-${runId}`;
+  const thread: PhaseThread = {
+    id: threadId,
+    runId,
+    phase: currentPhase,
+    revision: 1,
+    messages,
+    decisions: [],
+    status: phaseStatuses[currentPhase] === "completed" ? "completed" : "active",
+    createdAt: messages[0]?.timestamp ?? Date.now(),
+  };
+
+  threads[currentPhase] = [thread];
+  activeThreadIds[currentPhase] = threadId;
+
+  return { threads, activeThreadIds };
 }
 
 export async function GET(_request: Request, { params }: { params: Promise<{ runId: string }> }) {
@@ -44,12 +94,21 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
   try {
     const conn = await getDb();
 
-    // Query both tables -- run_state may exist without sessions (phase 1)
+    // Query run_state, phase_threads, and sessions
     const stateRows = await queryAll<RunStateRow>(
       conn,
-      `SELECT messages_json, current_phase, phase_statuses_json, project_path, project_name
+      `SELECT messages_json, current_phase, phase_statuses_json, project_path, project_name, threads_json
        FROM run_state
        WHERE run_id = ?`,
+      [runId],
+    );
+
+    const threadRows = await queryAll<ThreadRow>(
+      conn,
+      `SELECT id, run_id, phase, revision, messages_json, decisions_json, status, created_at
+       FROM phase_threads
+       WHERE run_id = ?
+       ORDER BY phase ASC, revision ASC`,
       [runId],
     );
 
@@ -70,13 +129,57 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
     // If run_state exists, prefer its data
     if (stateRows.length > 0) {
       const rs = stateRows[0];
-      const messages = JSON.parse(rs.messages_json);
       const currentPhase = rs.current_phase as Phase;
       const phaseStatuses = JSON.parse(rs.phase_statuses_json) as Record<Phase, PhaseStatus>;
-
-      // Prefer run_state project info, fall back to session-derived
       const projectPath = rs.project_path || sessionRows[0]?.context_name || "";
       const projectName = rs.project_name || basename(projectPath);
+
+      let threads: Record<Phase, PhaseThread[]>;
+      let activeThreadIds: Record<Phase, string | null>;
+
+      if (threadRows.length > 0) {
+        // Reconstruct threads from phase_threads table
+        threads = emptyThreads();
+        for (const row of threadRows) {
+          const phase = row.phase as Phase;
+          threads[phase].push({
+            id: row.id,
+            runId: row.run_id,
+            phase,
+            revision: row.revision,
+            messages: JSON.parse(row.messages_json),
+            decisions: JSON.parse(row.decisions_json),
+            status: row.status as PhaseThread["status"],
+            createdAt: new Date(row.created_at).getTime(),
+          });
+        }
+
+        // Restore activeThreadIds from run_state threads_json
+        if (rs.threads_json) {
+          try {
+            activeThreadIds = JSON.parse(rs.threads_json) as Record<Phase, string | null>;
+          } catch {
+            activeThreadIds = emptyActiveThreadIds();
+          }
+        } else {
+          activeThreadIds = emptyActiveThreadIds();
+        }
+
+        // Fallback: if an activeThreadId is null but threads exist, pick the latest active/completed
+        for (let p = 1; p <= 7; p++) {
+          const phase = p as Phase;
+          if (!activeThreadIds[phase] && threads[phase].length > 0) {
+            const active = threads[phase].find((t) => t.status === "active");
+            activeThreadIds[phase] = active?.id ?? threads[phase][threads[phase].length - 1].id;
+          }
+        }
+      } else {
+        // Legacy: convert flat messages to synthetic thread
+        const messages = JSON.parse(rs.messages_json) as ChatMessage[];
+        const converted = convertLegacyMessages(runId, messages, currentPhase, phaseStatuses);
+        threads = converted.threads;
+        activeThreadIds = converted.activeThreadIds;
+      }
 
       return NextResponse.json({
         runId,
@@ -84,7 +187,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
         projectName,
         currentPhase,
         phaseStatuses,
-        messages,
+        threads,
+        activeThreadIds,
       });
     }
 
@@ -119,7 +223,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
       }
     }
 
-    const messages = [
+    const messages: ChatMessage[] = [
       {
         id: `restored-${runId}`,
         role: "system",
@@ -127,6 +231,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
         timestamp: Date.now(),
       },
     ];
+
+    const converted = convertLegacyMessages(runId, messages, currentPhase, phaseStatuses);
 
     // Backfill run_state so future restorations find persisted state
     try {
@@ -147,7 +253,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
       projectName,
       currentPhase,
       phaseStatuses,
-      messages,
+      threads: converted.threads,
+      activeThreadIds: converted.activeThreadIds,
     });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to fetch run" }, { status: 500 });
@@ -174,6 +281,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
       "recordings",
       "audio_files",
       "final_videos",
+      "phase_threads",
     ];
     for (const table of contentTables) {
       await execute(conn, `DELETE FROM ${table} WHERE run_id = ?`, [runId]);

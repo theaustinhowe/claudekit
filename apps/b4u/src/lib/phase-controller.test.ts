@@ -207,7 +207,33 @@ describe("usePhaseController", () => {
   // -----------------------------------------------------------------------
 
   describe("handleFolderSelected", () => {
-    it("sets run ID, project path, dispatches messages", async () => {
+    it("sets project path and dispatches messages (runId already set by startPhase1)", async () => {
+      // Simulate startPhase1 having already created a runId and thread
+      mockState.runId = "test-run-id";
+      mockState.threads[1] = [
+        {
+          id: "t-1",
+          runId: "test-run-id",
+          phase: 1,
+          revision: 1,
+          messages: [],
+          decisions: [
+            {
+              id: "d-1",
+              key: "folder-path",
+              label: "Folder",
+              type: "text",
+              options: undefined,
+              value: null,
+              decidedAt: null,
+            },
+          ],
+          status: "active",
+          createdAt: Date.now(),
+        },
+      ];
+      mockState.activeThreadIds[1] = "t-1";
+
       globalThis.fetch = mockFetchResponse({
         name: "my-app",
         framework: "Next.js",
@@ -217,14 +243,13 @@ describe("usePhaseController", () => {
         tree: [{ name: "src", type: "directory" }],
       });
 
-      vi.stubGlobal("crypto", { randomUUID: () => "test-run-id" });
-
       await controller.handleFolderSelected("/home/user/project");
 
+      // startPhase1 creates runId, so handleFolderSelected should NOT dispatch SET_RUN_ID
       const runIdCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_RUN_ID",
       );
-      expect(runIdCalls.length).toBe(1);
+      expect(runIdCalls.length).toBe(0);
 
       const pathCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "SET_PROJECT_PATH",
@@ -260,8 +285,32 @@ describe("usePhaseController", () => {
       expect((nameCalls[0][0] as { name: string }).name).toBe("path");
     });
 
-    it("dispatches RESTART_FROM_PHASE when runId already exists", async () => {
+    it("dispatches RESTART_FROM_PHASE when folder was already selected", async () => {
+      // Simulate a thread where folder-path decision was already set (re-selection)
       mockState.runId = "existing-run";
+      mockState.threads[1] = [
+        {
+          id: "t-1",
+          runId: "existing-run",
+          phase: 1,
+          revision: 1,
+          messages: [],
+          decisions: [
+            {
+              id: "d-1",
+              key: "folder-path",
+              label: "Folder",
+              type: "text",
+              options: undefined,
+              value: "/old/path",
+              decidedAt: Date.now(),
+            },
+          ],
+          status: "active",
+          createdAt: Date.now(),
+        },
+      ];
+      mockState.activeThreadIds[1] = "t-1";
 
       globalThis.fetch = mockFetchResponse({
         name: "my-app",
@@ -357,17 +406,18 @@ describe("usePhaseController", () => {
       expect((decisionCalls[0][0] as { key: string }).key).toBe("confirm-scan");
     });
 
-    it("handles errors by restarting from current phase", async () => {
+    it("handles errors without rolling back the approved phase", async () => {
       globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
       await controller.approvePhase(1);
 
+      // Should NOT dispatch RESTART_FROM_PHASE — the approved phase stays completed
       const restartCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
       );
-      expect(restartCalls.length).toBe(1);
-      expect((restartCalls[0][0] as { phase: number }).phase).toBe(1);
+      expect(restartCalls.length).toBe(0);
 
+      // Should show error message with retry option
       const addMsgCalls = mockDispatch.mock.calls.filter(
         (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );

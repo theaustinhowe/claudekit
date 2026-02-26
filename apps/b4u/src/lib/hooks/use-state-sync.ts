@@ -45,6 +45,9 @@ export function useStateSync() {
     };
   }, [flushBeacon]);
 
+  // Check if any threads exist (proxy for "has data to persist")
+  const hasThreads = Object.values(state.threads).some((arr) => arr.length > 0);
+
   // Combined effect: flush old run's pending state, then eager-save new run's state
   useEffect(() => {
     // Flush pending state from previous run
@@ -59,11 +62,11 @@ export function useStateSync() {
     }
 
     // Eager save for new run (only on runId change)
-    if (state.runId && state.messages.length > 0 && prevRunIdRef.current !== state.runId) {
+    if (state.runId && hasThreads && prevRunIdRef.current !== state.runId) {
       const payload = JSON.stringify({
-        messages: state.messages,
         currentPhase: state.currentPhase,
         phaseStatuses: state.phaseStatuses,
+        activeThreadIds: state.activeThreadIds,
         projectPath: state.projectPath,
         projectName: state.projectName,
       });
@@ -82,7 +85,15 @@ export function useStateSync() {
 
     // Update ref AFTER both checks so the guards work correctly
     prevRunIdRef.current = state.runId;
-  }, [state.runId, state.messages, state.currentPhase, state.phaseStatuses, state.projectPath, state.projectName]);
+  }, [
+    state.runId,
+    hasThreads,
+    state.currentPhase,
+    state.phaseStatuses,
+    state.activeThreadIds,
+    state.projectPath,
+    state.projectName,
+  ]);
 
   // Flush on unmount
   useEffect(() => {
@@ -93,12 +104,12 @@ export function useStateSync() {
 
   // Debounced save on state changes
   useEffect(() => {
-    if (!state.runId || state.messages.length === 0) return;
+    if (!state.runId || !hasThreads) return;
 
     const payload = JSON.stringify({
-      messages: state.messages,
       currentPhase: state.currentPhase,
       phaseStatuses: state.phaseStatuses,
+      activeThreadIds: state.activeThreadIds,
       projectPath: state.projectPath,
       projectName: state.projectName,
     });
@@ -131,5 +142,13 @@ export function useStateSync() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [state.runId, state.messages, state.currentPhase, state.phaseStatuses, state.projectPath, state.projectName]);
+  }, [
+    state.runId,
+    hasThreads,
+    state.currentPhase,
+    state.phaseStatuses,
+    state.activeThreadIds,
+    state.projectPath,
+    state.projectName,
+  ]);
 }

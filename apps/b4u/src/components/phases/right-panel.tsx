@@ -24,6 +24,8 @@ export function RightPanel() {
   const isViewingCompleted =
     content !== null && state.phaseStatuses[content] === "completed" && content !== state.currentPhase;
 
+  const threadCount = content !== null ? (state.threads[content as Phase]?.length ?? 0) : 0;
+
   const handleEditClick = () => {
     if (content !== null) {
       controller.handleEditPhaseFromPanel(content as Phase);
@@ -69,18 +71,19 @@ export function RightPanel() {
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/85 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 p-6 rounded-lg">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>✓</span>
+              <span>{"\u2713"}</span>
               <span>{PHASE_LABELS[content as Phase]} — completed</span>
+              {threadCount > 1 && <span className="text-2xs text-muted-foreground/60">({threadCount} revisions)</span>}
             </div>
             <button
               type="button"
               onClick={handleEditClick}
               className="flex items-center gap-2 px-5 py-2.5 text-xs font-medium transition-all bg-muted border border-border rounded-md text-foreground hover:border-primary hover:text-primary"
             >
-              <span>✎</span>
-              <span>Edit this step</span>
+              <span>{"\u270E"}</span>
+              <span>Start New Revision</span>
             </button>
-            <div className="text-2xs text-muted-foreground">This will restart from this phase</div>
+            <div className="text-2xs text-muted-foreground">Previous versions remain viewable</div>
           </div>
         </div>
       )}

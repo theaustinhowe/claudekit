@@ -206,6 +206,8 @@ export function Phase7Output() {
   }, [state.runId]);
 
   if (loading) return <Phase7OutputSkeleton />;
+  // Data may not exist yet while audio/video generation is still running
+  if (!chapterMarkers && !videoInfo) return <Phase7OutputSkeleton />;
   if (error || !chapterMarkers) {
     return (
       <ErrorState

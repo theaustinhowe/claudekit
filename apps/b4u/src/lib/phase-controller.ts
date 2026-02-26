@@ -49,14 +49,35 @@ export function usePhaseController() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  /**
+   * Ensure a thread exists for the given phase. If one already exists and is active, no-op.
+   * Otherwise creates a new one.
+   */
+  const ensureThread = useCallback(
+    (phase: Phase) => {
+      const runId = stateRef.current.runId;
+      if (!runId) return;
+      const activeId = stateRef.current.activeThreadIds[phase];
+      if (activeId) {
+        // Check if the thread is still active
+        const thread = stateRef.current.threads[phase]?.find((t) => t.id === activeId);
+        if (thread?.status === "active") return;
+      }
+      dispatch({ type: "CREATE_THREAD", phase, runId });
+    },
+    [dispatch],
+  );
+
   const addAIMessage = useCallback(
     async (content: string, actionCard?: ActionCard, delayMs = 800): Promise<string> => {
+      const phase = stateRef.current.viewingPhase;
       dispatch({ type: "SET_TYPING", isTyping: true });
       await delay(delayMs);
       dispatch({ type: "SET_TYPING", isTyping: false });
       const id = uid();
       dispatch({
-        type: "ADD_MESSAGE",
+        type: "ADD_THREAD_MESSAGE",
+        phase,
         message: {
           id,
           role: "ai",
@@ -72,8 +93,10 @@ export function usePhaseController() {
 
   const addMessage = useCallback(
     (role: "ai" | "user" | "system", content: string, actionCard?: ActionCard) => {
+      const phase = stateRef.current.viewingPhase;
       dispatch({
-        type: "ADD_MESSAGE",
+        type: "ADD_THREAD_MESSAGE",
+        phase,
         message: { id: uid(), role, content, timestamp: Date.now(), actionCard },
       });
     },
@@ -125,6 +148,15 @@ export function usePhaseController() {
     if (busyRef.current) return;
     busyRef.current = true;
 
+    // Create a runId and thread immediately so messages have somewhere to go
+    if (!stateRef.current.runId) {
+      const runId = crypto.randomUUID();
+      dispatch({ type: "SET_RUN_ID", runId });
+      dispatch({ type: "CREATE_THREAD", phase: 1, runId });
+    } else {
+      ensureThread(1);
+    }
+
     await addAIMessage(
       "Welcome to B4U. I'll scan your web app's codebase and generate a narrated demo video, walking through every feature automatically.",
       undefined,
@@ -134,17 +166,23 @@ export function usePhaseController() {
     await addAIMessage("Let's start by selecting your project folder.", { type: "folder-select" }, 600);
     dispatch({ type: "SET_RIGHT_PANEL", phase: 1 });
     busyRef.current = false;
-  }, [addAIMessage, dispatch]);
+  }, [addAIMessage, dispatch, ensureThread]);
 
   const handleFolderSelected = useCallback(
     async (path: string) => {
       if (busyRef.current) return;
       busyRef.current = true;
 
-      const runId = crypto.randomUUID();
-      dispatch({ type: "SET_RUN_ID", runId });
-      dispatch({ type: "SET_PROJECT_PATH", path });
+      // Check if folder was already selected (re-selection triggers revision)
+      const activeThread = stateRef.current.threads[1]?.find((t) => t.id === stateRef.current.activeThreadIds[1]);
+      const isReselection = activeThread?.decisions?.some((d) => d.key === "folder-path" && d.value !== null);
 
+      if (isReselection) {
+        dispatch({ type: "RESTART_FROM_PHASE", phase: 1 });
+      }
+
+      dispatch({ type: "SET_THREAD_DECISION", phase: 1, key: "folder-path", value: path });
+      dispatch({ type: "SET_PROJECT_PATH", path });
       addMessage("user", `Selected: ${path}`);
 
       const scanningId = await addAIMessage(
@@ -155,6 +193,7 @@ export function usePhaseController() {
 
       // Quick scan via fs/tree for immediate feedback
       let projectSummary: ProjectSummary;
+      const runId = stateRef.current.runId;
       try {
         const treeRes = await fetch("/api/fs/tree", {
           method: "POST",
@@ -172,7 +211,7 @@ export function usePhaseController() {
         };
 
         // Persist tree to DB before showing panel (panel fetches it immediately)
-        if (scan.tree) {
+        if (scan.tree && runId) {
           try {
             await fetch(`/api/file-tree?runId=${runId}`, {
               method: "PUT",
@@ -198,8 +237,9 @@ export function usePhaseController() {
 
       // Replace the scanning message with the project summary
       dispatch({
-        type: "UPDATE_MESSAGE",
-        id: scanningId,
+        type: "UPDATE_THREAD_MESSAGE",
+        phase: 1,
+        messageId: scanningId,
         updates: {
           content: "Project detected! Here's what I found:",
           actionCard: { type: "project-summary", data: projectSummary },
@@ -226,9 +266,36 @@ export function usePhaseController() {
       busyRef.current = true;
 
       addMessage("user", "Approved \u2713");
+
+      // Record the approve decision
+      const approveKeys: Record<Phase, string> = {
+        1: "confirm-scan",
+        2: "approve-outline",
+        3: "approve-data-plan",
+        4: "approve-scripts",
+        5: "approve-recording",
+        6: "approve-voiceover",
+        7: "",
+      };
+      const approveKey = approveKeys[phase];
+      if (approveKey) {
+        dispatch({ type: "SET_THREAD_DECISION", phase, key: approveKey, value: "approved" });
+      }
+
       dispatch({ type: "COMPLETE_PHASE", phase });
 
       const nextPhase = (phase + 1) as Phase;
+
+      // Create a thread for the next phase
+      if (nextPhase <= 7) {
+        const runId = stateRef.current.runId;
+        if (runId) {
+          dispatch({ type: "CREATE_THREAD", phase: nextPhase, runId });
+        }
+        // Eagerly update ref so addAIMessage/addMessage target the new phase
+        // (React won't re-render until this async function yields)
+        stateRef.current = { ...stateRef.current, viewingPhase: nextPhase, currentPhase: nextPhase };
+      }
 
       try {
         switch (nextPhase) {
@@ -365,12 +432,13 @@ export function usePhaseController() {
           case 7: {
             await addAIMessage("Generating voiceover audio...", undefined, 400);
 
+            // Read voice selection from Phase 6 thread decisions
+            const phase6Threads = stateRef.current.threads[6] ?? [];
+            const phase6Thread = phase6Threads.findLast((t) => t.status === "completed" || t.status === "active");
+            const voiceId = phase6Thread?.decisions.find((d) => d.key === "voice-selection")?.value ?? "default";
+
             // Generate audio first
-            await runSessionPhase(
-              "/api/audio/generate",
-              { voiceId: "default", speed: 1.0 },
-              "Generating voiceover audio...",
-            );
+            await runSessionPhase("/api/audio/generate", { voiceId, speed: 1.0 }, "Generating voiceover audio...");
 
             // Then merge video + audio
             await runSessionPhase("/api/video/merge", null, "Merging video and audio...");
@@ -389,9 +457,9 @@ export function usePhaseController() {
             break;
         }
       } catch (err) {
-        dispatch({ type: "RESTART_FROM_PHASE", phase });
         const msg = err instanceof Error ? err.message : "Something went wrong";
-        await addAIMessage(`An error occurred: ${msg}`, {
+        const failedPhase = nextPhase <= 7 ? nextPhase : phase;
+        await addAIMessage(`An error occurred during ${PHASE_LABELS[failedPhase]}: ${msg}`, {
           type: "approve",
           phase,
           label: "Retry",
@@ -588,8 +656,8 @@ export function usePhaseController() {
   // -----------------------------------------------------------------------
 
   /**
-   * Check if going back to a phase would discard completed work.
-   * Returns the list of phases that would be reset.
+   * Check if going back to a phase would affect completed work.
+   * Returns the list of phases that would be locked.
    */
   const getAffectedPhases = useCallback((targetPhase: Phase): Phase[] => {
     const affected: Phase[] = [];
@@ -607,13 +675,13 @@ export function usePhaseController() {
       if (busyRef.current) return;
       busyRef.current = true;
 
-      // Check if any completed phases would be lost
+      // Check if any completed phases would be affected
       const affected = getAffectedPhases(phase);
       if (affected.length > 0) {
         const phaseNames = affected.map((p) => PHASE_LABELS[p]).join(", ");
         await addAIMessage(
-          `Going back will reset completed phases: ${phaseNames}. Continue?`,
-          { type: "confirm-restart" as "approve", phase, label: `Yes, go back to ${PHASE_LABELS[phase]}` },
+          `Starting a new revision will lock later phases: ${phaseNames}. Previous versions remain viewable. Continue?`,
+          { type: "confirm-restart" as "approve", phase, label: `Yes, start new revision of ${PHASE_LABELS[phase]}` },
           400,
         );
         busyRef.current = false;
@@ -621,9 +689,10 @@ export function usePhaseController() {
       }
 
       dispatch({ type: "RESTART_FROM_PHASE", phase });
+      stateRef.current = { ...stateRef.current, viewingPhase: phase, currentPhase: phase };
 
       await addAIMessage(
-        `Going back to ${PHASE_LABELS[phase]}. I've reset everything from this point forward \u2014 make your changes and approve when ready.`,
+        `Starting a new revision of ${PHASE_LABELS[phase]}. Previous versions are still viewable. Make your changes and approve when ready.`,
         { type: "approve", phase, label: `Re-approve ${PHASE_LABELS[phase]}` },
         600,
       );
@@ -638,25 +707,26 @@ export function usePhaseController() {
       if (busyRef.current) return;
       busyRef.current = true;
 
-      // Check if any completed phases would be lost
+      // Check if any completed phases would be affected
       const affected = getAffectedPhases(phase);
       if (affected.length > 0) {
         const phaseNames = affected.map((p) => PHASE_LABELS[p]).join(", ");
-        addMessage("user", `I want to go back and edit ${PHASE_LABELS[phase]}.`);
+        addMessage("user", `I want to start a new revision of ${PHASE_LABELS[phase]}.`);
         await addAIMessage(
-          `Going back will reset completed phases: ${phaseNames}. Are you sure?`,
-          { type: "approve", phase, label: `Yes, restart from ${PHASE_LABELS[phase]}` },
+          `This will lock later phases: ${phaseNames}. Previous versions remain viewable. Continue?`,
+          { type: "approve", phase, label: `Yes, start new revision of ${PHASE_LABELS[phase]}` },
           400,
         );
         busyRef.current = false;
         return;
       }
 
-      addMessage("user", `I want to go back and edit ${PHASE_LABELS[phase]}.`);
+      addMessage("user", `I want to start a new revision of ${PHASE_LABELS[phase]}.`);
       dispatch({ type: "RESTART_FROM_PHASE", phase });
+      stateRef.current = { ...stateRef.current, viewingPhase: phase, currentPhase: phase };
 
       await addAIMessage(
-        `Restarting from ${PHASE_LABELS[phase]}. Everything after this step has been reset. Make your changes on the right, then approve when you're ready to continue.`,
+        `Starting a new revision of ${PHASE_LABELS[phase]}. Previous versions are still viewable. Make your changes on the right, then approve when you're ready to continue.`,
         { type: "approve", phase, label: `Re-approve ${PHASE_LABELS[phase]}` },
         600,
       );
@@ -671,9 +741,9 @@ export function usePhaseController() {
    */
   const notifySidebarEdit = useCallback(
     (phase: Phase, description: string) => {
-      dispatch({ type: "SIDEBAR_EDIT", phase, description });
+      addMessage("system", `Updated ${description} in ${PHASE_LABELS[phase]}`);
     },
-    [dispatch],
+    [addMessage],
   );
 
   return {

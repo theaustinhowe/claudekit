@@ -9,7 +9,7 @@ import type { FlowScript, TimelineMarker, VoiceOption } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 
 export function Phase6Voiceover() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const {
     data: flowScripts,
     loading: l1,
@@ -56,9 +56,11 @@ export function Phase6Voiceover() {
 
   useEffect(() => {
     if (voiceOptions && voiceOptions.length > 0 && selectedVoice === null) {
-      setSelectedVoice(voiceOptions[0].id);
+      const voiceId = voiceOptions[0].id;
+      setSelectedVoice(voiceId);
+      dispatch({ type: "SET_THREAD_DECISION", phase: 6, key: "voice-selection", value: voiceId });
     }
-  }, [voiceOptions, selectedVoice]);
+  }, [voiceOptions, selectedVoice, dispatch]);
 
   useEffect(() => {
     if (voiceoverScripts) {
@@ -362,7 +364,10 @@ export function Phase6Voiceover() {
               VOICE
               <select
                 value={selectedVoice || ""}
-                onChange={(e) => setSelectedVoice(e.target.value)}
+                onChange={(e) => {
+                  setSelectedVoice(e.target.value);
+                  dispatch({ type: "SET_THREAD_DECISION", phase: 6, key: "voice-selection", value: e.target.value });
+                }}
                 className="text-xs px-2 py-1 outline-none cursor-pointer bg-input border border-input rounded-sm text-foreground"
               >
                 {voiceOptions.map((v) => (

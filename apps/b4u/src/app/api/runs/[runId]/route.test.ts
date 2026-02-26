@@ -19,7 +19,7 @@ beforeEach(() => {
 const makeParams = (runId: string) => ({ params: Promise.resolve({ runId }) });
 
 describe("GET /api/runs/[runId]", () => {
-  it("returns run from run_state", async () => {
+  it("returns run from run_state with legacy messages converted to thread", async () => {
     mockQueryAll
       .mockResolvedValueOnce([
         {
@@ -29,8 +29,10 @@ describe("GET /api/runs/[runId]", () => {
             '{"1":"completed","2":"active","3":"locked","4":"locked","5":"locked","6":"locked","7":"locked"}',
           project_path: "/projects/my-app",
           project_name: "my-app",
+          threads_json: null,
         },
       ] as never)
+      .mockResolvedValueOnce([] as never) // phase_threads
       .mockResolvedValueOnce([] as never); // sessions
 
     const response = await GET(new Request("http://localhost"), makeParams("run-1"));
@@ -40,11 +42,14 @@ describe("GET /api/runs/[runId]", () => {
     expect(data.runId).toBe("run-1");
     expect(data.currentPhase).toBe(2);
     expect(data.projectName).toBe("my-app");
+    expect(data.threads).toBeDefined();
+    expect(data.activeThreadIds).toBeDefined();
   });
 
   it("derives state from sessions when no run_state", async () => {
     mockQueryAll
       .mockResolvedValueOnce([] as never) // no run_state
+      .mockResolvedValueOnce([] as never) // no phase_threads
       .mockResolvedValueOnce([
         {
           id: "s1",
@@ -60,37 +65,62 @@ describe("GET /api/runs/[runId]", () => {
 
     expect(response.status).toBe(200);
     expect(data.projectName).toBe("test");
+    expect(data.threads).toBeDefined();
+    expect(data.activeThreadIds).toBeDefined();
   });
 
-  it("returns messages from run_state when they exist", async () => {
-    const storedMessages = [
-      { id: "m1", role: "user", content: "Hello", timestamp: 1000 },
-      { id: "m2", role: "ai", content: "Hi!", timestamp: 1001 },
-    ];
+  it("returns threads from phase_threads when they exist", async () => {
     mockQueryAll
       .mockResolvedValueOnce([
         {
-          messages_json: JSON.stringify(storedMessages),
+          messages_json: "[]",
           current_phase: 2,
           phase_statuses_json:
             '{"1":"completed","2":"active","3":"locked","4":"locked","5":"locked","6":"locked","7":"locked"}',
           project_path: "/projects/my-app",
           project_name: "my-app",
+          threads_json: '{"1":"t-1","2":"t-2","3":null,"4":null,"5":null,"6":null,"7":null}',
         },
       ] as never)
-      .mockResolvedValueOnce([] as never);
+      .mockResolvedValueOnce([
+        {
+          id: "t-1",
+          run_id: "run-1",
+          phase: 1,
+          revision: 1,
+          messages_json: '[{"id":"m1","role":"ai","content":"Hello","timestamp":1000}]',
+          decisions_json: "[]",
+          status: "completed",
+          created_at: "2024-01-01T00:00:00Z",
+        },
+        {
+          id: "t-2",
+          run_id: "run-1",
+          phase: 2,
+          revision: 1,
+          messages_json: "[]",
+          decisions_json: "[]",
+          status: "active",
+          created_at: "2024-01-01T00:01:00Z",
+        },
+      ] as never)
+      .mockResolvedValueOnce([] as never); // sessions
 
     const response = await GET(new Request("http://localhost"), makeParams("run-1"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.messages).toEqual(storedMessages);
-    expect(data.messages).toHaveLength(2);
+    expect(data.threads["1"]).toHaveLength(1);
+    expect(data.threads["1"][0].messages).toHaveLength(1);
+    expect(data.threads["2"]).toHaveLength(1);
+    expect(data.activeThreadIds["1"]).toBe("t-1");
+    expect(data.activeThreadIds["2"]).toBe("t-2");
   });
 
   it("returns system message for legacy fallback (no run_state)", async () => {
     mockQueryAll
       .mockResolvedValueOnce([] as never) // no run_state
+      .mockResolvedValueOnce([] as never) // no phase_threads
       .mockResolvedValueOnce([
         {
           id: "s1",
@@ -105,11 +135,14 @@ describe("GET /api/runs/[runId]", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.messages).toHaveLength(1);
-    expect(data.messages[0].role).toBe("system");
-    expect(data.messages[0].content).toContain("Restored run");
-    expect(data.messages[0].content).toContain("test");
-    expect(data.messages[0].id).toBe("restored-run-1");
+    // Legacy messages are now in a synthetic thread
+    const currentPhaseThreads = data.threads[String(data.currentPhase)];
+    expect(currentPhaseThreads).toBeDefined();
+    expect(currentPhaseThreads.length).toBe(1);
+    const thread = currentPhaseThreads[0];
+    expect(thread.messages).toHaveLength(1);
+    expect(thread.messages[0].role).toBe("system");
+    expect(thread.messages[0].content).toContain("Restored run");
   });
 
   it("returns 404 when run not found", async () => {
@@ -132,8 +165,8 @@ describe("DELETE /api/runs/[runId]", () => {
 
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
-    // 8 content tables + session_logs + sessions + run_state = 11
-    expect(mockExecute).toHaveBeenCalledTimes(11);
+    // 9 content tables (including phase_threads) + session_logs + sessions + run_state = 12
+    expect(mockExecute).toHaveBeenCalledTimes(12);
   });
 
   it("returns 500 on error", async () => {

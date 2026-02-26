@@ -162,10 +162,14 @@ export function Phase4Scripts() {
   );
 
   if (loading) return <Phase4ScriptsSkeleton />;
-  if (error || !flowScripts || flowScripts.length === 0)
+  if (error || !flowScripts || flowScripts.length === 0 || !flowScripts.some((f) => f.steps?.length))
     return <ErrorState message={error || "No scripts data"} onRetry={refetch} />;
 
   const activeScript = scripts.find((f) => f.flowId === activeTab) || scripts[0];
+
+  // scripts state syncs from flowScripts via useEffect (runs after render),
+  // so there's a one-render gap where scripts is [] but the guard above passed
+  if (!activeScript?.steps?.length) return <Phase4ScriptsSkeleton />;
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">

@@ -1,13 +1,15 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { ChatMessage, Phase, PhaseStatus } from "./types";
-import { PHASE_LABELS } from "./types";
+import { createThread, emptyActiveThreadIds, emptyThreads, getNextRevision } from "./thread-utils";
+import type { ChatMessage, Phase, PhaseStatus, PhaseThread } from "./types";
 
 interface AppState {
   currentPhase: Phase;
   phaseStatuses: Record<Phase, PhaseStatus>;
-  messages: ChatMessage[];
+  threads: Record<Phase, PhaseThread[]>;
+  activeThreadIds: Record<Phase, string | null>;
+  viewingPhase: Phase;
   isTyping: boolean;
   projectName: string;
   rightPanelContent: Phase | null;
@@ -31,7 +33,9 @@ export const initialState: AppState = {
     6: "locked",
     7: "locked",
   },
-  messages: [],
+  threads: emptyThreads(),
+  activeThreadIds: emptyActiveThreadIds(),
+  viewingPhase: 1,
   isTyping: false,
   projectName: "",
   rightPanelContent: null,
@@ -47,7 +51,6 @@ export const initialState: AppState = {
 type AppAction =
   | { type: "SET_PHASE"; phase: Phase }
   | { type: "COMPLETE_PHASE"; phase: Phase }
-  | { type: "ADD_MESSAGE"; message: ChatMessage }
   | { type: "SET_TYPING"; isTyping: boolean }
   | { type: "SET_PROJECT_NAME"; name: string }
   | { type: "SET_RIGHT_PANEL"; phase: Phase | null }
@@ -57,10 +60,19 @@ type AppAction =
   | { type: "SET_PROJECT_PATH"; path: string | null }
   | { type: "SET_ACTIVE_SESSION"; sessionId: string | null }
   | { type: "SET_FILE_BROWSER_OPEN"; open: boolean }
-  | { type: "UPDATE_MESSAGE"; id: string; updates: Partial<Pick<ChatMessage, "content" | "actionCard">> }
   | { type: "SET_HISTORY_SIDEBAR_OPEN"; open: boolean }
   | { type: "SET_RUN_ID"; runId: string }
-  | { type: "SIDEBAR_EDIT"; phase: Phase; description: string }
+  | { type: "SET_VIEWING_PHASE"; phase: Phase }
+  | { type: "CREATE_THREAD"; phase: Phase; runId: string }
+  | { type: "ADD_THREAD_MESSAGE"; phase: Phase; message: ChatMessage }
+  | {
+      type: "UPDATE_THREAD_MESSAGE";
+      phase: Phase;
+      messageId: string;
+      updates: Partial<Pick<ChatMessage, "content" | "actionCard">>;
+    }
+  | { type: "SET_THREAD_DECISION"; phase: Phase; key: string; value: string }
+  | { type: "COMPLETE_THREAD"; phase: Phase }
   | {
       type: "RESTORE_RUN";
       runId: string;
@@ -68,10 +80,24 @@ type AppAction =
       projectName: string;
       currentPhase: Phase;
       phaseStatuses: Record<Phase, PhaseStatus>;
-      messages: ChatMessage[];
+      threads: Record<Phase, PhaseThread[]>;
+      activeThreadIds: Record<Phase, string | null>;
     }
   | { type: "REFRESH_PANEL" }
   | { type: "RESET_STATE" };
+
+export type { AppAction, AppState };
+
+function updateActiveThread(state: AppState, phase: Phase, updater: (thread: PhaseThread) => PhaseThread): AppState {
+  const threadId = state.activeThreadIds[phase];
+  if (!threadId) return state;
+
+  const phaseThreads = state.threads[phase].map((t) => (t.id === threadId ? updater(t) : t));
+  return {
+    ...state,
+    threads: { ...state.threads, [phase]: phaseThreads },
+  };
+}
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -84,26 +110,85 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           [action.phase]: "active",
         },
         rightPanelContent: action.phase,
+        viewingPhase: action.phase,
       };
 
     case "COMPLETE_PHASE": {
       const nextPhase = (action.phase + 1) as Phase;
+      // Also mark the active thread as completed
+      const updatedState = updateActiveThread(state, action.phase, (t) => ({
+        ...t,
+        status: "completed" as const,
+      }));
       return {
-        ...state,
+        ...updatedState,
         phaseStatuses: {
-          ...state.phaseStatuses,
+          ...updatedState.phaseStatuses,
           [action.phase]: "completed",
           ...(nextPhase <= 7 ? { [nextPhase]: "active" } : {}),
         },
         currentPhase: nextPhase <= 7 ? nextPhase : action.phase,
         rightPanelContent: nextPhase <= 7 ? nextPhase : action.phase,
+        viewingPhase: nextPhase <= 7 ? nextPhase : action.phase,
       };
     }
 
-    case "ADD_MESSAGE":
+    case "CREATE_THREAD": {
+      const revision = getNextRevision(state.threads, action.phase);
+      const thread = createThread(action.runId, action.phase, revision);
       return {
         ...state,
-        messages: [...state.messages, action.message],
+        threads: {
+          ...state.threads,
+          [action.phase]: [...state.threads[action.phase], thread],
+        },
+        activeThreadIds: {
+          ...state.activeThreadIds,
+          [action.phase]: thread.id,
+        },
+      };
+    }
+
+    case "ADD_THREAD_MESSAGE": {
+      const threadId = state.activeThreadIds[action.phase];
+      if (!threadId) {
+        console.warn(`[B4U] ADD_THREAD_MESSAGE: No active thread for phase ${action.phase}, message dropped`);
+        return state;
+      }
+      return updateActiveThread(state, action.phase, (t) => ({
+        ...t,
+        messages: [...t.messages, action.message],
+      }));
+    }
+
+    case "UPDATE_THREAD_MESSAGE": {
+      return updateActiveThread(state, action.phase, (t) => ({
+        ...t,
+        messages: t.messages.map((msg) => (msg.id === action.messageId ? { ...msg, ...action.updates } : msg)),
+      }));
+    }
+
+    case "SET_THREAD_DECISION": {
+      return updateActiveThread(state, action.phase, (t) => ({
+        ...t,
+        decisions: t.decisions.map((d) =>
+          d.key === action.key ? { ...d, value: action.value, decidedAt: Date.now() } : d,
+        ),
+      }));
+    }
+
+    case "COMPLETE_THREAD": {
+      return updateActiveThread(state, action.phase, (t) => ({
+        ...t,
+        status: "completed" as const,
+      }));
+    }
+
+    case "SET_VIEWING_PHASE":
+      return {
+        ...state,
+        viewingPhase: action.phase,
+        rightPanelContent: action.phase,
       };
 
     case "SET_TYPING":
@@ -119,14 +204,26 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, editMode: action.phase };
 
     case "GOTO_PHASE":
-      // Navigate to a completed phase to view it (no status change)
       return {
         ...state,
         rightPanelContent: action.phase,
+        viewingPhase: action.phase,
       };
 
     case "RESTART_FROM_PHASE": {
+      // Supersede current active thread for the target phase
+      const currentThreadId = state.activeThreadIds[action.phase];
+      let phaseThreads = state.threads[action.phase].map((t) =>
+        t.id === currentThreadId ? { ...t, status: "superseded" as const } : t,
+      );
+
+      // Create a new thread for the target phase
+      const revision = getNextRevision(state.threads, action.phase);
+      const newThread = createThread(state.runId ?? "", action.phase, revision);
+      phaseThreads = [...phaseThreads, newThread];
+
       // Re-activate the target phase, lock everything after it
+      // but preserve existing threads (they remain viewable as superseded)
       const newStatuses = { ...state.phaseStatuses };
       for (let p = 1; p <= 7; p++) {
         const phase = p as Phase;
@@ -138,11 +235,21 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           newStatuses[phase] = "locked";
         }
       }
+
       return {
         ...state,
         currentPhase: action.phase,
         phaseStatuses: newStatuses,
+        threads: {
+          ...state.threads,
+          [action.phase]: phaseThreads,
+        },
+        activeThreadIds: {
+          ...state.activeThreadIds,
+          [action.phase]: newThread.id,
+        },
         rightPanelContent: action.phase,
+        viewingPhase: action.phase,
         editMode: null,
       };
     }
@@ -156,31 +263,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case "SET_FILE_BROWSER_OPEN":
       return { ...state, fileBrowserOpen: action.open };
 
-    case "UPDATE_MESSAGE":
-      return {
-        ...state,
-        messages: state.messages.map((msg) => (msg.id === action.id ? { ...msg, ...action.updates } : msg)),
-      };
-
     case "SET_HISTORY_SIDEBAR_OPEN":
       return { ...state, historySidebarOpen: action.open };
 
     case "SET_RUN_ID":
       return { ...state, runId: action.runId };
-
-    case "SIDEBAR_EDIT":
-      return {
-        ...state,
-        messages: [
-          ...state.messages,
-          {
-            id: `sidebar-${Date.now()}`,
-            role: "system" as const,
-            content: `Updated ${action.description} in ${PHASE_LABELS[action.phase]}`,
-            timestamp: Date.now(),
-          },
-        ],
-      };
 
     case "RESTORE_RUN":
       return {
@@ -190,8 +277,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         projectName: action.projectName,
         currentPhase: action.currentPhase,
         phaseStatuses: action.phaseStatuses,
-        messages: action.messages,
+        threads: action.threads,
+        activeThreadIds: action.activeThreadIds,
         rightPanelContent: action.currentPhase,
+        viewingPhase: action.currentPhase,
         editMode: null,
         activeSessionId: null,
       };
