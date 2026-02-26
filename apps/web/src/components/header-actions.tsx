@@ -9,6 +9,7 @@ export function HeaderActions({ autoOpen }: { autoOpen?: boolean }) {
       autoOpen={autoOpen}
       trigger={
         <button
+          id="setup-wizard-trigger"
           type="button"
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
