@@ -454,7 +454,8 @@ function ToolRow({
   const isInstalled = result?.installed ?? false;
   const hasError = !!result?.error;
   const isHomebrew = result?.metadata?.installMethod === "homebrew";
-  const updateCommand = isHomebrew ? `brew upgrade ${tool.binary}` : (tool.updateCommand ?? tool.installCommand);
+  const brewName = tool.brewPackage ?? tool.binary;
+  const updateCommand = isHomebrew ? `brew upgrade ${brewName}` : (tool.updateCommand ?? tool.installCommand);
   const expandCommand = updateCommand ?? tool.installCommand ?? null;
 
   return (

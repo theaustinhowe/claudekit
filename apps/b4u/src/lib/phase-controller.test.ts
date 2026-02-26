@@ -10,7 +10,9 @@ const mockDispatch = vi.fn();
 const mockState: {
   currentPhase: Phase;
   phaseStatuses: Record<Phase, PhaseStatus>;
-  messages: unknown[];
+  threads: Record<Phase, unknown[]>;
+  activeThreadIds: Record<Phase, string | null>;
+  viewingPhase: Phase;
   isTyping: boolean;
   projectName: string;
   rightPanelContent: Phase | null;
@@ -32,7 +34,9 @@ const mockState: {
     6: "locked",
     7: "locked",
   },
-  messages: [],
+  threads: { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] },
+  activeThreadIds: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null },
+  viewingPhase: 1,
   isTyping: false,
   projectName: "",
   rightPanelContent: null,
@@ -131,6 +135,7 @@ describe("usePhaseController", () => {
     mockState.currentPhase = 1;
     mockState.runId = null;
     mockState.projectPath = null;
+    mockState.viewingPhase = 1;
     mockState.phaseStatuses = {
       1: "active",
       2: "locked",
@@ -140,7 +145,8 @@ describe("usePhaseController", () => {
       6: "locked",
       7: "locked",
     };
-    mockState.messages = [];
+    mockState.threads = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
+    mockState.activeThreadIds = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null };
 
     globalThis.fetch = mockFetchResponse({});
 
@@ -166,7 +172,7 @@ describe("usePhaseController", () => {
       expect(typingCalls.length).toBeGreaterThanOrEqual(2);
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       expect(addMsgCalls.length).toBe(2);
 
@@ -190,7 +196,7 @@ describe("usePhaseController", () => {
       await Promise.all([p1, p2]);
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       expect(addMsgCalls.length).toBe(2);
     });
@@ -227,7 +233,7 @@ describe("usePhaseController", () => {
       expect((pathCalls[0][0] as { path: string }).path).toBe("/home/user/project");
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const userMsg = addMsgCalls.find(
         (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "user",
@@ -252,6 +258,26 @@ describe("usePhaseController", () => {
       );
       expect(nameCalls.length).toBe(1);
       expect((nameCalls[0][0] as { name: string }).name).toBe("path");
+    });
+
+    it("dispatches RESTART_FROM_PHASE when runId already exists", async () => {
+      mockState.runId = "existing-run";
+
+      globalThis.fetch = mockFetchResponse({
+        name: "my-app",
+        framework: "Next.js",
+        directories: [],
+        auth: "None",
+        database: "None",
+      });
+
+      await controller.handleFolderSelected("/new/path");
+
+      const restartCalls = mockDispatch.mock.calls.filter(
+        (c: unknown[]) => (c[0] as { type: string }).type === "RESTART_FROM_PHASE",
+      );
+      expect(restartCalls.length).toBe(1);
+      expect((restartCalls[0][0] as { phase: number }).phase).toBe(1);
     });
   });
 
@@ -287,7 +313,7 @@ describe("usePhaseController", () => {
       await promise;
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const userApproval = addMsgCalls.find(
         (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "user",
@@ -299,6 +325,36 @@ describe("usePhaseController", () => {
       );
       expect(completeCalls.length).toBe(1);
       expect((completeCalls[0][0] as { phase: number }).phase).toBe(1);
+    });
+
+    it("records approve decision via SET_THREAD_DECISION", async () => {
+      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+        if (typeof url === "string" && url.includes("/api/analyze")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ sessionId: "sess-1" }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        });
+      });
+
+      const promise = controller.approvePhase(1);
+
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
+      esInstances[0].triggerMessage({ type: "done", data: {} });
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(2));
+      esInstances[1].triggerMessage({ type: "done", data: {} });
+
+      await promise;
+
+      const decisionCalls = mockDispatch.mock.calls.filter(
+        (c: unknown[]) => (c[0] as { type: string }).type === "SET_THREAD_DECISION",
+      );
+      expect(decisionCalls.length).toBe(1);
+      expect((decisionCalls[0][0] as { key: string }).key).toBe("confirm-scan");
     });
 
     it("handles errors by restarting from current phase", async () => {
@@ -313,7 +369,7 @@ describe("usePhaseController", () => {
       expect((restartCalls[0][0] as { phase: number }).phase).toBe(1);
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const errorMsg = addMsgCalls.find((c: unknown[]) =>
         (c[0] as { message: { content: string } }).message.content.includes("error"),
@@ -413,7 +469,7 @@ describe("usePhaseController", () => {
       await controller.handleRecordingComplete();
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       expect(addMsgCalls.length).toBe(2);
 
@@ -441,7 +497,7 @@ describe("usePhaseController", () => {
       await controller.handleUserMessage("Hello there");
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const userMsg = addMsgCalls.find(
         (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "user",
@@ -464,7 +520,7 @@ describe("usePhaseController", () => {
       await controller.handleUserMessage("help me please");
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const aiMsg = addMsgCalls.find((c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai");
       expect(aiMsg).toBeDefined();
@@ -476,7 +532,7 @@ describe("usePhaseController", () => {
       await controller.handleUserMessage("how does this work?");
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       expect(addMsgCalls.length).toBeGreaterThanOrEqual(2);
     });
@@ -490,7 +546,7 @@ describe("usePhaseController", () => {
       await controller.handleUserMessage("looks ready");
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const aiMsg = addMsgCalls.find((c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai");
       expect(aiMsg).toBeDefined();
@@ -507,7 +563,7 @@ describe("usePhaseController", () => {
       await controller.handleUserMessage("I want to change something");
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const aiMsg = addMsgCalls.find((c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai");
       expect(aiMsg).toBeDefined();
@@ -532,7 +588,7 @@ describe("usePhaseController", () => {
       expect((editCalls[0][0] as { phase: number }).phase).toBe(2);
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const aiMsg = addMsgCalls.find((c: unknown[]) =>
         (c[0] as { message: { content: string } }).message.content.includes("change"),
@@ -582,7 +638,7 @@ describe("usePhaseController", () => {
       await controller.handleEditSubmit(3 as 3, "Change data entities");
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const errorMsg = addMsgCalls.find((c: unknown[]) =>
         (c[0] as { message: { content: string } }).message.content.includes("issue"),
@@ -635,10 +691,10 @@ describe("usePhaseController", () => {
       expect(restartCalls.length).toBe(0);
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const warnMsg = addMsgCalls.find((c: unknown[]) =>
-        (c[0] as { message: { content: string } }).message.content.includes("reset"),
+        (c[0] as { message: { content: string } }).message.content.includes("lock"),
       );
       expect(warnMsg).toBeDefined();
     });
@@ -687,10 +743,10 @@ describe("usePhaseController", () => {
       expect(restartCalls.length).toBe(0);
 
       const addMsgCalls = mockDispatch.mock.calls.filter(
-        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_MESSAGE",
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
       );
       const warnMsg = addMsgCalls.find((c: unknown[]) =>
-        (c[0] as { message: { content: string } }).message.content.includes("reset"),
+        (c[0] as { message: { content: string } }).message.content.includes("lock"),
       );
       expect(warnMsg).toBeDefined();
     });
@@ -701,14 +757,16 @@ describe("usePhaseController", () => {
   // -----------------------------------------------------------------------
 
   describe("notifySidebarEdit", () => {
-    it("dispatches SIDEBAR_EDIT action", () => {
+    it("dispatches ADD_THREAD_MESSAGE with system role", () => {
       controller.notifySidebarEdit(2 as 2, "updated route /about");
 
-      expect(mockDispatch).toHaveBeenCalledWith({
-        type: "SIDEBAR_EDIT",
-        phase: 2,
-        description: "updated route /about",
-      });
+      const addMsgCalls = mockDispatch.mock.calls.filter(
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
+      );
+      expect(addMsgCalls.length).toBe(1);
+      const msg = (addMsgCalls[0][0] as { message: { role: string; content: string } }).message;
+      expect(msg.role).toBe("system");
+      expect(msg.content).toContain("updated route /about");
     });
   });
 });

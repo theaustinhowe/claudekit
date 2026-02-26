@@ -21,8 +21,9 @@ export async function POST(request: NextRequest) {
     }
 
     let command: string | undefined;
+    const brewName = tool.brewPackage ?? tool.binary;
     if (installMethod === "homebrew") {
-      command = action === "update" ? `brew upgrade ${tool.binary}` : `brew install ${tool.binary}`;
+      command = action === "update" ? `brew upgrade ${brewName}` : `brew install ${brewName}`;
     } else {
       command = action === "update" ? (tool.updateCommand ?? tool.installCommand) : tool.installCommand;
     }

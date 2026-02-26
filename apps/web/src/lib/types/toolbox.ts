@@ -22,6 +22,8 @@ export interface ToolDefinition {
   latestCommand?: string;
   latestVersionSource?: LatestVersionSource;
   updateCommand?: string;
+  /** Homebrew package name when it differs from binary (e.g. claude-code vs claude) */
+  brewPackage?: string;
   shellFunction?: boolean;
 }
 

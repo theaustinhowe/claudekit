@@ -127,6 +127,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installUrl: "https://docs.anthropic.com/en/docs/claude-code",
     installCommand: "npm install -g @anthropic-ai/claude-code",
     updateCommand: "npm update -g @anthropic-ai/claude-code",
+    brewPackage: "claude-code",
     latestVersionSource: { type: "npm", package: "@anthropic-ai/claude-code" },
   },
   {
