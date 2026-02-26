@@ -36,7 +36,10 @@ describe("connection-manager", () => {
   beforeEach(() => {
     clearCache();
     vi.clearAllMocks();
+    // Re-setup mock implementations after clearAllMocks
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    mockInstance.connect.mockResolvedValue(mockConn);
+    vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
   });
 
   afterEach(() => {
