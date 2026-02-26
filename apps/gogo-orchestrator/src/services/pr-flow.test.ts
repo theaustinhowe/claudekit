@@ -21,12 +21,18 @@ vi.mock("../ws/handler.js", () => ({
   sendLogToSubscribers: vi.fn(),
 }));
 
+vi.mock("node:fs/promises", () => ({
+  rm: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("./git.js", () => ({
   isWorkingTreeClean: vi.fn(),
   commitAllChanges: vi.fn(),
   pushBranch: vi.fn(),
   hasCommits: vi.fn(),
   getCommitLog: vi.fn(),
+  removeWorktree: vi.fn().mockResolvedValue(undefined),
+  getRepoDir: vi.fn().mockReturnValue("/tmp/repos/testowner-testrepo"),
 }));
 
 vi.mock("./github/index.js", () => ({
@@ -66,7 +72,15 @@ vi.mock("../utils/job-logging.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
-import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch } from "./git.js";
+import {
+  commitAllChanges,
+  getCommitLog,
+  getRepoDir,
+  hasCommits,
+  isWorkingTreeClean,
+  pushBranch,
+  removeWorktree,
+} from "./git.js";
 import { createIssueCommentForRepo, createPullRequestForRepo, findExistingPrForRepo } from "./github/index.js";
 import { pollReadyToPrJobs, processReadyToPr } from "./pr-flow.js";
 import { applyTransitionAtomic } from "./state-machine.js";
@@ -299,6 +313,45 @@ describe("pr-flow", () => {
         }),
       );
       expect(createIssueCommentForRepo).toHaveBeenCalledWith("repo-1", 42, expect.stringContaining("PR Created"));
+    });
+
+    it("should clean up worktree after successful PR creation", async () => {
+      const job = makeJob();
+      const repo = makeRepo();
+
+      vi.mocked(queryOne)
+        .mockResolvedValueOnce(job) // job lookup
+        .mockResolvedValueOnce(repo) // repo lookup
+        .mockResolvedValueOnce(undefined); // getNextLogSequence
+
+      vi.mocked(runTests).mockResolvedValue({
+        success: true,
+        output: "All passed",
+        exitCode: 0,
+        commandsRun: ["npm test"],
+      });
+      vi.mocked(findExistingPrForRepo).mockResolvedValue(null);
+      vi.mocked(isWorkingTreeClean).mockResolvedValue(true);
+      vi.mocked(hasCommits).mockResolvedValue(true);
+      vi.mocked(getCommitLog).mockResolvedValue("commit log");
+      // updateJob (change_summary): queryOne for broadcast
+      vi.mocked(queryOne).mockResolvedValueOnce(job);
+      vi.mocked(pushBranch).mockResolvedValue(undefined);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue({
+        number: 100,
+        html_url: "https://github.com/testowner/testrepo/pull/100",
+      } as never);
+      vi.mocked(createIssueCommentForRepo).mockResolvedValue({ id: 1 } as never);
+      // updateJob (worktree_path = null): queryOne for broadcast
+      vi.mocked(queryOne).mockResolvedValueOnce(job);
+
+      const result = await processReadyToPr("job-1");
+
+      expect(result.success).toBe(true);
+      expect(removeWorktree).toHaveBeenCalledWith(
+        expect.objectContaining({ owner: "testowner", name: "testrepo" }),
+        "/tmp/worktrees/issue-42",
+      );
     });
 
     it("should auto-commit when working tree is dirty", async () => {

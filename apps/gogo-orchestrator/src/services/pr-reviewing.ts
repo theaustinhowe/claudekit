@@ -14,7 +14,7 @@ import type { DbJob, DbRepository } from "../db/schema.js";
 import { createServiceLogger } from "../utils/logger.js";
 import { broadcast } from "../ws/handler.js";
 import { resumeAgent } from "./agent-executor.js";
-import { getRepoDir, removeWorktree } from "./git.js";
+import { fetchUpdates, getRepoDir, removeWorktree, restoreWorktree } from "./git.js";
 import {
   type GitHubComment,
   getPullRequestByNumber,
@@ -65,6 +65,7 @@ interface JobWithPr {
   agent_type: string | null;
   claude_session_id: string | null;
   worktree_path: string | null;
+  branch: string | null;
   issue_number: number;
 }
 
@@ -235,6 +236,42 @@ async function checkForReviewFeedback(job: JobWithPr): Promise<void> {
   if (!result.success) {
     log.error({ jobId: job.id, error: result.error }, "Failed to transition job to running");
     return;
+  }
+
+  // Restore worktree if it was cleaned up after PR creation
+  if (!job.worktree_path && job.branch && job.repository_id) {
+    try {
+      const repo = await queryOne<DbRepository>(conn, "SELECT * FROM repositories WHERE id = ?", [job.repository_id]);
+      if (repo) {
+        const gitConfig = toGitConfigFromRepo({
+          owner: repo.owner,
+          name: repo.name,
+          githubToken: repo.github_token,
+          workdirPath: repo.workdir_path,
+          baseBranch: repo.base_branch,
+        });
+
+        await fetchUpdates(gitConfig);
+        const { worktreePath } = await restoreWorktree(gitConfig, job.branch, job.issue_number, job.id);
+
+        const now = new Date().toISOString();
+        await execute(conn, "UPDATE jobs SET worktree_path = ?, updated_at = ? WHERE id = ?", [
+          worktreePath,
+          now,
+          job.id,
+        ]);
+
+        log.info({ jobId: job.id, worktreePath }, "Restored worktree for review feedback");
+
+        const restoredJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [job.id]);
+        if (restoredJob) {
+          broadcast({ type: "job:updated", payload: restoredJob });
+        }
+      }
+    } catch (restoreError) {
+      log.error({ err: restoreError, jobId: job.id }, "Failed to restore worktree — skipping agent resume");
+      return;
+    }
   }
 
   const updatedJob = await queryOne<DbJob>(conn, "SELECT * FROM jobs WHERE id = ?", [job.id]);

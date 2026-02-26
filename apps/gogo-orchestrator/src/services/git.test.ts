@@ -1,6 +1,6 @@
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type GitConfig, getBareRepoPath, getJobsDir, getRepoDir, getRepoSlug } from "./git.js";
+import { type GitConfig, getBareRepoPath, getJobsDir, getRepoDir, getRepoSlug, restoreWorktree } from "./git.js";
 
 describe("git path helpers", () => {
   const baseConfig: GitConfig = {
@@ -158,6 +158,32 @@ describe("git path helpers", () => {
       const repoDir = getRepoDir(baseConfig);
       const expectedSlug = getRepoSlug(baseConfig.owner, baseConfig.name);
       expect(repoDir).toBe(join(baseConfig.workdir, expectedSlug));
+    });
+  });
+
+  describe("restoreWorktree", () => {
+    it("is exported", () => {
+      expect(typeof restoreWorktree).toBe("function");
+    });
+
+    it("computes worktree path using issueNumber", () => {
+      // We can't call restoreWorktree without a real git repo, but we can
+      // verify the path computation matches createWorktree conventions
+      const jobsDir = getJobsDir(baseConfig);
+      const expectedPath = resolve(join(jobsDir, "issue-42"));
+
+      // Path should be under the repo dir
+      const repoDir = getRepoDir(baseConfig);
+      expect(expectedPath.startsWith(resolve(repoDir))).toBe(true);
+    });
+
+    it("computes manual worktree path using jobId prefix", () => {
+      const jobsDir = getJobsDir(baseConfig);
+      const jobId = "abcd1234-5678-9012-3456-789012345678";
+      const expectedPath = resolve(join(jobsDir, `manual-${jobId.slice(0, 8)}`));
+
+      const repoDir = getRepoDir(baseConfig);
+      expect(expectedPath.startsWith(resolve(repoDir))).toBe(true);
     });
   });
 });

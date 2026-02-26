@@ -34,6 +34,8 @@ vi.mock("./agent-executor.js", () => ({
 vi.mock("./git.js", () => ({
   getRepoDir: vi.fn(),
   removeWorktree: vi.fn(),
+  restoreWorktree: vi.fn(),
+  fetchUpdates: vi.fn(),
 }));
 
 vi.mock("./github/index.js", () => ({
@@ -56,8 +58,10 @@ import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { getDb } from "../db/index.js";
 import { broadcast } from "../ws/handler.js";
 import { resumeAgent } from "./agent-executor.js";
+import { fetchUpdates, restoreWorktree } from "./git.js";
 import { getPullRequestByNumber, getPullRequestIssueComments, getPullRequestReviewComments } from "./github/index.js";
 import { enterPrReviewing, pollPrReviewingJobs } from "./pr-reviewing";
+import { toGitConfigFromRepo } from "./settings-helper.js";
 import { applyTransitionAtomic } from "./state-machine.js";
 
 describe("enterPrReviewing", () => {
@@ -201,6 +205,107 @@ describe("pollPrReviewingJobs", () => {
     expect(applyTransitionAtomic).toHaveBeenCalledWith("job-1", "running", expect.any(String));
     expect(resumeAgent).toHaveBeenCalledWith("job-1", expect.stringContaining("Review Feedback"), "claude-code");
     expect(broadcast).toHaveBeenCalled();
+  });
+
+  it("restores worktree when worktree_path is null and review feedback triggers running", async () => {
+    vi.mocked(queryAll).mockResolvedValue([
+      {
+        id: "job-1",
+        pr_number: 42,
+        repository_id: "repo-1",
+        status: "pr_reviewing",
+        last_checked_comment_id: null,
+        last_checked_pr_review_comment_id: null,
+        claude_session_id: "session-1",
+        agent_type: "claude-code",
+        worktree_path: null,
+        branch: "agent/issue-10-fix-bug",
+        issue_number: 10,
+      },
+    ]);
+    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false } as never);
+    vi.mocked(getPullRequestReviewComments).mockResolvedValue([
+      { id: 100, body: "Please fix this", user: { login: "reviewer" }, path: "src/index.ts", line: 10 },
+    ] as never);
+    vi.mocked(getPullRequestIssueComments).mockResolvedValue([]);
+    vi.mocked(applyTransitionAtomic).mockResolvedValue({ success: true });
+    const mockGitConfig = { owner: "test", name: "repo", workdir: "/tmp/repos", token: "ghp_test", repoUrl: "" };
+    vi.mocked(toGitConfigFromRepo).mockReturnValue(mockGitConfig);
+    // queryOne calls: repo lookup, restoredJob broadcast, updatedJob broadcast
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({
+        id: "repo-1",
+        owner: "test",
+        name: "repo",
+        github_token: "ghp_test",
+        workdir_path: "/tmp/repos",
+        base_branch: "main",
+      })
+      .mockResolvedValueOnce({ id: "job-1", status: "running", worktree_path: "/tmp/repos/test-repo/jobs/issue-10" })
+      .mockResolvedValueOnce({ id: "job-1", status: "running", worktree_path: "/tmp/repos/test-repo/jobs/issue-10" });
+    vi.mocked(fetchUpdates).mockResolvedValue(undefined);
+    vi.mocked(restoreWorktree).mockResolvedValue({
+      worktreePath: "/tmp/repos/test-repo/jobs/issue-10",
+      branch: "agent/issue-10-fix-bug",
+    });
+    vi.mocked(resumeAgent).mockResolvedValue({ success: true });
+
+    await pollPrReviewingJobs();
+
+    expect(fetchUpdates).toHaveBeenCalled();
+    expect(restoreWorktree).toHaveBeenCalledWith(mockGitConfig, "agent/issue-10-fix-bug", 10, "job-1");
+    expect(execute).toHaveBeenCalledWith(
+      {},
+      expect.stringContaining("worktree_path"),
+      expect.arrayContaining(["/tmp/repos/test-repo/jobs/issue-10"]),
+    );
+    expect(resumeAgent).toHaveBeenCalled();
+  });
+
+  it("skips agent resume when worktree restore fails", async () => {
+    vi.mocked(queryAll).mockResolvedValue([
+      {
+        id: "job-1",
+        pr_number: 42,
+        repository_id: "repo-1",
+        status: "pr_reviewing",
+        last_checked_comment_id: null,
+        last_checked_pr_review_comment_id: null,
+        claude_session_id: "session-1",
+        agent_type: "claude-code",
+        worktree_path: null,
+        branch: "agent/issue-10-fix-bug",
+        issue_number: 10,
+      },
+    ]);
+    vi.mocked(getPullRequestByNumber).mockResolvedValue({ state: "open", merged: false } as never);
+    vi.mocked(getPullRequestReviewComments).mockResolvedValue([
+      { id: 100, body: "fix this", user: { login: "reviewer" } },
+    ] as never);
+    vi.mocked(getPullRequestIssueComments).mockResolvedValue([]);
+    vi.mocked(applyTransitionAtomic).mockResolvedValue({ success: true });
+    vi.mocked(toGitConfigFromRepo).mockReturnValue({
+      owner: "test",
+      name: "repo",
+      workdir: "/tmp/repos",
+      token: "ghp_test",
+      repoUrl: "",
+    });
+    vi.mocked(queryOne).mockResolvedValueOnce({
+      id: "repo-1",
+      owner: "test",
+      name: "repo",
+      github_token: "ghp_test",
+      workdir_path: "/tmp/repos",
+      base_branch: "main",
+    });
+    vi.mocked(fetchUpdates).mockResolvedValue(undefined);
+    vi.mocked(restoreWorktree).mockRejectedValue(new Error("Branch not found on remote"));
+
+    await pollPrReviewingJobs();
+
+    // Should NOT resume agent when restore fails
+    expect(resumeAgent).not.toHaveBeenCalled();
   });
 
   it("skips when no human comments found", async () => {

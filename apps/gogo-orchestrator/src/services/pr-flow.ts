@@ -7,7 +7,17 @@ import { broadcast } from "../ws/handler.js";
 
 const log = createServiceLogger("pr-flow");
 
-import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch } from "./git.js";
+import { rm } from "node:fs/promises";
+import { resolve } from "node:path";
+import {
+  commitAllChanges,
+  getCommitLog,
+  getRepoDir,
+  hasCommits,
+  isWorkingTreeClean,
+  pushBranch,
+  removeWorktree,
+} from "./git.js";
 import {
   AGENT_COMMENT_MARKER,
   createIssueCommentForRepo,
@@ -309,6 +319,25 @@ ${testCommands.map((cmd) => `- \`${cmd}\` ✓`).join("\n")}`;
         const err = error as Error;
         await emitLog(jobId, "stderr", `Warning: Failed to enter pr_reviewing state: ${err.message}`, logState);
         // Continue - PR was created successfully even if we can't monitor
+      }
+
+      // Step 11: Auto-clean worktree — branch is pushed, local copy is no longer needed
+      try {
+        await removeWorktree(gitConfig, job.worktree_path);
+
+        const repoDir = getRepoDir(gitConfig);
+        const normalizedRepoDir = resolve(repoDir);
+        const worktreeName = job.issue_number < 0 ? `manual-${job.id.slice(0, 8)}` : `issue-${job.issue_number}`;
+        const jobDir = resolve(repoDir, "jobs", worktreeName);
+        if (jobDir.startsWith(normalizedRepoDir)) {
+          await rm(jobDir, { recursive: true, force: true });
+        }
+
+        await updateJob(jobId, { worktree_path: null });
+        await emitLog(jobId, "system", "🧹 Worktree cleaned up (will restore if review feedback received)", logState);
+      } catch (cleanupError) {
+        const cleanupErr = cleanupError as Error;
+        log.warn({ err: cleanupErr, jobId }, "Non-fatal: failed to clean up worktree after PR creation");
       }
 
       return {

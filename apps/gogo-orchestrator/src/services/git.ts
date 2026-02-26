@@ -359,6 +359,60 @@ export async function removeWorktree(config: GitConfig, worktreePath: string): P
   }
 }
 
+/**
+ * Restore a worktree from an existing remote branch.
+ * Unlike createWorktree, this does NOT error on branch collision — it expects
+ * the branch to already exist on the remote (e.g. after a PR was opened and
+ * the local worktree was cleaned up).
+ */
+export async function restoreWorktree(
+  config: GitConfig,
+  branch: string,
+  issueNumber: number,
+  jobId?: string,
+): Promise<CreateWorktreeResult> {
+  const repoDir = getRepoDir(config);
+  const bareRepoPath = getBareRepoPath(config);
+  const jobsDir = getJobsDir(config);
+
+  const isManual = issueNumber < 0;
+  const shortId = jobId ? jobId.slice(0, 8) : Math.abs(issueNumber).toString();
+  const worktreeName = isManual ? `manual-${shortId}` : `issue-${issueNumber}`;
+  const worktreePath = resolve(join(jobsDir, worktreeName));
+
+  // Validate path is within repo directory to prevent directory traversal
+  const normalizedRepoDir = resolve(repoDir);
+  if (!worktreePath.startsWith(normalizedRepoDir)) {
+    throw new Error("Invalid worktree path: directory traversal detected");
+  }
+
+  // Verify branch exists on remote
+  if (!(await remoteBranchExists(config, branch))) {
+    throw new Error(`Branch "${branch}" does not exist on remote — cannot restore worktree`);
+  }
+
+  await mkdir(jobsDir, { recursive: true });
+
+  // Delete any stale local branch with that name
+  try {
+    await execGit(["-C", bareRepoPath, "branch", "-D", branch], config.workdir, config);
+  } catch {
+    // Branch doesn't exist locally, that's fine
+  }
+
+  // Fetch latest from origin
+  await execGit(["-C", bareRepoPath, "fetch", "origin", "--prune"], config.workdir, config);
+
+  // Create worktree tracking the remote branch
+  await execGit(
+    ["-C", bareRepoPath, "worktree", "add", worktreePath, "-b", branch, `origin/${branch}`],
+    config.workdir,
+    config,
+  );
+
+  return { worktreePath, branch };
+}
+
 export async function listWorktrees(config: GitConfig): Promise<WorktreeInfo[]> {
   const bareRepoPath = getBareRepoPath(config);
 
