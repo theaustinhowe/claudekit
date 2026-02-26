@@ -15,7 +15,17 @@ import {
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
-import { CheckCircle2, ExternalLink, Eye, EyeOff, Github, HelpCircle, Loader2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Github,
+  HelpCircle,
+  KeyRound,
+  Loader2,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import type { VerifyGitHubResponse } from "@/lib/api";
 
@@ -25,12 +35,25 @@ interface GitHubStepProps {
   onContinue: () => void;
   isVerifying: boolean;
   verificationResult: VerifyGitHubResponse | null;
+  hasEnvToken: boolean;
+  useEnvToken: boolean;
+  onUseEnvTokenChange: (useEnvToken: boolean) => void;
 }
 
-export function GitHubStep({ token, onTokenChange, onContinue, isVerifying, verificationResult }: GitHubStepProps) {
+export function GitHubStep({
+  token,
+  onTokenChange,
+  onContinue,
+  isVerifying,
+  verificationResult,
+  hasEnvToken,
+  useEnvToken,
+  onUseEnvTokenChange,
+}: GitHubStepProps) {
   const [showToken, setShowToken] = useState(false);
 
   const hasFailed = verificationResult?.success === false;
+  const canContinue = useEnvToken || !!token;
 
   return (
     <Card>
@@ -44,6 +67,33 @@ export function GitHubStep({ token, onTokenChange, onContinue, isVerifying, veri
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {hasEnvToken && (
+          <div
+            className={`rounded-lg border p-4 cursor-pointer transition-colors ${
+              useEnvToken
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-muted-foreground/50"
+            }`}
+            onClick={() => onUseEnvTokenChange(!useEnvToken)}
+            onKeyDown={(e) => e.key === "Enter" && onUseEnvTokenChange(!useEnvToken)}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="flex items-center gap-3">
+              <KeyRound className="h-5 w-5 text-primary shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Use environment variable</p>
+                <p className="text-xs text-muted-foreground">
+                  <code className="bg-muted px-1 py-0.5 rounded">GITHUB_PERSONAL_ACCESS_TOKEN</code> is set in your
+                  environment
+                </p>
+              </div>
+              {useEnvToken && <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />}
+            </div>
+          </div>
+        )}
+
+        {!useEnvToken && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <Label htmlFor="github-token">Personal Access Token</Label>
@@ -187,6 +237,7 @@ export function GitHubStep({ token, onTokenChange, onContinue, isVerifying, veri
             <code className="bg-muted px-1 py-0.5 rounded">workflow</code> scopes
           </p>
         </div>
+        )}
 
         {/* Verification error (shown inline on failure) */}
         {hasFailed && (
@@ -199,7 +250,7 @@ export function GitHubStep({ token, onTokenChange, onContinue, isVerifying, veri
         )}
 
         <div className="flex justify-end pt-4">
-          <Button onClick={onContinue} disabled={!token || isVerifying}>
+          <Button onClick={onContinue} disabled={!canContinue || isVerifying}>
             {isVerifying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

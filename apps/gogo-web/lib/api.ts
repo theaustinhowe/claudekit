@@ -532,9 +532,10 @@ export async function fetchFileDiffByPath(worktreePath: string, filePath: string
 // Setup Wizard
 // =============================================================================
 
-interface SetupStatusResponse {
+export interface SetupStatusResponse {
   needsSetup: boolean;
   repositoryCount: number;
+  hasEnvToken: boolean;
 }
 
 export interface VerifyGitHubResponse {
@@ -614,11 +615,14 @@ export async function fetchSetupStatus(): Promise<SetupStatusResponse> {
 }
 
 // Verify GitHub token
-export async function verifyGitHub(token: string): Promise<VerifyGitHubResponse> {
+export async function verifyGitHub(
+  tokenOrOptions: string | { useEnvToken: true },
+): Promise<VerifyGitHubResponse> {
+  const body = typeof tokenOrOptions === "string" ? { token: tokenOrOptions } : tokenOrOptions;
   const res = await fetch(`${getApiUrlCached()}/api/setup/verify-github`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(body),
   });
   return res.json();
 }
@@ -627,7 +631,7 @@ export async function verifyGitHub(token: string): Promise<VerifyGitHubResponse>
 export async function verifyRepository(
   owner: string,
   name: string,
-  options: { token?: string; reuseTokenFromRepoId?: string },
+  options: { token?: string; reuseTokenFromRepoId?: string; useEnvToken?: boolean },
 ): Promise<VerifyRepositoryResponse> {
   const res = await fetch(`${getApiUrlCached()}/api/setup/verify-repository`, {
     method: "POST",
@@ -651,6 +655,7 @@ export async function verifyWorkspace(path: string): Promise<VerifyWorkspaceResp
 export async function completeSetup(data: {
   githubToken?: string;
   reuseTokenFromRepoId?: string;
+  useEnvToken?: boolean;
   owner: string;
   name: string;
   triggerLabel: string;

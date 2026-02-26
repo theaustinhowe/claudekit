@@ -8,6 +8,7 @@ import { useSettings } from "@/hooks/use-settings";
 import {
   useCompleteSetup,
   useDiscoverRepos,
+  useSetupStatus,
   useVerifyGitHub,
   useVerifyRepository,
   useVerifyWorkspace,
@@ -38,6 +39,7 @@ export interface SelectedRepo {
 interface SetupState {
   githubToken: string;
   reuseTokenFromRepoId: string | null;
+  useEnvToken: boolean;
   selectedRepos: SelectedRepo[];
   workspacePath: string;
   discoveryPath: string;
@@ -52,9 +54,10 @@ interface VerificationState {
 const defaultState: SetupState = {
   githubToken: "",
   reuseTokenFromRepoId: null,
+  useEnvToken: false,
   selectedRepos: [],
   workspacePath: process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "/tmp/agent-worktrees",
-  discoveryPath: "~",
+  discoveryPath: process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~",
 };
 
 const steps: Step[] = [
@@ -126,9 +129,11 @@ export function SetupWizard() {
   const [discoveryError, setDiscoveryError] = useState<string | null>(null);
   const hasCheckedExisting = useRef(false);
 
-  // Fetch existing settings and repositories
+  // Fetch existing settings, repositories, and setup status (env token availability)
   const { data: existingSettings, isLoading: isLoadingSettings } = useSettings();
   const { data: existingRepos = [], isLoading: isLoadingRepos } = useRepositories();
+  const { data: setupStatus } = useSetupStatus();
+  const hasEnvToken = setupStatus?.hasEnvToken ?? false;
 
   // Mutations
   const verifyGitHub = useVerifyGitHub();
@@ -147,7 +152,7 @@ export function SetupWizard() {
     setHasHydrated(true);
   }, []);
 
-  // Check for existing token and pre-fill/skip GitHub step
+  // Check for existing token (repos, settings, or env var) and pre-fill/skip GitHub step
   useEffect(() => {
     if (hasCheckedExisting.current || isLoadingSettings || isLoadingRepos) return;
 
@@ -200,10 +205,26 @@ export function SetupWizard() {
       }));
       setCompletedSteps([1]);
       setCurrentStep(2);
+    } else if (hasEnvToken) {
+      // Environment variable GITHUB_PERSONAL_ACCESS_TOKEN is set — auto-verify it
+      hasCheckedExisting.current = true;
+      setState((prev) => ({ ...prev, useEnvToken: true }));
+      verifyGitHub.mutate(
+        { useEnvToken: true },
+        {
+          onSuccess: (result) => {
+            if (result.success) {
+              setVerification((prev) => ({ ...prev, github: result }));
+              setCompletedSteps([1]);
+              setCurrentStep(2);
+            }
+          },
+        },
+      );
     } else {
       hasCheckedExisting.current = true;
     }
-  }, [existingSettings, existingRepos, isLoadingSettings, isLoadingRepos, verifyGitHub]);
+  }, [existingSettings, existingRepos, isLoadingSettings, isLoadingRepos, hasEnvToken, verifyGitHub]);
 
   // Save state to localStorage when it changes (only after initial hydration)
   useEffect(() => {
@@ -239,7 +260,10 @@ export function SetupWizard() {
 
   // GitHub step: verify-on-submit
   const handleGitHubContinue = useCallback(() => {
-    verifyGitHub.mutate(state.githubToken, {
+    const tokenOrOptions: string | { useEnvToken: true } = state.useEnvToken
+      ? { useEnvToken: true }
+      : state.githubToken;
+    verifyGitHub.mutate(tokenOrOptions, {
       onSuccess: (result) => {
         setVerification((prev) => ({ ...prev, github: result }));
         if (result.success) {
@@ -248,7 +272,7 @@ export function SetupWizard() {
         }
       },
     });
-  }, [state.githubToken, verifyGitHub, markStepCompleted, goToStep]);
+  }, [state.githubToken, state.useEnvToken, verifyGitHub, markStepCompleted, goToStep]);
 
   // Repository step handlers
   const handleToggleRepo = useCallback((repo: DiscoveredRepo) => {
@@ -306,7 +330,7 @@ export function SetupWizard() {
     setIsVerifyingRepos(true);
     setRepoVerifyError(null);
 
-    const tokenToUse = state.githubToken || undefined;
+    const tokenToUse = state.useEnvToken ? undefined : state.githubToken || undefined;
     const reuseId = state.reuseTokenFromRepoId || (existingRepos.length > 0 ? existingRepos[0].id : undefined);
 
     const newResults = new Map<string, VerifyRepositoryResponse>();
@@ -318,7 +342,8 @@ export function SetupWizard() {
           owner: repo.owner,
           name: repo.name,
           token: tokenToUse,
-          reuseTokenFromRepoId: !tokenToUse ? reuseId : undefined,
+          reuseTokenFromRepoId: !tokenToUse && !state.useEnvToken ? reuseId : undefined,
+          useEnvToken: state.useEnvToken || undefined,
         });
         newResults.set(repoKey(repo.owner, repo.name), result);
         if (!result.success) {
@@ -358,6 +383,7 @@ export function SetupWizard() {
     }
   }, [
     state.githubToken,
+    state.useEnvToken,
     state.reuseTokenFromRepoId,
     state.selectedRepos,
     existingRepos,
@@ -471,14 +497,15 @@ export function SetupWizard() {
   const handleComplete = useCallback(async () => {
     setCompleteError(null);
 
-    const tokenToUse = state.githubToken || undefined;
+    const tokenToUse = state.useEnvToken ? undefined : state.githubToken || undefined;
     const reuseId = state.reuseTokenFromRepoId || (existingRepos.length > 0 ? existingRepos[0].id : undefined);
 
     for (const repo of state.selectedRepos) {
       try {
         const result = await completeSetup.mutateAsync({
           githubToken: tokenToUse,
-          reuseTokenFromRepoId: !tokenToUse ? reuseId : undefined,
+          reuseTokenFromRepoId: !tokenToUse && !state.useEnvToken ? reuseId : undefined,
+          useEnvToken: state.useEnvToken || undefined,
           owner: repo.owner,
           name: repo.name,
           triggerLabel: repo.triggerLabel,
@@ -518,10 +545,8 @@ export function SetupWizard() {
     }
   };
 
-  // Show loading state while hydrating from localStorage, checking for existing settings/repos,
-  // or while auto-verifying an existing token — avoids flashing step 1
-  const isAutoVerifying = hasCheckedExisting.current && verifyGitHub.isPending && currentStep === 1;
-  if (!hasHydrated || isLoadingSettings || isLoadingRepos || !hasCheckedExisting.current || isAutoVerifying) {
+  // Only block render for localStorage hydration — settings/repos/token checks run in background
+  if (!hasHydrated) {
     return (
       <div className="w-full max-w-2xl mx-auto">
         <StepIndicator steps={steps} currentStep={currentStep} completedSteps={completedSteps} />
@@ -543,6 +568,12 @@ export function SetupWizard() {
           onContinue={handleGitHubContinue}
           isVerifying={verifyGitHub.isPending}
           verificationResult={verification.github}
+          hasEnvToken={hasEnvToken}
+          useEnvToken={state.useEnvToken}
+          onUseEnvTokenChange={(v) => {
+            setState((prev) => ({ ...prev, useEnvToken: v, githubToken: v ? "" : prev.githubToken }));
+            setVerification((prev) => ({ ...prev, github: null, repository: new Map() }));
+          }}
         />
       )}
 

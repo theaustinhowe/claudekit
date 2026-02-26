@@ -4,11 +4,11 @@ import { ThemeToggle } from "@claudekit/ui/components/theme-toggle";
 import Image from "next/image";
 import Link from "next/link";
 import { SetupWizard } from "@/components/setup/setup-wizard";
-import { useRepositories } from "@/hooks/use-repositories";
+import { useRepositoryContext } from "@/contexts/repository-context";
 
 export default function SetupPage() {
-  const { data: existingRepos = [] } = useRepositories();
-  const hasRepos = existingRepos.length > 0;
+  const { repositories } = useRepositoryContext();
+  const hasRepos = repositories.length > 0;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

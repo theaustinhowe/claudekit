@@ -18,6 +18,7 @@ vi.mock("@/hooks/use-settings", () => ({
 }));
 
 vi.mock("@/hooks/use-setup", () => ({
+  useSetupStatus: () => ({ data: { needsSetup: true, repositoryCount: 0, hasEnvToken: false } }),
   useVerifyGitHub: () => ({ mutate: vi.fn(), isPending: false }),
   useDiscoverRepos: () => ({ mutate: vi.fn(), isPending: false }),
   useVerifyRepository: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),

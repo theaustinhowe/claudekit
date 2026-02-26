@@ -56,6 +56,7 @@ vi.mock("lucide-react", () => ({
   EyeOff: () => <span data-testid="eye-off-icon" />,
   Github: () => <span />,
   HelpCircle: () => <span />,
+  KeyRound: () => <span />,
   Loader2: () => <span />,
   XCircle: () => <span />,
 }));
@@ -71,6 +72,9 @@ describe("GitHubStep", () => {
     onContinue: vi.fn(),
     isVerifying: false,
     verificationResult: null,
+    hasEnvToken: false,
+    useEnvToken: false,
+    onUseEnvTokenChange: vi.fn(),
   };
 
   it("renders Connect to GitHub heading", () => {

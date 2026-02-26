@@ -8,14 +8,23 @@ import { z } from "zod";
 import { getDb } from "../db/index.js";
 import { type DbRepository, mapRepositoryFull } from "../db/schema.js";
 
+// Resolve GITHUB_PERSONAL_ACCESS_TOKEN from environment
+function getEnvToken(): string | undefined {
+  return process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
+}
+
 // Validation schemas
 const VerifyGitHubSchema = z.object({
-  token: z.string().min(1, "Token is required"),
+  token: z.string().min(1).optional(),
+  useEnvToken: z.boolean().optional(),
+}).refine((data) => data.token || data.useEnvToken, {
+  message: "Either token or useEnvToken must be provided",
 });
 
 const VerifyRepositorySchema = z.object({
-  token: z.string().optional(), // Optional if reuseTokenFromRepoId is provided
+  token: z.string().optional(), // Optional if reuseTokenFromRepoId or useEnvToken is provided
   reuseTokenFromRepoId: z.string().uuid().optional(),
+  useEnvToken: z.boolean().optional(), // Use GITHUB_PERSONAL_ACCESS_TOKEN env var
   owner: z.string().min(1, "Owner is required"),
   name: z.string().min(1, "Repository name is required"),
 });
@@ -25,8 +34,9 @@ const VerifyWorkspaceSchema = z.object({
 });
 
 const CompleteSetupSchema = z.object({
-  githubToken: z.string().optional(), // Optional if reuseTokenFromRepoId is provided
+  githubToken: z.string().optional(), // Optional if reuseTokenFromRepoId or useEnvToken is provided
   reuseTokenFromRepoId: z.string().uuid().optional(), // Reuse token from existing repo
+  useEnvToken: z.boolean().optional(), // Use GITHUB_PERSONAL_ACCESS_TOKEN env var
   owner: z.string().min(1),
   name: z.string().min(1),
   triggerLabel: z.string().default("agent"),
@@ -159,6 +169,7 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
     return {
       needsSetup: activeRepos.length === 0,
       repositoryCount: activeRepos.length,
+      hasEnvToken: !!getEnvToken(),
     };
   });
 
@@ -173,7 +184,16 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const { token } = parsed.data;
+    const token = parsed.data.token ?? (parsed.data.useEnvToken ? getEnvToken() : undefined);
+
+    if (!token) {
+      return reply.status(400).send({
+        success: false,
+        error: parsed.data.useEnvToken
+          ? "GITHUB_PERSONAL_ACCESS_TOKEN environment variable is not set"
+          : "Token is required",
+      });
+    }
 
     try {
       const octokit = new Octokit({ auth: token });
@@ -249,10 +269,10 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const { token, reuseTokenFromRepoId, owner, name } = parsed.data;
+    const { token, reuseTokenFromRepoId, useEnvToken, owner, name } = parsed.data;
 
     // Resolve the token
-    let resolvedToken = token;
+    let resolvedToken = token ?? (useEnvToken ? getEnvToken() : undefined);
     if (!resolvedToken && reuseTokenFromRepoId) {
       const conn = await getDb();
       const existingRepo = await queryOne<{ github_token: string }>(
@@ -535,12 +555,13 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const { githubToken, reuseTokenFromRepoId, owner, name, triggerLabel, baseBranch, workdirPath } = parsed.data;
+    const { githubToken, reuseTokenFromRepoId, useEnvToken, owner, name, triggerLabel, baseBranch, workdirPath } =
+      parsed.data;
 
     const conn = await getDb();
 
-    // Resolve the token - either use provided or fetch from existing repo
-    let resolvedToken = githubToken;
+    // Resolve the token - use provided, env var, or fetch from existing repo
+    let resolvedToken = githubToken ?? (useEnvToken ? getEnvToken() : undefined);
     if (!resolvedToken && reuseTokenFromRepoId) {
       const existingRepo = await queryOne<{ github_token: string }>(
         conn,
@@ -560,7 +581,9 @@ export const setupRouter: FastifyPluginAsync = async (fastify) => {
     if (!resolvedToken) {
       return reply.status(400).send({
         success: false,
-        error: "Either githubToken or reuseTokenFromRepoId must be provided",
+        error: useEnvToken
+          ? "GITHUB_PERSONAL_ACCESS_TOKEN environment variable is not set"
+          : "Either githubToken, reuseTokenFromRepoId, or useEnvToken must be provided",
       });
     }
 

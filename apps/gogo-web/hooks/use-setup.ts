@@ -28,7 +28,7 @@ export function useSetupStatus() {
 // Verify GitHub token mutation
 export function useVerifyGitHub() {
   return useMutation({
-    mutationFn: (token: string) => verifyGitHub(token),
+    mutationFn: (tokenOrOptions: string | { useEnvToken: true }) => verifyGitHub(tokenOrOptions),
   });
 }
 
@@ -40,12 +40,14 @@ export function useVerifyRepository() {
       name,
       token,
       reuseTokenFromRepoId,
+      useEnvToken,
     }: {
       owner: string;
       name: string;
       token?: string;
       reuseTokenFromRepoId?: string;
-    }) => verifyRepository(owner, name, { token, reuseTokenFromRepoId }),
+      useEnvToken?: boolean;
+    }) => verifyRepository(owner, name, { token, reuseTokenFromRepoId, useEnvToken }),
   });
 }
 
@@ -64,6 +66,7 @@ export function useCompleteSetup() {
     mutationFn: (data: {
       githubToken?: string;
       reuseTokenFromRepoId?: string;
+      useEnvToken?: boolean;
       owner: string;
       name: string;
       triggerLabel: string;
