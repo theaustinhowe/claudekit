@@ -237,48 +237,71 @@ export function ToolboxDialog({ trigger, initialToolIds }: ToolboxDialogProps) {
             <DialogDescription>Check and manage your developer tools.</DialogDescription>
           </DialogHeader>
           <DialogBody className="flex-1 overflow-y-auto">
-            {/* Summary row */}
-            <div className="flex items-center gap-4 mb-4 text-sm">
-              <span className="text-muted-foreground">{tools.length} tools</span>
-              {results.size > 0 && (
-                <>
-                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {installed.length} installed
-                  </span>
-                  {withUpdates.length > 0 && (
-                    <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                      <ArrowUpCircle className="w-3.5 h-3.5" />
-                      {withUpdates.length} updates
-                    </span>
-                  )}
-                  {missing.length > 0 && (
-                    <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                      <XCircle className="w-3.5 h-3.5" />
-                      {missing.length} missing
-                    </span>
-                  )}
-                  {withErrors.length > 0 && (
-                    <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {withErrors.length} errors
-                    </span>
-                  )}
-                </>
-              )}
-              <div className="flex-1" />
-              <Button variant="outline" size="sm" className="h-7" onClick={() => setManageOpen(true)}>
-                <Settings2 className="w-3.5 h-3.5 mr-1" />
-                Manage
-              </Button>
-              <Button size="sm" className="h-7" onClick={() => runChecks()} disabled={checking}>
-                {checking ? (
-                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+            {/* Actions row */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-muted-foreground">{tools.length} tools</span>
+                {results.size > 0 && (
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 cursor-default">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          {installed.length}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Installed</TooltipContent>
+                    </Tooltip>
+                    {withUpdates.length > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 cursor-default">
+                            <ArrowUpCircle className="w-3.5 h-3.5" />
+                            {withUpdates.length}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Updates available</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {missing.length > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1.5 text-red-600 dark:text-red-400 cursor-default">
+                            <XCircle className="w-3.5 h-3.5" />
+                            {missing.length}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Missing</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {withErrors.length > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1.5 text-yellow-600 dark:text-yellow-400 cursor-default">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            {withErrors.length}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Errors</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </>
                 )}
-                Check All
-              </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-7" onClick={() => setManageOpen(true)}>
+                  <Settings2 className="w-3.5 h-3.5 mr-1" />
+                  Manage
+                </Button>
+                <Button size="sm" className="h-7" onClick={() => runChecks()} disabled={checking}>
+                  {checking ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  )}
+                  Check All
+                </Button>
+              </div>
             </div>
 
             {/* Tool Groups */}
@@ -570,9 +593,11 @@ function ToolRow({
         </div>
 
         {/* Version */}
-        <div className="shrink-0 w-24 text-right hidden sm:block">
+        <div className="shrink-0 w-20 text-right hidden sm:block">
           {result?.currentVersion ? (
-            <span className="text-xs font-mono text-muted-foreground">{result.currentVersion}</span>
+            <span className="text-xs font-mono text-muted-foreground truncate block">
+              {result.currentVersion.match(/\d+\.\d+\.\d+/)?.[0] ?? result.currentVersion}
+            </span>
           ) : null}
         </div>
       </div>

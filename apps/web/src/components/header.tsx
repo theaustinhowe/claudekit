@@ -10,7 +10,7 @@ export function Header({ actions }: { actions?: React.ReactNode }) {
           <Image src="/logo.png" alt="ClaudeKit" width={1091} height={369} className="h-8 w-auto" />
           <span className="text-sm text-muted-foreground">Local development control center</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {actions}
           <ThemeToggle />
         </div>

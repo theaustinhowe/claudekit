@@ -123,7 +123,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     description: "Anthropic's Claude Code CLI",
     binary: "claude",
     versionCommand: "claude --version",
-    versionParser: "first-line",
+    versionParser: "semver-line",
     installUrl: "https://docs.anthropic.com/en/docs/claude-code",
     installCommand: "npm install -g @anthropic-ai/claude-code",
     updateCommand: "npm update -g @anthropic-ai/claude-code",
