@@ -1,5 +1,4 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { join } from "node:path";
 
@@ -22,8 +21,6 @@ async function findFreePort(): Promise<number> {
 }
 
 export async function startDevServer(projectPath: string): Promise<DevServer> {
-  const pkgJson = JSON.parse(await readFile(join(projectPath, "package.json"), "utf-8"));
-
   // Detect package manager
   const fs = await import("node:fs");
   let pm = "npm";
