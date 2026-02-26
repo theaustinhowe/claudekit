@@ -98,8 +98,13 @@ function loadSavedState(): {
       delete savedState.triggerLabel;
       delete savedState.baseBranch;
     }
+    const mergedState = { ...defaultState, ...savedState };
+    // Don't let a stale "~" override a configured default directory
+    if (savedState?.discoveryPath === "~" && defaultState.discoveryPath !== "~") {
+      mergedState.discoveryPath = defaultState.discoveryPath;
+    }
     return {
-      state: { ...defaultState, ...savedState },
+      state: mergedState,
       currentStep: parsed.currentStep || 1,
       completedSteps: parsed.completedSteps || [],
     };
@@ -415,17 +420,18 @@ export function SetupWizard() {
     );
   }, [state.discoveryPath, discoverRepos]);
 
-  // Auto-scan when reaching step 2 if a discovery path was persisted
+  // Auto-scan when reaching step 2 if a discovery path is configured (env var or persisted)
   const discoverReposRef = useRef(discoverRepos);
   discoverReposRef.current = discoverRepos;
   const hasAutoScanned = useRef(false);
   useEffect(() => {
     if (currentStep !== 2 || hasAutoScanned.current) return;
+    // Use current path, fall back to persisted localStorage path, fall back to default
     const path =
-      state.discoveryPath !== defaultState.discoveryPath
+      state.discoveryPath !== "~"
         ? state.discoveryPath
-        : localStorage.getItem(DISCOVERY_PATH_KEY);
-    if (!path || path === defaultState.discoveryPath) return;
+        : localStorage.getItem(DISCOVERY_PATH_KEY) || (defaultState.discoveryPath !== "~" ? defaultState.discoveryPath : null);
+    if (!path || path === "~") return;
     hasAutoScanned.current = true;
     if (state.discoveryPath !== path) {
       setState((prev) => ({ ...prev, discoveryPath: path }));

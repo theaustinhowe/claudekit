@@ -249,28 +249,27 @@ export function RepositoryStep({
                       failed ? "border-destructive/30 bg-destructive/5" : "border-border"
                     }`}
                   >
-                    <CollapsibleTrigger asChild>
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors group"
-                      >
-                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[open]:rotate-90" />
-                        <span className="font-medium flex-1">
-                          {repo.owner}/{repo.name}
-                        </span>
-                        {failed && <XCircle className="h-3.5 w-3.5 text-destructive" />}
+                    <div className="flex items-center">
+                      <CollapsibleTrigger asChild>
                         <button
                           type="button"
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveRepo(index);
-                          }}
+                          className="flex flex-1 items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors group"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[open]:rotate-90" />
+                          <span className="font-medium flex-1">
+                            {repo.owner}/{repo.name}
+                          </span>
+                          {failed && <XCircle className="h-3.5 w-3.5 text-destructive" />}
                         </button>
+                      </CollapsibleTrigger>
+                      <button
+                        type="button"
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent mr-2"
+                        onClick={() => onRemoveRepo(index)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
-                    </CollapsibleTrigger>
+                    </div>
                     <CollapsibleContent>
                       <div className="px-3 pb-3 space-y-2">
                         <div className="grid gap-2 sm:grid-cols-2">
