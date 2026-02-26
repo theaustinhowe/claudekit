@@ -390,7 +390,12 @@ export function ScanWizard({ policies, repos: _repos, savedScanRoots }: ScanWiza
                                 }}
                               >
                                 <SelectTrigger className="h-8 text-xs w-45">
-                                  <SelectValue />
+                                  <SelectValue>
+                                    {(value: string | null) => {
+                                      const p = policies.find((pol) => pol.id === value);
+                                      return p?.name ?? "Select policy";
+                                    }}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   {policies.map((policy) => (
