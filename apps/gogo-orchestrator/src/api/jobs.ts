@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { buildInClause, execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { buildInClause, execute, queryAll, queryOne, withTransaction } from "@claudekit/duckdb";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { getDb } from "../db/index.js";
@@ -194,28 +194,32 @@ export const jobsRouter: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: "Repository is not active" });
     }
 
-    // Generate synthetic negative issue number using atomic counter in settings
-    const counterKey = "manual_job_counter";
-    const existing = await queryOne<DbSetting>(conn, "SELECT * FROM settings WHERE key = ?", [counterKey]);
-
+    // Generate synthetic negative issue number using atomic counter in settings.
+    // Wrapped in a transaction to prevent race conditions where concurrent requests
+    // could read the same counter value and generate duplicate issue numbers.
     const now = new Date().toISOString();
-    let nextNumber: number;
-    if (existing) {
-      const mapped = mapSetting(existing);
-      nextNumber = (mapped.value as number) - 1;
-      await execute(conn, "UPDATE settings SET value = ?, updated_at = ? WHERE key = ?", [
-        JSON.stringify(nextNumber),
-        now,
+    const counterKey = "manual_job_counter";
+    const nextNumber = await withTransaction(conn, async (txn) => {
+      const existing = await queryOne<DbSetting>(txn, "SELECT * FROM settings WHERE key = ?", [counterKey]);
+
+      if (existing) {
+        const mapped = mapSetting(existing);
+        const next = (mapped.value as number) - 1;
+        await execute(txn, "UPDATE settings SET value = ?, updated_at = ? WHERE key = ?", [
+          JSON.stringify(next),
+          now,
+          counterKey,
+        ]);
+        return next;
+      }
+
+      await execute(txn, "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)", [
         counterKey,
-      ]);
-    } else {
-      nextNumber = -1;
-      await execute(conn, "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)", [
-        counterKey,
-        JSON.stringify(nextNumber),
+        JSON.stringify(-1),
         now,
       ]);
-    }
+      return -1;
+    });
 
     const newJob = await queryOne<DbJob>(
       conn,
