@@ -76,7 +76,7 @@ export function PermissionRulesEditor({ value, onChange, placeholder, fieldPath 
       )}
       <div className="flex gap-2">
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>
+          <PopoverTrigger asChild nativeButton={false}>
             <div className="flex-1">
               <Input
                 ref={inputRef}
