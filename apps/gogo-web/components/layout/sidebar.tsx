@@ -73,10 +73,17 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 export function MobileMenuButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button variant="ghost" size="icon" className="md:hidden" onClick={onClick} aria-label="Open menu">
-      <Menu className="h-5 w-5" />
-      <span className="sr-only">Open menu</span>
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={onClick} aria-label="Open menu">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Open menu</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
