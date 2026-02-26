@@ -14,11 +14,11 @@ import type { ColumnInfo } from "@/lib/types";
 
 // ── Type classifiers ──────────────────────────────────────────────
 
-export function isBooleanType(dataType: string): boolean {
+function isBooleanType(dataType: string): boolean {
   return dataType.toUpperCase() === "BOOLEAN";
 }
 
-export function isNumericType(dataType: string): boolean {
+function isNumericType(dataType: string): boolean {
   const upper = dataType.toUpperCase();
   return [
     "INTEGER",
@@ -36,26 +36,26 @@ export function isNumericType(dataType: string): boolean {
   ].some((t) => upper.includes(t));
 }
 
-export function isDateType(dataType: string): boolean {
+function isDateType(dataType: string): boolean {
   return dataType.toUpperCase() === "DATE";
 }
 
-export function isTimestampType(dataType: string): boolean {
+function isTimestampType(dataType: string): boolean {
   const upper = dataType.toUpperCase();
   return upper.startsWith("TIMESTAMP");
 }
 
-export function isTimeType(dataType: string): boolean {
+function isTimeType(dataType: string): boolean {
   const upper = dataType.toUpperCase();
   return upper === "TIME" || upper === "TIME WITH TIME ZONE";
 }
 
-export function isComplexType(dataType: string): boolean {
+function isComplexType(dataType: string): boolean {
   const upper = dataType.toUpperCase();
   return upper.startsWith("LIST") || upper.startsWith("MAP") || upper.startsWith("STRUCT") || upper === "JSON";
 }
 
-export function isBlobType(dataType: string): boolean {
+function isBlobType(dataType: string): boolean {
   return dataType.toUpperCase() === "BLOB";
 }
 

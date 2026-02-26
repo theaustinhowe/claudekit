@@ -11,9 +11,7 @@
     "apps/gogo-orchestrator": {
       "ignore": ["src/**/*.test.ts"]
     },
-    "apps/inside": {
-      "ignoreDependencies": ["@claudekit/playwright"]
-    },
+    "apps/inside": {},
     "apps/b4u": {},
     "packages/ui": {
       "entry": ["src/components/*.tsx"],

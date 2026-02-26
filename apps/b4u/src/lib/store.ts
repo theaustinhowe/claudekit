@@ -86,7 +86,7 @@ type AppAction =
   | { type: "REFRESH_PANEL" }
   | { type: "RESET_STATE" };
 
-export type { AppAction, AppState };
+export type { AppState };
 
 function updateActiveThread(state: AppState, phase: Phase, updater: (thread: PhaseThread) => PhaseThread): AppState {
   const threadId = state.activeThreadIds[phase];

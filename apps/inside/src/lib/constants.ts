@@ -78,7 +78,7 @@ export const PAYMENT_OPTIONS = [
 
 // --- Next Steps for Upgrade Completion ---
 
-export interface NextStep {
+interface NextStep {
   label: string;
   description: string;
   url: string;

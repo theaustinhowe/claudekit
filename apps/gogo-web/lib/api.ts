@@ -532,7 +532,7 @@ export async function fetchFileDiffByPath(worktreePath: string, filePath: string
 // Setup Wizard
 // =============================================================================
 
-export interface SetupStatusResponse {
+interface SetupStatusResponse {
   needsSetup: boolean;
   repositoryCount: number;
   hasEnvToken: boolean;
