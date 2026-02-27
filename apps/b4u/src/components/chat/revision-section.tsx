@@ -34,6 +34,7 @@ export function RevisionSection({ thread }: RevisionSectionProps) {
             >
               {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               <span className="font-medium">Revision {thread.revision}</span>
+              <span className="text-muted-foreground/50 italic">· superseded</span>
               <span className="text-muted-foreground/60">{timestamp}</span>
               <span className="ml-auto text-muted-foreground/50">{thread.messages.length} messages</span>
             </button>
@@ -42,7 +43,7 @@ export function RevisionSection({ thread }: RevisionSectionProps) {
         </Tooltip>
       </TooltipProvider>
       {expanded && (
-        <div className="px-4 py-3 space-y-3 opacity-60 border-t border-border/50">
+        <div className="px-4 py-3 space-y-3 opacity-75 border-t border-border/50">
           {thread.messages.map((msg, i) => (
             <ChatBubble key={msg.id} message={msg} index={i} />
           ))}

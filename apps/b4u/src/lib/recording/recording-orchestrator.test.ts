@@ -69,7 +69,7 @@ describe("runRecordingPipeline", () => {
       url: "http://localhost:3000",
       pid: 123,
     });
-    vi.mocked(recordFlow).mockResolvedValue({ videoPath: "/recordings/f1.webm", durationSeconds: 30 });
+    vi.mocked(recordFlow).mockResolvedValue({ videoPath: "/recordings/f1.webm", durationSeconds: 30, stepResults: [] });
 
     const result = await runRecordingPipeline(makeOptions());
 
@@ -104,7 +104,7 @@ describe("runRecordingPipeline", () => {
       url: "http://localhost:3000",
       pid: 123,
     });
-    vi.mocked(recordFlow).mockResolvedValue({ videoPath: "/recordings/f1.webm", durationSeconds: 20 });
+    vi.mocked(recordFlow).mockResolvedValue({ videoPath: "/recordings/f1.webm", durationSeconds: 20, stepResults: [] });
 
     const result = await runRecordingPipeline(makeOptions({ flowIds: ["f1"] }));
 

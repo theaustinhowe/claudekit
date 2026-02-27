@@ -34,7 +34,7 @@ describe("createGenerateScriptsRunner", () => {
   it("throws when no project summary found", async () => {
     vi.mocked(queryAll).mockResolvedValue([]);
 
-    const runner = createGenerateScriptsRunner();
+    const runner = createGenerateScriptsRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No project summary found");
   });
@@ -45,7 +45,7 @@ describe("createGenerateScriptsRunner", () => {
       .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home", description: "Main" }]) }) // routes
       .mockResolvedValueOnce(null); // no flows
 
-    const runner = createGenerateScriptsRunner();
+    const runner = createGenerateScriptsRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No user flows found");
   });
@@ -78,13 +78,17 @@ describe("createGenerateScriptsRunner", () => {
       .mockResolvedValueOnce({ stdout: JSON.stringify(scripts), stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({ stdout: JSON.stringify(voiceover), stderr: "", exitCode: 0 });
 
-    const runner = createGenerateScriptsRunner();
+    const runner = createGenerateScriptsRunner("test-run-id");
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: { scripts, voiceover } });
     expect(runClaude).toHaveBeenCalledTimes(2);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts WHERE run_id = ?", [undefined]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_voiceover WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_scripts WHERE run_id = ?", [
+      "test-run-id",
+    ]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM flow_voiceover WHERE run_id = ?", [
+      "test-run-id",
+    ]);
   });
 
   it("throws when scripts Claude output has no JSON", async () => {
@@ -95,7 +99,7 @@ describe("createGenerateScriptsRunner", () => {
 
     vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 
-    const runner = createGenerateScriptsRunner();
+    const runner = createGenerateScriptsRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No JSON found");
   });

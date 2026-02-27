@@ -226,6 +226,37 @@ describe("appReducer", () => {
       expect(newThread?.revision).toBe(2);
     });
 
+    it("new revision thread inherits gate decision values from superseded thread", () => {
+      // Set up phase 6 with voice-selection filled
+      const base = stateWithThread(6, "run-1");
+      let state = appReducer(base, {
+        type: "SET_THREAD_DECISION",
+        phase: 6,
+        key: "voice-selection",
+        value: "voice-xyz",
+      });
+      // Also set approve-voiceover (not gate)
+      state = appReducer(state, {
+        type: "SET_THREAD_DECISION",
+        phase: 6,
+        key: "approve-voiceover",
+        value: "true",
+      });
+
+      // Restart phase 6
+      state = appReducer(state, { type: "RESTART_FROM_PHASE", phase: 6 });
+
+      // New thread should inherit gate decisions
+      const newThreadId = state.activeThreadIds[6];
+      const newThread = state.threads[6].find((t) => t.id === newThreadId);
+      const voice = newThread?.decisions.find((d) => d.key === "voice-selection");
+      expect(voice?.value).toBe("voice-xyz");
+
+      // Non-gate decision should not be inherited
+      const approve = newThread?.decisions.find((d) => d.key === "approve-voiceover");
+      expect(approve?.value).toBeNull();
+    });
+
     it("activates target phase and locks all after it", () => {
       const startState = {
         ...stateWithThread(3, "run-1"),

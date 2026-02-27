@@ -33,14 +33,16 @@ describe("createVoiceoverAudioRunner", () => {
       .mockResolvedValueOnce({ flowId: "f1", filePath: "/audio/f1.mp3", durationEstimate: 10 })
       .mockResolvedValueOnce({ flowId: "f2", filePath: "/audio/f2.mp3", durationEstimate: 5 });
 
-    const runner = createVoiceoverAudioRunner("voice-1", 1.0);
+    const runner = createVoiceoverAudioRunner("voice-1", 1.0, "test-run-id");
     const result = await runner(makeCtx());
 
     expect(generateFlowVoiceover).toHaveBeenCalledTimes(2);
     expect(generateFlowVoiceover).toHaveBeenCalledWith(
       expect.objectContaining({ flowId: "f1", paragraphs: ["Hello", "World"], voiceId: "voice-1" }),
     );
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM audio_files WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM audio_files WHERE run_id = ?", [
+      "test-run-id",
+    ]);
     expect(result).toEqual({
       result: {
         audioFiles: [
@@ -64,7 +66,7 @@ describe("createVoiceoverAudioRunner", () => {
       { flow_id: "f2", paragraphs_json: JSON.stringify(["World"]) },
     ]);
 
-    const runner = createVoiceoverAudioRunner("voice-1");
+    const runner = createVoiceoverAudioRunner("voice-1", 1.0, "test-run-id");
 
     await expect(runner({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" })).rejects.toThrow(
       "Aborted",

@@ -31,7 +31,7 @@ describe("createGenerateDataPlanRunner", () => {
   it("throws when no project summary found", async () => {
     vi.mocked(queryAll).mockResolvedValue([]);
 
-    const runner = createGenerateDataPlanRunner();
+    const runner = createGenerateDataPlanRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No project summary found");
   });
@@ -44,7 +44,7 @@ describe("createGenerateDataPlanRunner", () => {
       .mockResolvedValueOnce({ data_json: JSON.stringify([{ path: "/", title: "Home" }]) }) // routes
       .mockResolvedValueOnce(null); // no flows
 
-    const runner = createGenerateDataPlanRunner();
+    const runner = createGenerateDataPlanRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No user flows found");
   });
@@ -68,14 +68,14 @@ describe("createGenerateDataPlanRunner", () => {
       exitCode: 0,
     });
 
-    const runner = createGenerateDataPlanRunner();
+    const runner = createGenerateDataPlanRunner("test-run-id");
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: dataPlan });
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),
       "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('mock_data_entities', 'auth_overrides', 'env_items')",
-      [undefined],
+      ["test-run-id"],
     );
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),

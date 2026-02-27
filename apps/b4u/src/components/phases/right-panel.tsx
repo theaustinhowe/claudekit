@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { ErrorBoundary } from "@claudekit/ui/components/error-boundary";
 import { usePhaseController } from "@/lib/phase-controller";
 import { useApp } from "@/lib/store";
@@ -60,33 +61,37 @@ export function RightPanel() {
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {phaseLabel ? `Now showing: ${phaseLabel}` : ""}
       </div>
-      <ErrorBoundary
-        key={`${content ?? "empty"}-${state.panelRefreshKey}`}
-        fallbackLabel={content ? `Phase ${content} encountered an error` : undefined}
-      >
-        {phaseContent}
-      </ErrorBoundary>
 
       {isViewingCompleted && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/85 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3 p-6 rounded-lg">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{"\u2713"}</span>
-              <span>{PHASE_LABELS[content as Phase]} — completed</span>
-              {threadCount > 1 && <span className="text-2xs text-muted-foreground/60">({threadCount} revisions)</span>}
-            </div>
-            <button
-              type="button"
-              onClick={handleEditClick}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-medium transition-all bg-muted border border-border rounded-md text-foreground hover:border-primary hover:text-primary"
-            >
-              <span>{"\u270E"}</span>
-              <span>Start New Revision</span>
-            </button>
-            <div className="text-2xs text-muted-foreground">Previous versions remain viewable</div>
-          </div>
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-primary/30 bg-primary/5 shrink-0">
+          <span className="text-primary text-xs">{"\u2713"}</span>
+          <span className="text-xs text-muted-foreground flex-1">
+            {PHASE_LABELS[content as Phase]} — completed (read-only)
+            {threadCount > 1 && (
+              <span className="text-2xs text-muted-foreground/60 ml-1">({threadCount} revisions)</span>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={handleEditClick}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-2xs font-medium transition-all border border-border rounded-md text-muted-foreground hover:border-primary hover:text-primary"
+          >
+            <span>{"\u270E"}</span>
+            <span>New Revision</span>
+          </button>
         </div>
       )}
+
+      <ErrorBoundary
+        key={`${content ?? "empty"}`}
+        fallbackLabel={content ? `Phase ${content} encountered an error` : undefined}
+      >
+        <div
+          className={cn("flex-1 overflow-hidden", isViewingCompleted && "opacity-80 pointer-events-none select-none")}
+        >
+          {phaseContent}
+        </div>
+      </ErrorBoundary>
     </section>
   );
 }

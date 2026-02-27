@@ -57,7 +57,7 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
     case "approve": {
       const isCompleted = state.phaseStatuses[card.phase] === "completed";
       return (
-        <div className="flex items-center gap-2.5 px-2 py-2.5">
+        <div className="flex items-center gap-2.5 px-4 py-3">
           {isCompleted ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 px-3 py-2 text-xs text-primary bg-primary/10 rounded-md">
@@ -144,12 +144,53 @@ export function ActionCardRenderer({ card }: ActionCardRendererProps) {
     case "session-progress":
       return <SessionProgressCard sessionId={card.sessionId} label={card.label} />;
 
+    case "retry":
+      return (
+        <div className="flex items-center gap-2.5 px-4 py-3">
+          <Tooltip label="Retry the failed operation" position="top">
+            <button
+              type="button"
+              onClick={() => controller.retryPhase(card.phase)}
+              className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-opacity bg-primary text-primary-foreground rounded-md hover:opacity-90"
+            >
+              {card.label || "Retry"} →
+            </button>
+          </Tooltip>
+        </div>
+      );
+
+    case "confirm-restart": {
+      const isCompleted = state.phaseStatuses[card.phase] === "completed";
+      if (isCompleted) return null;
+      return (
+        <div className="flex items-center gap-2.5 px-4 py-3">
+          <Tooltip label="Confirm and start a new revision" position="top">
+            <button
+              type="button"
+              onClick={() => controller.handleConfirmRestart(card.phase)}
+              className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-opacity bg-amber-600 text-white rounded-md hover:opacity-90"
+            >
+              {card.label || "Confirm"} →
+            </button>
+          </Tooltip>
+          <Tooltip label="Cancel and stay on current phase" position="top">
+            <button
+              type="button"
+              onClick={() => {
+                /* no-op: user stays on current phase */
+              }}
+              className="px-3 py-2.5 text-xs transition-colors text-muted-foreground/70 border border-border rounded-md hover:border-primary hover:text-primary"
+            >
+              Cancel
+            </button>
+          </Tooltip>
+        </div>
+      );
+    }
+
     case "edit-request":
       return (
-        <div
-          className="flex items-center gap-3 px-4 py-3.5 bg-muted border border-primary rounded-lg"
-          style={{ borderLeft: "3px solid hsl(var(--primary))" }}
-        >
+        <div className="flex items-center gap-3 px-4 py-3.5 bg-muted border border-primary rounded-lg border-l-[3px] border-l-primary">
           <span className="text-primary">✎</span>
           <span className="text-xs text-muted-foreground">{card.request}</span>
         </div>

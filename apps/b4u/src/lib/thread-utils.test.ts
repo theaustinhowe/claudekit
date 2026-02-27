@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   areDecisionsComplete,
   buildDefaultDecisions,
+  createRevisionThread,
   createThread,
   emptyActiveThreadIds,
   emptyThreads,
   getActiveThread,
+  getMissingGateDecisions,
   getNextRevision,
   getPhaseThreads,
 } from "./thread-utils";
@@ -101,8 +103,10 @@ describe("thread-utils", () => {
       expect(decisions[1].key).toBe("approve-voiceover");
     });
 
-    it("returns empty for phase 7", () => {
-      expect(buildDefaultDecisions(7)).toHaveLength(0);
+    it("returns one non-required decision for phase 7", () => {
+      const decisions = buildDefaultDecisions(7);
+      expect(decisions).toHaveLength(1);
+      expect(decisions[0].key).toBe("review-output");
     });
   });
 
@@ -128,6 +132,114 @@ describe("thread-utils", () => {
       const t2 = makeThread({ revision: 3 });
       const threads = { ...emptyThreads(), 1: [t1, t2] };
       expect(getNextRevision(threads, 1)).toBe(4);
+    });
+  });
+
+  describe("getMissingGateDecisions", () => {
+    it("returns gate decisions that have null values", () => {
+      // Phase 1 has folder-path (gate) and confirm-scan (not gate)
+      const thread = makeThread({ phase: 1 });
+      const missing = getMissingGateDecisions(thread);
+      expect(missing).toHaveLength(1);
+      expect(missing[0].key).toBe("folder-path");
+    });
+
+    it("returns empty array when all gate decisions are set", () => {
+      const thread = makeThread({ phase: 1 });
+      const folderDecision = thread.decisions.find((d) => d.key === "folder-path");
+      if (folderDecision) {
+        folderDecision.value = "/some/path";
+        folderDecision.decidedAt = Date.now();
+      }
+      expect(getMissingGateDecisions(thread)).toHaveLength(0);
+    });
+
+    it("returns missing gate decisions for phase 6 (voice-selection)", () => {
+      const thread = makeThread({ phase: 6, decisions: buildDefaultDecisions(6) });
+      const missing = getMissingGateDecisions(thread);
+      expect(missing).toHaveLength(1);
+      expect(missing[0].key).toBe("voice-selection");
+    });
+
+    it("returns empty for phase 7 (no gate decisions)", () => {
+      const thread = makeThread({ phase: 7, decisions: buildDefaultDecisions(7) });
+      expect(getMissingGateDecisions(thread)).toHaveLength(0);
+    });
+
+    it("ignores non-gate decisions even if they are null", () => {
+      const thread = makeThread({ phase: 1 });
+      // Set the gate decision but leave confirm-scan (not gate) as null
+      const folderDecision = thread.decisions.find((d) => d.key === "folder-path");
+      if (folderDecision) {
+        folderDecision.value = "/path";
+        folderDecision.decidedAt = Date.now();
+      }
+      // confirm-scan is still null but it's not a gate
+      expect(getMissingGateDecisions(thread)).toHaveLength(0);
+    });
+  });
+
+  describe("createRevisionThread", () => {
+    it("copies gate decision values from superseded thread", () => {
+      // Phase 6 has voice-selection (gate) and approve-voiceover (not gate)
+      const superseded = makeThread({ phase: 6, decisions: buildDefaultDecisions(6) });
+      const voiceDecision = superseded.decisions.find((d) => d.key === "voice-selection");
+      if (voiceDecision) {
+        voiceDecision.value = "voice-abc";
+        voiceDecision.decidedAt = 1000;
+      }
+      // Also set the non-gate decision
+      const approveDecision = superseded.decisions.find((d) => d.key === "approve-voiceover");
+      if (approveDecision) {
+        approveDecision.value = "true";
+        approveDecision.decidedAt = 2000;
+      }
+
+      const newThread = createRevisionThread("run-1", 6, 2, superseded);
+      // Gate decision should be copied
+      const newVoice = newThread.decisions.find((d) => d.key === "voice-selection");
+      expect(newVoice?.value).toBe("voice-abc");
+      expect(newVoice?.decidedAt).toBe(1000);
+
+      // Non-gate decision should remain null
+      const newApprove = newThread.decisions.find((d) => d.key === "approve-voiceover");
+      expect(newApprove?.value).toBeNull();
+    });
+
+    it("returns default decisions when no superseded thread", () => {
+      const newThread = createRevisionThread("run-1", 6, 1);
+      const voice = newThread.decisions.find((d) => d.key === "voice-selection");
+      expect(voice?.value).toBeNull();
+    });
+
+    it("handles phase with no gate decisions (phase 2)", () => {
+      const superseded = makeThread({ phase: 2, decisions: buildDefaultDecisions(2) });
+      const approveDecision = superseded.decisions.find((d) => d.key === "approve-outline");
+      if (approveDecision) {
+        approveDecision.value = "true";
+      }
+
+      const newThread = createRevisionThread("run-1", 2, 2, superseded);
+      // approve-outline is not a gate, so should not be copied
+      const newApprove = newThread.decisions.find((d) => d.key === "approve-outline");
+      expect(newApprove?.value).toBeNull();
+    });
+
+    it("copies gate decisions for phase 1 (folder-path)", () => {
+      const superseded = makeThread({ phase: 1 });
+      const folderDecision = superseded.decisions.find((d) => d.key === "folder-path");
+      if (folderDecision) {
+        folderDecision.value = "/my/project";
+        folderDecision.decidedAt = 5000;
+      }
+
+      const newThread = createRevisionThread("run-1", 1, 2, superseded);
+      const newFolder = newThread.decisions.find((d) => d.key === "folder-path");
+      expect(newFolder?.value).toBe("/my/project");
+
+      // confirm-scan is not gate, should remain null
+      const newConfirm = newThread.decisions.find((d) => d.key === "confirm-scan");
+      expect(newConfirm?.value).toBeNull();
     });
   });
 

@@ -2,7 +2,7 @@ import type { SessionRunner } from "@claudekit/session";
 import { generateFlowVoiceover } from "@/lib/audio/voiceover-generator";
 import { execute, getDb, queryAll } from "@/lib/db";
 
-export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0, runId?: string): SessionRunner {
+export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0, runId: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading voiceover scripts...", progress: 5 });
 
@@ -11,10 +11,8 @@ export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0,
     // Load voiceover data from flow_voiceover
     const rows = await queryAll<{ flow_id: string; paragraphs_json: string }>(
       conn,
-      runId
-        ? "SELECT flow_id, paragraphs_json FROM flow_voiceover WHERE run_id = ?"
-        : "SELECT flow_id, paragraphs_json FROM flow_voiceover",
-      runId ? [runId] : [],
+      "SELECT flow_id, paragraphs_json FROM flow_voiceover WHERE run_id = ?",
+      [runId],
     );
 
     // Build flow map from paragraphs_json

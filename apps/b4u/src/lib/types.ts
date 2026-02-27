@@ -24,6 +24,8 @@ export type ActionCard =
   | { type: "folder-select" }
   | { type: "project-summary"; data: ProjectSummary }
   | { type: "approve"; phase: Phase; label?: string }
+  | { type: "retry"; phase: Phase; label?: string }
+  | { type: "confirm-restart"; phase: Phase; label?: string }
   | { type: "scanning"; label: string }
   | { type: "session-progress"; sessionId: string; label: string }
   | { type: "recording-complete" }
@@ -152,5 +154,7 @@ export interface PhaseDecisionConfig {
   label: string;
   type: "select" | "confirm" | "text";
   required: boolean;
+  /** If true, this decision must be completed before the phase can be approved. */
+  gate?: boolean;
   options?: DecisionOption[];
 }

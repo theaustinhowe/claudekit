@@ -1,9 +1,10 @@
 import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@claudekit/session";
+import { extractJsonObject } from "@/lib/claude/extract-json";
 import { buildAnalyzeProjectPrompt } from "@/lib/claude/prompts/analyze-project";
 import { execute, getDb } from "@/lib/db";
 
-export function createAnalyzeProjectRunner(projectPath: string, runId?: string): SessionRunner {
+export function createAnalyzeProjectRunner(projectPath: string, runId: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Analyzing project structure...", progress: 10 });
 
@@ -42,9 +43,9 @@ export function createAnalyzeProjectRunner(projectPath: string, runId?: string):
     let analysis: Record<string, any>;
     try {
       // Try to extract JSON from the result (Claude might wrap it in markdown)
-      const jsonMatch = result.stdout.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON found in Claude output");
-      analysis = JSON.parse(jsonMatch[0]);
+      const jsonStr = extractJsonObject(result.stdout);
+      if (!jsonStr) throw new Error("No JSON found in Claude output");
+      analysis = JSON.parse(jsonStr);
     } catch (err) {
       throw new Error(`Failed to parse analysis: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -53,48 +54,58 @@ export function createAnalyzeProjectRunner(projectPath: string, runId?: string):
 
     const conn = await getDb();
 
-    // Clear existing data and save new
-    await execute(conn, "DELETE FROM project_summary WHERE run_id = ?", [runId]);
-    await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'file_tree')", [
-      runId,
-    ]);
+    // Wrap delete-then-insert in a transaction for atomicity
+    try {
+      await execute(conn, "BEGIN TRANSACTION");
 
-    // Save project summary
-    const dirs = analysis.directories || [];
-    await execute(
-      conn,
-      `INSERT INTO project_summary (id, run_id, name, framework, directories, auth, database_info, project_path)
-      VALUES (1, ?, ?, ?, ?::VARCHAR[], ?, ?, ?)`,
-      [
+      // Clear existing data and save new
+      await execute(conn, "DELETE FROM project_summary WHERE run_id = ?", [runId]);
+      await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'file_tree')", [
         runId,
-        analysis.name || "",
-        analysis.framework || "",
-        JSON.stringify(dirs),
-        analysis.auth || "None",
-        analysis.database || "None",
-        projectPath,
-      ],
-    );
+      ]);
 
-    // Save routes as run_content if present
-    if (analysis.routes && Array.isArray(analysis.routes)) {
+      // Save project summary
+      const dirs = analysis.directories || [];
       await execute(
         conn,
-        `INSERT INTO run_content (id, run_id, content_type, data_json)
-        VALUES (?, ?, 'routes', ?)`,
-        [crypto.randomUUID(), runId, JSON.stringify(analysis.routes)],
+        `INSERT INTO project_summary (id, run_id, name, framework, directories, auth, database_info, project_path)
+        VALUES (1, ?, ?, ?, ?::VARCHAR[], ?, ?, ?)`,
+        [
+          runId,
+          analysis.name || "",
+          analysis.framework || "",
+          JSON.stringify(dirs),
+          analysis.auth || "None",
+          analysis.database || "None",
+          projectPath,
+        ],
       );
-    }
 
-    // Save file tree as run_content if Claude returned one
-    if (analysis.fileTree || analysis.file_tree) {
-      const treeData = analysis.fileTree || analysis.file_tree;
-      await execute(
-        conn,
-        `INSERT INTO run_content (id, run_id, content_type, data_json)
-        VALUES (?, ?, 'file_tree', ?)`,
-        [crypto.randomUUID(), runId, JSON.stringify(treeData)],
-      );
+      // Save routes as run_content if present
+      if (analysis.routes && Array.isArray(analysis.routes)) {
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'routes', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(analysis.routes)],
+        );
+      }
+
+      // Save file tree as run_content if Claude returned one
+      if (analysis.fileTree || analysis.file_tree) {
+        const treeData = analysis.fileTree || analysis.file_tree;
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'file_tree', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(treeData)],
+        );
+      }
+
+      await execute(conn, "COMMIT");
+    } catch (err) {
+      await execute(conn, "ROLLBACK").catch(() => {});
+      throw err;
     }
 
     onProgress({ type: "progress", message: "Analysis complete", progress: 100 });

@@ -9,7 +9,7 @@ interface UseApiResult<T> {
   refetch: () => void;
 }
 
-export function useApi<T>(url: string): UseApiResult<T> {
+export function useApi<T>(url: string, refreshKey?: number): UseApiResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +19,7 @@ export function useApi<T>(url: string): UseApiResult<T> {
     setFetchKey((k) => k + 1);
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: fetchKey is intentionally included to trigger refetch
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fetchKey and refreshKey are intentionally included to trigger refetch
   useEffect(() => {
     let cancelled = false;
 
@@ -51,7 +51,7 @@ export function useApi<T>(url: string): UseApiResult<T> {
     return () => {
       cancelled = true;
     };
-  }, [url, fetchKey]);
+  }, [url, fetchKey, refreshKey]);
 
   return { data, loading, error, refetch };
 }

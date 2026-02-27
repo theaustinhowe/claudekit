@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase3DataPlanSkeleton } from "@/components/ui/phase-skeletons";
@@ -7,6 +8,7 @@ import { useApp } from "@/lib/store";
 import type { AuthOverride, EnvItem, MockDataEntity } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
+import { PhaseGoalBanner } from "./phase-goal-banner";
 
 export function Phase3DataPlan() {
   const { state, dispatch } = useApp();
@@ -15,19 +17,19 @@ export function Phase3DataPlan() {
     loading: l1,
     error: e1,
     refetch: r1,
-  } = useApi<MockDataEntity[]>(`/api/mock-data-entities?runId=${state.runId}`);
+  } = useApi<MockDataEntity[]>(`/api/mock-data-entities?runId=${state.runId}`, state.panelRefreshKey);
   const {
     data: apiAuth,
     loading: l2,
     error: e2,
     refetch: r2,
-  } = useApi<AuthOverride[]>(`/api/auth-overrides?runId=${state.runId}`);
+  } = useApi<AuthOverride[]>(`/api/auth-overrides?runId=${state.runId}`, state.panelRefreshKey);
   const {
     data: apiEnv,
     loading: l3,
     error: e3,
     refetch: r3,
-  } = useApi<EnvItem[]>(`/api/env-config?runId=${state.runId}`);
+  } = useApi<EnvItem[]>(`/api/env-config?runId=${state.runId}`, state.panelRefreshKey);
 
   const [authOverrides, setAuthOverrides] = useState<AuthOverride[]>([]);
   const [envItems, setEnvItems] = useState<EnvItem[]>([]);
@@ -50,9 +52,6 @@ export function Phase3DataPlan() {
   useEffect(() => {
     if (apiEnv) setEnvItems(apiEnv);
   }, [apiEnv]);
-
-  const loading = l1 || l2 || l3;
-  const error = e1 || e2 || e3;
 
   const persistAuthToggle = useCallback(
     async (id: string, enabled: boolean) => {
@@ -84,18 +83,7 @@ export function Phase3DataPlan() {
     [state.runId],
   );
 
-  if (loading) return <Phase3DataPlanSkeleton />;
-  if (error || !apiEntities)
-    return (
-      <ErrorState
-        message={error || "No data"}
-        onRetry={() => {
-          r1();
-          r2();
-          r3();
-        }}
-      />
-    );
+  if (l1 && l2 && l3) return <Phase3DataPlanSkeleton />;
 
   const toggleAuth = (id: string) => {
     setAuthOverrides((prev) => {
@@ -123,6 +111,7 @@ export function Phase3DataPlan() {
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
+      <PhaseGoalBanner phase={3} />
       <div className="px-4 py-3 border-b border-border text-xs font-medium flex items-center gap-2 text-muted-foreground bg-card">
         <span className="text-primary">◊</span>
         DATA & ENVIRONMENT PLAN
@@ -132,47 +121,78 @@ export function Phase3DataPlan() {
         {/* Mock Data section */}
         <section>
           <div className="text-2xs font-medium mb-2 text-muted-foreground">MOCK DATA</div>
-          <div className="divide-y bg-card border border-border rounded-md overflow-hidden">
-            {apiEntities.map((entity) => (
-              <div key={entity.name} className="flex items-center justify-between px-3 py-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium w-[24px] text-center text-primary">{entity.count}</span>
-                  <div>
-                    <div className="text-xs text-foreground">{entity.name}</div>
-                    <div className="text-2xs text-muted-foreground/70">{entity.note}</div>
+          {l1 ? (
+            <SectionSkeleton />
+          ) : e1 || !apiEntities ? (
+            <ErrorState message={e1 || "No data"} onRetry={r1} />
+          ) : (
+            <div className="divide-y bg-card border border-border rounded-md overflow-hidden">
+              {apiEntities.map((entity) => (
+                <div key={entity.name} className="flex items-center justify-between px-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium w-[24px] text-center text-primary">{entity.count}</span>
+                    <div>
+                      <div className="text-xs text-foreground">{entity.name}</div>
+                      <div className="text-2xs text-muted-foreground/70">{entity.note}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Auth Overrides */}
         <section>
           <div className="text-2xs font-medium mb-2 text-muted-foreground">AUTH OVERRIDES</div>
-          <div className="space-y-0 bg-card border border-border rounded-md overflow-hidden">
-            {authOverrides.map((item) => (
-              <div key={item.id} className="flex items-center justify-between px-3 py-2 border-b border-border">
-                <span className="text-xs text-muted-foreground">{item.label}</span>
-                <ToggleSwitch enabled={item.enabled} onToggle={() => toggleAuth(item.id)} />
-              </div>
-            ))}
-          </div>
+          {l2 ? (
+            <SectionSkeleton />
+          ) : e2 ? (
+            <ErrorState message={e2} onRetry={r2} />
+          ) : (
+            <div className="space-y-0 bg-card border border-border rounded-md overflow-hidden">
+              {authOverrides.map((item) => (
+                <div key={item.id} className="flex items-center justify-between px-3 py-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <ToggleSwitch enabled={item.enabled} onToggle={() => toggleAuth(item.id)} />
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Environment */}
         <section>
           <div className="text-2xs font-medium mb-2 text-muted-foreground">ENVIRONMENT</div>
-          <div className="space-y-0 bg-card border border-border rounded-md overflow-hidden">
-            {envItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between px-3 py-2 border-b border-border">
-                <span className="text-xs text-muted-foreground">{item.label}</span>
-                <ToggleSwitch enabled={item.enabled} onToggle={() => toggleEnv(item.id)} />
-              </div>
-            ))}
-          </div>
+          {l3 ? (
+            <SectionSkeleton />
+          ) : e3 ? (
+            <ErrorState message={e3} onRetry={r3} />
+          ) : (
+            <div className="space-y-0 bg-card border border-border rounded-md overflow-hidden">
+              {envItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between px-3 py-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <ToggleSwitch enabled={item.enabled} onToggle={() => toggleEnv(item.id)} />
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
+    </div>
+  );
+}
+
+function SectionSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-md overflow-hidden">
+      {Array.from({ length: 3 }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholder
+        <div key={i} className="flex items-center gap-3 px-3 py-2.5 border-b border-border last:border-b-0">
+          <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -181,32 +201,31 @@ function ToggleSwitch({ enabled, onToggle, disabled }: { enabled: boolean; onTog
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={enabled}
+      aria-label={enabled ? "Enabled" : "Disabled"}
       onClick={disabled ? undefined : onToggle}
-      className="relative shrink-0 transition-colors"
-      style={{
-        width: "32px",
-        height: "18px",
-        background: disabled ? "hsl(var(--muted))" : enabled ? "hsl(var(--primary))" : "hsl(var(--muted))",
-        border: `1px solid ${disabled ? "hsl(var(--border))" : enabled ? "hsl(var(--primary))" : "hsl(var(--border))"}`,
-        borderRadius: "99px",
-        opacity: disabled ? 0.5 : 1,
-        cursor: disabled ? "default" : "pointer",
+      onKeyDown={(e) => {
+        if (!disabled && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onToggle();
+        }
       }}
+      className={cn(
+        "relative shrink-0 w-[32px] h-[18px] rounded-full border transition-colors",
+        disabled && "opacity-50 cursor-default",
+        !disabled && "cursor-pointer",
+        enabled && !disabled && "bg-primary border-primary",
+        !enabled && !disabled && "bg-muted border-border",
+        disabled && "bg-muted border-border",
+      )}
     >
       <div
-        className="absolute transition-all"
-        style={{
-          width: "12px",
-          height: "12px",
-          top: "2px",
-          background: disabled
-            ? "hsl(var(--muted-foreground))"
-            : enabled
-              ? "hsl(var(--background))"
-              : "hsl(var(--muted-foreground))",
-          left: enabled ? "16px" : "2px",
-          borderRadius: "99px",
-        }}
+        className={cn(
+          "absolute top-[2px] w-[12px] h-[12px] rounded-full transition-all",
+          enabled ? "left-[16px] bg-background" : "left-[2px] bg-muted-foreground",
+          disabled && "bg-muted-foreground",
+        )}
       />
     </button>
   );

@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useApp } from "@/lib/store";
+import { useSyncStatus } from "./use-sync-status";
 
 export function useStateSync() {
   const { state } = useApp();
+  const { reportSaving, reportSuccess, reportError } = useSyncStatus();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastJsonRef = useRef<string>("");
   const pendingPayloadRef = useRef<string | null>(null);
@@ -71,16 +73,22 @@ export function useStateSync() {
         projectName: state.projectName,
       });
 
+      reportSaving();
       fetch(`/api/runs/${state.runId}/state`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: payload,
+        signal: AbortSignal.timeout(10_000),
       })
         .then(() => {
           lastJsonRef.current = payload;
           pendingPayloadRef.current = null;
+          reportSuccess();
         })
-        .catch(console.error);
+        .catch((err) => {
+          console.error("[useStateSync] Failed to persist state:", err);
+          reportError();
+        });
     }
 
     // Update ref AFTER both checks so the guards work correctly
@@ -93,6 +101,9 @@ export function useStateSync() {
     state.activeThreadIds,
     state.projectPath,
     state.projectName,
+    reportSaving,
+    reportSuccess,
+    reportError,
   ]);
 
   // Flush on unmount
@@ -123,20 +134,30 @@ export function useStateSync() {
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
-      fetch(`/api/runs/${state.runId}/state`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: payload,
-      })
-        .then(() => {
-          // Only mark as saved after successful persist
-          lastJsonRef.current = payload;
-          // Clear pending — successful save means beacon is unnecessary
-          pendingPayloadRef.current = null;
+      const attemptSave = (retry: boolean) => {
+        reportSaving();
+        fetch(`/api/runs/${state.runId}/state`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+          signal: AbortSignal.timeout(10_000),
         })
-        .catch((err) => {
-          console.error("[useStateSync] Failed to persist state:", err);
-        });
+          .then(() => {
+            lastJsonRef.current = payload;
+            pendingPayloadRef.current = null;
+            reportSuccess();
+          })
+          .catch((err) => {
+            console.error("[useStateSync] Failed to persist state:", err);
+            if (retry) {
+              // Single retry after 2s
+              setTimeout(() => attemptSave(false), 2000);
+            } else {
+              reportError();
+            }
+          });
+      };
+      attemptSave(true);
     }, 500);
 
     return () => {
@@ -150,5 +171,8 @@ export function useStateSync() {
     state.activeThreadIds,
     state.projectPath,
     state.projectName,
+    reportSaving,
+    reportSuccess,
+    reportError,
   ]);
 }

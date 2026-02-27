@@ -23,7 +23,7 @@ describe("POST /api/recording/start", () => {
 
     const req = new Request("http://localhost/api/recording/start", {
       method: "POST",
-      body: JSON.stringify({ projectPath: "/projects/app", flowIds: ["flow-1", "flow-2"] }),
+      body: JSON.stringify({ projectPath: "/projects/app", flowIds: ["flow-1", "flow-2"], runId: "run-1" }),
     });
 
     const response = await POST(req);

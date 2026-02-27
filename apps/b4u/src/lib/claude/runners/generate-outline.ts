@@ -1,9 +1,10 @@
 import { runClaude } from "@claudekit/claude-runner";
 import type { SessionRunner } from "@claudekit/session";
+import { extractJsonObject } from "@/lib/claude/extract-json";
 import { buildGenerateOutlinePrompt } from "@/lib/claude/prompts/generate-outline";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 
-export function createGenerateOutlineRunner(runId?: string): SessionRunner {
+export function createGenerateOutlineRunner(runId: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading project context...", progress: 10 });
 
@@ -18,10 +19,8 @@ export function createGenerateOutlineRunner(runId?: string): SessionRunner {
       project_path: string;
     }>(
       conn,
-      runId
-        ? "SELECT name, framework, auth, database_info, project_path FROM project_summary WHERE run_id = ? LIMIT 1"
-        : "SELECT name, framework, auth, database_info, project_path FROM project_summary LIMIT 1",
-      runId ? [runId] : [],
+      "SELECT name, framework, auth, database_info, project_path FROM project_summary WHERE run_id = ? LIMIT 1",
+      [runId],
     );
 
     if (summaryRows.length === 0) {
@@ -31,16 +30,11 @@ export function createGenerateOutlineRunner(runId?: string): SessionRunner {
     const summary = summaryRows[0];
 
     // Read routes from run_content
-    const routesRow = runId
-      ? await queryOne<{ data_json: string }>(
-          conn,
-          "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
-          [runId],
-        )
-      : await queryOne<{ data_json: string }>(
-          conn,
-          "SELECT data_json FROM run_content WHERE content_type = 'routes' LIMIT 1",
-        );
+    const routesRow = await queryOne<{ data_json: string }>(
+      conn,
+      "SELECT data_json FROM run_content WHERE run_id = ? AND content_type = 'routes'",
+      [runId],
+    );
 
     const routeRows: Array<{ path: string; title: string; authRequired: boolean; description: string }> = routesRow
       ? JSON.parse(routesRow.data_json)
@@ -91,38 +85,47 @@ export function createGenerateOutlineRunner(runId?: string): SessionRunner {
     // biome-ignore lint/suspicious/noExplicitAny: dynamic JSON from Claude response
     let outline: Record<string, any>;
     try {
-      const jsonMatch = result.stdout.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON found in Claude output");
-      outline = JSON.parse(jsonMatch[0]);
+      const jsonStr = extractJsonObject(result.stdout);
+      if (!jsonStr) throw new Error("No JSON found in Claude output");
+      outline = JSON.parse(jsonStr);
     } catch (err) {
       throw new Error(`Failed to parse outline: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     onProgress({ type: "progress", message: "Saving to database...", progress: 90 });
 
-    // Clear existing data
-    await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'user_flows')", [
-      runId,
-    ]);
+    try {
+      await execute(conn, "BEGIN TRANSACTION");
 
-    // Save updated routes as run_content
-    if (outline.routes && Array.isArray(outline.routes)) {
-      await execute(
-        conn,
-        `INSERT INTO run_content (id, run_id, content_type, data_json)
-        VALUES (?, ?, 'routes', ?)`,
-        [crypto.randomUUID(), runId, JSON.stringify(outline.routes)],
-      );
-    }
+      // Clear existing data
+      await execute(conn, "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'user_flows')", [
+        runId,
+      ]);
 
-    // Save user flows as run_content
-    if (outline.flows && Array.isArray(outline.flows)) {
-      await execute(
-        conn,
-        `INSERT INTO run_content (id, run_id, content_type, data_json)
-        VALUES (?, ?, 'user_flows', ?)`,
-        [crypto.randomUUID(), runId, JSON.stringify(outline.flows)],
-      );
+      // Save updated routes as run_content
+      if (outline.routes && Array.isArray(outline.routes)) {
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'routes', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(outline.routes)],
+        );
+      }
+
+      // Save user flows as run_content
+      if (outline.flows && Array.isArray(outline.flows)) {
+        await execute(
+          conn,
+          `INSERT INTO run_content (id, run_id, content_type, data_json)
+          VALUES (?, ?, 'user_flows', ?)`,
+          [crypto.randomUUID(), runId, JSON.stringify(outline.flows)],
+        );
+      }
+
+      await execute(conn, "COMMIT");
+    } catch (err) {
+      await execute(conn, "ROLLBACK").catch(() => {});
+      throw err;
     }
 
     onProgress({ type: "progress", message: "Outline complete", progress: 100 });

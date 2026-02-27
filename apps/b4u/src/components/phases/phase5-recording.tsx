@@ -7,6 +7,7 @@ import { Phase5RecordingSkeleton } from "@/components/ui/phase-skeletons";
 import { useApp } from "@/lib/store";
 import type { FlowScript, RecordingStatus } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { PhaseGoalBanner } from "./phase-goal-banner";
 
 const STATUS_LABELS: Record<RecordingStatus["status"], string> = {
   queued: "— Queued",
@@ -31,7 +32,12 @@ interface Phase5RecordingProps {
 
 export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
   const { state } = useApp();
-  const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`);
+  const {
+    data: flowScripts,
+    loading,
+    error,
+    refetch,
+  } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`, state.panelRefreshKey);
   const { events, status: streamStatus } = useSessionStream({ sessionId: state.activeSessionId });
   const [recordings, setRecordings] = useState<RecordingStatus[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
@@ -134,12 +140,20 @@ export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
   }, [streamStatus]);
 
   if (loading) return <Phase5RecordingSkeleton />;
-  if (error || !flowScripts) return <ErrorState message={error || "No flow data"} onRetry={refetch} />;
+  if (error || !flowScripts)
+    return (
+      <ErrorState
+        message={error || "No flow data"}
+        onRetry={refetch}
+        guidance="Check that demo scripts were generated in Phase 4"
+      />
+    );
 
   const allDone = recordings.length > 0 && recordings.every((r) => r.status === "done");
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
+      <PhaseGoalBanner phase={5} />
       <div className="px-4 py-3 border-b border-border text-xs font-medium flex items-center gap-2 text-muted-foreground bg-card">
         <span style={{ color: allDone ? "hsl(var(--success))" : "hsl(var(--destructive))" }}>
           {allDone ? "\u2713" : "\u25CF"}
@@ -154,10 +168,7 @@ export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
             <span className="text-2xs text-muted-foreground">OVERALL</span>
             <span className="text-2xs font-medium text-primary">{Math.round(overallProgress)}%</span>
           </div>
-          <div
-            className="h-[4px] w-full overflow-hidden bg-muted border border-border"
-            style={{ borderRadius: "99px" }}
-          >
+          <div className="h-1 w-full overflow-hidden bg-muted border border-border rounded-full">
             <div
               className="h-full transition-all"
               style={{
@@ -185,7 +196,7 @@ export function Phase5Recording({ onComplete }: Phase5RecordingProps) {
                 {STATUS_LABELS[rec.status]}
               </span>
             </div>
-            <div className="h-[3px] w-full overflow-hidden bg-background" style={{ borderRadius: "99px" }}>
+            <div className="h-0.5 w-full overflow-hidden bg-background rounded-full">
               <div
                 className="h-full transition-all"
                 style={{

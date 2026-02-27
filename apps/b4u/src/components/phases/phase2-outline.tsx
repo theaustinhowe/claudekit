@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase2OutlineSkeleton } from "@/components/ui/phase-skeletons";
@@ -7,6 +8,7 @@ import { useApp } from "@/lib/store";
 import type { RouteEntry, UserFlow } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
+import { PhaseGoalBanner } from "./phase-goal-banner";
 
 function validateRoute(route: RouteEntry): Record<string, string> {
   const errors: Record<string, string> = {};
@@ -26,13 +28,13 @@ export function Phase2Outline() {
     loading: loadingRoutes,
     error: errorRoutes,
     refetch: refetchRoutes,
-  } = useApi<RouteEntry[]>(`/api/routes?runId=${state.runId}`);
+  } = useApi<RouteEntry[]>(`/api/routes?runId=${state.runId}`, state.panelRefreshKey);
   const {
     data: apiFlows,
     loading: loadingFlows,
     error: errorFlows,
     refetch: refetchFlows,
-  } = useApi<UserFlow[]>(`/api/user-flows?runId=${state.runId}`);
+  } = useApi<UserFlow[]>(`/api/user-flows?runId=${state.runId}`, state.panelRefreshKey);
 
   const [routes, setRoutes] = useState<RouteEntry[]>([]);
   const [flows, setFlows] = useState<UserFlow[]>([]);
@@ -282,33 +284,35 @@ export function Phase2Outline() {
           refetchRoutes();
           refetchFlows();
         }}
+        guidance="Run Phase 1 scan first, or retry if data is loading"
       />
     );
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
+      <PhaseGoalBanner phase={2} />
       <div className="px-4 py-3 border-b border-border flex items-center gap-4 bg-card">
         <button
           type="button"
           onClick={() => setActiveTab("routes")}
-          className="text-xs font-medium px-2.5 py-1 transition-colors rounded-sm"
-          style={{
-            color: activeTab === "routes" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.7)",
-            background: activeTab === "routes" ? "hsl(var(--primary) / 0.1)" : "transparent",
-            border: activeTab === "routes" ? "1px solid hsl(var(--primary))" : "1px solid transparent",
-          }}
+          className={cn(
+            "text-xs font-medium px-2.5 py-1 transition-colors rounded-sm border",
+            activeTab === "routes"
+              ? "text-primary bg-primary/10 border-primary"
+              : "text-muted-foreground/70 bg-transparent border-transparent",
+          )}
         >
           Routes ({routes.length})
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("flows")}
-          className="text-xs font-medium px-2.5 py-1 transition-colors rounded-sm"
-          style={{
-            color: activeTab === "flows" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.7)",
-            background: activeTab === "flows" ? "hsl(var(--primary) / 0.1)" : "transparent",
-            border: activeTab === "flows" ? "1px solid hsl(var(--primary))" : "1px solid transparent",
-          }}
+          className={cn(
+            "text-xs font-medium px-2.5 py-1 transition-colors rounded-sm border",
+            activeTab === "flows"
+              ? "text-primary bg-primary/10 border-primary"
+              : "text-muted-foreground/70 bg-transparent border-transparent",
+          )}
         >
           User Flows ({flows.length})
         </button>

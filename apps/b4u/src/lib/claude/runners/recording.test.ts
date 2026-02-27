@@ -22,7 +22,7 @@ describe("createRecordingRunner", () => {
     const recordings = [{ flowId: "f1", videoPath: "/v.mp4", duration: 30 }];
     vi.mocked(runRecordingPipeline).mockResolvedValue({ recordings });
 
-    const runner = createRecordingRunner("/project", ["f1"]);
+    const runner = createRecordingRunner("/project", ["f1"], "test-run-id");
     const result = await runner(makeCtx());
 
     expect(runRecordingPipeline).toHaveBeenCalledWith(
@@ -38,7 +38,7 @@ describe("createRecordingRunner", () => {
     vi.mocked(runRecordingPipeline).mockResolvedValue({ recordings: [] });
 
     const ctx = makeCtx();
-    const runner = createRecordingRunner("/project");
+    const runner = createRecordingRunner("/project", undefined, "test-run-id");
     await runner(ctx);
 
     expect(runRecordingPipeline).toHaveBeenCalledWith(
@@ -52,7 +52,7 @@ describe("createRecordingRunner", () => {
   it("propagates pipeline errors", async () => {
     vi.mocked(runRecordingPipeline).mockRejectedValue(new Error("No flow scripts found"));
 
-    const runner = createRecordingRunner("/project");
+    const runner = createRecordingRunner("/project", undefined, "test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No flow scripts found");
   });

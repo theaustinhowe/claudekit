@@ -427,6 +427,59 @@ describe("usePhaseController", () => {
       expect(errorMsg).toBeDefined();
     });
 
+    it("error action card uses 'retry' type targeting the failed phase, not the completed one", async () => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error("Outline generation failed"));
+
+      await controller.approvePhase(1);
+
+      const addMsgCalls = mockDispatch.mock.calls.filter(
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
+      );
+      const errorMsg = addMsgCalls.find(
+        (c: unknown[]) => (c[0] as { message: { actionCard?: { type: string } } }).message.actionCard?.type === "retry",
+      );
+      expect(errorMsg).toBeDefined();
+      const card = (errorMsg?.[0] as { message: { actionCard: { type: string; phase: number } } }).message.actionCard;
+      expect(card.type).toBe("retry");
+      // Failed phase is 2 (the next phase), not 1 (the completed phase)
+      expect(card.phase).toBe(2);
+    });
+
+    it("messages target nextPhase explicitly during phase transition", async () => {
+      mockState.viewingPhase = 1;
+
+      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+        if (typeof url === "string" && url.includes("/api/analyze")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ sessionId: "sess-1" }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        });
+      });
+
+      const promise = controller.approvePhase(1);
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(1));
+      esInstances[0].triggerMessage({ type: "done", data: {} });
+      await vi.waitFor(() => expect(esInstances.length).toBeGreaterThanOrEqual(2));
+      esInstances[1].triggerMessage({ type: "done", data: { routeCount: 5, flowCount: 3 } });
+      await promise;
+
+      // AI messages after COMPLETE_PHASE should target phase 2, not phase 1
+      const addMsgCalls = mockDispatch.mock.calls.filter(
+        (c: unknown[]) => (c[0] as { type: string }).type === "ADD_THREAD_MESSAGE",
+      );
+      const aiMsgsAfterComplete = addMsgCalls.filter(
+        (c: unknown[]) => (c[0] as { message: { role: string } }).message.role === "ai",
+      );
+      // The first AI message after approval should go to phase 2
+      expect(aiMsgsAfterComplete.length).toBeGreaterThanOrEqual(1);
+      expect((aiMsgsAfterComplete[0][0] as { phase: number }).phase).toBe(2);
+    });
+
     it("does not run if already busy", async () => {
       globalThis.fetch = vi.fn().mockImplementation(
         () =>

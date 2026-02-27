@@ -9,14 +9,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "projectPath is required" }, { status: 400 });
   }
 
+  if (!runId) {
+    return NextResponse.json({ error: "runId is required" }, { status: 400 });
+  }
+
   const sessionId = await createSession({
     sessionType: "recording",
     label: "Recording flows",
     projectPath,
-    runId: runId || null,
+    runId,
   });
 
-  const runner = createRecordingRunner(projectPath, flowIds, runId || undefined);
+  const runner = createRecordingRunner(projectPath, flowIds, runId);
   await startSession(sessionId, runner);
 
   return NextResponse.json({ sessionId });

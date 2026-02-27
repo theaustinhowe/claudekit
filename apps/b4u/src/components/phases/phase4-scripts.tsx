@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase4ScriptsSkeleton } from "@/components/ui/phase-skeletons";
@@ -7,10 +8,16 @@ import { useApp } from "@/lib/store";
 import type { FlowScript, ScriptStep } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
 import { uid } from "@/lib/utils";
+import { PhaseGoalBanner } from "./phase-goal-banner";
 
 export function Phase4Scripts() {
   const { state } = useApp();
-  const { data: flowScripts, loading, error, refetch } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`);
+  const {
+    data: flowScripts,
+    loading,
+    error,
+    refetch,
+  } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`, state.panelRefreshKey);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [scripts, setScripts] = useState<FlowScript[]>([]);
   const [saving, setSaving] = useState(false);
@@ -173,6 +180,7 @@ export function Phase4Scripts() {
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
+      <PhaseGoalBanner phase={4} />
       {/* Tabs */}
       <div className="flex border-b border-border overflow-x-auto shrink-0 bg-card">
         {scripts.map((script) => (
@@ -180,11 +188,10 @@ export function Phase4Scripts() {
             type="button"
             key={script.flowId}
             onClick={() => setActiveTab(script.flowId)}
-            className="px-3 py-2.5 text-2xs font-medium whitespace-nowrap transition-colors relative"
-            style={{
-              color: activeTab === script.flowId ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.7)",
-              background: activeTab === script.flowId ? "hsl(var(--primary) / 0.1)" : "transparent",
-            }}
+            className={cn(
+              "px-3 py-2.5 text-2xs font-medium whitespace-nowrap transition-colors relative",
+              activeTab === script.flowId ? "text-primary bg-primary/10" : "text-muted-foreground/70",
+            )}
           >
             {script.flowName}
             {activeTab === script.flowId && <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-primary" />}
@@ -197,7 +204,7 @@ export function Phase4Scripts() {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-[11px] top-[16px] bottom-[16px] w-[1px] bg-border" />
+          <div className="absolute left-3 top-4 bottom-4 w-[1px] bg-border" />
 
           <div role="listbox" aria-roledescription="sortable" aria-label="Demo script steps" className="space-y-0">
             {activeScript.steps.map((step, index) => (
@@ -228,13 +235,7 @@ export function Phase4Scripts() {
                   <div className="text-2xs cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity select-none text-muted-foreground">
                     ⋮⋮
                   </div>
-                  <div
-                    className="w-[22px] h-[22px] flex items-center justify-center text-2xs font-bold bg-card text-primary"
-                    style={{
-                      border: "1.5px solid hsl(var(--primary))",
-                      borderRadius: "99px",
-                    }}
-                  >
+                  <div className="w-[22px] h-[22px] flex items-center justify-center text-2xs font-bold bg-card text-primary border-[1.5px] border-primary rounded-full">
                     {step.stepNumber}
                   </div>
                 </div>
@@ -272,13 +273,7 @@ export function Phase4Scripts() {
                         <button
                           type="button"
                           onClick={() => removeStep(step.id)}
-                          className="text-2xs px-2 py-1 text-destructive border border-destructive rounded-sm bg-transparent"
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "transparent";
-                          }}
+                          className="text-2xs px-2 py-1 text-destructive border border-destructive rounded-sm bg-transparent hover:bg-destructive/10"
                         >
                           Remove step
                         </button>
@@ -309,13 +304,7 @@ export function Phase4Scripts() {
           <button
             type="button"
             onClick={addStep}
-            className="flex items-center gap-1 mt-2 ml-8 text-2xs transition-colors text-muted-foreground"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "hsl(var(--primary))";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-            }}
+            className="flex items-center gap-1 mt-2 ml-8 text-2xs transition-colors text-muted-foreground hover:text-primary"
           >
             + Add step
           </button>

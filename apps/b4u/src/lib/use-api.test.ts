@@ -170,4 +170,50 @@ describe("useApi", () => {
     const fetchEffect = effectCallbacks[0];
     expect(fetchEffect.deps).toContain("/api/test-url");
   });
+
+  it("includes refreshKey in effect dependencies", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({}),
+    });
+
+    const mod = await import("./use-api");
+    mod.useApi("/api/data", 42);
+
+    const fetchEffect = effectCallbacks[0];
+    expect(fetchEffect.deps).toContain(42);
+  });
+
+  it("changing refreshKey triggers a new fetch", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ v: 1 }),
+    });
+
+    const mod = await import("./use-api");
+
+    // First call with refreshKey=0
+    mod.useApi("/api/data", 0);
+    const firstEffect = effectCallbacks[0];
+    firstEffect.cb();
+
+    await vi.waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    // Reset state for second render
+    effectCallbacks = [];
+    stateIndex = 0;
+
+    // Second call with refreshKey=1
+    mod.useApi("/api/data", 1);
+    const secondEffect = effectCallbacks[0];
+    // The deps should include the new refreshKey
+    expect(secondEffect.deps).toContain(1);
+    secondEffect.cb();
+
+    await vi.waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    });
+  });
 });

@@ -8,6 +8,7 @@ import { usePhaseController } from "@/lib/phase-controller";
 import { useApp } from "@/lib/store";
 import type { ChapterMarker } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { PhaseGoalBanner } from "./phase-goal-banner";
 
 interface VideoInfo {
   id: string;
@@ -21,13 +22,13 @@ export function Phase7Output() {
     loading: l1,
     error: e1,
     refetch: rf1,
-  } = useApi<ChapterMarker[]>(`/api/chapter-markers?runId=${state.runId}`);
+  } = useApi<ChapterMarker[]>(`/api/chapter-markers?runId=${state.runId}`, state.panelRefreshKey);
   const {
     data: videoInfo,
     loading: l2,
     error: e2,
     refetch: rf2,
-  } = useApi<VideoInfo>(`/api/video/info?runId=${state.runId}`);
+  } = useApi<VideoInfo>(`/api/video/info?runId=${state.runId}`, state.panelRefreshKey);
   const controller = usePhaseController();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -225,6 +226,7 @@ export function Phase7Output() {
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
+      <PhaseGoalBanner phase={7} />
       <div className="px-4 py-3 border-b border-border text-xs font-medium flex items-center gap-2 text-muted-foreground bg-card">
         <span className="text-success">▶</span>
         FINAL OUTPUT

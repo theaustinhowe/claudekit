@@ -23,7 +23,7 @@ describe("POST /api/audio/generate", () => {
 
     const req = new Request("http://localhost/api/audio/generate", {
       method: "POST",
-      body: JSON.stringify({ voiceId: "voice-1", speed: 1.2 }),
+      body: JSON.stringify({ voiceId: "voice-1", speed: 1.2, runId: "run-1" }),
     });
 
     const response = await POST(req);

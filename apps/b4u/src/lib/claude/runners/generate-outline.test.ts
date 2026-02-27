@@ -31,7 +31,7 @@ describe("createGenerateOutlineRunner", () => {
   it("throws when no project summary found", async () => {
     vi.mocked(queryAll).mockResolvedValue([]);
 
-    const runner = createGenerateOutlineRunner();
+    const runner = createGenerateOutlineRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No project summary found");
   });
@@ -43,7 +43,7 @@ describe("createGenerateOutlineRunner", () => {
     vi.mocked(queryOne).mockResolvedValueOnce({ data_json: "[]" }); // routes from run_content
     vi.mocked(runClaude).mockResolvedValue({ stdout: "no json", stderr: "", exitCode: 0 });
 
-    const runner = createGenerateOutlineRunner();
+    const runner = createGenerateOutlineRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No JSON found");
   });
@@ -66,14 +66,14 @@ describe("createGenerateOutlineRunner", () => {
       exitCode: 0,
     });
 
-    const runner = createGenerateOutlineRunner();
+    const runner = createGenerateOutlineRunner("test-run-id");
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: outline });
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),
       "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'user_flows')",
-      [undefined],
+      ["test-run-id"],
     );
 
     // Verify routes INSERT into run_content

@@ -6,13 +6,17 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const { runId } = body as { runId?: string };
 
+  if (!runId) {
+    return NextResponse.json({ error: "runId is required" }, { status: 400 });
+  }
+
   const sessionId = await createSession({
     sessionType: "generate-scripts",
     label: "Generating demo scripts",
-    runId: runId || null,
+    runId,
   });
 
-  const runner = createGenerateScriptsRunner(runId || undefined);
+  const runner = createGenerateScriptsRunner(runId);
   await startSession(sessionId, runner);
 
   return NextResponse.json({ sessionId });

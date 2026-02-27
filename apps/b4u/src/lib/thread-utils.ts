@@ -76,6 +76,44 @@ export function getNextRevision(threads: Record<Phase, PhaseThread[]>, phase: Ph
 }
 
 /**
+ * Get gate decisions that are still missing (null value) for a thread.
+ * Gate decisions must be completed before the phase can be approved.
+ */
+export function getMissingGateDecisions(thread: PhaseThread): PhaseDecision[] {
+  const configs = PHASE_DECISION_CONFIGS[thread.phase];
+  const gateKeys = new Set(configs.filter((c) => c.gate).map((c) => c.key));
+  return thread.decisions.filter((d) => gateKeys.has(d.key) && d.value === null);
+}
+
+/**
+ * Create a revision thread that inherits gate decision values from the superseded thread.
+ * Non-gate decisions are left empty (null) since they represent per-revision confirmations.
+ */
+export function createRevisionThread(
+  runId: string,
+  phase: Phase,
+  revision: number,
+  supersededThread?: PhaseThread,
+): PhaseThread {
+  const thread = createThread(runId, phase, revision);
+  if (!supersededThread) return thread;
+
+  const configs = PHASE_DECISION_CONFIGS[phase];
+  const gateKeys = new Set(configs.filter((c) => c.gate).map((c) => c.key));
+
+  thread.decisions = thread.decisions.map((d) => {
+    if (!gateKeys.has(d.key)) return d;
+    const prev = supersededThread.decisions.find((sd) => sd.key === d.key);
+    if (prev?.value !== null && prev?.value !== undefined) {
+      return { ...d, value: prev.value, decidedAt: prev.decidedAt };
+    }
+    return d;
+  });
+
+  return thread;
+}
+
+/**
  * Create empty thread collections for initializing state.
  */
 export function emptyThreads(): Record<Phase, PhaseThread[]> {

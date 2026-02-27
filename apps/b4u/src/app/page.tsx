@@ -8,6 +8,7 @@ import { LayoutShell } from "@/components/layout/layout-shell";
 import { RightPanel } from "@/components/phases/right-panel";
 import { useRunParam } from "@/lib/hooks/use-run-param";
 import { useStateSync } from "@/lib/hooks/use-state-sync";
+import { SyncStatusContext, useSyncStatusProvider } from "@/lib/hooks/use-sync-status";
 import { useThreadSync } from "@/lib/hooks/use-thread-sync";
 import { usePhaseController } from "@/lib/phase-controller";
 import { AppContext, appReducer, initialState, useApp } from "@/lib/store";
@@ -103,10 +104,13 @@ function AppShell() {
 
 export default function Home() {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const syncStatus = useSyncStatusProvider();
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
-      <AppShell />
+      <SyncStatusContext.Provider value={syncStatus}>
+        <AppShell />
+      </SyncStatusContext.Provider>
     </AppContext.Provider>
   );
 }

@@ -36,9 +36,7 @@ describe("POST /api/analyze/outline", () => {
     );
   });
 
-  it("works without runId", async () => {
-    mockCreateSession.mockResolvedValue("session-abc");
-
+  it("returns 400 without runId", async () => {
     const req = new Request("http://localhost/api/analyze/outline", {
       method: "POST",
       body: JSON.stringify({}),
@@ -47,7 +45,7 @@ describe("POST /api/analyze/outline", () => {
     const response = await POST(req);
     const data = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(data.sessionId).toBe("session-abc");
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId");
   });
 });

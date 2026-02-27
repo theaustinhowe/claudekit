@@ -29,7 +29,7 @@ describe("createAnalyzeProjectRunner", () => {
   it("throws when Claude returns no JSON", async () => {
     vi.mocked(runClaude).mockResolvedValue({ stdout: "no json here", stderr: "", exitCode: 0 });
 
-    const runner = createAnalyzeProjectRunner("/project");
+    const runner = createAnalyzeProjectRunner("/project", "test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No JSON found");
   });
@@ -37,7 +37,7 @@ describe("createAnalyzeProjectRunner", () => {
   it("throws on invalid JSON from Claude", async () => {
     vi.mocked(runClaude).mockResolvedValue({ stdout: "{invalid json}", stderr: "", exitCode: 0 });
 
-    const runner = createAnalyzeProjectRunner("/project");
+    const runner = createAnalyzeProjectRunner("/project", "test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("Failed to parse analysis");
   });
@@ -56,18 +56,18 @@ describe("createAnalyzeProjectRunner", () => {
       exitCode: 0,
     });
 
-    const runner = createAnalyzeProjectRunner("/project");
+    const runner = createAnalyzeProjectRunner("/project", "test-run-id");
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: analysis });
     // Clears existing data
     expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM project_summary WHERE run_id = ?", [
-      undefined,
+      "test-run-id",
     ]);
     expect(execute).toHaveBeenCalledWith(
       expect.anything(),
       "DELETE FROM run_content WHERE run_id = ? AND content_type IN ('routes', 'file_tree')",
-      [undefined],
+      ["test-run-id"],
     );
     // Inserts project summary
     expect(execute).toHaveBeenCalledWith(
@@ -85,7 +85,7 @@ describe("createAnalyzeProjectRunner", () => {
     });
 
     const ctx = makeCtx();
-    const runner = createAnalyzeProjectRunner("/project");
+    const runner = createAnalyzeProjectRunner("/project", "test-run-id");
     await runner(ctx);
 
     expect(ctx.onProgress).toHaveBeenCalledWith(
@@ -110,7 +110,7 @@ describe("createAnalyzeProjectRunner", () => {
       exitCode: 0,
     });
 
-    const runner = createAnalyzeProjectRunner("/project");
+    const runner = createAnalyzeProjectRunner("/project", "test-run-id");
     await runner(makeCtx());
 
     // Verify the INSERT uses ?::VARCHAR[] cast
@@ -130,7 +130,7 @@ describe("createAnalyzeProjectRunner", () => {
       exitCode: 0,
     });
 
-    const runner = createAnalyzeProjectRunner("/project");
+    const runner = createAnalyzeProjectRunner("/project", "test-run-id");
     const result = await runner(makeCtx());
 
     expect(result).toEqual({ result: { name: "Wrapped" } });

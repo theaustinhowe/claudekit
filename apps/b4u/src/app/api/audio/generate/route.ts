@@ -9,13 +9,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "voiceId is required" }, { status: 400 });
   }
 
+  if (!runId) {
+    return NextResponse.json({ error: "runId is required" }, { status: 400 });
+  }
+
   const sessionId = await createSession({
     sessionType: "voiceover-audio",
     label: "Generating voiceover audio",
-    runId: runId || null,
+    runId,
   });
 
-  const runner = createVoiceoverAudioRunner(voiceId, speed || 1.0, runId || undefined);
+  const runner = createVoiceoverAudioRunner(voiceId, speed || 1.0, runId);
   await startSession(sessionId, runner);
 
   return NextResponse.json({ sessionId });

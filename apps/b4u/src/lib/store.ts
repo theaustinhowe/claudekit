@@ -1,7 +1,13 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { createThread, emptyActiveThreadIds, emptyThreads, getNextRevision } from "./thread-utils";
+import {
+  createRevisionThread,
+  createThread,
+  emptyActiveThreadIds,
+  emptyThreads,
+  getNextRevision,
+} from "./thread-utils";
 import type { ChatMessage, Phase, PhaseStatus, PhaseThread } from "./types";
 
 interface AppState {
@@ -213,13 +219,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case "RESTART_FROM_PHASE": {
       // Supersede current active thread for the target phase
       const currentThreadId = state.activeThreadIds[action.phase];
+      const supersededThread = state.threads[action.phase].find((t) => t.id === currentThreadId);
       let phaseThreads = state.threads[action.phase].map((t) =>
         t.id === currentThreadId ? { ...t, status: "superseded" as const } : t,
       );
 
-      // Create a new thread for the target phase
+      // Create a new thread that inherits gate decisions from the superseded thread
       const revision = getNextRevision(state.threads, action.phase);
-      const newThread = createThread(state.runId ?? "", action.phase, revision);
+      const newThread = createRevisionThread(state.runId ?? "", action.phase, revision, supersededThread);
       phaseThreads = [...phaseThreads, newThread];
 
       // Re-activate the target phase, lock everything after it

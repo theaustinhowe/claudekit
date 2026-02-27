@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { useApp } from "./store";
+import { getActiveThread, getMissingGateDecisions } from "./thread-utils";
 import type { ActionCard, Phase, ProjectSummary } from "./types";
 import { PHASE_LABELS } from "./types";
 import { delay, uid } from "./utils";
@@ -10,35 +11,61 @@ import { delay, uid } from "./utils";
  * Wait for a session to reach a terminal state via SSE.
  * Resolves with the final event data, or rejects on error/cancel.
  */
-function waitForSession(sessionId: string): Promise<Record<string, unknown> | undefined> {
+function waitForSession(sessionId: string, timeoutMs = 300_000): Promise<Record<string, unknown> | undefined> {
   return new Promise((resolve, reject) => {
     const es = new EventSource(`/api/sessions/${sessionId}/stream`);
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        es.close();
+        reject(new Error("Session timed out"));
+      }
+    }, timeoutMs);
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      es.close();
+    };
 
     es.onmessage = (event) => {
       try {
         const parsed = JSON.parse(event.data);
         switch (parsed.type) {
           case "done":
-            es.close();
-            resolve(parsed.data);
+            if (!settled) {
+              settled = true;
+              cleanup();
+              resolve(parsed.data);
+            }
             break;
           case "error":
-            es.close();
-            reject(new Error(parsed.message ?? "Session error"));
+            if (!settled) {
+              settled = true;
+              cleanup();
+              reject(new Error(parsed.message ?? "Session error"));
+            }
             break;
           case "cancelled":
-            es.close();
-            reject(new Error("Session cancelled"));
+            if (!settled) {
+              settled = true;
+              cleanup();
+              reject(new Error("Session cancelled"));
+            }
             break;
         }
-      } catch {
-        // ignore parse errors
+      } catch (e) {
+        console.warn("[waitForSession] Failed to parse SSE event:", e);
       }
     };
 
     es.onerror = () => {
-      es.close();
-      reject(new Error("Stream connection lost"));
+      if (!settled) {
+        settled = true;
+        cleanup();
+        reject(new Error("Stream connection lost"));
+      }
     };
   });
 }
@@ -69,8 +96,8 @@ export function usePhaseController() {
   );
 
   const addAIMessage = useCallback(
-    async (content: string, actionCard?: ActionCard, delayMs = 800): Promise<string> => {
-      const phase = stateRef.current.viewingPhase;
+    async (content: string, actionCard?: ActionCard, delayMs = 800, targetPhase?: Phase): Promise<string> => {
+      const phase = targetPhase ?? stateRef.current.viewingPhase;
       dispatch({ type: "SET_TYPING", isTyping: true });
       await delay(delayMs);
       dispatch({ type: "SET_TYPING", isTyping: false });
@@ -92,8 +119,8 @@ export function usePhaseController() {
   );
 
   const addMessage = useCallback(
-    (role: "ai" | "user" | "system", content: string, actionCard?: ActionCard) => {
-      const phase = stateRef.current.viewingPhase;
+    (role: "ai" | "user" | "system", content: string, actionCard?: ActionCard, targetPhase?: Phase) => {
+      const phase = targetPhase ?? stateRef.current.viewingPhase;
       dispatch({
         type: "ADD_THREAD_MESSAGE",
         phase,
@@ -162,11 +189,27 @@ export function usePhaseController() {
       undefined,
       500,
     );
+
+    // Non-blocking preflight check for external dependencies
+    try {
+      const pfRes = await fetch("/api/preflight");
+      if (pfRes.ok) {
+        const pfData = await pfRes.json();
+        const missing = (pfData.checks as Array<{ available: boolean; message: string }>).filter((c) => !c.available);
+        if (missing.length > 0) {
+          const warnings = missing.map((c) => c.message).join(" ");
+          addMessage("system", `Dependency warning: ${warnings}`, undefined, 1);
+        }
+      }
+    } catch {
+      // Preflight unavailable — continue silently
+    }
+
     await delay(300);
     await addAIMessage("Let's start by selecting your project folder.", { type: "folder-select" }, 600);
     dispatch({ type: "SET_RIGHT_PANEL", phase: 1 });
     busyRef.current = false;
-  }, [addAIMessage, dispatch, ensureThread]);
+  }, [addAIMessage, addMessage, dispatch, ensureThread]);
 
   const handleFolderSelected = useCallback(
     async (path: string) => {
@@ -265,7 +308,45 @@ export function usePhaseController() {
       if (busyRef.current) return;
       busyRef.current = true;
 
+      // Validate gate decisions before allowing advancement
+      const activeThread = getActiveThread(stateRef.current.threads, stateRef.current.activeThreadIds, phase);
+      if (activeThread) {
+        const missing = getMissingGateDecisions(activeThread);
+        if (missing.length > 0) {
+          const names = missing.map((d) => d.label).join(", ");
+          await addAIMessage(
+            `Before continuing, please complete: ${names}. These are required for ${PHASE_LABELS[phase]}.`,
+          );
+          busyRef.current = false;
+          return;
+        }
+      }
+
       addMessage("user", "Approved \u2713");
+
+      // Validate that prerequisite data exists before advancing
+      const nextPhaseNum = (phase + 1) as Phase;
+      if (nextPhaseNum <= 7) {
+        const runId = stateRef.current.runId;
+        if (runId) {
+          try {
+            const valRes = await fetch(`/api/runs/${runId}/validate-phase?phase=${nextPhaseNum}`);
+            if (valRes.ok) {
+              const valData = await valRes.json();
+              if (!valData.valid) {
+                await addAIMessage(
+                  valData.message || "Required data from the previous phase is missing. Please complete it first.",
+                  { type: "retry", phase, label: "Retry" },
+                );
+                busyRef.current = false;
+                return;
+              }
+            }
+          } catch {
+            // Validation endpoint unavailable — continue anyway
+          }
+        }
+      }
 
       // Record the approve decision
       const approveKeys: Record<Phase, string> = {
@@ -292,9 +373,6 @@ export function usePhaseController() {
         if (runId) {
           dispatch({ type: "CREATE_THREAD", phase: nextPhase, runId });
         }
-        // Eagerly update ref so addAIMessage/addMessage target the new phase
-        // (React won't re-render until this async function yields)
-        stateRef.current = { ...stateRef.current, viewingPhase: nextPhase, currentPhase: nextPhase };
       }
 
       try {
@@ -305,6 +383,7 @@ export function usePhaseController() {
               "Great. Let me run a deep analysis of your codebase first, then outline the app's user flows and URL structure.",
               undefined,
               600,
+              nextPhase,
             );
 
             // Deep analysis — maps routes, auth, database, etc. from source code
@@ -313,7 +392,12 @@ export function usePhaseController() {
               await runSessionPhase("/api/analyze/project", { path: projectPath }, "Analyzing codebase with Claude...");
             } catch (err) {
               const msg = err instanceof Error ? err.message : "Analysis failed";
-              await addAIMessage(`Deep analysis encountered an issue: ${msg}. Continuing with basic scan results.`);
+              await addAIMessage(
+                `Deep analysis encountered an issue: ${msg}. Continuing with basic scan results.`,
+                undefined,
+                800,
+                nextPhase,
+              );
             }
 
             const outlineResult = await runSessionPhase("/api/analyze/outline", null, "Generating app outline...");
@@ -326,6 +410,7 @@ export function usePhaseController() {
               `I've mapped out ${routeCount} routes and ${flowCount} user flows on the right. Review the outline and edit anything that needs adjusting.`,
               { type: "approve", phase: 2 },
               500,
+              nextPhase,
             );
             break;
           }
@@ -336,6 +421,7 @@ export function usePhaseController() {
               "Now I'll figure out what mock data and environment setup is needed for the recordings.",
               undefined,
               600,
+              nextPhase,
             );
 
             const dataPlanResult = await runSessionPhase("/api/analyze/data-plan", null, "Generating data plan...");
@@ -347,6 +433,7 @@ export function usePhaseController() {
               `The data plan is ready \u2014 ${entityCount} mock data entities and ${authCount} auth overrides configured. Toggle settings on the right.`,
               { type: "approve", phase: 3 },
               700,
+              nextPhase,
             );
             break;
           }
@@ -357,6 +444,7 @@ export function usePhaseController() {
               "Time to write the demo scripts. I'll create a step-by-step walkthrough for each user flow.",
               undefined,
               600,
+              nextPhase,
             );
 
             const scriptsResult = await runSessionPhase(
@@ -372,11 +460,13 @@ export function usePhaseController() {
               `Created scripts for ${scriptFlowCount} flows with ${totalSteps} total steps. Each step includes URL, action, expected result, and timing.`,
               undefined,
               800,
+              nextPhase,
             );
             await addAIMessage(
               "Edit anything on the right, or tell me what to adjust.",
               { type: "approve", phase: 4, label: "Scripts look good" },
               500,
+              nextPhase,
             );
             break;
           }
@@ -387,6 +477,7 @@ export function usePhaseController() {
               "Starting the recording process. I'll launch the app, seed the data, and record each flow. Watch the progress on the right.",
               undefined,
               600,
+              nextPhase,
             );
             dispatch({ type: "SET_RIGHT_PANEL", phase: 5 });
 
@@ -397,11 +488,13 @@ export function usePhaseController() {
               "All flows recorded! The raw recordings are ready.",
               { type: "recording-complete" },
               400,
+              nextPhase,
             );
             await addAIMessage(
               "Ready to create the voiceover narration?",
               { type: "approve", phase: 5, label: "Continue to voiceover" },
               500,
+              nextPhase,
             );
             break;
           }
@@ -412,6 +505,7 @@ export function usePhaseController() {
               "All flows recorded. Now let's create the voiceover narration to go with the video.",
               undefined,
               600,
+              nextPhase,
             );
             // Panel shows data from earlier phases (scripts, voiceover) — safe to show immediately
             dispatch({ type: "SET_RIGHT_PANEL", phase: 6 });
@@ -419,18 +513,20 @@ export function usePhaseController() {
               "The voiceover script is ready on the right, synced to the video timeline. Pick a voice and preview the audio.",
               undefined,
               800,
+              nextPhase,
             );
             await addAIMessage(
               "Edit the voiceover script to your liking, then approve to generate audio.",
               { type: "approve", phase: 6, label: "Generate audio" },
               500,
+              nextPhase,
             );
             break;
           }
 
           // Phase 7 — Final Merge
           case 7: {
-            await addAIMessage("Generating voiceover audio...", undefined, 400);
+            await addAIMessage("Generating voiceover audio...", undefined, 400, nextPhase);
 
             // Read voice selection from Phase 6 thread decisions
             const phase6Threads = stateRef.current.threads[6] ?? [];
@@ -449,6 +545,7 @@ export function usePhaseController() {
               "Your feature walkthrough is ready! You can play it on the right, jump to specific chapters, or download in various formats.",
               { type: "final-ready" },
               500,
+              nextPhase,
             );
             break;
           }
@@ -459,11 +556,16 @@ export function usePhaseController() {
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Something went wrong";
         const failedPhase = nextPhase <= 7 ? nextPhase : phase;
-        await addAIMessage(`An error occurred during ${PHASE_LABELS[failedPhase]}: ${msg}`, {
-          type: "approve",
-          phase,
-          label: "Retry",
-        });
+        await addAIMessage(
+          `An error occurred during ${PHASE_LABELS[failedPhase]}: ${msg}`,
+          {
+            type: "retry",
+            phase: failedPhase,
+            label: "Retry",
+          },
+          800,
+          failedPhase,
+        );
       }
 
       busyRef.current = false;
@@ -681,7 +783,7 @@ export function usePhaseController() {
         const phaseNames = affected.map((p) => PHASE_LABELS[p]).join(", ");
         await addAIMessage(
           `Starting a new revision will lock later phases: ${phaseNames}. Previous versions remain viewable. Continue?`,
-          { type: "confirm-restart" as "approve", phase, label: `Yes, start new revision of ${PHASE_LABELS[phase]}` },
+          { type: "confirm-restart", phase, label: `Yes, start new revision of ${PHASE_LABELS[phase]}` },
           400,
         );
         busyRef.current = false;
@@ -689,7 +791,6 @@ export function usePhaseController() {
       }
 
       dispatch({ type: "RESTART_FROM_PHASE", phase });
-      stateRef.current = { ...stateRef.current, viewingPhase: phase, currentPhase: phase };
 
       await addAIMessage(
         `Starting a new revision of ${PHASE_LABELS[phase]}. Previous versions are still viewable. Make your changes and approve when ready.`,
@@ -714,7 +815,7 @@ export function usePhaseController() {
         addMessage("user", `I want to start a new revision of ${PHASE_LABELS[phase]}.`);
         await addAIMessage(
           `This will lock later phases: ${phaseNames}. Previous versions remain viewable. Continue?`,
-          { type: "approve", phase, label: `Yes, start new revision of ${PHASE_LABELS[phase]}` },
+          { type: "confirm-restart", phase, label: `Yes, start new revision of ${PHASE_LABELS[phase]}` },
           400,
         );
         busyRef.current = false;
@@ -723,7 +824,6 @@ export function usePhaseController() {
 
       addMessage("user", `I want to start a new revision of ${PHASE_LABELS[phase]}.`);
       dispatch({ type: "RESTART_FROM_PHASE", phase });
-      stateRef.current = { ...stateRef.current, viewingPhase: phase, currentPhase: phase };
 
       await addAIMessage(
         `Starting a new revision of ${PHASE_LABELS[phase]}. Previous versions are still viewable. Make your changes on the right, then approve when you're ready to continue.`,
@@ -734,6 +834,41 @@ export function usePhaseController() {
       busyRef.current = false;
     },
     [addAIMessage, addMessage, dispatch, getAffectedPhases],
+  );
+
+  /**
+   * Retry a failed phase transition. Re-runs approvePhase for the phase
+   * that precedes the failed one.
+   */
+  const retryPhase = useCallback(
+    async (failedPhase: Phase) => {
+      const prevPhase = (failedPhase - 1) as Phase;
+      if (prevPhase >= 1) {
+        await approvePhase(prevPhase);
+      }
+    },
+    [approvePhase],
+  );
+
+  /**
+   * Confirm a restart from a phase after the user has been warned about affected phases.
+   */
+  const handleConfirmRestart = useCallback(
+    async (phase: Phase) => {
+      if (busyRef.current) return;
+      busyRef.current = true;
+
+      dispatch({ type: "RESTART_FROM_PHASE", phase });
+
+      await addAIMessage(
+        `Starting a new revision of ${PHASE_LABELS[phase]}. Previous versions are still viewable. Make your changes and approve when ready.`,
+        { type: "approve", phase, label: `Re-approve ${PHASE_LABELS[phase]}` },
+        600,
+      );
+
+      busyRef.current = false;
+    },
+    [addAIMessage, dispatch],
   );
 
   /**
@@ -750,6 +885,8 @@ export function usePhaseController() {
     startPhase1,
     handleFolderSelected,
     approvePhase,
+    retryPhase,
+    handleConfirmRestart,
     handleRecordingComplete,
     handleUserMessage,
     handleEditRequest,

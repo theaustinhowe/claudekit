@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePhaseController } from "@/lib/phase-controller";
@@ -112,16 +113,7 @@ export function ChatPanel() {
           <button
             type="button"
             onClick={scrollToBottom}
-            className="px-3 py-1.5 text-2xs font-medium bg-card border border-border rounded-full shadow-md transition-all text-muted-foreground"
-            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "hsl(var(--primary))";
-              e.currentTarget.style.color = "hsl(var(--primary))";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "hsl(var(--border))";
-              e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-            }}
+            className="px-3 py-1.5 text-2xs font-medium bg-card border border-border rounded-full shadow-md transition-all text-muted-foreground hover:border-primary hover:text-primary"
           >
             {"\u2193"} New messages
           </button>
@@ -138,13 +130,7 @@ export function ChatPanel() {
           <button
             type="button"
             onClick={handleCancelEdit}
-            className="px-2 py-0.5 text-2xs rounded-sm transition-colors border border-primary/50 text-primary"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "hsl(var(--primary) / 0.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
+            className="px-2 py-0.5 text-2xs rounded-sm transition-colors border border-primary/50 text-primary hover:bg-primary/20"
           >
             Cancel
           </button>
@@ -152,15 +138,12 @@ export function ChatPanel() {
       )}
 
       {/* Input bar */}
-      <div
-        className="border-t px-3 sm:px-4 py-3 sm:py-3.5"
-        style={{ borderColor: isEditing ? "hsl(var(--primary))" : "hsl(var(--border))" }}
-      >
+      <div className={cn("border-t px-3 sm:px-4 py-3 sm:py-3.5", isEditing ? "border-primary" : "border-border")}>
         <div
-          className="flex items-end gap-2 bg-input rounded-lg"
-          style={{
-            border: isEditing ? "1px solid hsl(var(--primary))" : "1px solid hsl(var(--input))",
-          }}
+          className={cn(
+            "flex items-end gap-2 bg-input rounded-lg border",
+            isEditing ? "border-primary" : "border-input",
+          )}
         >
           <textarea
             value={inputValue}

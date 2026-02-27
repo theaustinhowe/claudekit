@@ -60,14 +60,37 @@ describe("POST /api/chat", () => {
     expect(data.error).toContain("message and phase are required");
   });
 
+  it("returns 400 when runId is missing for phase > 1", async () => {
+    const response = await POST(makeRequest({ message: "hello", phase: 2 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("runId is required");
+  });
+
   it("phase 1: calls queryOne for project_summary", async () => {
     setupHappyPath();
 
     await POST(makeRequest({ message: "hello", phase: 1 }));
 
-    // First call: loadPhaseContext -> queryOne for project_summary
+    // First call: loadPhaseContext -> queryOne for project_summary (no runId for phase 1)
     expect(mockQueryOne).toHaveBeenCalledWith({}, "SELECT * FROM project_summary LIMIT 1");
     expect(mockBuildPrompt).toHaveBeenCalledWith("hello", 1, { summary: { name: "Test" } });
+  });
+
+  it("phase 1 with runId: filters by run_id", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({ name: "Test" } as never)
+      .mockResolvedValueOnce({ project_path: "/project" } as never);
+    mockRunClaude.mockResolvedValue({
+      stdout: '{"response":"Hello!","suggestedAction":null}',
+      stderr: "",
+      exitCode: 0,
+    } as never);
+
+    await POST(makeRequest({ message: "hello", phase: 1, runId: "run-123" }));
+
+    expect(mockQueryOne).toHaveBeenCalledWith({}, "SELECT * FROM project_summary WHERE run_id = ?", ["run-123"]);
   });
 
   it("phase 2: calls queryOne for routes and flows from run_content", async () => {
@@ -83,7 +106,7 @@ describe("POST /api/chat", () => {
       exitCode: 0,
     } as never);
 
-    await POST(makeRequest({ message: "show routes", phase: 2 }));
+    await POST(makeRequest({ message: "show routes", phase: 2, runId: "run-abc" }));
 
     expect(mockBuildPrompt).toHaveBeenCalledWith("show routes", 2, {
       routes: mockRoutes,
@@ -104,7 +127,7 @@ describe("POST /api/chat", () => {
       exitCode: 0,
     } as never);
 
-    await POST(makeRequest({ message: "data plan", phase: 3 }));
+    await POST(makeRequest({ message: "data plan", phase: 3, runId: "run-abc" }));
 
     expect(mockBuildPrompt).toHaveBeenCalledWith("data plan", 3, {
       entities: mockEntities,
@@ -123,10 +146,10 @@ describe("POST /api/chat", () => {
       exitCode: 0,
     } as never);
 
-    await POST(makeRequest({ message: "scripts", phase: 4 }));
+    await POST(makeRequest({ message: "scripts", phase: 4, runId: "run-abc" }));
 
-    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT flow_name FROM flow_scripts");
-    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT steps_json FROM flow_scripts");
+    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT flow_name FROM flow_scripts WHERE run_id = ?", ["run-abc"]);
+    expect(mockQueryAll).toHaveBeenCalledWith({}, "SELECT steps_json FROM flow_scripts WHERE run_id = ?", ["run-abc"]);
     expect(mockBuildPrompt).toHaveBeenCalledWith("scripts", 4, {
       scripts: mockScripts,
       totalSteps: 2,
@@ -144,27 +167,26 @@ describe("POST /api/chat", () => {
     expect(data.suggestedAction).toBe("help");
   });
 
-  it("falls back to raw text when Claude returns malformed JSON", async () => {
+  it("returns 422 when Claude returns malformed JSON", async () => {
     const longText = "A".repeat(600);
     setupHappyPath(longText);
 
     const response = await POST(makeRequest({ message: "hello", phase: 1 }));
     const data = await response.json();
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(422);
+    expect(data.error).toContain("Failed to parse");
     expect(data.response).toHaveLength(500);
-    expect(data.response).toBe(longText.slice(0, 500));
-    expect(data.suggestedAction).toBeNull();
   });
 
-  it("returns 200 with error message when database/Claude throws", async () => {
+  it("returns 500 when database/Claude throws", async () => {
     mockQueryOne.mockRejectedValue(new Error("DB connection failed"));
 
     const response = await POST(makeRequest({ message: "hello", phase: 1 }));
     const data = await response.json();
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(500);
+    expect(data.error).toContain("Internal server error");
     expect(data.response).toContain("I encountered an issue");
-    expect(data.suggestedAction).toBeNull();
   });
 });

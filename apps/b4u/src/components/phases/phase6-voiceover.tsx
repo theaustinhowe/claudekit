@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase6VoiceoverSkeleton } from "@/components/ui/phase-skeletons";
@@ -7,6 +8,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { useApp } from "@/lib/store";
 import type { FlowScript, TimelineMarker, VoiceOption } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { PhaseGoalBanner } from "./phase-goal-banner";
 
 export function Phase6Voiceover() {
   const { state, dispatch } = useApp();
@@ -15,20 +17,25 @@ export function Phase6Voiceover() {
     loading: l1,
     error: e1,
     refetch: rf1,
-  } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`);
+  } = useApi<FlowScript[]>(`/api/flow-scripts?runId=${state.runId}`, state.panelRefreshKey);
   const {
     data: voiceoverScripts,
     loading: l2,
     error: e2,
     refetch: rf2,
-  } = useApi<Record<string, string[]>>(`/api/voiceover-scripts?runId=${state.runId}`);
-  const { data: voiceOptions, loading: l3, error: e3, refetch: rf3 } = useApi<VoiceOption[]>("/api/voice-options");
+  } = useApi<Record<string, string[]>>(`/api/voiceover-scripts?runId=${state.runId}`, state.panelRefreshKey);
+  const {
+    data: voiceOptions,
+    loading: l3,
+    error: _e3,
+    refetch: _rf3,
+  } = useApi<VoiceOption[]>("/api/voice-options", state.panelRefreshKey);
   const {
     data: timelineMarkers,
     loading: l4,
-    error: e4,
-    refetch: rf4,
-  } = useApi<Record<string, TimelineMarker[]>>(`/api/timeline-markers?runId=${state.runId}`);
+    error: _e4,
+    refetch: _rf4,
+  } = useApi<Record<string, TimelineMarker[]>>(`/api/timeline-markers?runId=${state.runId}`, state.panelRefreshKey);
 
   const [activeFlow, setActiveFlow] = useState<string | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<string | null>(null);
@@ -263,23 +270,15 @@ export function Phase6Voiceover() {
     }
   }, [isPlaying, selectedVoice, activeFlow, editedScripts, speed]);
 
-  const loading = l1 || l2 || l3 || l4;
-  const error = e1 || e2 || e3 || e4;
+  // Only show full skeleton if ALL APIs are loading
+  if (l1 && l2 && l3 && l4) return <Phase6VoiceoverSkeleton />;
 
-  if (loading) return <Phase6VoiceoverSkeleton />;
-  if (error || !flowScripts || !voiceoverScripts || !voiceOptions || !timelineMarkers) {
-    return (
-      <ErrorState
-        message={error || "No voiceover data"}
-        onRetry={() => {
-          rf1();
-          rf2();
-          rf3();
-          rf4();
-        }}
-      />
-    );
-  }
+  // Flow scripts and voiceover scripts are essential
+  if (!l1 && (e1 || !flowScripts)) return <ErrorState message={e1 || "No flow scripts"} onRetry={rf1} />;
+  if (!l2 && (e2 || !voiceoverScripts)) return <ErrorState message={e2 || "No voiceover scripts"} onRetry={rf2} />;
+
+  // Still loading essential data
+  if (!flowScripts || !voiceoverScripts) return <Phase6VoiceoverSkeleton />;
 
   const paragraphs = activeFlow ? editedScripts[activeFlow] || [] : [];
   const markers = activeFlow ? localMarkers[activeFlow] || [] : [];
@@ -294,6 +293,7 @@ export function Phase6Voiceover() {
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
+      <PhaseGoalBanner phase={6} />
       {/* Flow selector */}
       <div className="flex border-b border-border overflow-x-auto shrink-0 bg-card">
         {flowScripts.map((f) => (
@@ -304,20 +304,16 @@ export function Phase6Voiceover() {
               setActiveFlow(f.flowId);
               setEditingParagraph(null);
             }}
-            className="px-3 py-2.5 text-2xs font-medium whitespace-nowrap transition-colors relative"
-            style={{
-              color: activeFlow === f.flowId ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.7)",
-              background: activeFlow === f.flowId ? "hsl(var(--primary) / 0.1)" : "transparent",
-            }}
+            className={cn(
+              "px-3 py-2.5 text-2xs font-medium whitespace-nowrap transition-colors relative",
+              activeFlow === f.flowId ? "text-primary bg-primary/10" : "text-muted-foreground/70",
+            )}
           >
             {f.flowName}
             {activeFlow === f.flowId && <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-primary" />}
           </button>
         ))}
-        <span
-          className="text-2xs px-3 py-2.5 ml-auto"
-          style={{ color: saveError ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))" }}
-        >
+        <span className={cn("text-2xs px-3 py-2.5 ml-auto", saveError ? "text-destructive" : "text-muted-foreground")}>
           {saveError ? saveError : saving ? "Saving..." : ""}
         </span>
       </div>
@@ -326,7 +322,14 @@ export function Phase6Voiceover() {
         {/* Timeline */}
         <div className="p-4 border-b border-border shrink-0">
           <div className="text-2xs mb-2 text-muted-foreground">TIMELINE</div>
-          <div className="h-[48px] relative flex items-end bg-card border border-border rounded-md overflow-hidden">
+          <div className="min-h-12 relative flex items-end bg-card border border-border rounded-md overflow-hidden">
+            {markers.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xs text-muted-foreground/50">
+                  {l4 ? "Loading timeline..." : "No timeline data"}
+                </span>
+              </div>
+            )}
             {/* Frame thumbnails (colored blocks) */}
             <div className="absolute inset-0 flex">
               {markers.map((marker, i) => {
@@ -360,23 +363,29 @@ export function Phase6Voiceover() {
         {/* Voice settings bar */}
         <div className="flex items-center gap-3 px-4 py-2 border-b border-border shrink-0 bg-card">
           <div className="flex items-center gap-2">
-            <label className="text-2xs text-muted-foreground">
-              VOICE
-              <select
-                value={selectedVoice || ""}
-                onChange={(e) => {
-                  setSelectedVoice(e.target.value);
-                  dispatch({ type: "SET_THREAD_DECISION", phase: 6, key: "voice-selection", value: e.target.value });
-                }}
-                className="text-xs px-2 py-1 outline-none cursor-pointer bg-input border border-input rounded-sm text-foreground"
-              >
-                {voiceOptions.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name} — {v.style}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {voiceOptions && voiceOptions.length > 0 ? (
+              <label className="text-2xs text-muted-foreground">
+                VOICE
+                <select
+                  value={selectedVoice || ""}
+                  onChange={(e) => {
+                    setSelectedVoice(e.target.value);
+                    dispatch({ type: "SET_THREAD_DECISION", phase: 6, key: "voice-selection", value: e.target.value });
+                  }}
+                  className="text-xs px-2 py-1 outline-none cursor-pointer bg-input border border-input rounded-sm text-foreground"
+                >
+                  {voiceOptions.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} — {v.style}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <span className="text-2xs text-muted-foreground/50 italic">
+                Voice options unavailable — using default
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -400,13 +409,11 @@ export function Phase6Voiceover() {
               type="button"
               onClick={handlePreviewAudio}
               disabled={audioLoading}
-              className="ml-auto px-3 py-1.5 text-2xs font-medium transition-colors rounded-sm"
-              style={{
-                background: isPlaying ? "hsl(var(--primary))" : "hsl(var(--muted))",
-                color: isPlaying ? "hsl(var(--background))" : "hsl(var(--primary))",
-                border: "1px solid hsl(var(--primary))",
-                opacity: audioLoading ? 0.7 : 1,
-              }}
+              className={cn(
+                "ml-auto px-3 py-1.5 text-2xs font-medium transition-colors rounded-sm border border-primary",
+                isPlaying ? "bg-primary text-background" : "bg-muted text-primary",
+                audioLoading && "opacity-70",
+              )}
             >
               {audioLoading ? "Loading..." : isPlaying ? "■ Stop" : "▶ Preview Audio"}
             </button>
@@ -427,23 +434,14 @@ export function Phase6Voiceover() {
                 // biome-ignore lint/suspicious/noArrayIndexKey: paragraphs have no stable key
                 key={i}
                 role="presentation"
-                className="p-3.5 transition-all"
-                style={{
-                  background: paraError
-                    ? "rgba(239, 68, 68, 0.05)"
-                    : hoveredParagraph === i
-                      ? "hsl(var(--primary) / 0.1)"
-                      : "hsl(var(--card))",
-                  border: paraError
-                    ? "1px solid hsl(var(--destructive))"
-                    : editingParagraph === i
-                      ? "1px solid hsl(var(--primary))"
-                      : hoveredParagraph === i
-                        ? "1px solid hsl(var(--primary))"
-                        : "1px solid hsl(var(--border))",
-                  borderRadius: "calc(var(--radius) - 2px)",
-                  color: "hsl(var(--muted-foreground))",
-                }}
+                className={cn(
+                  "p-3.5 transition-all rounded-md border text-muted-foreground",
+                  paraError
+                    ? "bg-destructive/5 border-destructive"
+                    : editingParagraph === i || hoveredParagraph === i
+                      ? "bg-primary/10 border-primary"
+                      : "bg-card border-border",
+                )}
                 onMouseEnter={() => setHoveredParagraph(i)}
                 onMouseLeave={() => setHoveredParagraph(null)}
               >
@@ -500,7 +498,7 @@ export function Phase6Voiceover() {
                   ))}
                 </div>
                 <span className="text-2xs text-primary">
-                  Playing preview — {voiceOptions.find((v) => v.id === selectedVoice)?.name}
+                  Playing preview — {voiceOptions?.find((v) => v.id === selectedVoice)?.name ?? "Default voice"}
                 </span>
               </div>
             </div>

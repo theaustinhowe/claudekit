@@ -42,6 +42,15 @@ vi.mock("@/lib/store", () => ({
   useApp: () => ({ state: mockState, dispatch: vi.fn() }),
 }));
 
+vi.mock("./use-sync-status", () => ({
+  useSyncStatus: () => ({
+    status: "idle",
+    reportSaving: vi.fn(),
+    reportSuccess: vi.fn(),
+    reportError: vi.fn(),
+  }),
+}));
+
 type EffectCallback = () => undefined | (() => void);
 type EventHandler = (...args: never[]) => unknown;
 

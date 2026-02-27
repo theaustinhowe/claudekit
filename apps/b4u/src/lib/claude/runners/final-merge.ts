@@ -5,7 +5,7 @@ import { execute, getDb, queryAll } from "@/lib/db";
 import { generateChapters } from "@/lib/video/chapter-generator";
 import { concatenateAudioFiles, concatenateVideos, mergeVideoAudio } from "@/lib/video/ffmpeg-merger";
 
-export function createFinalMergeRunner(runId?: string): SessionRunner {
+export function createFinalMergeRunner(runId: string): SessionRunner {
   return async ({ onProgress, signal }) => {
     onProgress({ type: "progress", message: "Loading recordings and audio...", progress: 5 });
 
@@ -19,10 +19,8 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
       duration_seconds: number;
     }>(
       conn,
-      runId
-        ? "SELECT id, flow_id, file_path, duration_seconds FROM recordings WHERE status = 'done' AND run_id = ? ORDER BY flow_id"
-        : "SELECT id, flow_id, file_path, duration_seconds FROM recordings WHERE status = 'done' ORDER BY flow_id",
-      runId ? [runId] : [],
+      "SELECT id, flow_id, file_path, duration_seconds FROM recordings WHERE status = 'done' AND run_id = ? ORDER BY flow_id",
+      [runId],
     );
 
     const audioFiles = await queryAll<{
@@ -30,20 +28,14 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
       flow_id: string;
       file_path: string;
       duration_seconds: number;
-    }>(
-      conn,
-      runId
-        ? "SELECT id, flow_id, file_path, duration_seconds FROM audio_files WHERE run_id = ? ORDER BY flow_id"
-        : "SELECT id, flow_id, file_path, duration_seconds FROM audio_files ORDER BY flow_id",
-      runId ? [runId] : [],
-    );
+    }>(conn, "SELECT id, flow_id, file_path, duration_seconds FROM audio_files WHERE run_id = ? ORDER BY flow_id", [
+      runId,
+    ]);
 
     const flowScripts = await queryAll<{ flow_id: string; flow_name: string }>(
       conn,
-      runId
-        ? "SELECT flow_id, flow_name FROM flow_scripts WHERE run_id = ?"
-        : "SELECT flow_id, flow_name FROM flow_scripts",
-      runId ? [runId] : [],
+      "SELECT flow_id, flow_name FROM flow_scripts WHERE run_id = ?",
+      [runId],
     );
 
     if (recordings.length === 0) throw new Error("No recordings found");
@@ -54,10 +46,8 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
     // Get project name
     const projectRows = await queryAll<{ name: string; project_path: string }>(
       conn,
-      runId
-        ? "SELECT name, project_path FROM project_summary WHERE run_id = ? LIMIT 1"
-        : "SELECT name, project_path FROM project_summary LIMIT 1",
-      runId ? [runId] : [],
+      "SELECT name, project_path FROM project_summary WHERE run_id = ? LIMIT 1",
+      [runId],
     );
     const projectName = projectRows[0]?.name || "project";
     const safeName = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -115,29 +105,37 @@ export function createFinalMergeRunner(runId?: string): SessionRunner {
 
     const chapters = generateChapters(recordingInfo);
 
-    // Save chapters to DB
-    await execute(conn, "DELETE FROM chapter_markers WHERE run_id = ?", [runId]);
-    for (let i = 0; i < chapters.length; i++) {
-      await execute(
-        conn,
-        `INSERT INTO chapter_markers (id, run_id, flow_name, start_time)
-        VALUES (?, ?, ?, ?)`,
-        [i + 1, runId, chapters[i].flowName, chapters[i].startTime],
-      );
-    }
-
-    // Save final video to DB
-    await execute(conn, "DELETE FROM final_videos WHERE run_id = ?", [runId]);
+    // Save chapters and final video to DB
     const { statSync } = await import("node:fs");
     const stats = statSync(finalPath);
     const totalDuration = recordingInfo.reduce((sum, r) => sum + r.durationSeconds, 0);
 
-    await execute(
-      conn,
-      `INSERT INTO final_videos (id, run_id, file_path, duration_seconds, file_size_bytes, status)
-      VALUES (?, ?, ?, ?, ?, 'done')`,
-      ["final-1", runId, finalPath, totalDuration, stats.size],
-    );
+    try {
+      await execute(conn, "BEGIN TRANSACTION");
+
+      await execute(conn, "DELETE FROM chapter_markers WHERE run_id = ?", [runId]);
+      for (let i = 0; i < chapters.length; i++) {
+        await execute(
+          conn,
+          `INSERT INTO chapter_markers (id, run_id, flow_name, start_time)
+          VALUES (?, ?, ?, ?)`,
+          [i + 1, runId, chapters[i].flowName, chapters[i].startTime],
+        );
+      }
+
+      await execute(conn, "DELETE FROM final_videos WHERE run_id = ?", [runId]);
+      await execute(
+        conn,
+        `INSERT INTO final_videos (id, run_id, file_path, duration_seconds, file_size_bytes, status)
+        VALUES (?, ?, ?, ?, ?, 'done')`,
+        ["final-1", runId, finalPath, totalDuration, stats.size],
+      );
+
+      await execute(conn, "COMMIT");
+    } catch (err) {
+      await execute(conn, "ROLLBACK").catch(() => {});
+      throw err;
+    }
 
     onProgress({ type: "progress", message: "Video merge complete!", progress: 100 });
 

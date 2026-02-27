@@ -41,7 +41,7 @@ describe("createFinalMergeRunner", () => {
       .mockResolvedValueOnce([]) // audio_files
       .mockResolvedValueOnce([]); // flow_scripts
 
-    const runner = createFinalMergeRunner();
+    const runner = createFinalMergeRunner("test-run-id");
 
     await expect(runner(makeCtx())).rejects.toThrow("No recordings found");
   });
@@ -55,16 +55,18 @@ describe("createFinalMergeRunner", () => {
 
     vi.mocked(generateChapters).mockReturnValue([{ flowName: "Login", startTime: "0:00", startSeconds: 0 }]);
 
-    const runner = createFinalMergeRunner();
+    const runner = createFinalMergeRunner("test-run-id");
     const result = await runner(makeCtx());
 
     expect(concatenateVideos).toHaveBeenCalled();
     expect(mergeVideoAudio).not.toHaveBeenCalled(); // no audio
     expect(generateChapters).toHaveBeenCalled();
     expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM chapter_markers WHERE run_id = ?", [
-      undefined,
+      "test-run-id",
     ]);
-    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM final_videos WHERE run_id = ?", [undefined]);
+    expect(execute).toHaveBeenCalledWith(expect.anything(), "DELETE FROM final_videos WHERE run_id = ?", [
+      "test-run-id",
+    ]);
     expect(result.result).toHaveProperty("videoPath");
     expect(result.result).toHaveProperty("chapters");
   });
@@ -78,7 +80,7 @@ describe("createFinalMergeRunner", () => {
 
     vi.mocked(generateChapters).mockReturnValue([]);
 
-    const runner = createFinalMergeRunner();
+    const runner = createFinalMergeRunner("test-run-id");
     await runner(makeCtx());
 
     expect(mergeVideoAudio).toHaveBeenCalledWith(expect.objectContaining({ audioPath: "/a1.mp3" }));
@@ -94,7 +96,7 @@ describe("createFinalMergeRunner", () => {
     const controller = new AbortController();
     controller.abort();
 
-    const runner = createFinalMergeRunner();
+    const runner = createFinalMergeRunner("test-run-id");
 
     await expect(runner({ onProgress: vi.fn(), signal: controller.signal, sessionId: "s1" })).rejects.toThrow(
       "Aborted",

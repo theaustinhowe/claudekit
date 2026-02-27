@@ -1,11 +1,13 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { useState } from "react";
 import { ErrorState } from "@/components/ui/api-state";
 import { Phase1TreeSkeleton } from "@/components/ui/phase-skeletons";
 import { useApp } from "@/lib/store";
 import type { FileTreeNode } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { PhaseGoalBanner } from "./phase-goal-banner";
 
 function TreeNode({ node, depth = 0 }: { node: FileTreeNode; depth?: number }) {
   const [expanded, setExpanded] = useState(depth === 0);
@@ -17,17 +19,11 @@ function TreeNode({ node, depth = 0 }: { node: FileTreeNode; depth?: number }) {
       <button
         type="button"
         onClick={() => isDir && setExpanded(!expanded)}
-        className="flex items-center gap-1.5 w-full text-left py-[2px] transition-colors group"
-        style={{
-          paddingLeft: `${depth * 16 + 8}px`,
-          color: isDir ? "hsl(var(--muted-foreground))" : "hsl(var(--muted-foreground) / 0.7)",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "hsl(var(--muted))";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "transparent";
-        }}
+        className={cn(
+          "flex items-center gap-1.5 w-full text-left py-[2px] transition-colors group hover:bg-muted",
+          isDir ? "text-muted-foreground" : "text-muted-foreground/70",
+        )}
+        style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         {isDir ? (
           <span className="text-2xs w-[12px] text-center text-muted-foreground">{expanded ? "▾" : "▸"}</span>
@@ -52,13 +48,26 @@ function TreeNode({ node, depth = 0 }: { node: FileTreeNode; depth?: number }) {
 
 export function Phase1Tree() {
   const { state } = useApp();
-  const { data: fileTree, loading, error, refetch } = useApi<FileTreeNode>(`/api/file-tree?runId=${state.runId}`);
+  const {
+    data: fileTree,
+    loading,
+    error,
+    refetch,
+  } = useApi<FileTreeNode>(`/api/file-tree?runId=${state.runId}`, state.panelRefreshKey);
 
   if (loading) return <Phase1TreeSkeleton />;
-  if (error || !fileTree) return <ErrorState message={error || "No file tree data"} onRetry={refetch} />;
+  if (error || !fileTree)
+    return (
+      <ErrorState
+        message={error || "No file tree data"}
+        onRetry={refetch}
+        guidance="Try selecting a different project folder"
+      />
+    );
 
   return (
     <div className="h-full flex flex-col animate-slide-in-right">
+      <PhaseGoalBanner phase={1} />
       <div className="px-4 py-3 border-b border-border text-xs font-medium flex items-center gap-2 text-muted-foreground bg-card">
         <span className="text-primary">◊</span>
         PROJECT STRUCTURE
