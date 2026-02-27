@@ -45,3 +45,55 @@ export async function resolveAllFixes(commentIds: string[]) {
   const placeholders = commentIds.map(() => "?").join(",");
   await execute(db, `UPDATE comment_fixes SET status = 'resolved' WHERE comment_id IN (${placeholders})`, commentIds);
 }
+
+export async function startFixExecution(fixId: string, commentId: string): Promise<string> {
+  log.info({ fixId }, "Starting fix execution session");
+
+  const { createFixExecutionRunner } = await import("@/lib/services/session-runners/fix-execution");
+
+  const metadata = { fixIds: [fixId], batch: false };
+  const sessionId = await createSession({
+    sessionType: "fix_execution",
+    label: `Applying fix for comment ${commentId}`,
+    contextId: fixId,
+    metadata,
+  });
+
+  const runner = createFixExecutionRunner(metadata);
+  await startSession(sessionId, runner);
+
+  return sessionId;
+}
+
+export async function startBatchFixExecution(fixIds: string[]): Promise<string> {
+  log.info({ count: fixIds.length }, "Starting batch fix execution");
+
+  const { createFixExecutionRunner } = await import("@/lib/services/session-runners/fix-execution");
+
+  const metadata = { fixIds, batch: true };
+  const sessionId = await createSession({
+    sessionType: "fix_execution",
+    label: `Applying ${fixIds.length} fixes`,
+    metadata,
+  });
+
+  const runner = createFixExecutionRunner(metadata);
+  await startSession(sessionId, runner);
+
+  return sessionId;
+}
+
+export async function getFixExecutionStatus(fixId: string) {
+  const db = await getDb();
+  return queryAll<{
+    id: string;
+    fix_id: string;
+    comment_id: string;
+    status: string;
+    branch_name: string | null;
+    commit_sha: string | null;
+    error_message: string | null;
+    created_at: string;
+    completed_at: string | null;
+  }>(db, "SELECT * FROM fix_executions WHERE fix_id = ? ORDER BY created_at DESC LIMIT 1", [fixId]);
+}

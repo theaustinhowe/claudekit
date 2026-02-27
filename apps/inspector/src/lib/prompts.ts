@@ -116,3 +116,54 @@ For each comment, provide a fix. Return a JSON array where each element has:
 
 Return ONLY a JSON array. No markdown, no explanation.`;
 }
+
+export function buildSkillRulePrompt(
+  comments: {
+    id: string;
+    reviewer: string;
+    body: string;
+    filePath: string | null;
+    lineNumber: number | null;
+    prNumber: number;
+    prTitle: string;
+  }[],
+  diff: string,
+): string {
+  const commentList = comments
+    .map(
+      (c, i) =>
+        `[${i + 1}] Comment ID: ${c.id}\n  PR: #${c.prNumber} "${c.prTitle}"\n  Reviewer: ${c.reviewer}\n  File: ${c.filePath || "N/A"}:${c.lineNumber || "N/A"}\n  Text: ${c.body}`,
+    )
+    .join("\n\n");
+
+  const truncatedDiff = diff.length > 30000 ? `${diff.slice(0, 30000)}\n\n... (diff truncated at 30000 chars)` : diff;
+
+  return `Analyze these PR review comments alongside the diff to generate Claude Code SKILL.md rules.
+
+## Comments
+
+${commentList}
+
+## Diff
+
+\`\`\`
+${truncatedDiff}
+\`\`\`
+
+## Instructions
+
+For each distinct issue identified from the comments, generate a SKILL.md-compatible rule. Each rule should:
+1. Identify what mistake was made and what reviewers caught
+2. Provide instructions that Claude should follow to avoid the same mistake
+3. Be grouped by functionality category
+
+Return a JSON array where each element has:
+- name: A kebab-case slug for the skill (e.g., "react-memo-usage", "error-boundary-handling")
+- group: Category slug (e.g., "react-components", "css-styling", "testing", "api-design", "type-safety", "error-handling", "state-management", "file-setup", "migrations", "performance")
+- severity: "blocking" | "suggestion" | "nit"
+- description: One-line description for the SKILL.md frontmatter
+- rule_content: Full markdown body for the SKILL.md — the actual instructions Claude should follow. Be specific, include do/don't examples from the diff.
+- commentIds: Array of comment IDs this rule addresses
+
+Return ONLY a JSON array. No markdown, no explanation.`;
+}

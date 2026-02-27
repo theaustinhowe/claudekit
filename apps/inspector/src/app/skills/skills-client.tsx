@@ -6,7 +6,7 @@ import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
 import { Slider } from "@claudekit/ui/components/slider";
-import { Brain, Filter, GitCompareArrows, History, TrendingUp } from "lucide-react";
+import { Brain, Code, Download, Filter, FolderOpen, GitCompareArrows, History, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
@@ -16,9 +16,10 @@ import { AnalysisComparison } from "@/components/skills/analysis-comparison";
 import { AnalysisHistory } from "@/components/skills/analysis-history";
 import { SkillCard } from "@/components/skills/skill-card";
 import { SkillDetailDrawer } from "@/components/skills/skill-detail-drawer";
+import { exportSkillGroupAsFiles, getSkillGroupPreview } from "@/lib/actions/skill-groups";
 import type { ComparisonSkill, SkillTrendPoint } from "@/lib/actions/skills";
 import { getSkillsForAnalysis, startSkillAnalysis } from "@/lib/actions/skills";
-import type { PRWithComments, SkillWithComments } from "@/lib/types";
+import type { PRWithComments, SkillGroup, SkillWithComments } from "@/lib/types";
 
 // Dynamic imports to avoid linter type-only import optimization
 const loadHistory = () => import("@/lib/actions/skills").then((m) => m.getAnalysisHistory);
@@ -172,12 +173,13 @@ interface AnalysisHistoryEntry {
 }
 
 interface SkillsClientProps {
-  repoId: string;
+  repoId: string | null;
   prsWithComments: PRWithComments[];
   previousSkills: SkillWithComments[];
+  skillGroups: SkillGroup[];
 }
 
-export function SkillsClient({ repoId, prsWithComments, previousSkills }: SkillsClientProps) {
+export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGroups }: SkillsClientProps) {
   const searchParams = useSearchParams();
   const preselected = searchParams.get("pr");
 
@@ -247,6 +249,10 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
   };
 
   const handleAnalyze = () => {
+    if (!repoId) {
+      toast.error("No repository selected");
+      return;
+    }
     setPhase("analyzing");
     startTransition(async () => {
       try {
@@ -280,7 +286,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
               variant="outline"
               onClick={() => {
                 setShowHistory(!showHistory);
-                if (!showHistory && history.length === 0) {
+                if (!showHistory && history.length === 0 && repoId) {
                   startTransition(async () => {
                     const fn = await loadHistory();
                     const data = await fn(repoId);
@@ -296,7 +302,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
               variant="outline"
               onClick={() => {
                 setShowTrends(!showTrends);
-                if (!showTrends && trendData.length === 0) {
+                if (!showTrends && trendData.length === 0 && repoId) {
                   startTransition(async () => {
                     const fn = await loadTrends();
                     const data = await fn(repoId);
@@ -409,6 +415,80 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills }: Skills
               ) : (
                 <SkillTrendChart data={trendData} />
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {skillGroups.length > 0 && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4" />
+                  Skill Groups
+                </h3>
+              </div>
+              <div className="space-y-2">
+                {skillGroups.map((group) => (
+                  <div
+                    key={group.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{group.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {group.skillCount} skill{group.skillCount !== 1 ? "s" : ""} &middot; {group.category}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => {
+                          startTransition(async () => {
+                            const previews = await getSkillGroupPreview(group.id);
+                            if (previews.length === 0) {
+                              toast.info("No skills with rule content in this group");
+                              return;
+                            }
+                            toast.success(`Preview: ${previews.length} SKILL.md file(s)`, {
+                              description: `${previews[0].slice(0, 120)}...`,
+                              duration: 8000,
+                            });
+                          });
+                        }}
+                      >
+                        <Code className="h-3 w-3 mr-1" />
+                        Preview
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => {
+                          startTransition(async () => {
+                            try {
+                              const result = await exportSkillGroupAsFiles(group.id, "global");
+                              toast.success(`Exported ${result.filesWritten} SKILL.md files`, {
+                                description: result.directory,
+                                duration: 5000,
+                              });
+                            } catch (err) {
+                              toast.error("Export failed", {
+                                description: err instanceof Error ? err.message : "Unknown error",
+                              });
+                            }
+                          });
+                        }}
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Export
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}

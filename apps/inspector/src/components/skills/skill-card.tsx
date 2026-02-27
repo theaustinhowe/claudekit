@@ -55,6 +55,15 @@ export function SkillCard({ skill, onClick }: SkillCardProps) {
             &ldquo;{skill.topExample}&rdquo;
           </p>
         )}
+
+        {skill.ruleContent && (
+          <div className="pt-2 border-t border-border/50">
+            <p className="text-[10px] font-medium text-muted-foreground mb-1">SKILL.md Rule</p>
+            <pre className="text-[10px] font-mono text-muted-foreground bg-muted/50 rounded p-2 overflow-x-auto whitespace-pre-wrap line-clamp-4">
+              {skill.ruleContent}
+            </pre>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

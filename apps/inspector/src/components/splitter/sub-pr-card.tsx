@@ -17,9 +17,10 @@ interface SubPRCardProps {
   color: string;
   onFileClick?: (filePath: string) => void;
   onDescriptionChange?: (description: string) => void;
+  executionStatus?: { status: string; prUrl?: string | null; prNumber?: number | null };
 }
 
-export function SubPRCard({ subPR, color, onFileClick, onDescriptionChange }: SubPRCardProps) {
+export function SubPRCard({ subPR, color, onFileClick, onDescriptionChange, executionStatus }: SubPRCardProps) {
   const [filesOpen, setFilesOpen] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
   const [description, setDescription] = useState(subPR.description);
@@ -49,9 +50,31 @@ export function SubPRCard({ subPR, color, onFileClick, onDescriptionChange }: Su
             </span>
             <h3 className="font-semibold text-sm">{subPR.title}</h3>
           </div>
-          <Badge variant="outline" className={cn("text-[10px] border", SIZE_CLASSES[subPR.size])}>
-            {subPR.size} &middot; {subPR.linesChanged}L
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={cn("text-[10px] border", SIZE_CLASSES[subPR.size])}>
+              {subPR.size} &middot; {subPR.linesChanged}L
+            </Badge>
+            {executionStatus && (
+              <Badge
+                variant={
+                  executionStatus.status === "completed"
+                    ? "secondary"
+                    : executionStatus.status === "failed"
+                      ? "destructive"
+                      : "outline"
+                }
+                className="text-[10px]"
+              >
+                {executionStatus.status === "completed" && executionStatus.prUrl ? (
+                  <a href={executionStatus.prUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    PR #{executionStatus.prNumber}
+                  </a>
+                ) : (
+                  executionStatus.status
+                )}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">

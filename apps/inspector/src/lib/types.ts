@@ -1,6 +1,13 @@
 // --- Session Types ---
 
-export type SessionType = "skill_analysis" | "split_analysis" | "comment_fix";
+export type SessionType =
+  | "skill_analysis"
+  | "split_analysis"
+  | "comment_fix"
+  | "skill_rule_analysis"
+  | "split_execution"
+  | "fix_execution"
+  | "account_sync";
 export type SessionStatus = "pending" | "running" | "done" | "error" | "cancelled";
 
 export interface SessionRow {
@@ -37,6 +44,14 @@ export type SkillTrend = "Improving" | "Needs attention" | "New pattern" | "Flat
 export type Severity = "blocking" | "suggestion" | "nit";
 export type RiskLevel = "Low" | "Medium" | "High";
 export type CommentStatus = "open" | "fixing" | "fixed" | "resolved";
+export type UserRelationship = "authored" | "reviewed" | "assigned" | "mentioned";
+export type SplitExecutionStatus = "pending" | "in_progress" | "completed" | "failed";
+export interface GitHubUser {
+  id: string;
+  login: string;
+  avatarUrl: string | null;
+  name: string | null;
+}
 
 export interface PR {
   id: string;
@@ -56,6 +71,9 @@ export interface PR {
   githubCreatedAt: string | null;
   githubUpdatedAt: string | null;
   fetchedAt: string;
+  userRelationship: UserRelationship | null;
+  htmlUrl: string | null;
+  repoFullName: string | null;
 }
 
 export interface Skill {
@@ -71,6 +89,8 @@ export interface Skill {
   resources: string | null;
   actionItem: string | null;
   addressed: boolean;
+  ruleContent: string | null;
+  groupId: string | null;
 }
 
 export interface SubPR {
@@ -137,4 +157,41 @@ export interface SkillWithComments extends Skill {
     file: string | null;
     line: number | null;
   }[];
+}
+
+/** Skill group for organizing skills by functionality */
+export interface SkillGroup {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  skillCount: number;
+}
+
+/** Split execution tracking for individual sub-PRs */
+export interface SplitExecution {
+  id: string;
+  planId: string;
+  subPRIndex: number;
+  status: SplitExecutionStatus;
+  branchName: string | null;
+  prNumber: number | null;
+  prUrl: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+/** Account-wide stats */
+export interface AccountStats {
+  totalPRs: number;
+  totalRepos: number;
+  totalComments: number;
+  prsAuthored: number;
+  prsReviewed: number;
+  avgLinesChanged: number;
+  topSkillGap: string | null;
+  splittablePRs: number;
 }

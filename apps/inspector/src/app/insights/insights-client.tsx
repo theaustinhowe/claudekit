@@ -195,17 +195,29 @@ function ReviewerDrawer({
 }
 
 interface InsightsClientProps {
-  repoId: string;
+  repoId: string | null;
   reviewerStats: ReviewerStats[];
+  userStats: {
+    totalPRsAuthored: number;
+    totalPRsReviewed: number;
+    totalCommentsReceived: number;
+    totalCommentsGiven: number;
+    topReviewers: { reviewer: string; avatar: string | null; count: number }[];
+    topCommentedFiles: { filePath: string; count: number }[];
+    severityDistribution: Record<string, number>;
+    categoryDistribution: Record<string, number>;
+    weeklyActivity: { week: string; authored: number; reviewed: number; comments: number }[];
+  };
 }
 
-export function InsightsClient({ repoId, reviewerStats }: InsightsClientProps) {
+export function InsightsClient({ repoId, reviewerStats, userStats }: InsightsClientProps) {
   const [selectedReviewer, setSelectedReviewer] = useState<ReviewerStats | null>(null);
   const [reviewerComments, setReviewerComments] = useState<ReviewerComment[]>([]);
   const [fileStats, setFileStats] = useState<{ filePath: string; count: number }[]>([]);
   const [isPending, startTransition] = useTransition();
 
   const handleReviewerClick = (stats: ReviewerStats) => {
+    if (!repoId) return;
     setSelectedReviewer(stats);
     startTransition(async () => {
       const [comments, files] = await Promise.all([
@@ -239,6 +251,143 @@ export function InsightsClient({ repoId, reviewerStats }: InsightsClientProps) {
           {reviewerStats.length} reviewer{reviewerStats.length !== 1 ? "s" : ""} across {totalComments} comments
         </p>
       </div>
+
+      {/* Personal Overview */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">PRs Authored</p>
+            <p className="text-2xl font-bold">{userStats.totalPRsAuthored}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">PRs Reviewed</p>
+            <p className="text-2xl font-bold">{userStats.totalPRsReviewed}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Comments Received</p>
+            <p className="text-2xl font-bold">{userStats.totalCommentsReceived}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Comments Given</p>
+            <p className="text-2xl font-bold">{userStats.totalCommentsGiven}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Severity & Category Distribution */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {Object.keys(userStats.severityDistribution).length > 0 && (
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold mb-3">Severity Distribution</h3>
+              <div className="space-y-2">
+                {Object.entries(userStats.severityDistribution)
+                  .filter(([k]) => k !== "unknown")
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([severity, count]) => {
+                    const total = Object.values(userStats.severityDistribution).reduce((a, b) => a + b, 0);
+                    return (
+                      <div key={severity} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="capitalize">{SEVERITY_LABELS[severity] || severity}</span>
+                          <span className="text-muted-foreground">{count}</span>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full", SEVERITY_COLORS[severity] || "bg-muted-foreground")}
+                            style={{ width: `${(count / Math.max(total, 1)) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {Object.keys(userStats.categoryDistribution).length > 0 && (
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold mb-3">Feedback Categories</h3>
+              <div className="space-y-2">
+                {Object.entries(userStats.categoryDistribution)
+                  .sort(([, a], [, b]) => b - a)
+                  .slice(0, 8)
+                  .map(([category, count]) => {
+                    const total = Object.values(userStats.categoryDistribution).reduce((a, b) => a + b, 0);
+                    return (
+                      <div key={category} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>{category}</span>
+                          <span className="text-muted-foreground">{count}</span>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full gradient-primary"
+                            style={{ width: `${(count / Math.max(total, 1)) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Top Reviewers */}
+      {userStats.topReviewers.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3">Top Reviewers (Who Reviews Your PRs)</h3>
+            <div className="space-y-2">
+              {userStats.topReviewers.map((r) => (
+                <div key={r.reviewer} className="flex items-center gap-2">
+                  {r.avatar ? (
+                    // biome-ignore lint/performance/noImgElement: external avatar URL
+                    <img src={r.avatar} alt={r.reviewer} className="h-6 w-6 rounded-full" />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center text-[9px] font-bold">
+                      {r.reviewer.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm flex-1">{r.reviewer}</span>
+                  <span className="text-xs text-muted-foreground">{r.count} comments</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* File Hotspots */}
+      {userStats.topCommentedFiles.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+              <FileCode className="h-4 w-4" /> Most Commented Files
+            </h3>
+            <div className="space-y-1.5">
+              {userStats.topCommentedFiles.map(({ filePath, count }) => (
+                <div key={filePath} className="flex items-center justify-between text-xs">
+                  <code className="font-mono text-[11px] text-muted-foreground truncate max-w-[80%]">{filePath}</code>
+                  <span className="text-muted-foreground tabular-nums">{Number(count)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <h2 className="text-lg font-semibold">Reviewer Details</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {reviewerStats.map((stats) => (

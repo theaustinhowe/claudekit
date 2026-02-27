@@ -13,7 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@claudekit/ui/components/sheet";
-import { ArrowDown, ClipboardCopy, Scissors } from "lucide-react";
+import { ArrowDown, ClipboardCopy, GitBranch, Scissors } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
@@ -24,7 +24,7 @@ import { SubPRCard } from "@/components/splitter/sub-pr-card";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "@/lib/actions/splitter";
 import { SIZE_CLASSES, SUB_PR_COLORS } from "@/lib/constants";
 import { exportSplitPlanToMarkdown } from "@/lib/export";
-import type { PRWithComments, SubPR } from "@/lib/types";
+import type { PRWithComments, SplitExecution, SubPR } from "@/lib/types";
 
 type Phase = "select" | "analyzing" | "results";
 
@@ -46,6 +46,8 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
   const [_isPending, startTransition] = useTransition();
   const [selectedFile, setSelectedFile] = useState<{ path: string; subPRTitle: string } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executions, setExecutions] = useState<SplitExecution[]>([]);
 
   const handleSessionComplete = useCallback((event: { type: string; data?: Record<string, unknown> }) => {
     if (event.type === "done") {
@@ -108,6 +110,28 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
     });
   };
 
+  const handleExecuteSplit = () => {
+    if (!planId) return;
+    setIsExecuting(true);
+    startTransition(async () => {
+      try {
+        const { startSplitExecution } = await import("@/lib/actions/splitter");
+        await startSplitExecution(planId);
+        // Poll for execution status
+        const { getSplitExecutionStatus } = await import("@/lib/actions/splitter");
+        const status = await getSplitExecutionStatus(planId);
+        setExecutions(status);
+        setIsExecuting(false);
+        toast.success("Split execution complete");
+      } catch (err) {
+        setIsExecuting(false);
+        toast.error("Split execution failed", {
+          description: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
+    });
+  };
+
   if (phase === "analyzing") {
     return (
       <SessionProgress stream={stream} icon={<Scissors className="h-12 w-12 text-primary mb-6 animate-pulse" />} />
@@ -135,6 +159,14 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
             >
               <ClipboardCopy className="h-4 w-4 mr-2" />
               Copy as Markdown
+            </Button>
+            <Button
+              className="gradient-primary text-primary-foreground"
+              onClick={handleExecuteSplit}
+              disabled={isExecuting}
+            >
+              <GitBranch className="h-4 w-4 mr-2" />
+              {isExecuting ? "Executing..." : "Execute Split"}
             </Button>
             <Button
               variant="outline"
@@ -198,6 +230,39 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
             </motion.div>
           ))}
         </div>
+
+        {executions.length > 0 && (
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <h3 className="text-sm font-semibold">Execution Status</h3>
+              {executions.map((exec) => (
+                <div key={exec.id} className="flex items-center justify-between text-xs">
+                  <span>Sub-PR {exec.subPRIndex}</span>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        exec.status === "completed" ? "secondary" : exec.status === "failed" ? "destructive" : "outline"
+                      }
+                      className="text-[10px]"
+                    >
+                      {exec.status}
+                    </Badge>
+                    {exec.prUrl && (
+                      <a
+                        href={exec.prUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        PR #{exec.prNumber}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         <Sheet open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
           <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">

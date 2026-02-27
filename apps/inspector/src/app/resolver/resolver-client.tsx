@@ -7,13 +7,31 @@ import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
-import { Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, MessageSquare, Zap } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ClipboardCopy,
+  GitCommit,
+  Loader2,
+  MessageSquare,
+  Zap,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { SessionProgress } from "@/components/session-progress";
 import { getPRComments } from "@/lib/actions/prs";
-import { getCommentFixes, resolveAllFixes, resolveCommentFix, startCommentFixes } from "@/lib/actions/resolver";
+import {
+  getCommentFixes,
+  getFixExecutionStatus,
+  resolveAllFixes,
+  resolveCommentFix,
+  startBatchFixExecution,
+  startCommentFixes,
+  startFixExecution,
+} from "@/lib/actions/resolver";
 import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
 import { exportFixesToMarkdown } from "@/lib/export";
 import type { CommentStatus, PRWithComments } from "@/lib/types";
@@ -60,6 +78,8 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
   const [fixes, setFixes] = useState<FixResult[]>([]);
   const [isPending, startTransition] = useTransition();
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [executingFixes, setExecutingFixes] = useState<Set<string>>(new Set());
+  const [fixCommits, setFixCommits] = useState<Record<string, string>>({});
 
   const handleSelectPR = (pr: PRWithComments) => {
     setSelectedPR(pr);
@@ -171,6 +191,60 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
     });
   };
 
+  const handleApplyFix = (fix: FixResult) => {
+    setExecutingFixes((prev) => new Set([...prev, fix.commentId]));
+    startTransition(async () => {
+      try {
+        await startFixExecution(fix.commentId, fix.commentId);
+        // Check execution status
+        const status = await getFixExecutionStatus(fix.commentId);
+        if (status.length > 0 && status[0].commit_sha) {
+          setFixCommits((prev) => ({ ...prev, [fix.commentId]: String(status[0].commit_sha) }));
+        }
+        setExecutingFixes((prev) => {
+          const next = new Set(prev);
+          next.delete(fix.commentId);
+          return next;
+        });
+        toast.success("Fix applied and pushed");
+      } catch (err) {
+        setExecutingFixes((prev) => {
+          const next = new Set(prev);
+          next.delete(fix.commentId);
+          return next;
+        });
+        toast.error("Failed to apply fix", {
+          description: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
+    });
+  };
+
+  const handleApplyAll = () => {
+    const fixIdsToApply = fixes.filter((f) => f.status !== "resolved").map((f) => f.commentId);
+    for (const id of fixIdsToApply) {
+      setExecutingFixes((prev) => new Set([...prev, id]));
+    }
+    startTransition(async () => {
+      try {
+        await startBatchFixExecution(fixIdsToApply);
+        toast.success("All fixes applied");
+        for (const id of fixIdsToApply) {
+          setExecutingFixes((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        }
+      } catch (err) {
+        toast.error("Batch fix failed", {
+          description: err instanceof Error ? err.message : "Unknown error",
+        });
+        setExecutingFixes(new Set());
+      }
+    });
+  };
+
   // Phase: Fixing
   if (phase === "fixing") {
     return (
@@ -200,9 +274,14 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
           </div>
           <div className="flex gap-2">
             {!allResolved && (
-              <Button variant="outline" size="sm" onClick={handleResolveAll}>
-                <CheckCircle2 className="h-4 w-4 mr-1" /> Resolve All
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={handleApplyAll} disabled={executingFixes.size > 0}>
+                  <GitCommit className="h-4 w-4 mr-1" /> Apply All
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleResolveAll}>
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> Resolve All
+                </Button>
+              </>
             )}
             <Button
               variant="outline"
@@ -313,6 +392,27 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
 
                     {status === "fixed" && (
                       <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-7"
+                          onClick={() => fix && handleApplyFix(fix)}
+                          disabled={executingFixes.has(comment.id)}
+                        >
+                          {executingFixes.has(comment.id) ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Applying
+                            </>
+                          ) : fixCommits[comment.id] ? (
+                            <>
+                              <GitCommit className="h-3 w-3 mr-1" /> {fixCommits[comment.id].slice(0, 7)}
+                            </>
+                          ) : (
+                            <>
+                              <GitCommit className="h-3 w-3 mr-1" /> Apply Fix
+                            </>
+                          )}
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"

@@ -12,21 +12,23 @@ import {
   Clock,
   Eye,
   GitBranch,
+  GitPullRequest,
   MessageSquareText,
   RefreshCw,
   Scissors,
   Search,
   Settings,
   TrendingDown,
+  Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { syncAllCommentsForRepo, syncPRs } from "@/lib/actions/github";
+import { syncAccountPRs } from "@/lib/actions/account";
 import { SIZE_CLASSES, STATUS_COLORS } from "@/lib/constants";
-import type { DashboardStats, PRSize, PRWithComments } from "@/lib/types";
+import type { AccountStats, DashboardStats, GitHubUser, PRSize, PRWithComments, UserRelationship } from "@/lib/types";
 
 function Sparkline({ data }: { data: number[] }) {
   const points = data.length > 0 ? data : [0];
@@ -64,7 +66,6 @@ function StatCard({ label, value, children }: { label: string; value: string | n
 }
 
 function PRRow({ pr }: { pr: PRWithComments }) {
-  const _linesChanged = pr.linesAdded + pr.linesDeleted;
   const initials = pr.author
     .split(/[\s-]+/)
     .map((w) => w[0])
@@ -85,13 +86,22 @@ function PRRow({ pr }: { pr: PRWithComments }) {
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-0.5">
+            {pr.repoFullName && (
+              <Badge variant="secondary" className="text-[10px] shrink-0 font-mono">
+                {pr.repoFullName}
+              </Badge>
+            )}
             <span className="font-medium text-sm truncate">{pr.title}</span>
             <span className="text-xs text-muted-foreground shrink-0">#{pr.number}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>{pr.author}</span>
-            <span className="hidden sm:inline">&middot;</span>
-            {pr.branch && <code className="font-mono text-[11px] hidden sm:inline">{pr.branch}</code>}
+            {pr.userRelationship && (
+              <>
+                <span className="hidden sm:inline">&middot;</span>
+                <span className="hidden sm:inline capitalize">{pr.userRelationship}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -111,6 +121,13 @@ function PRRow({ pr }: { pr: PRWithComments }) {
       </div>
 
       <div className="hidden sm:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        {pr.htmlUrl && (
+          <a href={pr.htmlUrl} target="_blank" rel="noopener noreferrer">
+            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1">
+              <GitPullRequest className="h-3 w-3" /> View
+            </Button>
+          </a>
+        )}
         {pr.commentCount > 0 && (
           <Link href={`/skills?pr=${pr.number}`}>
             <Button size="sm" variant="ghost" className="h-7 text-xs gap-1">
@@ -141,32 +158,14 @@ function formatTimeAgo(dateStr: string): string {
 
 function SyncBadge({
   lastSyncedAt,
-  repoId,
-  externalSyncing,
+  onSync,
+  syncing,
 }: {
   lastSyncedAt: string | null;
-  repoId?: string;
-  externalSyncing?: boolean;
+  onSync?: () => void;
+  syncing?: boolean;
 }) {
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
-  const syncing = isPending || !!externalSyncing;
-
   const isStale = lastSyncedAt ? Date.now() - new Date(lastSyncedAt).getTime() > 24 * 60 * 60 * 1000 : true;
-
-  const handleResync = () => {
-    if (!repoId) return;
-    startTransition(async () => {
-      try {
-        await syncPRs(repoId);
-        await syncAllCommentsForRepo(repoId);
-        router.refresh();
-        toast.success("Sync complete");
-      } catch (err) {
-        toast.error("Sync failed", { description: err instanceof Error ? err.message : "Unknown error" });
-      }
-    });
-  };
 
   return (
     <div className="flex items-center gap-2">
@@ -177,15 +176,15 @@ function SyncBadge({
         <Clock className="h-3 w-3" />
         {lastSyncedAt ? `Synced ${formatTimeAgo(lastSyncedAt)}` : "Never synced"}
       </Badge>
-      {repoId && (
+      {onSync && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleResync} disabled={syncing}>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onSync} disabled={syncing}>
                 <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Sync</TooltipContent>
+            <TooltipContent>Sync all account PRs</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       )}
@@ -195,6 +194,11 @@ function SyncBadge({
 
 const SIZE_OPTIONS: PRSize[] = ["S", "M", "L", "XL"];
 const STATUS_OPTIONS = ["Approved", "Changes Requested", "Pending", "Merged", "Draft"];
+const RELATIONSHIP_OPTIONS: { label: string; value: UserRelationship }[] = [
+  { label: "Authored", value: "authored" },
+  { label: "Reviewed", value: "reviewed" },
+  { label: "Assigned", value: "assigned" },
+];
 
 function FilterChip({
   label,
@@ -228,8 +232,9 @@ function PRList({ prs }: { prs: PRWithComments[] }) {
   const [search, setSearch] = useState("");
   const [sizeFilter, setSizeFilter] = useState<Set<PRSize>>(new Set());
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
+  const [relationshipFilter, setRelationshipFilter] = useState<Set<UserRelationship>>(new Set());
 
-  const hasFilters = search || sizeFilter.size > 0 || statusFilter.size > 0;
+  const hasFilters = search || sizeFilter.size > 0 || statusFilter.size > 0 || relationshipFilter.size > 0;
 
   const toggleSize = (size: PRSize) => {
     setSizeFilter((prev) => {
@@ -247,10 +252,19 @@ function PRList({ prs }: { prs: PRWithComments[] }) {
     });
   };
 
+  const toggleRelationship = (rel: UserRelationship) => {
+    setRelationshipFilter((prev) => {
+      const next = new Set(prev);
+      next.has(rel) ? next.delete(rel) : next.add(rel);
+      return next;
+    });
+  };
+
   const clearFilters = () => {
     setSearch("");
     setSizeFilter(new Set());
     setStatusFilter(new Set());
+    setRelationshipFilter(new Set());
   };
 
   const filtered = useMemo(() => {
@@ -262,6 +276,7 @@ function PRList({ prs }: { prs: PRWithComments[] }) {
           pr.title.toLowerCase().includes(q) ||
           pr.author.toLowerCase().includes(q) ||
           String(pr.number).includes(q) ||
+          pr.repoFullName?.toLowerCase().includes(q) ||
           pr.branch?.toLowerCase().includes(q),
       );
     }
@@ -271,13 +286,16 @@ function PRList({ prs }: { prs: PRWithComments[] }) {
     if (statusFilter.size > 0) {
       result = result.filter((pr) => pr.reviewStatus && statusFilter.has(pr.reviewStatus));
     }
+    if (relationshipFilter.size > 0) {
+      result = result.filter((pr) => pr.userRelationship && relationshipFilter.has(pr.userRelationship));
+    }
     return result;
-  }, [prs, search, sizeFilter, statusFilter]);
+  }, [prs, search, sizeFilter, statusFilter, relationshipFilter]);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Recent Pull Requests</h2>
+        <h2 className="text-lg font-semibold">Pull Requests</h2>
         {hasFilters && (
           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={clearFilters}>
             <X className="h-3 w-3" /> Clear filters
@@ -289,7 +307,7 @@ function PRList({ prs }: { prs: PRWithComments[] }) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by title, author, number, or branch..."
+            placeholder="Search by title, author, repo, or number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -298,7 +316,16 @@ function PRList({ prs }: { prs: PRWithComments[] }) {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <span className="text-xs text-muted-foreground self-center mr-1">Size:</span>
+        <span className="text-xs text-muted-foreground self-center mr-1">Role:</span>
+        {RELATIONSHIP_OPTIONS.map((opt) => (
+          <FilterChip
+            key={opt.value}
+            label={opt.label}
+            active={relationshipFilter.has(opt.value)}
+            onClick={() => toggleRelationship(opt.value)}
+          />
+        ))}
+        <span className="text-xs text-muted-foreground self-center ml-2 mr-1">Size:</span>
         {SIZE_OPTIONS.map((size) => (
           <FilterChip
             key={size}
@@ -323,7 +350,7 @@ function PRList({ prs }: { prs: PRWithComments[] }) {
         <CardContent className="p-2">
           {prs.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
-              No PRs found. Sync your repository from Settings to get started.
+              No PRs found. Sync your account to discover PRs across all repositories.
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
@@ -354,50 +381,54 @@ interface DashboardClientProps {
   sparklineData: number[];
   lastSyncedAt: string | null;
   repoId: string | null;
+  user: GitHubUser | null;
+  accountStats: AccountStats | null;
 }
 
-export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSyncedAt, repoId }: DashboardClientProps) {
+export function DashboardClient({
+  prs,
+  stats,
+  hasRepo,
+  sparklineData,
+  lastSyncedAt,
+  user,
+  accountStats,
+}: DashboardClientProps) {
   const [isSyncing, startSync] = useTransition();
   const router = useRouter();
-  const autoSyncTriggered = useRef(false);
 
-  // Auto-sync if data is stale (>24hrs) on page load
-  useEffect(() => {
-    if (!repoId || autoSyncTriggered.current) return;
-    const isStale = lastSyncedAt ? Date.now() - new Date(lastSyncedAt).getTime() > 24 * 60 * 60 * 1000 : true;
-    if (!isStale) return;
-
-    autoSyncTriggered.current = true;
+  const handleSync = () => {
     startSync(async () => {
       try {
-        await syncPRs(repoId);
-        await syncAllCommentsForRepo(repoId);
+        const result = await syncAccountPRs();
         router.refresh();
-        toast.success("Auto-sync complete", { description: "Repository data has been refreshed" });
-      } catch {
-        // Silent fail for auto-sync — user can manually retry
+        toast.success("Account sync complete", {
+          description: `Synced ${result.totalSynced} PRs across ${result.reposDiscovered} new repos`,
+        });
+      } catch (err) {
+        toast.error("Sync failed", { description: err instanceof Error ? err.message : "Unknown error" });
       }
     });
-  }, [repoId, lastSyncedAt, router]);
+  };
 
-  if (!hasRepo) {
+  if (!hasRepo && !user) {
     const features = [
       {
         icon: Brain,
         title: "Skill Builder",
-        description: "Analyze review comments to discover skill patterns and track growth areas over time.",
+        description: "Analyze review comments to discover skill patterns and generate Claude SKILL.md files.",
         href: "/skills",
       },
       {
         icon: Scissors,
         title: "PR Splitter",
-        description: "AI-generated plans to break down large PRs into smaller, reviewable chunks.",
+        description: "AI-generated plans to break down large PRs — and execute the split on GitHub.",
         href: "/splitter",
       },
       {
         icon: MessageSquareText,
         title: "Comment Resolver",
-        description: "Generate code fixes for review comments with AI-powered diff suggestions.",
+        description: "Generate and apply code fixes for review comments directly to your branch.",
         href: "/resolver",
       },
       {
@@ -416,7 +447,7 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
           </div>
           <h1 className="text-2xl font-bold mb-2">Welcome to Inspector</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Your local-first GitHub PR analysis toolkit. Connect a repository to get started.
+            Your local-first GitHub PR analysis toolkit. Set up your GitHub PAT to auto-discover all your PRs.
           </p>
         </div>
 
@@ -429,9 +460,11 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
                   1
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Connect a repository</p>
+                  <p className="text-sm font-medium">Set your GitHub PAT</p>
                   <p className="text-xs text-muted-foreground">
-                    Go to Settings and add a GitHub repository using your personal access token.
+                    Add <code className="font-mono bg-muted px-1 rounded">GITHUB_PERSONAL_ACCESS_TOKEN</code> to your{" "}
+                    <code className="font-mono bg-muted px-1 rounded">.env.local</code> file with{" "}
+                    <code className="font-mono bg-muted px-1 rounded">repo</code> scope.
                   </p>
                 </div>
               </div>
@@ -440,9 +473,9 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
                   2
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Sync pull requests</p>
+                  <p className="text-sm font-medium">Auto-discover PRs</p>
                   <p className="text-xs text-muted-foreground">
-                    Inspector will automatically fetch your PRs and review comments from GitHub.
+                    Inspector will automatically find PRs you authored, reviewed, or are assigned across all repos.
                   </p>
                 </div>
               </div>
@@ -453,7 +486,7 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
                 <div>
                   <p className="text-sm font-medium">Explore your insights</p>
                   <p className="text-xs text-muted-foreground">
-                    Use the tools below to analyze feedback, split large PRs, and resolve comments.
+                    Use the tools below to analyze feedback, split large PRs, resolve comments, and build skills.
                   </p>
                 </div>
               </div>
@@ -461,7 +494,7 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
             <Link href="/settings" className="block mt-6">
               <Button className="gradient-primary text-primary-foreground w-full">
                 <Settings className="h-4 w-4 mr-2" />
-                Add Repository
+                Go to Settings
               </Button>
             </Link>
           </CardContent>
@@ -492,15 +525,25 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
   return (
     <div className="p-6 max-w-[1200px] mx-auto space-y-6">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Overview of recent PR activity and insights</p>
+        <div className="flex items-center gap-3">
+          {user?.avatarUrl && (
+            // biome-ignore lint/performance/noImgElement: external avatar URL
+            <img src={user.avatarUrl} alt={user.login} className="h-10 w-10 rounded-full" />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold mb-0.5">{user ? `Welcome, ${user.name || user.login}` : "Dashboard"}</h1>
+            <p className="text-sm text-muted-foreground">
+              {accountStats
+                ? `${accountStats.totalPRs} PRs across ${accountStats.totalRepos} repos`
+                : "Overview of recent PR activity and insights"}
+            </p>
+          </div>
         </div>
-        <SyncBadge lastSyncedAt={lastSyncedAt} repoId={repoId ?? undefined} externalSyncing={isSyncing} />
+        <SyncBadge lastSyncedAt={lastSyncedAt} onSync={handleSync} syncing={isSyncing} />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="PRs Analyzed" value={stats.totalPRs}>
+        <StatCard label="Total PRs" value={stats.totalPRs}>
           <Sparkline data={sparklineData} />
         </StatCard>
         <StatCard label="Avg PR Size" value={stats.avgLinesChanged ? `${stats.avgLinesChanged} lines` : "--"}>
@@ -528,6 +571,38 @@ export function DashboardClient({ prs, stats, hasRepo, sparklineData, lastSynced
           )}
         </StatCard>
       </div>
+
+      {accountStats && (
+        <div className="grid grid-cols-3 gap-3">
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <GitPullRequest className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-lg font-bold">{accountStats.prsAuthored}</p>
+                <p className="text-xs text-muted-foreground">Authored</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-lg font-bold">{accountStats.prsReviewed}</p>
+                <p className="text-xs text-muted-foreground">Reviewed</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <MessageSquareText className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-lg font-bold">{accountStats.totalComments}</p>
+                <p className="text-xs text-muted-foreground">Comments</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <PRList prs={prs} />
     </div>

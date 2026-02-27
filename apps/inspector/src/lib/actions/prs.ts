@@ -12,17 +12,20 @@ async function getFeedbackCategories(db: Awaited<ReturnType<typeof getDb>>, prId
   return rows.map((r) => r.category);
 }
 
-export async function getRecentPRs(repoId: string): Promise<PRWithComments[]> {
+export async function getRecentPRs(repoId?: string): Promise<PRWithComments[]> {
   const db = await getDb();
+  const whereClause = repoId ? "WHERE p.repo_id = ?" : "";
+  const params = repoId ? [repoId] : [];
+
   const prs = await queryAll<PR & { comment_count: number }>(
     db,
     `SELECT p.*,
        (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) as comment_count
      FROM prs p
-     WHERE p.repo_id = ?
+     ${whereClause}
      ORDER BY p.github_updated_at DESC NULLS LAST
      LIMIT 50`,
-    [repoId],
+    params,
   );
 
   const results: PRWithComments[] = [];
@@ -37,32 +40,41 @@ export async function getRecentPRs(repoId: string): Promise<PRWithComments[]> {
   return results;
 }
 
-export async function getDashboardStats(repoId: string): Promise<DashboardStats> {
+export async function getDashboardStats(repoId?: string): Promise<DashboardStats> {
   const db = await getDb();
+  const repoFilter = repoId ? "WHERE repo_id = ?" : "";
+  const repoParams = repoId ? [repoId] : [];
 
-  const total = await queryOne<{ count: number }>(db, "SELECT COUNT(*) as count FROM prs WHERE repo_id = ?", [repoId]);
+  const total = await queryOne<{ count: number }>(db, `SELECT COUNT(*) as count FROM prs ${repoFilter}`, repoParams);
 
   const avg = await queryOne<{ avg_lines: number }>(
     db,
-    "SELECT COALESCE(AVG(lines_added + lines_deleted), 0) as avg_lines FROM prs WHERE repo_id = ?",
-    [repoId],
+    `SELECT COALESCE(AVG(lines_added + lines_deleted), 0) as avg_lines FROM prs ${repoFilter}`,
+    repoParams,
   );
 
   const splittable = await queryOne<{ count: number }>(
     db,
-    "SELECT COUNT(*) as count FROM prs WHERE repo_id = ? AND size IN ('L', 'XL') AND state = 'open'",
-    [repoId],
+    `SELECT COUNT(*) as count FROM prs WHERE size IN ('L', 'XL') AND state = 'open'${repoId ? " AND repo_id = ?" : ""}`,
+    repoParams,
   );
 
   // Find the most frequent unaddressed skill gap
-  const topSkill = await queryOne<{ name: string }>(
-    db,
-    `SELECT s.name FROM skills s
-     JOIN skill_analyses sa ON s.analysis_id = sa.id
-     WHERE sa.repo_id = ? AND s.addressed = false
-     ORDER BY s.frequency DESC LIMIT 1`,
-    [repoId],
-  );
+  const topSkill = repoId
+    ? await queryOne<{ name: string }>(
+        db,
+        `SELECT s.name FROM skills s
+         JOIN skill_analyses sa ON s.analysis_id = sa.id
+         WHERE sa.repo_id = ? AND s.addressed = false
+         ORDER BY s.frequency DESC LIMIT 1`,
+        [repoId],
+      )
+    : await queryOne<{ name: string }>(
+        db,
+        `SELECT s.name FROM skills s
+         WHERE s.addressed = false
+         ORDER BY s.frequency DESC LIMIT 1`,
+      );
 
   return {
     totalPRs: Number(total?.count ?? 0),
@@ -115,17 +127,20 @@ export async function getLargePRs(repoId: string): Promise<PRWithComments[]> {
   }));
 }
 
-export async function getWeeklyPRCounts(repoId: string): Promise<number[]> {
+export async function getWeeklyPRCounts(repoId?: string): Promise<number[]> {
   const db = await getDb();
+  const whereClause = repoId ? "WHERE repo_id = ?" : "";
+  const params = repoId ? [repoId] : [];
+
   const rows = await queryAll<{ count: number }>(
     db,
     `SELECT COUNT(*) as count
      FROM prs
-     WHERE repo_id = ?
+     ${whereClause}
      GROUP BY DATE_TRUNC('week', github_created_at::TIMESTAMP)
      ORDER BY DATE_TRUNC('week', github_created_at::TIMESTAMP) DESC
      LIMIT 10`,
-    [repoId],
+    params,
   );
   // Reverse so most recent is last (for sparkline rendering)
   return rows.map((r) => Number(r.count)).reverse();

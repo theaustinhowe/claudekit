@@ -2,8 +2,8 @@ import { GitHubClient } from "@claudekit/github";
 
 let _client: GitHubClient | null = null;
 
-export function getOctokit() {
-  if (_client) return _client.octokit;
+function ensureClient(): GitHubClient {
+  if (_client) return _client;
 
   const token = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
   if (!token) {
@@ -11,5 +11,13 @@ export function getOctokit() {
   }
 
   _client = new GitHubClient({ token });
-  return _client.octokit;
+  return _client;
+}
+
+export function getOctokit() {
+  return ensureClient().octokit;
+}
+
+export function hasValidPATSync(): boolean {
+  return !!process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
 }

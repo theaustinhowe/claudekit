@@ -21,13 +21,15 @@ import { Input } from "@claudekit/ui/components/input";
 import { Slider } from "@claudekit/ui/components/slider";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
-import { Loader2, Trash2 } from "lucide-react";
+import { CheckCircle2, Loader2, Trash2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { syncAccountPRs } from "@/lib/actions/account";
 import { removeRepo, syncAllCommentsForRepo, syncPRs, syncRepo } from "@/lib/actions/github";
 import { setSetting } from "@/lib/actions/settings";
 import { FEEDBACK_CATEGORIES } from "@/lib/constants";
+import type { GitHubUser, SkillGroup } from "@/lib/types";
 
 interface Repo {
   id: string;
@@ -40,9 +42,12 @@ interface Repo {
 interface SettingsClientProps {
   repos: Repo[];
   settings: Record<string, string>;
+  hasPAT: boolean;
+  user: GitHubUser | null;
+  skillGroups: SkillGroup[];
 }
 
-export function SettingsClient({ repos: initialRepos, settings }: SettingsClientProps) {
+export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, skillGroups }: SettingsClientProps) {
   const router = useRouter();
   const { theme: colorTheme, setTheme: setColorTheme, themes } = useAppTheme({ storageKey: "inspector-theme" });
   const [repos, setRepos] = useState(initialRepos);
@@ -141,6 +146,67 @@ export function SettingsClient({ repos: initialRepos, settings }: SettingsClient
         <h1 className="text-2xl font-bold mb-1">Settings</h1>
         <p className="text-sm text-muted-foreground">Configure analysis preferences and appearance</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">GitHub Connection</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {hasPAT ? (
+                <Badge variant="secondary" className="bg-status-success/15 text-status-success gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> PAT Connected
+                </Badge>
+              ) : (
+                <Badge variant="destructive" className="gap-1">
+                  <XCircle className="h-3 w-3" /> No PAT
+                </Badge>
+              )}
+              {user && (
+                <div className="flex items-center gap-2">
+                  {user.avatarUrl && (
+                    // biome-ignore lint/performance/noImgElement: external avatar URL
+                    <img src={user.avatarUrl} alt={user.login} className="h-6 w-6 rounded-full" />
+                  )}
+                  <span className="text-sm font-medium">{user.name || user.login}</span>
+                </div>
+              )}
+            </div>
+            {hasPAT && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      const result = await syncAccountPRs();
+                      toast.success(`Synced ${result.totalSynced} PRs`, {
+                        description: `Discovered ${result.reposDiscovered} new repos`,
+                      });
+                      router.refresh();
+                    } catch (err) {
+                      toast.error("Sync failed", {
+                        description: err instanceof Error ? err.message : "Unknown error",
+                      });
+                    }
+                  });
+                }}
+                disabled={isPending}
+              >
+                {isPending ? "Syncing..." : "Sync All Account PRs"}
+              </Button>
+            )}
+          </div>
+          {!hasPAT && (
+            <p className="text-xs text-muted-foreground">
+              Add <code className="font-mono bg-muted px-1 rounded">GITHUB_PERSONAL_ACCESS_TOKEN</code> to your{" "}
+              <code className="font-mono bg-muted px-1 rounded">.env.local</code> with{" "}
+              <code className="font-mono bg-muted px-1 rounded">repo</code> scope, then restart the dev server.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -307,6 +373,29 @@ export function SettingsClient({ repos: initialRepos, settings }: SettingsClient
           </p>
         </CardContent>
       </Card>
+
+      {skillGroups.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Skill Groups</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {skillGroups.map((group) => (
+              <div key={group.id} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{group.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {group.skillCount} skill{group.skillCount !== 1 ? "s" : ""} &middot; {group.category}
+                  </p>
+                </div>
+                <Badge variant="secondary" className="text-[10px]">
+                  {group.category}
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
