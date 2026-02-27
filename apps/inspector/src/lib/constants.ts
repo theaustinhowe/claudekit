@@ -26,14 +26,6 @@ export const SIZE_CLASSES: Record<string, string> = {
   XL: "bg-size-xl/15 text-size-xl border-size-xl/30",
 };
 
-export const STATUS_COLORS: Record<string, string> = {
-  Approved: "bg-status-success/15 text-status-success",
-  "Changes Requested": "bg-status-warning/15 text-status-warning",
-  Pending: "bg-muted text-muted-foreground",
-  Merged: "bg-primary/15 text-primary",
-  Draft: "bg-muted text-muted-foreground",
-};
-
 export const SEVERITY_COLORS: Record<string, string> = {
   blocking: "bg-status-error",
   suggestion: "bg-status-warning",
