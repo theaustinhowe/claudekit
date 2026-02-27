@@ -237,7 +237,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
             setCurrentSkillGroups(groups);
             setPhase("results");
             toast.success("Rule generation complete", {
-              description: `Generated ${ruleCount} SKILL.md rule${ruleCount !== 1 ? "s" : ""}`,
+              description: `Generated ${ruleCount.toLocaleString()} SKILL.md rule${ruleCount !== 1 ? "s" : ""}`,
             });
           });
         } else {
@@ -248,7 +248,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
               setSkills(results);
               setPhase("results");
               toast.success("Skill analysis complete", {
-                description: `Found ${results.length} skill pattern${results.length !== 1 ? "s" : ""}`,
+                description: `Found ${results.length.toLocaleString()} skill pattern${results.length !== 1 ? "s" : ""}`,
               });
             });
           } else {
@@ -388,7 +388,8 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
           <div>
             <h1 className="text-2xl font-bold mb-1">Skills Dashboard</h1>
             <p className="text-sm text-muted-foreground">
-              Based on analysis of {skills.length > 0 ? skills[0]?.totalPRs : selected.size} pull requests
+              Based on analysis of {(skills.length > 0 ? skills[0]?.totalPRs : selected.size)?.toLocaleString()} pull
+              requests
             </p>
           </div>
           <div className="flex gap-2">
@@ -551,7 +552,8 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{group.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {group.skillCount} skill{group.skillCount !== 1 ? "s" : ""} &middot; {group.category}
+                        {group.skillCount.toLocaleString()} skill{group.skillCount !== 1 ? "s" : ""} &middot;{" "}
+                        {group.category}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -582,7 +584,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
                           startTransition(async () => {
                             try {
                               const result = await exportSkillGroupAsFiles(group.id, "global");
-                              toast.success(`Exported ${result.filesWritten} SKILL.md files`, {
+                              toast.success(`Exported ${result.filesWritten.toLocaleString()} SKILL.md files`, {
                                 description: result.directory,
                                 duration: 5000,
                               });
@@ -703,7 +705,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
                     <span className="text-xs text-muted-foreground">#{pr.number}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-muted-foreground">{pr.commentCount} comments</span>
+                    <span className="text-xs text-muted-foreground">{pr.commentCount.toLocaleString()} comments</span>
                   </div>
                 </div>
               </label>
@@ -718,7 +720,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
         onClick={handleAnalyze}
       >
         <Brain className="h-4 w-4 mr-2" />
-        Analyze Feedback ({selected.size} PR{selected.size !== 1 ? "s" : ""})
+        Analyze Feedback ({selected.size.toLocaleString()} PR{selected.size !== 1 ? "s" : ""})
       </Button>
     </>
   );
