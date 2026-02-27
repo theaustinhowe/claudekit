@@ -2,7 +2,7 @@ import { Skeleton } from "@claudekit/ui/components/skeleton";
 
 export default function SplitterLoading() {
   return (
-    <div className="p-6 max-w-[900px] mx-auto space-y-6">
+    <>
       <div>
         <Skeleton className="h-8 w-32 mb-2" />
         <Skeleton className="h-4 w-72" />
@@ -16,6 +16,6 @@ export default function SplitterLoading() {
       </div>
 
       <Skeleton className="h-10 w-full rounded-lg" />
-    </div>
+    </>
   );
 }

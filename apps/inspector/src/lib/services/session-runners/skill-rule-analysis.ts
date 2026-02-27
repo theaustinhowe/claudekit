@@ -154,11 +154,11 @@ export function createSkillRuleAnalysisRunner(metadata: Record<string, unknown>,
 
     // Create analysis record
     const analysisId = crypto.randomUUID();
-    await execute(
-      db,
-      "INSERT INTO skill_analyses (id, repo_id, pr_numbers, created_at) VALUES (?, ?, ?, current_timestamp)",
-      [analysisId, repoId, JSON.stringify(prNumbers)],
-    );
+    await execute(db, "INSERT INTO skill_analyses (id, repo_id, pr_numbers, created_at) VALUES (?, ?, ?, now())", [
+      analysisId,
+      repoId,
+      JSON.stringify(prNumbers),
+    ]);
 
     // Create/update skill groups and persist skills
     for (const rule of rulesData) {
@@ -168,7 +168,7 @@ export function createSkillRuleAnalysisRunner(metadata: Record<string, unknown>,
       if (!existingGroup) {
         await execute(
           db,
-          "INSERT INTO skill_groups (id, name, category, description, created_at, updated_at) VALUES (?, ?, ?, ?, current_timestamp, current_timestamp)",
+          "INSERT INTO skill_groups (id, name, category, description, created_at, updated_at) VALUES (?, ?, ?, ?, now(), now())",
           [groupId, rule.group.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()), rule.group, null],
         );
       }

@@ -1,6 +1,6 @@
 import { UsageSection } from "@claudekit/claude-usage/components/usage-section";
 import type { AppLayoutConfig, NavGroup } from "@claudekit/ui/components/shared-layout";
-import { Brain, GitBranch, LayoutDashboard, MessageSquareCode, Settings, Users } from "lucide-react";
+import { Brain, GitBranch, LayoutDashboard, MessageSquareCode, Settings } from "lucide-react";
 import Image from "next/image";
 import { getClaudeRateLimitsAction, getClaudeUsageStatsAction } from "@/lib/actions/claude-usage";
 
@@ -14,7 +14,6 @@ const navGroups: NavGroup[] = [
       { label: "Skill Builder", href: "/skills", icon: Brain },
       { label: "PR Splitter", href: "/splitter", icon: GitBranch },
       { label: "Comment Resolver", href: "/resolver", icon: MessageSquareCode },
-      { label: "Reviewer Insights", href: "/insights", icon: Users },
     ],
   },
   {

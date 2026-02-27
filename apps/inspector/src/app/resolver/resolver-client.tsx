@@ -264,7 +264,7 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
     const resolvedCount = fixedComments.filter((c) => commentStatuses[c.id] === "resolved").length;
 
     return (
-      <div className="p-4 sm:p-6 max-w-[900px] mx-auto space-y-6">
+      <>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold mb-1">Fix Results</h1>
@@ -429,14 +429,14 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
             );
           })}
         </div>
-      </div>
+      </>
     );
   }
 
   // Phase: Select Comments
   if (phase === "select-comments" && selectedPR) {
     return (
-      <div className="p-4 sm:p-6 max-w-[900px] mx-auto space-y-6">
+      <>
         <div>
           <button
             type="button"
@@ -532,13 +532,13 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
           <Zap className="h-4 w-4 mr-2" />
           Fix {selectedComments.size} Comment{selectedComments.size !== 1 ? "s" : ""}
         </Button>
-      </div>
+      </>
     );
   }
 
   // Phase: Select PR
   return (
-    <div className="p-4 sm:p-6 max-w-[900px] mx-auto space-y-6">
+    <>
       <div>
         <h1 className="text-2xl font-bold mb-1">Comment Resolver</h1>
         <p className="text-sm text-muted-foreground">Select a PR to auto-fix review comments with AI</p>
@@ -588,6 +588,6 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

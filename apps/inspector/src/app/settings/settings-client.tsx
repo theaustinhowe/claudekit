@@ -141,7 +141,7 @@ export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, sk
   };
 
   return (
-    <div className="p-6 max-w-[800px] mx-auto space-y-6">
+    <>
       <div>
         <h1 className="text-2xl font-bold mb-1">Settings</h1>
         <p className="text-sm text-muted-foreground">Configure analysis preferences and appearance</p>
@@ -424,6 +424,6 @@ export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, sk
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

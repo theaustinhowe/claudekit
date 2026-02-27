@@ -6,15 +6,19 @@ export default async function SplitterPage() {
   const repos = await getConnectedRepos();
   const activeRepo = repos[0] ?? null;
 
-  if (!activeRepo) {
+  const largePRs = await getLargePRs(activeRepo?.id);
+
+  if (largePRs.length === 0) {
     return (
       <div className="flex items-center justify-center h-full p-8">
-        <p className="text-muted-foreground">Connect a repository in Settings to get started.</p>
+        <p className="text-muted-foreground">
+          {activeRepo
+            ? "No large PRs (500+ lines) found. Sync your account PRs from the dashboard."
+            : "Connect a repository in Settings or sync your account PRs from the dashboard."}
+        </p>
       </div>
     );
   }
 
-  const largePRs = await getLargePRs(activeRepo.id);
-
-  return <SplitterClient repoId={activeRepo.id} largePRs={largePRs} />;
+  return <SplitterClient repoId={activeRepo?.id ?? null} largePRs={largePRs} />;
 }

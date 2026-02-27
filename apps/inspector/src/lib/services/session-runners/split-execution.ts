@@ -98,7 +98,7 @@ export function createSplitExecutionRunner(metadata: Record<string, unknown>, _c
       const executionId = crypto.randomUUID();
       await execute(
         db,
-        "INSERT INTO split_executions (id, plan_id, sub_pr_index, status, branch_name, created_at) VALUES (?, ?, ?, 'in_progress', ?, current_timestamp)",
+        "INSERT INTO split_executions (id, plan_id, sub_pr_index, status, branch_name, created_at) VALUES (?, ?, ?, 'in_progress', ?, now())",
         [executionId, planId, subPR.index, branchName],
       );
 
@@ -140,7 +140,7 @@ export function createSplitExecutionRunner(metadata: Record<string, unknown>, _c
 
         await execute(
           db,
-          "UPDATE split_executions SET status = 'completed', pr_number = ?, pr_url = ?, completed_at = current_timestamp WHERE id = ?",
+          "UPDATE split_executions SET status = 'completed', pr_number = ?, pr_url = ?, completed_at = now() WHERE id = ?",
           [created.number, created.url, executionId],
         );
 
@@ -155,7 +155,7 @@ export function createSplitExecutionRunner(metadata: Record<string, unknown>, _c
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
         await execute(
           db,
-          "UPDATE split_executions SET status = 'failed', error_message = ?, completed_at = current_timestamp WHERE id = ?",
+          "UPDATE split_executions SET status = 'failed', error_message = ?, completed_at = now() WHERE id = ?",
           [errorMsg, executionId],
         );
 

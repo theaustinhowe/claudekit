@@ -4,31 +4,31 @@ import { cn } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
-import { Input } from "@claudekit/ui/components/input";
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   AlertTriangle,
   Brain,
   Clock,
-  Eye,
+  FileCode,
   GitBranch,
   GitPullRequest,
+  MessageSquare,
   MessageSquareText,
   RefreshCw,
   Scissors,
-  Search,
   Settings,
   TrendingDown,
   Users,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { syncAccountPRs } from "@/lib/actions/account";
-import { SIZE_CLASSES, STATUS_COLORS } from "@/lib/constants";
-import type { AccountStats, DashboardStats, GitHubUser, PRSize, PRWithComments, UserRelationship } from "@/lib/types";
+import { getReviewerComments, getReviewerFileStats } from "@/lib/actions/reviewers";
+import { SEVERITY_COLORS, SEVERITY_LABELS, SIZE_CLASSES } from "@/lib/constants";
+import type { AccountStats, DashboardStats, GitHubUser, ReviewerComment, ReviewerStats } from "@/lib/types";
 
 function Sparkline({ data }: { data: number[] }) {
   const points = data.length > 0 ? data : [0];
@@ -62,88 +62,6 @@ function StatCard({ label, value, children }: { label: string; value: string | n
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function PRRow({ pr }: { pr: PRWithComments }) {
-  const initials = pr.author
-    .split(/[\s-]+/)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  return (
-    <div className="group flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 py-3 rounded-lg hover:bg-muted/50 transition-colors border-l-[3px] border-transparent hover:border-primary">
-      <div className="flex items-center gap-3 min-w-0">
-        {pr.authorAvatar ? (
-          // biome-ignore lint/performance/noImgElement: external avatar URL
-          <img src={pr.authorAvatar} alt={pr.author} className="h-8 w-8 rounded-full shrink-0" />
-        ) : (
-          <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold text-secondary-foreground shrink-0">
-            {initials}
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-0.5">
-            {pr.repoFullName && (
-              <Badge variant="secondary" className="text-[10px] shrink-0 font-mono">
-                {pr.repoFullName}
-              </Badge>
-            )}
-            <span className="font-medium text-sm truncate">{pr.title}</span>
-            <span className="text-xs text-muted-foreground shrink-0">#{pr.number}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{pr.author}</span>
-            {pr.userRelationship && (
-              <>
-                <span className="hidden sm:inline">&middot;</span>
-                <span className="hidden sm:inline capitalize">{pr.userRelationship}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 pl-11 sm:pl-0 sm:ml-auto shrink-0 flex-wrap">
-        <Badge variant="outline" className={cn("text-[10px] border shrink-0", SIZE_CLASSES[pr.size])}>
-          {pr.size}
-        </Badge>
-        {pr.reviewStatus && (
-          <Badge variant="secondary" className={cn("text-[10px] shrink-0", STATUS_COLORS[pr.reviewStatus] ?? "")}>
-            {pr.reviewStatus}
-          </Badge>
-        )}
-        {pr.commentCount > 0 && (
-          <span className="text-xs text-muted-foreground shrink-0">{pr.commentCount} comments</span>
-        )}
-      </div>
-
-      <div className="hidden sm:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        {pr.htmlUrl && (
-          <a href={pr.htmlUrl} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1">
-              <GitPullRequest className="h-3 w-3" /> View
-            </Button>
-          </a>
-        )}
-        {pr.commentCount > 0 && (
-          <Link href={`/skills?pr=${pr.number}`}>
-            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1">
-              <Brain className="h-3 w-3" /> Skills
-            </Button>
-          </Link>
-        )}
-        {(pr.size === "L" || pr.size === "XL") && (
-          <Link href={`/splitter?pr=${pr.number}`}>
-            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1">
-              <GitBranch className="h-3 w-3" /> Split
-            </Button>
-          </Link>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -192,190 +110,202 @@ function SyncBadge({
   );
 }
 
-const SIZE_OPTIONS: PRSize[] = ["S", "M", "L", "XL"];
-const STATUS_OPTIONS = ["Approved", "Changes Requested", "Pending", "Merged", "Draft"];
-const RELATIONSHIP_OPTIONS: { label: string; value: UserRelationship }[] = [
-  { label: "Authored", value: "authored" },
-  { label: "Reviewed", value: "reviewed" },
-  { label: "Assigned", value: "assigned" },
-];
+function SeverityBar({ counts }: { counts: Record<string, number> }) {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (total === 0) return null;
 
-function FilterChip({
-  label,
-  active,
-  onClick,
-  className,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-        active
-          ? "bg-primary/15 text-primary border-primary/30"
-          : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted",
-        className,
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
-function PRList({ prs }: { prs: PRWithComments[] }) {
-  const [search, setSearch] = useState("");
-  const [sizeFilter, setSizeFilter] = useState<Set<PRSize>>(new Set());
-  const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
-  const [relationshipFilter, setRelationshipFilter] = useState<Set<UserRelationship>>(new Set());
-
-  const hasFilters = search || sizeFilter.size > 0 || statusFilter.size > 0 || relationshipFilter.size > 0;
-
-  const toggleSize = (size: PRSize) => {
-    setSizeFilter((prev) => {
-      const next = new Set(prev);
-      next.has(size) ? next.delete(size) : next.add(size);
-      return next;
-    });
-  };
-
-  const toggleStatus = (status: string) => {
-    setStatusFilter((prev) => {
-      const next = new Set(prev);
-      next.has(status) ? next.delete(status) : next.add(status);
-      return next;
-    });
-  };
-
-  const toggleRelationship = (rel: UserRelationship) => {
-    setRelationshipFilter((prev) => {
-      const next = new Set(prev);
-      next.has(rel) ? next.delete(rel) : next.add(rel);
-      return next;
-    });
-  };
-
-  const clearFilters = () => {
-    setSearch("");
-    setSizeFilter(new Set());
-    setStatusFilter(new Set());
-    setRelationshipFilter(new Set());
-  };
-
-  const filtered = useMemo(() => {
-    let result = prs;
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (pr) =>
-          pr.title.toLowerCase().includes(q) ||
-          pr.author.toLowerCase().includes(q) ||
-          String(pr.number).includes(q) ||
-          pr.repoFullName?.toLowerCase().includes(q) ||
-          pr.branch?.toLowerCase().includes(q),
-      );
-    }
-    if (sizeFilter.size > 0) {
-      result = result.filter((pr) => sizeFilter.has(pr.size));
-    }
-    if (statusFilter.size > 0) {
-      result = result.filter((pr) => pr.reviewStatus && statusFilter.has(pr.reviewStatus));
-    }
-    if (relationshipFilter.size > 0) {
-      result = result.filter((pr) => pr.userRelationship && relationshipFilter.has(pr.userRelationship));
-    }
-    return result;
-  }, [prs, search, sizeFilter, statusFilter, relationshipFilter]);
+  const order: string[] = ["blocking", "suggestion", "nit"];
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Pull Requests</h2>
-        {hasFilters && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={clearFilters}>
-            <X className="h-3 w-3" /> Clear filters
-          </Button>
-        )}
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by title, author, repo, or number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9"
+    <div className="flex h-2 rounded-full overflow-hidden w-full">
+      {order.map((severity) => {
+        const count = counts[severity] || 0;
+        if (count === 0) return null;
+        return (
+          <div
+            key={severity}
+            className={cn("h-full", SEVERITY_COLORS[severity])}
+            style={{ width: `${(count / total) * 100}%` }}
+            title={`${SEVERITY_LABELS[severity] || severity}: ${count}`}
           />
-        </div>
-      </div>
-
-      <div className="flex gap-2 flex-wrap">
-        <span className="text-xs text-muted-foreground self-center mr-1">Role:</span>
-        {RELATIONSHIP_OPTIONS.map((opt) => (
-          <FilterChip
-            key={opt.value}
-            label={opt.label}
-            active={relationshipFilter.has(opt.value)}
-            onClick={() => toggleRelationship(opt.value)}
-          />
-        ))}
-        <span className="text-xs text-muted-foreground self-center ml-2 mr-1">Size:</span>
-        {SIZE_OPTIONS.map((size) => (
-          <FilterChip
-            key={size}
-            label={size}
-            active={sizeFilter.has(size)}
-            onClick={() => toggleSize(size)}
-            className={sizeFilter.has(size) ? SIZE_CLASSES[size] : undefined}
-          />
-        ))}
-        <span className="text-xs text-muted-foreground self-center ml-2 mr-1">Status:</span>
-        {STATUS_OPTIONS.map((status) => (
-          <FilterChip
-            key={status}
-            label={status}
-            active={statusFilter.has(status)}
-            onClick={() => toggleStatus(status)}
-          />
-        ))}
-      </div>
-
-      <Card>
-        <CardContent className="p-2">
-          {prs.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">
-              No PRs found. Sync your account to discover PRs across all repositories.
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">
-              No PRs match your filters. Try adjusting the search or filter criteria.
-            </div>
-          ) : (
-            <>
-              {filtered.map((pr) => (
-                <PRRow key={pr.id} pr={pr} />
-              ))}
-              {hasFilters && (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  Showing {filtered.length} of {prs.length} PRs
-                </p>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+        );
+      })}
+      {counts.unknown ? (
+        <div
+          className="h-full bg-muted-foreground/30"
+          style={{ width: `${(counts.unknown / total) * 100}%` }}
+          title={`Unknown: ${counts.unknown}`}
+        />
+      ) : null}
     </div>
   );
 }
 
+function SeverityBadge({ severity }: { severity: string | null }) {
+  if (!severity) return null;
+  const colorMap: Record<string, string> = {
+    blocking: "bg-status-error/15 text-status-error",
+    suggestion: "bg-status-warning/15 text-status-warning",
+    nit: "bg-status-success/15 text-status-success",
+  };
+  return (
+    <Badge variant="outline" className={cn("text-[10px] border-none", colorMap[severity] ?? "")}>
+      {SEVERITY_LABELS[severity] || severity}
+    </Badge>
+  );
+}
+
+function ReviewerCard({ stats, onClick }: { stats: ReviewerStats; onClick: () => void }) {
+  const initials = stats.reviewer
+    .split(/[\s-]+/)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const topCategories = Object.entries(stats.categoryCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3);
+
+  return (
+    <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          {stats.reviewerAvatar ? (
+            // biome-ignore lint/performance/noImgElement: external avatar URL
+            <img src={stats.reviewerAvatar} alt={stats.reviewer} className="h-10 w-10 rounded-full" />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
+              {initials}
+            </div>
+          )}
+          <div>
+            <h3 className="font-semibold text-sm">{stats.reviewer}</h3>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+              <span className="flex items-center gap-1">
+                <MessageSquare className="h-3 w-3" />
+                {stats.totalComments} comments
+              </span>
+              <span>{stats.prsReviewed} PRs</span>
+            </div>
+          </div>
+        </div>
+
+        <SeverityBar counts={stats.severityCounts} />
+
+        <div className="flex gap-2 flex-wrap">
+          {Object.entries(stats.severityCounts)
+            .filter(([k]) => k !== "unknown")
+            .map(([severity, count]) => (
+              <Badge key={severity} variant="secondary" className="text-[10px]">
+                {SEVERITY_LABELS[severity] || severity}: {count}
+              </Badge>
+            ))}
+        </div>
+
+        {topCategories.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">Top categories</p>
+            <div className="space-y-1">
+              {topCategories.map(([category, count]) => (
+                <div key={category} className="flex items-center justify-between text-xs">
+                  <span>{category}</span>
+                  <span className="text-muted-foreground tabular-nums">{count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReviewerDrawer({
+  comments,
+  fileStats,
+  loading,
+}: {
+  comments: ReviewerComment[];
+  fileStats: { filePath: string; count: number }[];
+  loading: boolean;
+}) {
+  return (
+    <div className="space-y-6">
+      {fileStats.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+            <FileCode className="h-4 w-4" /> Most Commented Files
+          </h4>
+          <div className="space-y-1.5">
+            {fileStats.map(({ filePath, count }) => (
+              <div key={filePath} className="flex items-center justify-between text-xs">
+                <code className="font-mono text-[11px] text-muted-foreground truncate max-w-[80%]">{filePath}</code>
+                <span className="text-muted-foreground tabular-nums">{Number(count)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+          <MessageSquare className="h-4 w-4" /> Comments ({comments.length})
+        </h4>
+        {loading ? (
+          <p className="text-sm text-muted-foreground animate-pulse">Loading comments...</p>
+        ) : comments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No comments found.</p>
+        ) : (
+          <div className="space-y-3">
+            {comments.map((comment) => (
+              <div key={comment.id} className="border rounded-lg p-3 space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-medium">
+                    #{comment.prNumber} {comment.prTitle}
+                  </span>
+                  <SeverityBadge severity={comment.severity} />
+                  {comment.category && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {comment.category}
+                    </Badge>
+                  )}
+                </div>
+                {comment.filePath && (
+                  <code className="text-[11px] font-mono text-muted-foreground block">
+                    {comment.filePath}
+                    {comment.lineNumber ? `:${comment.lineNumber}` : ""}
+                  </code>
+                )}
+                <p className="text-sm text-muted-foreground line-clamp-3">{comment.body}</p>
+                {comment.createdAt && (
+                  <p className="text-[10px] text-muted-foreground">
+                    {new Date(comment.createdAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface UserReviewStats {
+  totalPRsAuthored: number;
+  totalPRsReviewed: number;
+  totalCommentsReceived: number;
+  totalCommentsGiven: number;
+  topReviewers: { reviewer: string; avatar: string | null; count: number }[];
+  topCommentedFiles: { filePath: string; count: number }[];
+  severityDistribution: Record<string, number>;
+  categoryDistribution: Record<string, number>;
+  weeklyActivity: { week: string; authored: number; reviewed: number; comments: number }[];
+}
+
 interface DashboardClientProps {
-  prs: PRWithComments[];
+  prs: { id: string }[];
   stats: DashboardStats;
   hasRepo: boolean;
   sparklineData: number[];
@@ -383,18 +313,26 @@ interface DashboardClientProps {
   repoId: string | null;
   user: GitHubUser | null;
   accountStats: AccountStats | null;
+  reviewerStats: ReviewerStats[];
+  userStats: UserReviewStats | null;
 }
 
 export function DashboardClient({
-  prs,
   stats,
   hasRepo,
   sparklineData,
   lastSyncedAt,
+  repoId,
   user,
   accountStats,
+  reviewerStats,
+  userStats,
 }: DashboardClientProps) {
   const [isSyncing, startSync] = useTransition();
+  const [selectedReviewer, setSelectedReviewer] = useState<ReviewerStats | null>(null);
+  const [reviewerComments, setReviewerComments] = useState<ReviewerComment[]>([]);
+  const [fileStats, setFileStats] = useState<{ filePath: string; count: number }[]>([]);
+  const [isLoadingComments, startCommentLoad] = useTransition();
   const router = useRouter();
 
   const handleSync = () => {
@@ -408,6 +346,19 @@ export function DashboardClient({
       } catch (err) {
         toast.error("Sync failed", { description: err instanceof Error ? err.message : "Unknown error" });
       }
+    });
+  };
+
+  const handleReviewerClick = (rs: ReviewerStats) => {
+    if (!repoId) return;
+    setSelectedReviewer(rs);
+    startCommentLoad(async () => {
+      const [comments, files] = await Promise.all([
+        getReviewerComments(repoId, rs.reviewer),
+        getReviewerFileStats(repoId, rs.reviewer),
+      ]);
+      setReviewerComments(comments);
+      setFileStats(files);
     });
   };
 
@@ -431,16 +382,10 @@ export function DashboardClient({
         description: "Generate and apply code fixes for review comments directly to your branch.",
         href: "/resolver",
       },
-      {
-        icon: Eye,
-        title: "Reviewer Insights",
-        description: "Understand reviewer patterns, severity distributions, and feedback categories.",
-        href: "/insights",
-      },
     ];
 
     return (
-      <div className="p-6 max-w-[900px] mx-auto space-y-8">
+      <>
         <div className="text-center pt-8">
           <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center mb-6 mx-auto">
             <span className="text-2xl font-bold text-primary-foreground">IN</span>
@@ -518,12 +463,13 @@ export function DashboardClient({
             ))}
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-6">
+    <>
+      {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           {user?.avatarUrl && (
@@ -542,6 +488,7 @@ export function DashboardClient({
         <SyncBadge lastSyncedAt={lastSyncedAt} onSync={handleSync} syncing={isSyncing} />
       </div>
 
+      {/* Summary stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Total PRs" value={stats.totalPRs}>
           <Sparkline data={sparklineData} />
@@ -572,6 +519,7 @@ export function DashboardClient({
         </StatCard>
       </div>
 
+      {/* Account activity cards */}
       {accountStats && (
         <div className="grid grid-cols-3 gap-3">
           <Card>
@@ -604,7 +552,140 @@ export function DashboardClient({
         </div>
       )}
 
-      <PRList prs={prs} />
-    </div>
+      {/* Severity & Category Distribution */}
+      {userStats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.keys(userStats.severityDistribution).length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="text-sm font-semibold mb-3">Severity Distribution</h3>
+                <div className="space-y-2">
+                  {Object.entries(userStats.severityDistribution)
+                    .filter(([k]) => k !== "unknown")
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([severity, count]) => {
+                      const total = Object.values(userStats.severityDistribution).reduce((a, b) => a + b, 0);
+                      return (
+                        <div key={severity} className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="capitalize">{SEVERITY_LABELS[severity] || severity}</span>
+                            <span className="text-muted-foreground">{count}</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className={cn("h-full rounded-full", SEVERITY_COLORS[severity] || "bg-muted-foreground")}
+                              style={{ width: `${(count / Math.max(total, 1)) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {Object.keys(userStats.categoryDistribution).length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="text-sm font-semibold mb-3">Feedback Categories</h3>
+                <div className="space-y-2">
+                  {Object.entries(userStats.categoryDistribution)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 8)
+                    .map(([category, count]) => {
+                      const total = Object.values(userStats.categoryDistribution).reduce((a, b) => a + b, 0);
+                      return (
+                        <div key={category} className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span>{category}</span>
+                            <span className="text-muted-foreground">{count}</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full gradient-primary"
+                              style={{ width: `${(count / Math.max(total, 1)) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Top Reviewers */}
+      {userStats && userStats.topReviewers.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3">Top Reviewers (Who Reviews Your PRs)</h3>
+            <div className="space-y-2">
+              {userStats.topReviewers.map((r) => (
+                <div key={r.reviewer} className="flex items-center gap-2">
+                  {r.avatar ? (
+                    // biome-ignore lint/performance/noImgElement: external avatar URL
+                    <img src={r.avatar} alt={r.reviewer} className="h-6 w-6 rounded-full" />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center text-[9px] font-bold">
+                      {r.reviewer.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm flex-1">{r.reviewer}</span>
+                  <span className="text-xs text-muted-foreground">{r.count} comments</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* File Hotspots */}
+      {userStats && userStats.topCommentedFiles.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+              <FileCode className="h-4 w-4" /> Most Commented Files
+            </h3>
+            <div className="space-y-1.5">
+              {userStats.topCommentedFiles.map(({ filePath, count }) => (
+                <div key={filePath} className="flex items-center justify-between text-xs">
+                  <code className="font-mono text-[11px] text-muted-foreground truncate max-w-[80%]">{filePath}</code>
+                  <span className="text-muted-foreground tabular-nums">{Number(count)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Reviewer Detail Cards */}
+      {reviewerStats.length > 0 && (
+        <>
+          <h2 className="text-lg font-semibold">Reviewer Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {reviewerStats.map((rs) => (
+              <ReviewerCard key={rs.reviewer} stats={rs} onClick={() => handleReviewerClick(rs)} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Reviewer Drawer */}
+      <Sheet open={!!selectedReviewer} onOpenChange={(open) => !open && setSelectedReviewer(null)}>
+        <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{selectedReviewer?.reviewer}</SheetTitle>
+          </SheetHeader>
+          <SheetBody>
+            {selectedReviewer && (
+              <ReviewerDrawer comments={reviewerComments} fileStats={fileStats} loading={isLoadingComments} />
+            )}
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

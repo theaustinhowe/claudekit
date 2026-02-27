@@ -6,7 +6,17 @@ import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
 import { Slider } from "@claudekit/ui/components/slider";
-import { Brain, Code, Download, Filter, FolderOpen, GitCompareArrows, History, TrendingUp } from "lucide-react";
+import {
+  BookOpen,
+  Brain,
+  Code,
+  Download,
+  Filter,
+  FolderOpen,
+  GitCompareArrows,
+  History,
+  TrendingUp,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
@@ -16,9 +26,9 @@ import { AnalysisComparison } from "@/components/skills/analysis-comparison";
 import { AnalysisHistory } from "@/components/skills/analysis-history";
 import { SkillCard } from "@/components/skills/skill-card";
 import { SkillDetailDrawer } from "@/components/skills/skill-detail-drawer";
-import { exportSkillGroupAsFiles, getSkillGroupPreview } from "@/lib/actions/skill-groups";
+import { exportSkillGroupAsFiles, getSkillGroupPreview, getSkillGroups } from "@/lib/actions/skill-groups";
 import type { ComparisonSkill, SkillTrendPoint } from "@/lib/actions/skills";
-import { getSkillsForAnalysis, startSkillAnalysis } from "@/lib/actions/skills";
+import { getSkillsForAnalysis, startSkillAnalysis, startSkillRuleAnalysis } from "@/lib/actions/skills";
 import type { PRWithComments, SkillGroup, SkillWithComments } from "@/lib/types";
 
 // Dynamic imports to avoid linter type-only import optimization
@@ -162,7 +172,7 @@ function SkillTrendChart({ data }: { data: SkillTrendPoint[] }) {
   );
 }
 
-type Phase = "select" | "analyzing" | "results";
+type Phase = "select" | "analyzing" | "generating_rules" | "results";
 
 interface AnalysisHistoryEntry {
   id: string;
@@ -273,7 +283,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
 
   if (phase === "results") {
     return (
-      <div className="p-6 max-w-[1200px] mx-auto space-y-6">
+      <>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-1">Skills Dashboard</h1>
@@ -520,12 +530,12 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
             <SheetBody>{selectedSkill && <SkillDetailDrawer skill={selectedSkill} />}</SheetBody>
           </SheetContent>
         </Sheet>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="p-6 max-w-[900px] mx-auto space-y-6">
+    <>
       <div>
         <h1 className="text-2xl font-bold mb-1">Skill Builder</h1>
         <p className="text-sm text-muted-foreground">Select PRs with review feedback to uncover growth areas</p>
@@ -585,6 +595,6 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
         <Brain className="h-4 w-4 mr-2" />
         Analyze Feedback ({selected.size} PR{selected.size !== 1 ? "s" : ""})
       </Button>
-    </div>
+    </>
   );
 }

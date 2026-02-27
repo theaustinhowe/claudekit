@@ -45,12 +45,12 @@ export async function getAuthenticatedUser(): Promise<GitHubUser | null> {
     await execute(
       db,
       `INSERT INTO github_user (id, login, avatar_url, name, fetched_at)
-       VALUES (?, ?, ?, ?, current_timestamp)
+       VALUES (?, ?, ?, ?, now())
        ON CONFLICT (id) DO UPDATE SET
          login = excluded.login,
          avatar_url = excluded.avatar_url,
          name = excluded.name,
-         fetched_at = current_timestamp`,
+         fetched_at = now()`,
       [String(user.id), user.login, user.avatar_url, user.name],
     );
 
@@ -62,7 +62,9 @@ export async function getAuthenticatedUser(): Promise<GitHubUser | null> {
     };
   } catch (err) {
     log.error({ err }, "Failed to fetch authenticated user");
-    return null;
+    throw new Error(
+      `GitHub authentication failed: ${err instanceof Error ? err.message : "Unknown error"}. Check that your PAT is valid and not expired.`,
+    );
   }
 }
 
@@ -116,7 +118,7 @@ export async function syncAccountPRs(options?: {
           await execute(
             db,
             `INSERT INTO repos (id, owner, name, full_name, default_branch, created_at)
-             VALUES (?, ?, ?, ?, 'main', current_timestamp)`,
+             VALUES (?, ?, ?, ?, 'main', now())`,
             [repoId, owner, repoName, repoFullName],
           );
           reposDiscovered++;
@@ -137,7 +139,7 @@ export async function syncAccountPRs(options?: {
         await execute(
           db,
           `INSERT INTO prs (id, repo_id, number, title, author, author_avatar, branch, size, lines_added, lines_deleted, files_changed, review_status, state, github_created_at, github_updated_at, fetched_at, user_relationship, html_url, repo_full_name)
-           VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, 0, ?, ?, ?, ?, current_timestamp, ?, ?, ?)
+           VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, 0, ?, ?, ?, ?, now(), ?, ?, ?)
            ON CONFLICT (repo_id, number) DO UPDATE SET
              title = excluded.title,
              review_status = COALESCE(prs.review_status, excluded.review_status),
@@ -146,7 +148,7 @@ export async function syncAccountPRs(options?: {
              user_relationship = COALESCE(excluded.user_relationship, prs.user_relationship),
              html_url = COALESCE(excluded.html_url, prs.html_url),
              repo_full_name = COALESCE(excluded.repo_full_name, prs.repo_full_name),
-             fetched_at = current_timestamp`,
+             fetched_at = now()`,
           [
             prId,
             repoId,
@@ -174,10 +176,14 @@ export async function syncAccountPRs(options?: {
     }
   }
 
-  // Now enrich PRs that have 0 lines (from search API) by fetching full PR details
+  // Enrich PRs that have 0 lines (search API doesn't return line counts)
+  // Prioritize open PRs first (most actionable for splitting), then recent closed ones
   const prsToEnrich = await queryAll<{ id: string; repo_id: string; number: number }>(
     db,
-    "SELECT id, repo_id, number FROM prs WHERE lines_added = 0 AND lines_deleted = 0 AND user_relationship IS NOT NULL ORDER BY github_updated_at DESC LIMIT 50",
+    `SELECT id, repo_id, number FROM prs
+     WHERE lines_added = 0 AND lines_deleted = 0 AND user_relationship IS NOT NULL
+     ORDER BY (CASE WHEN state = 'open' THEN 0 ELSE 1 END), github_updated_at DESC
+     LIMIT 200`,
   );
 
   for (const pr of prsToEnrich) {

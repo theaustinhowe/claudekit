@@ -2,7 +2,7 @@ import { Skeleton } from "@claudekit/ui/components/skeleton";
 
 export default function SkillsLoading() {
   return (
-    <div className="p-6 max-w-[900px] mx-auto space-y-6">
+    <>
       <div>
         <Skeleton className="h-8 w-36 mb-2" />
         <Skeleton className="h-4 w-80" />
@@ -21,6 +21,6 @@ export default function SkillsLoading() {
       </div>
 
       <Skeleton className="h-10 w-full rounded-lg" />
-    </div>
+    </>
   );
 }

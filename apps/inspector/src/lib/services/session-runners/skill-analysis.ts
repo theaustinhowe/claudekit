@@ -143,11 +143,11 @@ export function createSkillAnalysisRunner(metadata: Record<string, unknown>, _co
 
     // Persist analysis
     const analysisId = crypto.randomUUID();
-    await execute(
-      db,
-      "INSERT INTO skill_analyses (id, repo_id, pr_numbers, created_at) VALUES (?, ?, ?, current_timestamp)",
-      [analysisId, repoId, JSON.stringify(prNumbers)],
-    );
+    await execute(db, "INSERT INTO skill_analyses (id, repo_id, pr_numbers, created_at) VALUES (?, ?, ?, now())", [
+      analysisId,
+      repoId,
+      JSON.stringify(prNumbers),
+    ]);
 
     for (const skill of skillsData) {
       const skillId = crypto.randomUUID();

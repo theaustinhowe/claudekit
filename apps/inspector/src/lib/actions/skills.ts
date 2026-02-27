@@ -4,6 +4,7 @@ import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { createServiceLogger } from "@/lib/logger";
 import { createSession, startSession } from "@/lib/services/session-manager";
 import { createSkillAnalysisRunner } from "@/lib/services/session-runners/skill-analysis";
+import { createSkillRuleAnalysisRunner } from "@/lib/services/session-runners/skill-rule-analysis";
 import type { Skill, SkillWithComments } from "@/lib/types";
 
 const log = createServiceLogger("skills");
@@ -21,6 +22,24 @@ export async function startSkillAnalysis(repoId: string, prNumbers: number[]): P
   });
 
   const runner = createSkillAnalysisRunner(metadata);
+  await startSession(sessionId, runner);
+
+  return sessionId;
+}
+
+export async function startSkillRuleAnalysis(repoId: string, prNumbers: number[]): Promise<string> {
+  log.info({ repoId, prNumbers }, "Starting skill rule analysis session");
+
+  const metadata = { repoId, prNumbers };
+  const sessionId = await createSession({
+    sessionType: "skill_rule_analysis",
+    label: `Skill rule generation (${prNumbers.length} PRs)`,
+    contextType: "repo",
+    contextId: repoId,
+    metadata,
+  });
+
+  const runner = createSkillRuleAnalysisRunner(metadata);
   await startSession(sessionId, runner);
 
   return sessionId;

@@ -131,7 +131,7 @@ export function createCommentFixRunner(metadata: Record<string, unknown>, _conte
       const fixId = crypto.randomUUID();
       await execute(
         db,
-        "INSERT INTO comment_fixes (id, comment_id, suggested_fix, fix_diff, status, created_at) VALUES (?, ?, ?, ?, 'open', current_timestamp)",
+        "INSERT INTO comment_fixes (id, comment_id, suggested_fix, fix_diff, status, created_at) VALUES (?, ?, ?, ?, 'open', now())",
         [fixId, fix.commentId, fix.suggestedFix, fix.fixDiff],
       );
     }

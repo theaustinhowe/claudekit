@@ -115,7 +115,7 @@ export function createFixExecutionRunner(metadata: Record<string, unknown>, _con
       const executionId = crypto.randomUUID();
       await execute(
         db,
-        "INSERT INTO fix_executions (id, fix_id, comment_id, status, branch_name, created_at) VALUES (?, ?, ?, 'in_progress', ?, current_timestamp)",
+        "INSERT INTO fix_executions (id, fix_id, comment_id, status, branch_name, created_at) VALUES (?, ?, ?, 'in_progress', ?, now())",
         [executionId, fix.id, fix.comment_id, pr.branch],
       );
 
@@ -161,7 +161,7 @@ Apply this fix by editing the appropriate file(s). Make the minimal changes need
 
         await execute(
           db,
-          "UPDATE fix_executions SET status = 'pushed', commit_sha = ?, completed_at = current_timestamp WHERE id = ?",
+          "UPDATE fix_executions SET status = 'pushed', commit_sha = ?, completed_at = now() WHERE id = ?",
           [sha, executionId],
         );
 
@@ -177,7 +177,7 @@ Apply this fix by editing the appropriate file(s). Make the minimal changes need
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
         await execute(
           db,
-          "UPDATE fix_executions SET status = 'failed', error_message = ?, completed_at = current_timestamp WHERE id = ?",
+          "UPDATE fix_executions SET status = 'failed', error_message = ?, completed_at = now() WHERE id = ?",
           [errorMsg, executionId],
         );
 

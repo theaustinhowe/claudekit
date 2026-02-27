@@ -29,7 +29,7 @@ import type { PRWithComments, SplitExecution, SubPR } from "@/lib/types";
 type Phase = "select" | "analyzing" | "results";
 
 interface SplitterClientProps {
-  repoId: string;
+  repoId: string | null;
   largePRs: PRWithComments[];
 }
 
@@ -37,7 +37,9 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
   const searchParams = useSearchParams();
   const preselected = searchParams.get("pr");
 
-  const [selectedPR, setSelectedPR] = useState<string | null>(preselected ? `${repoId}#${preselected}` : null);
+  const [selectedPR, setSelectedPR] = useState<string | null>(
+    preselected && repoId ? `${repoId}#${preselected}` : null,
+  );
   const [phase, setPhase] = useState<Phase>("select");
   const [planId, setPlanId] = useState<string | null>(null);
   const [plan, setPlan] = useState<{ prNumber: number; prTitle: string; totalLines: number; subPRs: SubPR[] } | null>(
@@ -140,7 +142,7 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
 
   if (phase === "results" && plan) {
     return (
-      <div className="p-6 max-w-[1000px] mx-auto space-y-6">
+      <>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-1">Split Plan</h1>
@@ -282,12 +284,12 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
             </SheetBody>
           </SheetContent>
         </Sheet>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="p-6 max-w-[900px] mx-auto space-y-6">
+    <>
       <div>
         <h1 className="text-2xl font-bold mb-1">PR Splitter</h1>
         <p className="text-sm text-muted-foreground">Select a large PR to analyze for intelligent splitting</p>
@@ -354,6 +356,6 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
         <Scissors className="h-4 w-4 mr-2" />
         Analyze for Splitting
       </Button>
-    </div>
+    </>
   );
 }

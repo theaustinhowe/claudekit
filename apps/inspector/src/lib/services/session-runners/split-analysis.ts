@@ -106,7 +106,7 @@ export function createSplitAnalysisRunner(metadata: Record<string, unknown>, _co
 
     await execute(
       db,
-      "INSERT INTO split_plans (id, pr_id, total_lines, sub_prs, created_at) VALUES (?, ?, ?, ?, current_timestamp)",
+      "INSERT INTO split_plans (id, pr_id, total_lines, sub_prs, created_at) VALUES (?, ?, ?, ?, now())",
       [planId, prId, totalLines, JSON.stringify(subPRs)],
     );
 

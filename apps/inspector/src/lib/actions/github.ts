@@ -20,10 +20,10 @@ export async function syncRepo(owner: string, name: string) {
   await execute(
     db,
     `INSERT INTO repos (id, owner, name, full_name, default_branch, last_synced_at, created_at)
-     VALUES (?, ?, ?, ?, ?, current_timestamp, current_timestamp)
+     VALUES (?, ?, ?, ?, ?, now(), now())
      ON CONFLICT (id) DO UPDATE SET
        default_branch = excluded.default_branch,
-       last_synced_at = current_timestamp`,
+       last_synced_at = now()`,
     [id, owner, name, repo.full_name, repo.default_branch || "main"],
   );
 
@@ -77,7 +77,7 @@ export async function syncPRs(repoId: string) {
     await execute(
       db,
       `INSERT INTO prs (id, repo_id, number, title, author, author_avatar, branch, size, lines_added, lines_deleted, files_changed, review_status, state, github_created_at, github_updated_at, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())
        ON CONFLICT (repo_id, number) DO UPDATE SET
          title = excluded.title,
          size = excluded.size,
@@ -87,7 +87,7 @@ export async function syncPRs(repoId: string) {
          review_status = excluded.review_status,
          state = excluded.state,
          github_updated_at = excluded.github_updated_at,
-         fetched_at = current_timestamp`,
+         fetched_at = now()`,
       [
         id,
         repoId,
@@ -109,7 +109,7 @@ export async function syncPRs(repoId: string) {
   }
 
   // Update last_synced_at
-  await execute(db, "UPDATE repos SET last_synced_at = current_timestamp WHERE id = ?", [repoId]);
+  await execute(db, "UPDATE repos SET last_synced_at = now() WHERE id = ?", [repoId]);
 
   log.info({ repoId, count: limitedPulls.length }, "PRs synced");
   return limitedPulls.length;
@@ -186,12 +186,12 @@ export async function syncPRComments(repoId: string, prNumber: number) {
     await execute(
       db,
       `INSERT INTO pr_comments (id, pr_id, github_id, reviewer, reviewer_avatar, body, file_path, line_number, severity, category, created_at, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())
        ON CONFLICT (id) DO UPDATE SET
          body = excluded.body,
          severity = COALESCE(pr_comments.severity, excluded.severity),
          category = COALESCE(pr_comments.category, excluded.category),
-         fetched_at = current_timestamp`,
+         fetched_at = now()`,
       [
         id,
         prId,
