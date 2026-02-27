@@ -17,5 +17,4 @@ const db = createDatabase({
 
 export const getDb = db.getDb;
 
-// Re-export query helpers so consumers can import from "@/lib/db"
 export { execute, queryAll, queryOne } from "@claudekit/duckdb";

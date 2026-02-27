@@ -45,7 +45,6 @@ const manager = createSessionManager({
   logFlushIntervalMs: SESSION_LOG_FLUSH_INTERVAL_MS,
 });
 
-// Re-export manager methods for drop-in compatibility (no consumer changes needed)
 export const { startSession, getLiveSession, setCleanupFn, setSessionPid } = manager;
 
 // Export the manager instance itself (needed by SSE route)

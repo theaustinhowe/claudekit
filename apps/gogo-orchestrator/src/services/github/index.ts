@@ -5,13 +5,11 @@
  * Each repository has its own GitHub token for isolated rate limiting and credentials.
  */
 
-// Re-export client functions (rate limiting and Octokit management)
 export {
   getAllRateLimitInfo,
   getOctokitForRepo,
 } from "./client.js";
 
-// Re-export repo-scoped operations
 export {
   AGENT_COMMENT_MARKER,
   createIssueCommentForRepo,
@@ -31,7 +29,6 @@ export {
   isHumanReviewComment,
   removeLabelFromIssue,
 } from "./repo-service.js";
-// Re-export types
 export type {
   GitHubComment,
   GitHubIssue,

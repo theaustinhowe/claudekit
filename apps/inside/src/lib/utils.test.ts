@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { expandTilde, formatNumber } from "./utils";
+import { expandTilde } from "./utils";
 
 describe("expandTilde", () => {
   const originalHome = process.env.HOME;
@@ -35,24 +35,5 @@ describe("expandTilde", () => {
 
   it("expands nested tilde paths", () => {
     expect(expandTilde("~/a/b/c")).toBe("/Users/testuser/a/b/c");
-  });
-});
-
-describe("formatNumber", () => {
-  it("formats integers with locale separators", () => {
-    const result = formatNumber(1000);
-    // Locale-dependent, but should contain the digits
-    expect(result).toContain("1");
-    expect(result).toContain("000");
-  });
-
-  it("formats zero", () => {
-    expect(formatNumber(0)).toBe("0");
-  });
-
-  it("formats negative numbers", () => {
-    const result = formatNumber(-1234);
-    expect(result).toContain("1");
-    expect(result).toContain("234");
   });
 });

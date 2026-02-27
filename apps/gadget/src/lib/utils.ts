@@ -1,6 +1,6 @@
 import type { Policy } from "@/lib/types";
 
-export { formatElapsed, generateId, nowTimestamp, parseGitHubUrl, timeAgo } from "@claudekit/ui";
+export { formatElapsed, formatNumber, generateId, nowTimestamp, parseGitHubUrl, timeAgo } from "@claudekit/ui";
 
 export function expandTilde(filepath: string): string {
   if (filepath.startsWith("~/") || filepath === "~") {
@@ -36,10 +36,6 @@ export function parsePolicy(row: Record<string, unknown>): Policy {
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };
-}
-
-export function formatNumber(n: number): string {
-  return n.toLocaleString();
 }
 
 async function moveToTrash(filePath: string): Promise<void> {

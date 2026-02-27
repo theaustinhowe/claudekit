@@ -7,10 +7,6 @@ export function expandTilde(filepath: string): string {
   return filepath;
 }
 
-export function formatNumber(n: number): string {
-  return n.toLocaleString();
-}
-
 async function moveToTrash(filePath: string): Promise<void> {
   const { execFile } = await import("node:child_process");
   const { promisify } = await import("node:util");

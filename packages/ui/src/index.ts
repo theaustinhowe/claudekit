@@ -3,6 +3,7 @@ export {
   cn,
   formatBytes,
   formatElapsed,
+  formatNumber,
   generateId,
   IMAGE_EXTENSIONS,
   nowTimestamp,

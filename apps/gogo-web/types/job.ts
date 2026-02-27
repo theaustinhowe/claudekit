@@ -1,4 +1,3 @@
-// Re-export core types and constants from shared package (source of truth)
 export type { Job } from "@claudekit/gogo-shared";
 
 // Import JobStatus as a value for use in constants

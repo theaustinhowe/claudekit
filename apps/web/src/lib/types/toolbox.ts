@@ -23,9 +23,7 @@ export interface ToolDefinition {
   installCommand?: string;
   latestCommand?: string;
   latestVersionSource?: LatestVersionSource;
-  /** @deprecated Use updateCommands instead */
-  updateCommand?: string;
-  /** Per-install-method update commands. Checked before legacy updateCommand. */
+  /** Per-install-method update commands. */
   updateCommands?: Partial<Record<InstallMethod | "default", string>>;
   /** Whether to auto-detect install method via `which`. Default true. Set false for tools where detection is irrelevant. */
   detectInstallMethod?: boolean;

@@ -81,8 +81,6 @@ function parseHooks(content: string, relativePath: string): DiscoveredConcept[] 
   }
 }
 
-/** Re-exported from concept-scanner — single source of truth for frontmatter parsing */
-
 /** Parse a single markdown concept file */
 function parseMarkdownConcept(content: string, relativePath: string, conceptType: ConceptType): DiscoveredConcept {
   const { frontmatter, body } = parseFrontmatter(content);

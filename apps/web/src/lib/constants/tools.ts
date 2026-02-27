@@ -217,15 +217,11 @@ export function resolveUpdateCommand(
   tool: ToolDefinition,
   installMethod: InstallMethod | string | null,
 ): string | undefined {
-  if (tool.updateCommands) {
-    if (installMethod && installMethod in tool.updateCommands) {
-      return tool.updateCommands[installMethod as InstallMethod];
-    }
-    if (tool.updateCommands.default) {
-      return tool.updateCommands.default;
-    }
+  if (!tool.updateCommands) return undefined;
+  if (installMethod && installMethod in tool.updateCommands) {
+    return tool.updateCommands[installMethod as InstallMethod];
   }
-  return tool.updateCommand;
+  return tool.updateCommands.default;
 }
 
 export const TOOL_CATEGORY_LABELS: Record<ToolCategory, string> = {

@@ -51,6 +51,10 @@ export function timeAgo(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
+export function formatNumber(n: number): string {
+  return n.toLocaleString();
+}
+
 export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const match = url.match(/github\.com[/:]([^/]+)\/([^/.#?]+)/);
   if (!match) return null;
