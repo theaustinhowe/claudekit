@@ -16,6 +16,7 @@ export function HeaderActions({ autoOpen, toolboxToolIds }: HeaderActionsProps) 
         initialToolIds={toolboxToolIds}
         trigger={
           <button
+            id="toolbox-trigger"
             type="button"
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >

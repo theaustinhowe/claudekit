@@ -6,7 +6,10 @@ import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Progress } from "@claudekit/ui/components/progress";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
+import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
+import { parseStreamLog, resetStreamIdCounter, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
 import {
   Check,
   CheckCircle2,
@@ -16,12 +19,12 @@ import {
   GitCommit,
   Loader2,
   MessageSquare,
+  Square,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { SessionProgress } from "@/components/session-progress";
 import { getPRComments } from "@/lib/actions/prs";
 import {
   getCommentFixes,
@@ -151,6 +154,17 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
     onComplete: handleSessionComplete,
   });
 
+  const streamEntries = useMemo(() => {
+    resetStreamIdCounter();
+    const result: StreamEntry[] = [];
+    for (const entry of stream.logs) {
+      result.push(...parseStreamLog(entry.log, entry.logType));
+    }
+    return result;
+  }, [stream.logs]);
+
+  const isStreaming = stream.status === "streaming";
+
   const handleStartFixing = () => {
     setPhase("fixing");
 
@@ -248,12 +262,23 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
   // Phase: Fixing
   if (phase === "fixing") {
     return (
-      <SessionProgress
-        stream={stream}
-        icon={<Zap className="h-12 w-12 text-primary mb-6 animate-pulse" />}
-        title="Generating Fixes"
-        subtitle={`Fixing ${selectedComments.size} comment${selectedComments.size !== 1 ? "s" : ""} on PR #${selectedPR?.number}`}
-      />
+      <div className="flex flex-col items-center justify-center h-full p-8">
+        <Zap className="h-12 w-12 text-primary mb-6 animate-pulse" />
+        <h2 className="text-xl font-bold mb-2">Generating Fixes</h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Fixing {selectedComments.size} comment{selectedComments.size !== 1 ? "s" : ""} on PR #{selectedPR?.number}
+        </p>
+        <div className="w-full max-w-md space-y-4">
+          <Progress value={stream.progress ?? 0} className="h-2" />
+          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
+          {streamEntries.length > 0 && <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />}
+          {stream.elapsed > 0 && <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>}
+          <Button variant="outline" className="w-full" onClick={stream.cancel}>
+            <Square className="h-3 w-3 mr-2" />
+            Cancel
+          </Button>
+        </div>
+      </div>
     );
   }
 

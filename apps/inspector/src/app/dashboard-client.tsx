@@ -1,33 +1,37 @@
 "use client";
 
+import { useSessionStream } from "@claudekit/hooks";
 import { cn } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Progress } from "@claudekit/ui/components/progress";
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
+import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
+import { parseStreamLog, resetStreamIdCounter, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   AlertTriangle,
   Brain,
   Clock,
   FileCode,
-  GitBranch,
   GitPullRequest,
   MessageSquare,
   MessageSquareText,
   RefreshCw,
   Scissors,
   Settings,
+  Square,
   TrendingDown,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { syncAccountPRs } from "@/lib/actions/account";
+import { startAccountSync } from "@/lib/actions/account";
 import { getReviewerComments, getReviewerFileStats } from "@/lib/actions/reviewers";
-import { SEVERITY_COLORS, SEVERITY_LABELS, SIZE_CLASSES } from "@/lib/constants";
+import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
 import type { AccountStats, DashboardStats, GitHubUser, ReviewerComment, ReviewerStats } from "@/lib/types";
 
 function Sparkline({ data }: { data: number[] }) {
@@ -56,7 +60,7 @@ function StatCard({ label, value, children }: { label: string; value: string | n
     <Card className="flex-1 min-w-[140px]">
       <CardContent className="p-5">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
-        <div className="flex items-end justify-between">
+        <div className="flex items-end justify-between min-w-0">
           <span className="text-2xl font-bold">{value}</span>
           {children}
         </div>
@@ -184,9 +188,9 @@ function ReviewerCard({ stats, onClick }: { stats: ReviewerStats; onClick: () =>
             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
               <span className="flex items-center gap-1">
                 <MessageSquare className="h-3 w-3" />
-                {stats.totalComments} comments
+                {stats.totalComments.toLocaleString()} comments
               </span>
-              <span>{stats.prsReviewed} PRs</span>
+              <span>{stats.prsReviewed.toLocaleString()} PRs</span>
             </div>
           </div>
         </div>
@@ -198,7 +202,7 @@ function ReviewerCard({ stats, onClick }: { stats: ReviewerStats; onClick: () =>
             .filter(([k]) => k !== "unknown")
             .map(([severity, count]) => (
               <Badge key={severity} variant="secondary" className="text-[10px]">
-                {SEVERITY_LABELS[severity] || severity}: {count}
+                {SEVERITY_LABELS[severity] || severity}: {count.toLocaleString()}
               </Badge>
             ))}
         </div>
@@ -210,7 +214,7 @@ function ReviewerCard({ stats, onClick }: { stats: ReviewerStats; onClick: () =>
               {topCategories.map(([category, count]) => (
                 <div key={category} className="flex items-center justify-between text-xs">
                   <span>{category}</span>
-                  <span className="text-muted-foreground tabular-nums">{count}</span>
+                  <span className="text-muted-foreground tabular-nums">{count.toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -241,7 +245,7 @@ function ReviewerDrawer({
             {fileStats.map(({ filePath, count }) => (
               <div key={filePath} className="flex items-center justify-between text-xs">
                 <code className="font-mono text-[11px] text-muted-foreground truncate max-w-[80%]">{filePath}</code>
-                <span className="text-muted-foreground tabular-nums">{Number(count)}</span>
+                <span className="text-muted-foreground tabular-nums">{Number(count).toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -250,7 +254,7 @@ function ReviewerDrawer({
 
       <div>
         <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
-          <MessageSquare className="h-4 w-4" /> Comments ({comments.length})
+          <MessageSquare className="h-4 w-4" /> Comments ({comments.length.toLocaleString()})
         </h4>
         {loading ? (
           <p className="text-sm text-muted-foreground animate-pulse">Loading comments...</p>
@@ -328,25 +332,51 @@ export function DashboardClient({
   reviewerStats,
   userStats,
 }: DashboardClientProps) {
-  const [isSyncing, startSync] = useTransition();
+  const [syncSessionId, setSyncSessionId] = useState<string | null>(null);
   const [selectedReviewer, setSelectedReviewer] = useState<ReviewerStats | null>(null);
   const [reviewerComments, setReviewerComments] = useState<ReviewerComment[]>([]);
   const [fileStats, setFileStats] = useState<{ filePath: string; count: number }[]>([]);
   const [isLoadingComments, startCommentLoad] = useTransition();
   const router = useRouter();
 
-  const handleSync = () => {
-    startSync(async () => {
-      try {
-        const result = await syncAccountPRs();
+  const syncStream = useSessionStream({
+    sessionId: syncSessionId,
+    onComplete: (event) => {
+      if (event.type === "done") {
+        const data = event.data as { totalSynced?: number; reposDiscovered?: number } | undefined;
         router.refresh();
         toast.success("Account sync complete", {
-          description: `Synced ${result.totalSynced} PRs across ${result.reposDiscovered} new repos`,
+          description: `Synced ${data?.totalSynced ?? 0} PRs, ${data?.reposDiscovered ?? 0} new repos discovered`,
         });
-      } catch (err) {
-        toast.error("Sync failed", { description: err instanceof Error ? err.message : "Unknown error" });
+      } else if (event.type === "error") {
+        toast.error("Sync failed", { description: event.message ?? "Unknown error" });
+      } else if (event.type === "cancelled") {
+        toast.info("Sync cancelled");
       }
-    });
+      setSyncSessionId(null);
+    },
+  });
+
+  const isSyncing = syncSessionId !== null && syncStream.status !== "done" && syncStream.status !== "error";
+
+  const syncEntries = useMemo(() => {
+    resetStreamIdCounter();
+    const result: StreamEntry[] = [];
+    for (const entry of syncStream.logs) {
+      result.push(...parseStreamLog(entry.log, entry.logType));
+    }
+    return result;
+  }, [syncStream.logs]);
+
+  const isSyncStreaming = syncStream.status === "streaming";
+
+  const handleSync = async () => {
+    try {
+      const sessionId = await startAccountSync();
+      setSyncSessionId(sessionId);
+    } catch (err) {
+      toast.error("Failed to start sync", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
   };
 
   const handleReviewerClick = (rs: ReviewerStats) => {
@@ -480,7 +510,7 @@ export function DashboardClient({
             <h1 className="text-2xl font-bold mb-0.5">{user ? `Welcome, ${user.name || user.login}` : "Dashboard"}</h1>
             <p className="text-sm text-muted-foreground">
               {accountStats
-                ? `${accountStats.totalPRs} PRs across ${accountStats.totalRepos} repos`
+                ? `${accountStats.totalPRs.toLocaleString()} PRs across ${accountStats.totalRepos.toLocaleString()} repos`
                 : "Overview of recent PR activity and insights"}
             </p>
           </div>
@@ -490,10 +520,13 @@ export function DashboardClient({
 
       {/* Summary stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="Total PRs" value={stats.totalPRs}>
+        <StatCard label="Total PRs" value={stats.totalPRs.toLocaleString()}>
           <Sparkline data={sparklineData} />
         </StatCard>
-        <StatCard label="Avg PR Size" value={stats.avgLinesChanged ? `${stats.avgLinesChanged} lines` : "--"}>
+        <StatCard
+          label="Avg PR Size"
+          value={stats.avgLinesChanged ? `${stats.avgLinesChanged.toLocaleString()} lines` : "--"}
+        >
           {stats.avgLinesChanged > 0 && (
             <div className="flex items-center gap-1 text-xs text-status-success">
               <TrendingDown className="h-3.5 w-3.5" />
@@ -502,19 +535,21 @@ export function DashboardClient({
         </StatCard>
         <StatCard label="Top Skill Gap" value="">
           {stats.topSkillGap ? (
-            <Link href="/skills">
-              <Button variant="secondary" size="sm" className="text-xs">
-                <AlertTriangle className="h-3 w-3 mr-1 text-status-warning" />
-                {stats.topSkillGap}
+            <Link href="/skills" className="min-w-0">
+              <Button variant="secondary" size="sm" className="text-xs max-w-full">
+                <AlertTriangle className="h-3 w-3 shrink-0 mr-1 text-status-warning" />
+                <span className="truncate">{stats.topSkillGap}</span>
               </Button>
             </Link>
           ) : (
             <span className="text-xs text-muted-foreground">Run analysis first</span>
           )}
         </StatCard>
-        <StatCard label="Splittable PRs" value={stats.splittablePRs}>
+        <StatCard label="Splittable PRs" value={stats.splittablePRs.toLocaleString()}>
           {stats.splittablePRs > 0 && (
-            <Badge className="gradient-primary text-primary-foreground text-xs">{stats.splittablePRs} ready</Badge>
+            <Badge className="gradient-primary text-primary-foreground text-xs">
+              {stats.splittablePRs.toLocaleString()} ready
+            </Badge>
           )}
         </StatCard>
       </div>
@@ -526,7 +561,7 @@ export function DashboardClient({
             <CardContent className="p-4 flex items-center gap-3">
               <GitPullRequest className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-lg font-bold">{accountStats.prsAuthored}</p>
+                <p className="text-lg font-bold">{accountStats.prsAuthored.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Authored</p>
               </div>
             </CardContent>
@@ -535,7 +570,7 @@ export function DashboardClient({
             <CardContent className="p-4 flex items-center gap-3">
               <Users className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-lg font-bold">{accountStats.prsReviewed}</p>
+                <p className="text-lg font-bold">{accountStats.prsReviewed.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Reviewed</p>
               </div>
             </CardContent>
@@ -544,7 +579,7 @@ export function DashboardClient({
             <CardContent className="p-4 flex items-center gap-3">
               <MessageSquareText className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-lg font-bold">{accountStats.totalComments}</p>
+                <p className="text-lg font-bold">{accountStats.totalComments.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Comments</p>
               </div>
             </CardContent>
@@ -569,7 +604,7 @@ export function DashboardClient({
                         <div key={severity} className="space-y-1">
                           <div className="flex justify-between text-xs">
                             <span className="capitalize">{SEVERITY_LABELS[severity] || severity}</span>
-                            <span className="text-muted-foreground">{count}</span>
+                            <span className="text-muted-foreground">{count.toLocaleString()}</span>
                           </div>
                           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
@@ -599,7 +634,7 @@ export function DashboardClient({
                         <div key={category} className="space-y-1">
                           <div className="flex justify-between text-xs">
                             <span>{category}</span>
-                            <span className="text-muted-foreground">{count}</span>
+                            <span className="text-muted-foreground">{count.toLocaleString()}</span>
                           </div>
                           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
@@ -634,7 +669,7 @@ export function DashboardClient({
                     </div>
                   )}
                   <span className="text-sm flex-1">{r.reviewer}</span>
-                  <span className="text-xs text-muted-foreground">{r.count} comments</span>
+                  <span className="text-xs text-muted-foreground">{r.count.toLocaleString()} comments</span>
                 </div>
               ))}
             </div>
@@ -653,7 +688,7 @@ export function DashboardClient({
               {userStats.topCommentedFiles.map(({ filePath, count }) => (
                 <div key={filePath} className="flex items-center justify-between text-xs">
                   <code className="font-mono text-[11px] text-muted-foreground truncate max-w-[80%]">{filePath}</code>
-                  <span className="text-muted-foreground tabular-nums">{Number(count)}</span>
+                  <span className="text-muted-foreground tabular-nums">{Number(count).toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -672,6 +707,40 @@ export function DashboardClient({
           </div>
         </>
       )}
+
+      {/* Sync Progress Sheet */}
+      <Sheet
+        open={isSyncing}
+        onOpenChange={(open) => {
+          if (!open) syncStream.cancel();
+        }}
+      >
+        <SheetContent side="right" className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Syncing Account PRs</SheetTitle>
+          </SheetHeader>
+          <SheetBody>
+            <div className="flex flex-col items-center p-4 space-y-4">
+              <RefreshCw className="h-10 w-10 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">Fetching PRs from GitHub...</p>
+              <div className="w-full space-y-4">
+                <Progress value={syncStream.progress ?? 0} className="h-2" />
+                {syncStream.phase && <p className="text-center text-sm font-medium">{syncStream.phase}</p>}
+                {syncEntries.length > 0 && (
+                  <StreamingDisplay entries={syncEntries} variant="chat" live={isSyncStreaming} />
+                )}
+                {syncStream.elapsed > 0 && (
+                  <p className="text-center text-xs text-muted-foreground">{syncStream.elapsed}s elapsed</p>
+                )}
+                <Button variant="outline" className="w-full" onClick={syncStream.cancel}>
+                  <Square className="h-3 w-3 mr-2" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
 
       {/* Reviewer Drawer */}
       <Sheet open={!!selectedReviewer} onOpenChange={(open) => !open && setSelectedReviewer(null)}>

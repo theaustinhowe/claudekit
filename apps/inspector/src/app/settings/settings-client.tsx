@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppTheme } from "@claudekit/hooks";
+import { useAppTheme, useSessionStream } from "@claudekit/hooks";
 import { cn } from "@claudekit/ui";
 import {
   AlertDialog,
@@ -18,14 +18,15 @@ import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Input } from "@claudekit/ui/components/input";
+import { Progress } from "@claudekit/ui/components/progress";
 import { Slider } from "@claudekit/ui/components/slider";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
-import { CheckCircle2, Loader2, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCw, Square, Trash2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { syncAccountPRs } from "@/lib/actions/account";
+import { startAccountSync } from "@/lib/actions/account";
 import { removeRepo, syncAllCommentsForRepo, syncPRs, syncRepo } from "@/lib/actions/github";
 import { setSetting } from "@/lib/actions/settings";
 import { FEEDBACK_CATEGORIES } from "@/lib/constants";
@@ -68,6 +69,27 @@ export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, sk
   const [isPending, startTransition] = useTransition();
   const [syncStatus, setSyncStatus] = useState("");
   const [syncingRepoId, setSyncingRepoId] = useState<string | null>(null);
+  const [syncSessionId, setSyncSessionId] = useState<string | null>(null);
+
+  const syncStream = useSessionStream({
+    sessionId: syncSessionId,
+    onComplete: (event) => {
+      if (event.type === "done") {
+        const data = event.data as { totalSynced?: number; reposDiscovered?: number } | undefined;
+        toast.success(`Synced ${data?.totalSynced ?? 0} PRs`, {
+          description: `Discovered ${data?.reposDiscovered ?? 0} new repos`,
+        });
+        router.refresh();
+      } else if (event.type === "error") {
+        toast.error("Sync failed", { description: event.message ?? "Unknown error" });
+      } else if (event.type === "cancelled") {
+        toast.info("Sync cancelled");
+      }
+      setSyncSessionId(null);
+    },
+  });
+
+  const isAccountSyncing = syncSessionId !== null && syncStream.status !== "done" && syncStream.status !== "error";
 
   const handleAddRepo = () => {
     const parts = repoInput.trim().split("/");
@@ -177,24 +199,25 @@ export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, sk
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  startTransition(async () => {
-                    try {
-                      const result = await syncAccountPRs();
-                      toast.success(`Synced ${result.totalSynced} PRs`, {
-                        description: `Discovered ${result.reposDiscovered} new repos`,
-                      });
-                      router.refresh();
-                    } catch (err) {
-                      toast.error("Sync failed", {
-                        description: err instanceof Error ? err.message : "Unknown error",
-                      });
-                    }
-                  });
+                onClick={async () => {
+                  try {
+                    const sessionId = await startAccountSync();
+                    setSyncSessionId(sessionId);
+                  } catch (err) {
+                    toast.error("Failed to start sync", {
+                      description: err instanceof Error ? err.message : "Unknown error",
+                    });
+                  }
                 }}
-                disabled={isPending}
+                disabled={isPending || isAccountSyncing}
               >
-                {isPending ? "Syncing..." : "Sync All Account PRs"}
+                {isAccountSyncing ? (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Syncing...
+                  </>
+                ) : (
+                  "Sync All Account PRs"
+                )}
               </Button>
             )}
           </div>
@@ -204,6 +227,24 @@ export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, sk
               <code className="font-mono bg-muted px-1 rounded">.env.local</code> with{" "}
               <code className="font-mono bg-muted px-1 rounded">repo</code> scope, then restart the dev server.
             </p>
+          )}
+          {isAccountSyncing && (
+            <div className="space-y-2 pt-2">
+              <Progress value={syncStream.progress ?? 0} className="h-2" />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  {syncStream.phase ?? "Starting..."} — {syncStream.progress ?? 0}%
+                </p>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={syncStream.cancel}>
+                  <Square className="h-3 w-3 mr-1" /> Cancel
+                </Button>
+              </div>
+              {syncStream.logs.length > 0 && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {syncStream.logs[syncStream.logs.length - 1].log}
+                </p>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

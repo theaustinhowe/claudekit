@@ -5,6 +5,7 @@ import { cn } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Progress } from "@claudekit/ui/components/progress";
 import {
   Sheet,
   SheetBody,
@@ -13,12 +14,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@claudekit/ui/components/sheet";
-import { ArrowDown, ClipboardCopy, GitBranch, Scissors } from "lucide-react";
+import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
+import { parseStreamLog, resetStreamIdCounter, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
+import { ArrowDown, ClipboardCopy, GitBranch, Scissors, Square } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { SessionProgress } from "@/components/session-progress";
 import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
 import { SubPRCard } from "@/components/splitter/sub-pr-card";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "@/lib/actions/splitter";
@@ -92,6 +94,17 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
     onComplete: handleSessionComplete,
   });
 
+  const streamEntries = useMemo(() => {
+    resetStreamIdCounter();
+    const result: StreamEntry[] = [];
+    for (const entry of stream.logs) {
+      result.push(...parseStreamLog(entry.log, entry.logType));
+    }
+    return result;
+  }, [stream.logs]);
+
+  const isStreaming = stream.status === "streaming";
+
   const handleSelect = (pr: PRWithComments) => {
     setSelectedPR(pr.id);
   };
@@ -136,7 +149,20 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
 
   if (phase === "analyzing") {
     return (
-      <SessionProgress stream={stream} icon={<Scissors className="h-12 w-12 text-primary mb-6 animate-pulse" />} />
+      <div className="flex flex-col items-center justify-center h-full p-8">
+        <Scissors className="h-12 w-12 text-primary mb-6 animate-pulse" />
+        <h2 className="text-xl font-bold mb-2">Analyzing PR</h2>
+        <div className="w-full max-w-md space-y-4">
+          <Progress value={stream.progress ?? 0} className="h-2" />
+          {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
+          {streamEntries.length > 0 && <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />}
+          {stream.elapsed > 0 && <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>}
+          <Button variant="outline" className="w-full" onClick={stream.cancel}>
+            <Square className="h-3 w-3 mr-2" />
+            Cancel
+          </Button>
+        </div>
+      </div>
     );
   }
 

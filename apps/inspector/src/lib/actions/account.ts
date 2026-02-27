@@ -4,6 +4,8 @@ import { classifyPRSize } from "@/lib/constants";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { getOctokit, hasValidPATSync } from "@/lib/github";
 import { createServiceLogger } from "@/lib/logger";
+import { createSession, startSession } from "@/lib/services/session-manager";
+import { createAccountSyncRunner } from "@/lib/services/session-runners/account-sync";
 import type { AccountStats, GitHubUser, PRWithComments, UserRelationship } from "@/lib/types";
 
 const log = createServiceLogger("account");
@@ -66,6 +68,22 @@ export async function getAuthenticatedUser(): Promise<GitHubUser | null> {
       `GitHub authentication failed: ${err instanceof Error ? err.message : "Unknown error"}. Check that your PAT is valid and not expired.`,
     );
   }
+}
+
+export async function startAccountSync(): Promise<string> {
+  log.info("Starting account sync session");
+
+  const metadata = {};
+  const sessionId = await createSession({
+    sessionType: "account_sync",
+    label: "Account PR sync",
+    metadata,
+  });
+
+  const runner = createAccountSyncRunner(metadata);
+  await startSession(sessionId, runner);
+
+  return sessionId;
 }
 
 export async function syncAccountPRs(options?: {

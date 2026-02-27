@@ -1,5 +1,6 @@
 import type { SessionRunner } from "@/lib/services/session-manager";
 import type { SessionType } from "@/lib/types";
+import { createAccountSyncRunner } from "./account-sync";
 import { createCommentFixRunner } from "./comment-fix";
 import { createSkillAnalysisRunner } from "./skill-analysis";
 import { createSplitAnalysisRunner } from "./split-analysis";
@@ -51,16 +52,5 @@ export const sessionRunners: Record<SessionType, RunnerFactory> = {
       return factory(metadata, contextId)(opts);
     };
   },
-  account_sync: (_metadata, _contextId) => {
-    return async ({ onProgress }) => {
-      onProgress({
-        type: "progress",
-        progress: 100,
-        phase: "Complete",
-        log: "Account sync delegated",
-        logType: "status",
-      });
-      return { result: {} };
-    };
-  },
+  account_sync: createAccountSyncRunner,
 };

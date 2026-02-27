@@ -1,7 +1,33 @@
 "use server";
 
 import { getDb, queryAll, queryOne } from "@/lib/db";
-import type { DashboardStats, PR, PRWithComments } from "@/lib/types";
+import type { DashboardStats, PR, PRSize, PRWithComments, UserRelationship } from "@/lib/types";
+
+/** Map a snake_case DB row from `prs` to the camelCase PR interface. */
+function mapPR(row: Record<string, unknown>): PR {
+  return {
+    id: row.id as string,
+    repoId: row.repo_id as string,
+    number: Number(row.number),
+    title: row.title as string,
+    author: row.author as string,
+    authorAvatar: (row.author_avatar as string) ?? null,
+    branch: (row.branch as string) ?? null,
+    size: row.size as PRSize,
+    linesAdded: Number(row.lines_added ?? 0),
+    linesDeleted: Number(row.lines_deleted ?? 0),
+    filesChanged: Number(row.files_changed ?? 0),
+    reviewStatus: (row.review_status as string) ?? null,
+    state: row.state as string,
+    complexity: row.complexity != null ? Number(row.complexity) : null,
+    githubCreatedAt: (row.github_created_at as string) ?? null,
+    githubUpdatedAt: (row.github_updated_at as string) ?? null,
+    fetchedAt: row.fetched_at as string,
+    userRelationship: (row.user_relationship as UserRelationship) ?? null,
+    htmlUrl: (row.html_url as string) ?? null,
+    repoFullName: (row.repo_full_name as string) ?? null,
+  };
+}
 
 async function getFeedbackCategories(db: Awaited<ReturnType<typeof getDb>>, prId: string): Promise<string[]> {
   const rows = await queryAll<{ category: string }>(
@@ -17,7 +43,7 @@ export async function getRecentPRs(repoId?: string): Promise<PRWithComments[]> {
   const whereClause = repoId ? "WHERE p.repo_id = ?" : "";
   const params = repoId ? [repoId] : [];
 
-  const prs = await queryAll<PR & { comment_count: number }>(
+  const prs = await queryAll<Record<string, unknown>>(
     db,
     `SELECT p.*,
        (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) as comment_count
@@ -29,11 +55,12 @@ export async function getRecentPRs(repoId?: string): Promise<PRWithComments[]> {
   );
 
   const results: PRWithComments[] = [];
-  for (const pr of prs) {
+  for (const row of prs) {
+    const pr = mapPR(row);
     const categories = await getFeedbackCategories(db, pr.id);
     results.push({
       ...pr,
-      commentCount: Number(pr.comment_count),
+      commentCount: Number(row.comment_count ?? 0),
       feedbackCategories: categories,
     });
   }
@@ -86,7 +113,7 @@ export async function getDashboardStats(repoId?: string): Promise<DashboardStats
 
 export async function getPRsWithComments(repoId: string): Promise<PRWithComments[]> {
   const db = await getDb();
-  const prs = await queryAll<PR & { comment_count: number }>(
+  const prs = await queryAll<Record<string, unknown>>(
     db,
     `SELECT p.*,
        (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) as comment_count
@@ -97,11 +124,12 @@ export async function getPRsWithComments(repoId: string): Promise<PRWithComments
   );
 
   const results: PRWithComments[] = [];
-  for (const pr of prs) {
+  for (const row of prs) {
+    const pr = mapPR(row);
     const categories = await getFeedbackCategories(db, pr.id);
     results.push({
       ...pr,
-      commentCount: Number(pr.comment_count),
+      commentCount: Number(row.comment_count ?? 0),
       feedbackCategories: categories,
     });
   }
@@ -115,7 +143,7 @@ export async function getLargePRs(repoId?: string): Promise<PRWithComments[]> {
     : "WHERE p.size IN ('L', 'XL') OR (p.lines_added + p.lines_deleted) >= 500";
   const params = repoId ? [repoId] : [];
 
-  const prs = await queryAll<PR & { comment_count: number }>(
+  const prs = await queryAll<Record<string, unknown>>(
     db,
     `SELECT p.*,
        (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) as comment_count
@@ -125,9 +153,9 @@ export async function getLargePRs(repoId?: string): Promise<PRWithComments[]> {
     params,
   );
 
-  return prs.map((pr) => ({
-    ...pr,
-    commentCount: Number(pr.comment_count),
+  return prs.map((row) => ({
+    ...mapPR(row),
+    commentCount: Number(row.comment_count ?? 0),
     feedbackCategories: [],
   }));
 }
