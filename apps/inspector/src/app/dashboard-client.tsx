@@ -346,7 +346,7 @@ export function DashboardClient({
         const data = event.data as { totalSynced?: number; reposDiscovered?: number } | undefined;
         router.refresh();
         toast.success("Account sync complete", {
-          description: `Synced ${data?.totalSynced ?? 0} PRs, ${data?.reposDiscovered ?? 0} new repos discovered`,
+          description: `Synced ${(data?.totalSynced ?? 0).toLocaleString()} PRs, ${(data?.reposDiscovered ?? 0).toLocaleString()} new repos discovered`,
         });
       } else if (event.type === "error") {
         toast.error("Sync failed", { description: event.message ?? "Unknown error" });
