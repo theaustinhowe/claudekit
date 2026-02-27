@@ -13,9 +13,9 @@ function SyncIndicator() {
   if (status === "idle") return null;
   return (
     <Tooltip label={status === "saving" ? "Saving changes..." : "Changes not saved"} position="bottom">
-      <div
+      <output
         className={cn(
-          "w-2 h-2 rounded-full shrink-0",
+          "block w-2 h-2 rounded-full shrink-0",
           status === "saving" && "bg-primary animate-pulse",
           status === "error" && "bg-amber-500",
         )}

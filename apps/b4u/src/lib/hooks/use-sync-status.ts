@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 
-export type SyncStatusValue = "idle" | "saving" | "error";
+type SyncStatusValue = "idle" | "saving" | "error";
 
 interface SyncStatusContextValue {
   status: SyncStatusValue;

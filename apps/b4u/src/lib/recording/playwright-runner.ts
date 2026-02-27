@@ -11,7 +11,7 @@ interface RecordFlowOptions {
   onProgress?: (message: string, progress: number) => void;
 }
 
-export interface StepResult {
+interface StepResult {
   action: string;
   success: boolean;
   method: string;
