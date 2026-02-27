@@ -88,8 +88,8 @@ function DesktopNav({ groups, collapsed }: { groups: NavGroup[]; collapsed: bool
   return (
     <TooltipProvider delayDuration={0}>
       <nav className="flex-1 py-2 px-2 overflow-y-auto">
-        {groups.map((group) => (
-          <div key={group.label ?? "ungrouped"}>
+        {groups.map((group, index) => (
+          <div key={group.label ?? `ungrouped-${index}`}>
             {group.label && !collapsed && (
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-4 pb-1">
                 {group.label}
