@@ -3,6 +3,7 @@
 import { cn } from "@claudekit/ui";
 import { Button } from "@claudekit/ui/components/button";
 import { Input } from "@claudekit/ui/components/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { ArrowDownAZ, ArrowUpAZ, Search } from "lucide-react";
 import type { PRFilters, PRSortField } from "@/lib/types";
 
@@ -101,13 +102,20 @@ export function PRFilterBar({
             </option>
           ))}
         </select>
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onToggleDirection}>
-          {filters.sortDirection === "desc" ? (
-            <ArrowDownAZ className="h-3.5 w-3.5" />
-          ) : (
-            <ArrowUpAZ className="h-3.5 w-3.5" />
-          )}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onToggleDirection}>
+                {filters.sortDirection === "desc" ? (
+                  <ArrowDownAZ className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowUpAZ className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{filters.sortDirection === "desc" ? "Descending" : "Ascending"}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <span className="text-xs text-muted-foreground whitespace-nowrap">
           {resultCount === totalCount
             ? `${resultCount.toLocaleString()} PRs`
