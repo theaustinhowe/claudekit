@@ -45,6 +45,7 @@ export async function createGeneratorProject(data: {
   inspiration_urls?: string[];
   color_scheme?: { primary?: string; accent?: string };
   custom_features?: string[];
+  tool_versions?: Record<string, string>;
 }): Promise<GeneratorProject> {
   const db = await getDb();
   const id = generateId();
