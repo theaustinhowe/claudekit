@@ -3,24 +3,20 @@ import { Skeleton } from "@claudekit/ui/components/skeleton";
 export default function SkillsLoading() {
   return (
     <>
-      <div>
-        <Skeleton className="h-8 w-36 mb-2" />
-        <Skeleton className="h-4 w-80" />
-      </div>
-
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-8 w-24 rounded-md" />
-        <Skeleton className="h-8 w-48 rounded-md" />
+      <div className="flex items-center justify-between">
+        <div>
+          <Skeleton className="h-8 w-36 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <Skeleton className="h-9 w-36 rounded-md" />
       </div>
 
       <div className="space-y-2">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders
-          <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          <Skeleton key={i} className="h-20 w-full rounded-lg" />
         ))}
       </div>
-
-      <Skeleton className="h-10 w-full rounded-lg" />
     </>
   );
 }

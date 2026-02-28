@@ -1,9 +1,7 @@
 import { hasValidPAT } from "@/lib/actions/account";
 import { getConnectedRepos } from "@/lib/actions/github";
-import { getPRsWithComments } from "@/lib/actions/prs";
-import { getSkillGroups } from "@/lib/actions/skill-groups";
-import { getSkillAnalyses, getSkillsForAnalysis } from "@/lib/actions/skills";
-import { SkillsClient } from "./skills-client";
+import { getAnalysisHistory } from "@/lib/actions/skills";
+import { SkillsListClient } from "./skills-list-client";
 
 export default async function SkillsPage() {
   const hasPAT = await hasValidPAT();
@@ -17,27 +15,14 @@ export default async function SkillsPage() {
 
   const repos = await getConnectedRepos();
 
-  // Fetch all PRs with comments across repos
-  const prsWithComments = await getPRsWithComments();
-
-  // Load skill groups and latest analysis (try first repo for analyses)
-  const activeRepo = repos[0] ?? null;
-  const [skillGroups, analyses] = await Promise.all([
-    getSkillGroups(),
-    activeRepo ? getSkillAnalyses(activeRepo.id) : Promise.resolve([]),
-  ]);
-
-  let previousSkills: Awaited<ReturnType<typeof getSkillsForAnalysis>> = [];
-  if (analyses.length > 0) {
-    previousSkills = await getSkillsForAnalysis(analyses[0].id);
-  }
-
-  return (
-    <SkillsClient
-      repoId={activeRepo?.id ?? null}
-      prsWithComments={prsWithComments}
-      previousSkills={previousSkills}
-      skillGroups={skillGroups}
-    />
+  // Fetch analysis history for all repos
+  const allHistory = await Promise.all(
+    repos.map(async (repo) => {
+      const history = await getAnalysisHistory(repo.id);
+      return history.map((h) => ({ ...h, repoId: repo.id }));
+    }),
   );
+  const history = allHistory.flat().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return <SkillsListClient history={history} />;
 }

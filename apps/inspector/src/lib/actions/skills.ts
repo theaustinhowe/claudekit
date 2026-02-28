@@ -45,6 +45,15 @@ export async function startSkillRuleAnalysis(repoId: string, prNumbers: number[]
   return sessionId;
 }
 
+export async function getAnalysisById(analysisId: string) {
+  const db = await getDb();
+  return queryOne<{ id: string; repo_id: string; pr_numbers: string; created_at: string }>(
+    db,
+    "SELECT id, repo_id, pr_numbers, created_at FROM skill_analyses WHERE id = ?",
+    [analysisId],
+  );
+}
+
 export async function getSkillAnalyses(repoId: string) {
   const db = await getDb();
   return queryAll<{ id: string; pr_numbers: string; created_at: string }>(
