@@ -41,25 +41,24 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageTabs } from "@/components/layout/page-tabs";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useTabNavigation } from "@/hooks/use-tab-navigation";
 import { createPolicy, deletePolicy, updatePolicy } from "@/lib/actions/policies";
-import type { CustomRule, Policy, PolicyTemplate } from "@/lib/types";
+import type { CustomRule, Policy } from "@/lib/types";
 import { PolicyForm, type PolicyFormData } from "./policy-form";
 import { RulesTab } from "./rules-tab";
-import { TemplatesTab } from "./templates-tab";
 
 interface PoliciesClientProps {
   policies: Policy[];
-  templates: PolicyTemplate[];
   rules: CustomRule[];
 }
 
-export function PoliciesClient({ policies: initialPolicies, templates, rules }: PoliciesClientProps) {
+export function PoliciesClient({ policies: initialPolicies, rules }: PoliciesClientProps) {
   const router = useRouter();
   const { activeTab, setActiveTab } = useTabNavigation(
-    "templates",
+    "policies",
     "/policies",
-    { templates: "Templates", policies: "Policies", rules: "Rules" },
+    { policies: "Policies", rules: "Rules" },
     "Policies",
   );
 
@@ -73,7 +72,6 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
   const [createDefaults, setCreateDefaults] = useState<Partial<Policy> | undefined>(undefined);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [ruleCreateTrigger, setRuleCreateTrigger] = useState(0);
-  const [templateCreateTrigger, setTemplateCreateTrigger] = useState(0);
 
   // --- Edit ---
   const openEditDialog = (policy: Policy) => {
@@ -100,8 +98,6 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
   const openCreateDialog = (defaults?: Partial<Policy>) => {
     setCreateDefaults(defaults);
     setCreateDialogOpen(true);
-    // Also switch to policies tab so user sees the result
-    setActiveTab("policies");
   };
 
   const handleCreateSubmit = async (data: PolicyFormData) => {
@@ -214,13 +210,6 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
 
   const tabActions = (() => {
     switch (activeTab) {
-      case "templates":
-        return (
-          <Button size="sm" onClick={() => setTemplateCreateTrigger((t) => t + 1)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Template
-          </Button>
-        );
       case "policies":
         return (
           <>
@@ -251,7 +240,6 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
       <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       <PageTabs
         tabs={[
-          { id: "templates", label: "Templates", count: templates.length },
           { id: "policies", label: "Policies", count: policies.length },
           { id: "rules", label: "Rules", count: rules.length },
         ]}
@@ -261,18 +249,20 @@ export function PoliciesClient({ policies: initialPolicies, templates, rules }: 
       />
       <div className="flex-1">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-          {/* Templates Tab */}
-          {activeTab === "templates" && (
-            <TemplatesTab
-              templates={templates}
-              onUseTemplate={(defaults) => openCreateDialog(defaults as Partial<Policy>)}
-              createTrigger={templateCreateTrigger}
-            />
-          )}
-
           {/* Policies Tab */}
           {activeTab === "policies" && (
             <div className="space-y-4">
+              {policies.length === 0 && (
+                <EmptyState
+                  icon={Shield}
+                  title="No Policies"
+                  description="Policies define the rules your repositories are audited against. Create one to get started."
+                  actions={[
+                    { label: "New Policy", onClick: () => openCreateDialog() },
+                    { label: "Browse Rules", onClick: () => setActiveTab("rules"), variant: "outline" },
+                  ]}
+                />
+              )}
               {policies.map((policy) => (
                 <motion.div key={policy.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <Card className="hover:border-primary/30 transition-colors">

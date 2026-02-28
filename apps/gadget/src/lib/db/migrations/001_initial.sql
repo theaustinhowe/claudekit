@@ -228,19 +228,6 @@ CREATE TABLE IF NOT EXISTS manual_findings (
 
 CREATE INDEX IF NOT EXISTS idx_manual_findings_repo ON manual_findings(repo_id);
 
--- 18. policy_templates
-CREATE TABLE IF NOT EXISTS policy_templates (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  icon TEXT,
-  defaults JSON DEFAULT '{}',
-  category TEXT,
-  is_builtin BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
 -- Session tables (@claudekit/session integration)
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,

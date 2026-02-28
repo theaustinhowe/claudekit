@@ -65,12 +65,12 @@ export function PolicyForm({ initialData, onSubmit, onCancel, isSubmitting }: Po
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [versions, setVersions] = useState(() =>
-    initialData
+    initialData?.expected_versions
       ? Object.entries(initialData.expected_versions).map(([pkg, version]) => ({ _key: genKey(), pkg, version }))
       : [],
   );
   const [bannedDeps, setBannedDeps] = useState(() =>
-    initialData
+    initialData?.banned_dependencies
       ? initialData.banned_dependencies.map((d) => ({
           _key: genKey(),
           name: d.name,

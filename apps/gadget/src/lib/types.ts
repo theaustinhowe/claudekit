@@ -39,17 +39,6 @@ export interface ManualFinding {
   updated_at: string;
 }
 
-export interface PolicyTemplate {
-  id: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  defaults: Partial<Policy>;
-  category: string | null;
-  is_builtin: boolean;
-  created_at: string;
-  updated_at: string;
-}
 export type FixImpact = "docs" | "config" | "dependencies" | "structure";
 export type FixRisk = "low" | "medium" | "high";
 

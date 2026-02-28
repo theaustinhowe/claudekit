@@ -4,10 +4,24 @@ import { THEMES, useAppTheme } from "@claudekit/hooks";
 import { cn } from "@claudekit/ui";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
-import { FolderOpen, Info, Loader2, Monitor, Moon, Plus, RotateCcw, Sparkles, Square, Sun, X } from "lucide-react";
+import {
+  ChevronDown,
+  FolderOpen,
+  Info,
+  Loader2,
+  Monitor,
+  Moon,
+  Plus,
+  RotateCcw,
+  Sparkles,
+  Square,
+  Sun,
+  X,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
@@ -191,8 +205,134 @@ export function SettingsClient({
         <div className="p-4 sm:p-6 max-w-3xl mx-auto">
           {activeTab === "general" && (
             <div className="space-y-6">
-              {/* Appearance */}
+              {/* Cleanup Files (collapsible) */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <Collapsible defaultOpen={false}>
+                  <Card>
+                    <CollapsibleTrigger asChild>
+                      <button type="button" className="w-full text-left">
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle className="text-lg flex items-center gap-2">
+                                <Sparkles className="w-5 h-5" />
+                                Cleanup Files ({cleanupFilesList.length})
+                              </CardTitle>
+                              <CardDescription>Files to remove when running repo cleanup</CardDescription>
+                            </div>
+                            <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform [[data-open]_&]:rotate-180" />
+                          </div>
+                        </CardHeader>
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <CardContent className="space-y-3">
+                        <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+                          {[...cleanupFilesList]
+                            .sort((a, b) => a.localeCompare(b))
+                            .map((file) => (
+                              <div
+                                key={file}
+                                className="flex items-center justify-between px-3 py-1.5 hover:bg-muted/50 group"
+                              >
+                                <span className="font-mono text-sm text-muted-foreground">{file}</span>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                        onClick={() => removeCleanupFile(file)}
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Remove</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <Input
+                            value={newCleanupFile}
+                            onChange={(e) => setNewCleanupFile(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addCleanupFile();
+                              }
+                            }}
+                            placeholder=".examplerc"
+                            className="flex-1 font-mono text-sm"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={addCleanupFile}
+                            disabled={!newCleanupFile.trim()}
+                          >
+                            <Plus className="w-4 h-4 mr-1.5" />
+                            Add
+                          </Button>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={resetCleanupFiles} className="text-muted-foreground">
+                          <RotateCcw className="w-4 h-4 mr-1.5" />
+                          Reset to Defaults
+                        </Button>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              </motion.div>
+
+              {/* Default Scan Roots */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FolderOpen className="w-5 h-5" />
+                      Default Scan Roots
+                    </CardTitle>
+                    <CardDescription>Directories to scan by default</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {roots.map((root) => (
+                      <div key={root.id} className="flex items-center gap-2">
+                        <DirectoryPicker
+                          value={root.path}
+                          onChange={(val) => updateRoot(root.id, val)}
+                          placeholder={process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects"}
+                          className="flex-1"
+                        />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeRoot(root.id)}
+                                disabled={roots.length === 1}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={addRoot}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Directory
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Appearance */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -273,116 +413,8 @@ export function SettingsClient({
                 </Card>
               </motion.div>
 
-              {/* Default Scan Roots */}
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <FolderOpen className="w-5 h-5" />
-                      Default Scan Roots
-                    </CardTitle>
-                    <CardDescription>Directories to scan by default</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {roots.map((root) => (
-                      <div key={root.id} className="flex items-center gap-2">
-                        <DirectoryPicker
-                          value={root.path}
-                          onChange={(val) => updateRoot(root.id, val)}
-                          placeholder={process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~/Projects"}
-                          className="flex-1"
-                        />
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeRoot(root.id)}
-                                disabled={roots.length === 1}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Remove</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" onClick={addRoot}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Directory
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Cleanup Files */}
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Sparkles className="w-5 h-5" />
-                      Cleanup Files ({cleanupFilesList.length})
-                    </CardTitle>
-                    <CardDescription>Files to remove when running repo cleanup</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
-                      {[...cleanupFilesList]
-                        .sort((a, b) => a.localeCompare(b))
-                        .map((file) => (
-                          <div
-                            key={file}
-                            className="flex items-center justify-between px-3 py-1.5 hover:bg-muted/50 group"
-                          >
-                            <span className="font-mono text-sm text-muted-foreground">{file}</span>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                    onClick={() => removeCleanupFile(file)}
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Remove</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                        ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        value={newCleanupFile}
-                        onChange={(e) => setNewCleanupFile(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addCleanupFile();
-                          }
-                        }}
-                        placeholder=".examplerc"
-                        className="flex-1 font-mono text-sm"
-                      />
-                      <Button variant="outline" size="sm" onClick={addCleanupFile} disabled={!newCleanupFile.trim()}>
-                        <Plus className="w-4 h-4 mr-1.5" />
-                        Add
-                      </Button>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={resetCleanupFiles} className="text-muted-foreground">
-                      <RotateCcw className="w-4 h-4 mr-1.5" />
-                      Reset to Defaults
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
               {/* About */}
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">

@@ -22,7 +22,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Setup",
     items: [
-      { label: "Policies", href: "/policies", icon: Shield },
+      { label: "Rules", href: "/policies", icon: Shield },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
   },
