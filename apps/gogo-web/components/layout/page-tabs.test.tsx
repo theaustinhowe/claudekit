@@ -5,7 +5,7 @@ vi.mock("@claudekit/ui", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
 }));
 
-import { PageTabs } from "@/components/layout/page-tabs";
+import { PageTabs } from "@claudekit/ui/components/page-tabs";
 
 const tabs = [
   { id: "all", label: "All Jobs", count: 10 },

@@ -2,7 +2,7 @@
 
 import type { PageTab } from "@claudekit/ui/components/page-tabs";
 import { PageTabs } from "@claudekit/ui/components/page-tabs";
-import { useState } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { GeneralTab } from "@/components/settings/general-tab";
 import { PreferencesTab } from "@/components/settings/preferences-tab";
 import { SkillGroupsTab } from "@/components/settings/skill-groups-tab";
@@ -24,7 +24,7 @@ interface SettingsClientProps {
   skillGroups: SkillGroup[];
 }
 
-type SettingsTab = "general" | "preferences" | "skill-groups";
+const settingsTabIds = ["general", "preferences", "skill-groups"] as const;
 
 const tabs: PageTab[] = [
   { id: "general", label: "General" },
@@ -33,7 +33,7 @@ const tabs: PageTab[] = [
 ];
 
 export function SettingsClient({ repos, settings, hasPAT, user, skillGroups }: SettingsClientProps) {
-  const [currentTab, setCurrentTab] = useState<SettingsTab>("general");
+  const [currentTab, setCurrentTab] = useQueryState("tab", parseAsStringLiteral(settingsTabIds).withDefault("general"));
 
   return (
     <>

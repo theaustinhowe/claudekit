@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeFOUCScript } from "@claudekit/hooks";
 import { Toaster } from "@claudekit/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { LayoutShell } from "@/components/layout/layout-shell";
 import { APP_NAME } from "@/lib/constants";
 
@@ -44,10 +45,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <ThemeFOUCScript />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <LayoutShell>{children}</LayoutShell>
-          <Toaster />
-        </ThemeProvider>
+        <NuqsAdapter>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <LayoutShell>{children}</LayoutShell>
+            <Toaster />
+          </ThemeProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );

@@ -28,6 +28,7 @@ import {
 } from "@claudekit/ui/components/dialog";
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
+import { PageTabs } from "@claudekit/ui/components/page-tabs";
 import { Progress } from "@claudekit/ui/components/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@claudekit/ui/components/select";
 import { SessionTerminal } from "@claudekit/ui/components/session-terminal";
@@ -68,18 +69,17 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { CodeTabContent } from "@/components/code/code-tab-content";
-import { PageTabs } from "@/components/layout/page-tabs";
 import { AIFileGenTerminal, useAIFileGen } from "@/components/repos/ai-file-gen-terminal";
 import { ClaudeTabContent } from "@/components/repos/claude-tab-content";
 import { ManualFindingForm, type ManualFindingFormData } from "@/components/repos/manual-finding-form";
 import { GitHubTabContent } from "@/components/repos/repo-github-content";
 import { RepoIntegrationsContent } from "@/components/repos/repo-integrations-content";
 import { QuickImproveDropdown, QuickImproveTerminal, useQuickImprove } from "@/components/repos/repo-quick-improve";
-import { useTabNavigation } from "@/hooks/use-tab-navigation";
 import {
   createManualFinding,
   deleteManualFinding,
@@ -141,22 +141,8 @@ export function RepoDetailClient({
   hasGitHubPat: patAvailable = false,
 }: RepoDetailClientProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { activeTab, setActiveTab } = useTabNavigation(
-    "overview",
-    pathname || "",
-    {
-      overview: "Overview",
-      code: "Code",
-      findings: "Findings",
-      "ai-files": "AI Files",
-      "ai-config": "AI Config",
-      "ai-integrations": "AI Integrations",
-      github: "GitHub",
-    },
-    repo.name,
-    { "ai-fixes": "ai-files", "fix-plan": "ai-files" },
-  );
+  const tabIds = ["overview", "code", "findings", "ai-files", "ai-config", "ai-integrations", "github"] as const;
+  const [activeTab, setActiveTab] = useQueryState("tab", parseAsStringLiteral(tabIds).withDefault("overview"));
 
   // Delete state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);

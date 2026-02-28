@@ -40,8 +40,8 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   removeRuleFile,
@@ -317,24 +317,8 @@ interface ClaudeTabContentProps {
 }
 
 export function ClaudeTabContent({ repoId, claudeConfig, defaultClaudeSettings, onSaved }: ClaudeTabContentProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const subTab = searchParams?.get("subtab") || "settings";
-
-  const setSubTab = useCallback(
-    (tab: string) => {
-      const params = new URLSearchParams(searchParams?.toString() || "");
-      if (tab === "settings") {
-        params.delete("subtab");
-      } else {
-        params.set("subtab", tab);
-      }
-      const qs = params.toString();
-      router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
-    },
-    [router, pathname, searchParams],
-  );
+  const subTabIds = ["settings", "claude-md", "rules"] as const;
+  const [subTab, setSubTab] = useQueryState("subtab", parseAsStringLiteral(subTabIds).withDefault("settings"));
 
   // Settings state
   const [viewMode, setViewMode] = useState<"form" | "json">("form");
@@ -491,7 +475,7 @@ export function ClaudeTabContent({ repoId, claudeConfig, defaultClaudeSettings, 
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs value={subTab} onValueChange={setSubTab}>
+        <Tabs value={subTab} onValueChange={(value) => setSubTab(value as (typeof subTabIds)[number])}>
           <TabsList className="mb-4">
             <TabsTrigger value="settings" className="gap-2">
               <FileCode className="w-4 h-4" />

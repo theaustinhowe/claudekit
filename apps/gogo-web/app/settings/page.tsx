@@ -1,10 +1,10 @@
 "use client";
 
+import { type PageTab, PageTabs } from "@claudekit/ui/components/page-tabs";
 import { ScrollArea } from "@claudekit/ui/components/scroll-area";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense } from "react";
-import { PageTabs, type Tab } from "@/components/layout/page-tabs";
 import { AgentsSettings } from "@/components/settings/agents-settings";
 import { ConnectDevice } from "@/components/settings/connect-device";
 import { GeneralSettings } from "@/components/settings/general-settings";
@@ -15,7 +15,7 @@ import { useSettings } from "@/hooks/use-settings";
 const tabIds = ["general", "github", "agents", "repositories", "connect"] as const;
 type TabId = (typeof tabIds)[number];
 
-const tabs: Tab[] = [
+const tabs: PageTab[] = [
   { id: "general", label: "General" },
   { id: "github", label: "GitHub" },
   { id: "agents", label: "Agents" },

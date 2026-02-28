@@ -1,5 +1,6 @@
 "use client";
 
+import { type PageTab, PageTabs } from "@claudekit/ui/components/page-tabs";
 import { ScrollArea } from "@claudekit/ui/components/scroll-area";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { Inbox } from "lucide-react";
@@ -9,7 +10,6 @@ import { toast } from "sonner";
 import { CreateIssueDialog } from "@/components/issues/create-issue-dialog";
 import { IssueDetailDrawer } from "@/components/issues/issue-detail-drawer";
 import { IssueList } from "@/components/issues/issue-list";
-import { PageTabs, type Tab } from "@/components/layout/page-tabs";
 import { RepoSelector } from "@/components/repo/repo-selector";
 import { useRepositoryContext } from "@/contexts/repository-context";
 import { useCreateIssue, useCreateJobFromIssue, useIssues } from "@/hooks/use-issues";
@@ -19,7 +19,7 @@ import type { GitHubIssue } from "@/lib/api";
 const tabIds = ["open", "in-progress", "closed"] as const;
 
 function IssuesPageSkeleton() {
-  const defaultTabs: Tab[] = [
+  const defaultTabs: PageTab[] = [
     { id: "open", label: "Open" },
     { id: "in-progress", label: "In Progress" },
     { id: "closed", label: "Closed" },
@@ -98,7 +98,7 @@ function IssuesPageContent() {
   }, [openIssues, closedIssues, issuesWithActiveJobs]);
 
   // Build tabs with counts
-  const tabs: Tab[] = useMemo(
+  const tabs: PageTab[] = useMemo(
     () => [
       { id: "open", label: "Open", count: counts.open },
       { id: "in-progress", label: "In Progress", count: counts["in-progress"] },

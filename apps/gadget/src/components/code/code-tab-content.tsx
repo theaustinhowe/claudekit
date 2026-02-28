@@ -5,7 +5,7 @@ import { FileViewer as CodeFileViewer } from "@claudekit/ui/components/file-view
 import { MarkdownRenderer } from "@claudekit/ui/components/markdown-renderer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { AlertCircle, FolderGit2, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CodeChangesView } from "@/components/code/code-changes-view";
 import { CodeCommitLog } from "@/components/code/code-commit-log";
@@ -41,12 +41,9 @@ export function CodeTabContent({
   rootEntries: initialRootEntries,
   readme: initialReadme,
 }: CodeTabContentProps) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  // Derive navigation state from URL params
-  const urlPath = searchParams?.get("path") || "";
-  const urlView = (searchParams?.get("view") as ViewMode) || "directory";
+  const viewModes = ["directory", "file", "commits", "changes"] as const;
+  const [urlPath, setUrlPath] = useQueryState("path", parseAsString.withDefault(""));
+  const [urlView, setUrlView] = useQueryState("view", parseAsStringLiteral(viewModes).withDefault("directory"));
 
   const [currentBranch, setCurrentBranch] = useState(
     () => branches.find((b) => b.isCurrent || b.isDefault)?.name || branches[0]?.name || "main",
@@ -79,21 +76,10 @@ export function CodeTabContent({
   // Push navigation state to URL
   const pushCodeUrl = useCallback(
     (codePath: string, view: ViewMode) => {
-      const params = new URLSearchParams(searchParams?.toString() || "");
-      if (codePath) {
-        params.set("path", codePath);
-      } else {
-        params.delete("path");
-      }
-      if (view !== "directory") {
-        params.set("view", view);
-      } else {
-        params.delete("view");
-      }
-      const qs = params.toString();
-      window.history.pushState(null, "", `${pathname}${qs ? `?${qs}` : ""}`);
+      setUrlPath(codePath || null);
+      setUrlView(view === "directory" ? null : view);
     },
-    [pathname, searchParams],
+    [setUrlPath, setUrlView],
   );
 
   // Content loader ref (always has latest closure, avoids stale deps in effect)

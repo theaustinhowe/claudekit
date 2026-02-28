@@ -5,6 +5,7 @@ import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { Input } from "@claudekit/ui/components/input";
+import { type PageTab, PageTabs } from "@claudekit/ui/components/page-tabs";
 import {
   Sheet,
   SheetBody,
@@ -32,7 +33,8 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { AddSourceDialog } from "@/components/concepts/add-source-dialog";
@@ -41,7 +43,6 @@ import { EditSourceDialog } from "@/components/concepts/edit-source-dialog";
 import { InstallConceptDialog } from "@/components/concepts/install-concept-dialog";
 import { ViewSourceDialog } from "@/components/concepts/view-source-dialog";
 import { PageBanner } from "@/components/layout/page-banner";
-import { PageTabs, type Tab } from "@/components/layout/page-tabs";
 import { refreshAllSources } from "@/lib/actions/concept-sources";
 import { CONCEPT_TYPE_LABELS, CONCEPT_TYPE_SINGULAR, LIBRARY_REPO_ID } from "@/lib/constants";
 import type { ConceptSourceWithStats, ConceptWithRepo, Repo } from "@/lib/types";
@@ -174,21 +175,10 @@ export function PatternsLibraryClient({
   hasGitPat,
 }: PatternsLibraryClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const activeType = searchParams?.get("type") || initialType || "all";
-
-  const setActiveType = useCallback(
-    (type: string) => {
-      const params = new URLSearchParams(searchParams?.toString() || "");
-      if (type === "all") {
-        params.delete("type");
-      } else {
-        params.set("type", type);
-      }
-      const qs = params.toString();
-      router.push(`/ai-integrations${qs ? `?${qs}` : ""}`, { scroll: false });
-    },
-    [router, searchParams],
+  const conceptTypeIds = ["all", "skill", "hook", "command", "agent", "mcp_server", "plugin"] as const;
+  const [activeType, setActiveType] = useQueryState(
+    "type",
+    parseAsStringLiteral(conceptTypeIds).withDefault((initialType as (typeof conceptTypeIds)[number]) || "all"),
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [viewConcept, setViewConcept] = useState<ConceptWithRepo | null>(null);
@@ -284,7 +274,7 @@ export function PatternsLibraryClient({
     );
   }
 
-  const conceptTabs: Tab[] = CONCEPT_TYPES.map((type) => {
+  const conceptTabs: PageTab[] = CONCEPT_TYPES.map((type) => {
     const rawCount = type === "all" ? totalCount : stats[type] || 0;
     const count = type === "mcp_server" ? visibleMcpCount : type === "all" ? totalCount - hiddenMcpCount : rawCount;
     const label = type === "all" ? "All" : CONCEPT_TYPE_LABELS[type] || type;

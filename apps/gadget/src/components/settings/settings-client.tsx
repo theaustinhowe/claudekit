@@ -8,17 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@clau
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
+import { PageTabs } from "@claudekit/ui/components/page-tabs";
 import { ProcessCleanup } from "@claudekit/ui/components/process-cleanup";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { ChevronDown, FolderOpen, Monitor, Moon, Plus, RotateCcw, Sparkles, Sun, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DirectoryPicker } from "@/components/directory-picker";
-import { PageTabs } from "@/components/layout/page-tabs";
 import { ApiKeysTab, type ServerKeyGroup } from "@/components/settings/api-keys-tab";
-import { useTabNavigation } from "@/hooks/use-tab-navigation";
 import { createScanRoot, deleteScanRoot } from "@/lib/actions/scans";
 import { setCleanupFiles } from "@/lib/actions/settings";
 import { DEFAULT_CLEANUP_FILES } from "@/lib/constants";
@@ -39,11 +39,10 @@ export function SettingsClient({
   cleanupFiles: initialCleanupFiles,
   initialTab,
 }: SettingsClientProps) {
-  const { activeTab, setActiveTab } = useTabNavigation(
-    initialTab || "general",
-    "/settings",
-    { general: "General", "api-keys": "API Keys" },
-    "Settings",
+  const tabIds = ["general", "api-keys"] as const;
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsStringLiteral(tabIds).withDefault((initialTab as (typeof tabIds)[number]) || "general"),
   );
 
   const { theme, setTheme } = useTheme();

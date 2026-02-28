@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@claudekit/ui/components/dialog";
+import { PageTabs } from "@claudekit/ui/components/page-tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
   AlertTriangle,
@@ -38,11 +39,10 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { PageTabs } from "@/components/layout/page-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useTabNavigation } from "@/hooks/use-tab-navigation";
 import { createCustomRule } from "@/lib/actions/custom-rules";
 import { createPolicy, deletePolicy, updatePolicy } from "@/lib/actions/policies";
 import type { CustomRule, Policy } from "@/lib/types";
@@ -57,12 +57,8 @@ interface PoliciesClientProps {
 
 export function PoliciesClient({ policies: initialPolicies, rules }: PoliciesClientProps) {
   const router = useRouter();
-  const { activeTab, setActiveTab } = useTabNavigation(
-    "policies",
-    "/policies",
-    { policies: "Policies", rules: "Rules" },
-    "Policies",
-  );
+  const tabIds = ["policies", "rules"] as const;
+  const [activeTab, setActiveTab] = useQueryState("tab", parseAsStringLiteral(tabIds).withDefault("policies"));
 
   const [policies] = useState<Policy[]>(initialPolicies);
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);

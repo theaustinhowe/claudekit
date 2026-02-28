@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@claudekit/ui/components/button";
+import { type PageTab, PageTabs } from "@claudekit/ui/components/page-tabs";
 import { ScrollArea } from "@claudekit/ui/components/scroll-area";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
 import { Inbox } from "lucide-react";
@@ -9,13 +10,12 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, useMemo } from "react";
 import { toast } from "sonner";
 import { ArchivedJobCard } from "@/components/archive/archived-job-card";
-import { PageTabs, type Tab } from "@/components/layout/page-tabs";
 import { useJobAction, useJobs } from "@/hooks/use-jobs";
 import type { Job } from "@/types/job";
 
 const tabIds = ["completed", "failed"] as const;
 
-const defaultTabs: Tab[] = [
+const defaultTabs: PageTab[] = [
   { id: "completed", label: "Completed" },
   { id: "failed", label: "Failed" },
 ];
@@ -64,7 +64,7 @@ function ArchivePageContent() {
   const jobs = currentTab === "completed" ? doneJobs : failedJobs;
 
   // Build tabs with counts
-  const tabs: Tab[] = useMemo(
+  const tabs: PageTab[] = useMemo(
     () => [
       { id: "completed", label: "Completed", count: doneJobs.length },
       { id: "failed", label: "Failed", count: failedJobs.length },
