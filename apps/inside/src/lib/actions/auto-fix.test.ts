@@ -60,7 +60,7 @@ describe("saveAutoFixRun", () => {
       attemptNumber: 1,
       logs: [],
     });
-    const params = mockExecute.mock.calls[0][2] as unknown[];
+    const params = vi.mocked(mockExecute).mock.calls[0][2] ?? [];
     // Last param should be null (completed_at)
     expect(params[params.length - 1]).toBeNull();
   });
@@ -74,7 +74,7 @@ describe("saveAutoFixRun", () => {
       attemptNumber: 1,
       logs: [],
     });
-    const params = mockExecute.mock.calls[0][2] as unknown[];
+    const params = vi.mocked(mockExecute).mock.calls[0][2] ?? [];
     expect(params[params.length - 1]).toBe("2024-01-01T00:00:00.000Z");
   });
 });

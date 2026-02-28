@@ -8,9 +8,14 @@ vi.mock("node:fs", () => ({
   statSync: vi.fn(),
 }));
 
+import type fs from "node:fs";
 import { statSync } from "node:fs";
 import { listLogFiles } from "@claudekit/logger";
 import { GET } from "./route";
+
+function createMockStats(overrides: { size: number; mtime: Date }): fs.Stats {
+  return overrides as fs.Stats;
+}
 
 const mockListLogFiles = vi.mocked(listLogFiles);
 const mockStatSync = vi.mocked(statSync);
@@ -36,10 +41,7 @@ describe("GET /api/logs", () => {
     ]);
 
     const mtime = new Date("2026-02-15T10:00:00Z");
-    mockStatSync.mockReturnValue({
-      size: 4096,
-      mtime,
-    } as unknown as ReturnType<typeof statSync>);
+    mockStatSync.mockReturnValue(createMockStats({ size: 4096, mtime }));
 
     const response = await GET();
     const data = await response.json();
@@ -65,7 +67,7 @@ describe("GET /api/logs", () => {
       if ((filePath as string).includes("missing")) {
         throw new Error("ENOENT");
       }
-      return { size: 1024, mtime } as unknown as ReturnType<typeof statSync>;
+      return createMockStats({ size: 1024, mtime });
     });
 
     const response = await GET();
@@ -79,10 +81,7 @@ describe("GET /api/logs", () => {
     mockListLogFiles.mockReturnValue([{ path: "/logs/gadget.ndjson", app: "gadget", date: null }]);
 
     const mtime = new Date("2026-02-15T08:00:00Z");
-    mockStatSync.mockReturnValue({
-      size: 2048,
-      mtime,
-    } as unknown as ReturnType<typeof statSync>);
+    mockStatSync.mockReturnValue(createMockStats({ size: 2048, mtime }));
 
     const response = await GET();
     const data = await response.json();

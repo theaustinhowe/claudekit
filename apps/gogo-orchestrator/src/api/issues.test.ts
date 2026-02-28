@@ -44,45 +44,9 @@ vi.mock("../services/issue-sync.js", () => ({
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { mapIssue, mapRepositoryFull } from "../db/schema.js";
 import { syncIssuesForRepo } from "../services/issue-sync.js";
+import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 import { broadcast } from "../ws/handler.js";
 import { issuesRouter } from "./issues.js";
-
-interface RouteHandler {
-  method: string;
-  path: string;
-  handler: (request: unknown, reply: unknown) => Promise<unknown>;
-}
-
-function createMockFastify() {
-  const routes: RouteHandler[] = [];
-  const createRouteRegistrar =
-    (method: string) => (path: string, handler: (req: unknown, rep: unknown) => Promise<unknown>) => {
-      routes.push({ method, path, handler });
-    };
-  return {
-    routes,
-    instance: {
-      get: createRouteRegistrar("GET"),
-      post: createRouteRegistrar("POST"),
-    },
-  };
-}
-
-function createMockReply() {
-  const reply = {
-    _statusCode: 200,
-    _body: null as unknown,
-    status(code: number) {
-      reply._statusCode = code;
-      return reply;
-    },
-    send(body: unknown) {
-      reply._body = body;
-      return body;
-    },
-  };
-  return reply;
-}
 
 describe("issues API", () => {
   let routes: RouteHandler[];
@@ -211,7 +175,7 @@ describe("issues API", () => {
         .mockResolvedValueOnce(localIssue) // local issue found
         .mockResolvedValueOnce(newJob); // createJobFromIssue
 
-      vi.mocked(mapIssue).mockReturnValue(localIssue as unknown as ReturnType<typeof mapIssue>);
+      vi.mocked(mapIssue).mockReturnValue(localIssue as ReturnType<typeof mapIssue>);
 
       const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/issues/:issueNumber/job")?.handler;
       const result = await handler?.({ params: { id: "repo-1", issueNumber: "42" } }, createMockReply());

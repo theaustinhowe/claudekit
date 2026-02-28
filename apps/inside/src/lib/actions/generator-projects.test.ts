@@ -142,7 +142,7 @@ describe("createGeneratorProject", () => {
       custom_features: ["dark-mode"],
     });
 
-    const params = mockExecute.mock.calls[0][2] as unknown[];
+    const params = vi.mocked(mockExecute).mock.calls[0][2];
     expect(params).toContain("openai");
     expect(params).toContain("gpt-4");
     expect(params).toContain("tmpl-1");

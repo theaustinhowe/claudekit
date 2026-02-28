@@ -36,6 +36,10 @@ import fs from "node:fs";
 import { isBinaryFile } from "@/lib/services/language-detector";
 import { getProjectFileContent, getProjectTree } from "./prototype-files";
 
+function createMockDirent(name: string, isDir: boolean) {
+  return { name, isDirectory: () => isDir, isFile: () => !isDir } as fs.Dirent<Buffer>;
+}
+
 const mockFs = vi.mocked(fs);
 const mockIsBinaryFile = vi.mocked(isBinaryFile);
 
@@ -50,10 +54,10 @@ beforeEach(() => {
 describe("getProjectTree", () => {
   it("returns entries for a directory", async () => {
     mockFs.readdirSync.mockReturnValue([
-      { name: "src", isDirectory: () => true },
-      { name: "README.md", isDirectory: () => false },
-      { name: "package.json", isDirectory: () => false },
-    ] as unknown as ReturnType<typeof fs.readdirSync>);
+      createMockDirent("src", true),
+      createMockDirent("README.md", false),
+      createMockDirent("package.json", false),
+    ]);
 
     const result = await getProjectTree("/tmp", "my-app");
     expect(result).toHaveLength(3);
@@ -66,10 +70,10 @@ describe("getProjectTree", () => {
 
   it("filters out hidden files and node_modules", async () => {
     mockFs.readdirSync.mockReturnValue([
-      { name: ".git", isDirectory: () => true },
-      { name: "node_modules", isDirectory: () => true },
-      { name: "src", isDirectory: () => true },
-    ] as unknown as ReturnType<typeof fs.readdirSync>);
+      createMockDirent(".git", true),
+      createMockDirent("node_modules", true),
+      createMockDirent("src", true),
+    ]);
 
     const result = await getProjectTree("/tmp", "my-app");
     expect(result).toHaveLength(1);
@@ -83,9 +87,7 @@ describe("getProjectTree", () => {
   });
 
   it("supports subPath parameter", async () => {
-    mockFs.readdirSync.mockReturnValue([{ name: "index.ts", isDirectory: () => false }] as unknown as ReturnType<
-      typeof fs.readdirSync
-    >);
+    mockFs.readdirSync.mockReturnValue([createMockDirent("index.ts", false)]);
 
     const result = await getProjectTree("/tmp", "my-app", "src");
     expect(result).toHaveLength(1);

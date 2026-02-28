@@ -41,45 +41,8 @@ vi.mock("../utils/timeout.js", () => ({
 import { buildUpdate, execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getOctokitForRepo } from "../services/github/index.js";
+import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 import { repositoriesRouter, toSnakeCaseFields } from "./repositories.js";
-
-interface RouteHandler {
-  method: string;
-  path: string;
-  handler: (request: unknown, reply: unknown) => Promise<unknown>;
-}
-
-function createMockFastify() {
-  const routes: RouteHandler[] = [];
-  const reg = (method: string) => (path: string, handler: (r: unknown, p: unknown) => Promise<unknown>) => {
-    routes.push({ method, path, handler });
-  };
-  return {
-    routes,
-    instance: {
-      get: reg("GET"),
-      post: reg("POST"),
-      patch: reg("PATCH"),
-      delete: reg("DELETE"),
-    },
-  };
-}
-
-function createMockReply() {
-  const reply = {
-    _statusCode: 200,
-    _body: null as unknown,
-    status(code: number) {
-      reply._statusCode = code;
-      return reply;
-    },
-    send(body: unknown) {
-      reply._body = body;
-      return body;
-    },
-  };
-  return reply;
-}
 
 const mockRepo = {
   id: "repo-1",

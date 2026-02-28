@@ -126,9 +126,8 @@ describe("claude-config", () => {
 
   describe("readRulesFiles", () => {
     it("reads .md files sorted from rules directory", async () => {
-      vi.mocked(fs.readdirSync).mockReturnValue(["b-rule.md", "a-rule.md", "not-md.txt"] as unknown as ReturnType<
-        typeof fs.readdirSync
-      >);
+      vi.mocked(fs.readdirSync).mockReturnValue(["b-rule.md", "a-rule.md", "not-md.txt"] as string[] &
+        fs.Dirent<Buffer>[]);
       vi.mocked(fs.readFileSync).mockReturnValueOnce("Rule A content").mockReturnValueOnce("Rule B content");
 
       const result = await readRulesFiles("/repo");

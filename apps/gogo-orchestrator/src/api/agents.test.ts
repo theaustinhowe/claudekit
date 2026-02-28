@@ -34,44 +34,8 @@ vi.mock("../services/agents/index.js", () => ({
 import { listAgents } from "../services/agent-executor.js";
 import { getClaudeRunnerStatus } from "../services/agents/claude-code-runner.js";
 import { agentRegistry } from "../services/agents/index.js";
+import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 import { agentsRouter } from "./agents.js";
-
-interface RouteHandler {
-  method: string;
-  path: string;
-  handler: (request: unknown, reply: unknown) => Promise<unknown>;
-}
-
-function createMockFastify() {
-  const routes: RouteHandler[] = [];
-  const createRouteRegistrar =
-    (method: string) => (path: string, handler: (req: unknown, rep: unknown) => Promise<unknown>) => {
-      routes.push({ method, path, handler });
-    };
-  return {
-    routes,
-    instance: {
-      get: createRouteRegistrar("GET"),
-      post: createRouteRegistrar("POST"),
-    },
-  };
-}
-
-function createMockReply() {
-  const reply = {
-    _statusCode: 200,
-    _body: null as unknown,
-    status(code: number) {
-      reply._statusCode = code;
-      return reply;
-    },
-    send(body: unknown) {
-      reply._body = body;
-      return body;
-    },
-  };
-  return reply;
-}
 
 describe("agents API", () => {
   let routes: RouteHandler[];

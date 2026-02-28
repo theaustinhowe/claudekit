@@ -46,6 +46,12 @@ const mockCreateSession = vi.mocked(createSession);
 const mockStartSession = vi.mocked(startSession);
 const mockCreateAccountSyncRunner = vi.mocked(createAccountSyncRunner);
 
+function createMockOctokit(getAuthenticated: ReturnType<typeof vi.fn>): ReturnType<typeof getOctokit> {
+  // biome-ignore lint/suspicious/noExplicitAny: Test mock — partial Octokit structure
+  const mock: any = { rest: { users: { getAuthenticated } } };
+  return mock;
+}
+
 describe("account actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -106,21 +112,17 @@ describe("account actions", () => {
         fetched_at: staleDate,
       });
 
-      const mockOctokit = {
-        rest: {
-          users: {
-            getAuthenticated: vi.fn().mockResolvedValue({
-              data: {
-                id: 456,
-                login: "newuser",
-                avatar_url: "https://example.com/new-avatar.png",
-                name: "New User",
-              },
-            }),
+      const mockOctokit = createMockOctokit(
+        vi.fn().mockResolvedValue({
+          data: {
+            id: 456,
+            login: "newuser",
+            avatar_url: "https://example.com/new-avatar.png",
+            name: "New User",
           },
-        },
-      };
-      mockGetOctokit.mockReturnValue(mockOctokit as unknown as ReturnType<typeof getOctokit>);
+        }),
+      );
+      mockGetOctokit.mockReturnValue(mockOctokit);
 
       const result = await getAuthenticatedUser();
 
@@ -142,21 +144,17 @@ describe("account actions", () => {
       mockHasValidPATSync.mockReturnValue(true);
       mockQueryOne.mockResolvedValue(null);
 
-      const mockOctokit = {
-        rest: {
-          users: {
-            getAuthenticated: vi.fn().mockResolvedValue({
-              data: {
-                id: 789,
-                login: "freshuser",
-                avatar_url: null,
-                name: "Fresh User",
-              },
-            }),
+      const mockOctokit = createMockOctokit(
+        vi.fn().mockResolvedValue({
+          data: {
+            id: 789,
+            login: "freshuser",
+            avatar_url: null,
+            name: "Fresh User",
           },
-        },
-      };
-      mockGetOctokit.mockReturnValue(mockOctokit as unknown as ReturnType<typeof getOctokit>);
+        }),
+      );
+      mockGetOctokit.mockReturnValue(mockOctokit);
 
       const result = await getAuthenticatedUser();
 
@@ -172,14 +170,8 @@ describe("account actions", () => {
       mockHasValidPATSync.mockReturnValue(true);
       mockQueryOne.mockResolvedValue(null);
 
-      const mockOctokit = {
-        rest: {
-          users: {
-            getAuthenticated: vi.fn().mockRejectedValue(new Error("Bad credentials")),
-          },
-        },
-      };
-      mockGetOctokit.mockReturnValue(mockOctokit as unknown as ReturnType<typeof getOctokit>);
+      const mockOctokit = createMockOctokit(vi.fn().mockRejectedValue(new Error("Bad credentials")));
+      mockGetOctokit.mockReturnValue(mockOctokit);
 
       await expect(getAuthenticatedUser()).rejects.toThrow(
         "GitHub authentication failed: Bad credentials. Check that your PAT is valid and not expired.",
@@ -190,14 +182,8 @@ describe("account actions", () => {
       mockHasValidPATSync.mockReturnValue(true);
       mockQueryOne.mockResolvedValue(null);
 
-      const mockOctokit = {
-        rest: {
-          users: {
-            getAuthenticated: vi.fn().mockRejectedValue("string error"),
-          },
-        },
-      };
-      mockGetOctokit.mockReturnValue(mockOctokit as unknown as ReturnType<typeof getOctokit>);
+      const mockOctokit = createMockOctokit(vi.fn().mockRejectedValue("string error"));
+      mockGetOctokit.mockReturnValue(mockOctokit);
 
       await expect(getAuthenticatedUser()).rejects.toThrow(
         "GitHub authentication failed: Unknown error. Check that your PAT is valid and not expired.",

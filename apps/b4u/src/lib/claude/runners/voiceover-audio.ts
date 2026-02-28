@@ -62,6 +62,6 @@ export function createVoiceoverAudioRunner(voiceId: string, speed: number = 1.0,
     }
 
     onProgress({ type: "progress", message: "Audio generation complete", progress: 100 });
-    return { result: { audioFiles: results } as unknown as Record<string, unknown> };
+    return { result: { audioFiles: results } };
   };
 }

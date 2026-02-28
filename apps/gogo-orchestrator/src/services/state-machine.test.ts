@@ -358,7 +358,7 @@ describe("state-machine", () => {
 
       vi.mocked(execute).mockResolvedValue(undefined);
       // buildUpdate may return null for empty updates (no status change, no other fields)
-      vi.mocked(buildUpdate).mockReturnValue(null as unknown as ReturnType<typeof buildUpdate>);
+      vi.mocked(buildUpdate).mockReturnValue(null);
 
       const result = await applyActionAtomic("job-1", "inject", {
         message: "Additional instructions",
@@ -394,8 +394,7 @@ describe("state-machine", () => {
       );
       expect(eventInsertCall).toBeDefined();
       // The metadata parameter should be the JSON-stringified metadata
-      const params = eventInsertCall?.[2] as unknown[];
-      const metadataParam = params.find((p) => typeof p === "string" && p.includes("customKey"));
+      const metadataParam = eventInsertCall?.[2]?.find((p) => typeof p === "string" && p.includes("customKey"));
       expect(metadataParam).toBeDefined();
     });
 
@@ -549,7 +548,7 @@ describe("state-machine", () => {
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
       vi.mocked(execute).mockResolvedValue(undefined);
-      vi.mocked(buildUpdate).mockReturnValue(null as unknown as ReturnType<typeof buildUpdate>);
+      vi.mocked(buildUpdate).mockReturnValue(null);
 
       await applyActionAtomic("job-1", "inject", { message: "Do this now" });
 
@@ -558,9 +557,8 @@ describe("state-machine", () => {
         (call) => typeof call[1] === "string" && call[1].includes("job_events"),
       );
       expect(eventInsertCall).toBeDefined();
-      const params = eventInsertCall?.[2] as unknown[];
       // The message param should be "Do this now"
-      expect(params).toContain("Do this now");
+      expect(eventInsertCall?.[2]).toContain("Do this now");
     });
   });
 

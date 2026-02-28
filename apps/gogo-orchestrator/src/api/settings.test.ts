@@ -25,29 +25,8 @@ vi.mock("../db/schema.js", async (importOriginal) => {
 
 import { execute, queryAll } from "@claudekit/duckdb";
 import { mapSetting } from "../db/schema.js";
+import { createMockFastify, type RouteHandler } from "../test-utils.js";
 import { settingsRouter } from "./settings.js";
-
-interface RouteHandler {
-  method: string;
-  path: string;
-  handler: (request: unknown, reply: unknown) => Promise<unknown>;
-}
-
-function createMockFastify() {
-  const routes: RouteHandler[] = [];
-  const createRouteRegistrar =
-    (method: string) => (path: string, handler: (req: unknown, rep: unknown) => Promise<unknown>) => {
-      routes.push({ method, path, handler });
-    };
-  return {
-    routes,
-    instance: {
-      get: createRouteRegistrar("GET"),
-      put: createRouteRegistrar("PUT"),
-      post: createRouteRegistrar("POST"),
-    },
-  };
-}
 
 describe("settings API", () => {
   let routes: RouteHandler[];
@@ -119,14 +98,12 @@ describe("settings API", () => {
       expect(execute).toHaveBeenCalledTimes(3);
 
       // Check github_token upsert
-      const ghTokenCall = vi
-        .mocked(execute)
-        .mock.calls.find((call) => (call[2] as unknown[])?.includes("github_token"));
+      const ghTokenCall = vi.mocked(execute).mock.calls.find((call) => call[2]?.includes("github_token"));
       expect(ghTokenCall).toBeDefined();
       expect(ghTokenCall?.[2]).toContain(JSON.stringify({ token: "ghp_new" }));
 
       // Check workdir upsert
-      const workdirCall = vi.mocked(execute).mock.calls.find((call) => (call[2] as unknown[])?.includes("workdir"));
+      const workdirCall = vi.mocked(execute).mock.calls.find((call) => call[2]?.includes("workdir"));
       expect(workdirCall).toBeDefined();
       expect(workdirCall?.[2]).toContain(JSON.stringify({ path: "/home/user/work" }));
 
@@ -148,12 +125,10 @@ describe("settings API", () => {
       const handler = routes.find((r) => r.method === "PUT" && r.path === "/")?.handler;
       await handler?.({ body: { personalAccessToken: "ghp_new" } }, {});
 
-      const ghTokenCall = vi
-        .mocked(execute)
-        .mock.calls.find((call) => (call[2] as unknown[])?.includes("github_token"));
+      const ghTokenCall = vi.mocked(execute).mock.calls.find((call) => call[2]?.includes("github_token"));
       expect(ghTokenCall).toBeDefined();
       // Should preserve "extra" field from existing value while updating "token"
-      const storedValue = JSON.parse((ghTokenCall?.[2] as unknown[])?.[1] as string);
+      const storedValue = JSON.parse(ghTokenCall?.[2]?.[1] as string);
       expect(storedValue.token).toBe("ghp_new");
       expect(storedValue.extra).toBe("data");
     });

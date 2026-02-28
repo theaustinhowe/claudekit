@@ -59,45 +59,9 @@ import { execute, queryAll, queryOne } from "@claudekit/duckdb";
 import { mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getChangedFiles, getFileDiff, getRepoDir, listWorktrees, removeWorktree } from "../services/git.js";
 import { getOctokitForRepo, getRepoConfigById } from "../services/github/index.js";
+import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 import { broadcast } from "../ws/handler.js";
 import { worktreesRouter } from "./worktrees.js";
-
-interface RouteHandler {
-  method: string;
-  path: string;
-  handler: (request: unknown, reply: unknown) => Promise<unknown>;
-}
-
-function createMockFastify() {
-  const routes: RouteHandler[] = [];
-  const reg = (method: string) => (path: string, handler: (r: unknown, p: unknown) => Promise<unknown>) => {
-    routes.push({ method, path, handler });
-  };
-  return {
-    routes,
-    instance: {
-      get: reg("GET"),
-      post: reg("POST"),
-      log: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-    },
-  };
-}
-
-function createMockReply() {
-  const reply = {
-    _statusCode: 200,
-    _body: null as unknown,
-    status(code: number) {
-      reply._statusCode = code;
-      return reply;
-    },
-    send(body: unknown) {
-      reply._body = body;
-      return body;
-    },
-  };
-  return reply;
-}
 
 const mockRepo = {
   id: "repo-1",
@@ -133,6 +97,7 @@ describe("worktrees API", () => {
     vi.mocked(execute).mockResolvedValue(undefined);
 
     const mock = createMockFastify();
+    mock.instance.log = { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() };
     routes = mock.routes;
     await worktreesRouter(mock.instance as never, {} as never);
 

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { PhaseThread } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Mock state
@@ -15,7 +16,7 @@ const mockState = {
     6: "locked" as const,
     7: "locked" as const,
   },
-  threads: { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] } as Record<number, unknown[]>,
+  threads: { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] } as Record<number, PhaseThread[]>,
   activeThreadIds: {
     1: null as string | null,
     2: null as string | null,
@@ -172,7 +173,15 @@ describe("useStateSync", () => {
 
   it("does not save state when runId is null", async () => {
     mockState.runId = null;
-    mockState.threads = { 1: [{ id: "t-1" }] as unknown[], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
+    mockState.threads = {
+      1: [{ id: "t-1", runId: "", phase: 1, revision: 1, messages: [], decisions: [], status: "active", createdAt: 0 }],
+      2: [],
+      3: [],
+      4: [],
+      5: [],
+      6: [],
+      7: [],
+    };
 
     const mod = await import("./use-state-sync");
     mod.useStateSync();

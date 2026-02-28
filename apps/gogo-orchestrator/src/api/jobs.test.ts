@@ -74,53 +74,8 @@ import { startClaudeRun } from "../services/claude-code-agent.js";
 import { enterNeedsInfo } from "../services/needs-info.js";
 import { processReadyToPr } from "../services/pr-flow.js";
 import { applyActionAtomic } from "../services/state-machine.js";
+import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 import { broadcast } from "../ws/handler.js";
-
-// We test the route handler logic by importing the router and creating a mock Fastify instance
-// Since the router uses `fastify.get/post/patch`, we capture the handlers during registration
-
-interface RouteHandler {
-  method: string;
-  path: string;
-  handler: (request: unknown, reply: unknown) => Promise<unknown>;
-}
-
-function createMockFastify(): {
-  routes: RouteHandler[];
-  instance: Record<string, unknown>;
-} {
-  const routes: RouteHandler[] = [];
-
-  const createRouteRegistrar =
-    (method: string) => (path: string, handler: (req: unknown, rep: unknown) => Promise<unknown>) => {
-      routes.push({ method, path, handler });
-    };
-
-  return {
-    routes,
-    instance: {
-      get: createRouteRegistrar("GET"),
-      post: createRouteRegistrar("POST"),
-      patch: createRouteRegistrar("PATCH"),
-    },
-  };
-}
-
-function createMockReply() {
-  const reply = {
-    _statusCode: 200,
-    _body: null as unknown,
-    status(code: number) {
-      reply._statusCode = code;
-      return reply;
-    },
-    send(body: unknown) {
-      reply._body = body;
-      return body;
-    },
-  };
-  return reply;
-}
 
 describe("jobs API", () => {
   let routes: RouteHandler[];

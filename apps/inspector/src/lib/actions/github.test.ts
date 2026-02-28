@@ -34,8 +34,9 @@ const mockQueryAll = vi.mocked(queryAll);
 const mockQueryOne = vi.mocked(queryOne);
 const mockGetOctokit = vi.mocked(getOctokit);
 
-function createMockOctokit(overrides: Record<string, unknown> = {}) {
-  return {
+function createMockOctokit(overrides: Record<string, unknown> = {}): ReturnType<typeof getOctokit> {
+  // biome-ignore lint/suspicious/noExplicitAny: Test mock — partial Octokit structure
+  const mock: any = {
     paginate: vi.fn().mockResolvedValue([]),
     rest: {
       repos: {
@@ -52,7 +53,8 @@ function createMockOctokit(overrides: Record<string, unknown> = {}) {
       },
       ...overrides,
     },
-  } as unknown as ReturnType<typeof getOctokit>;
+  };
+  return mock;
 }
 
 describe("github actions", () => {
@@ -85,7 +87,7 @@ describe("github actions", () => {
     it("syncs PRs and returns count", async () => {
       mockQueryOne.mockResolvedValue({ owner: "owner", name: "repo", last_synced_at: null });
       const octokit = createMockOctokit();
-      (octokit.paginate as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      vi.mocked(octokit.paginate).mockResolvedValue([
         {
           number: 1,
           title: "Fix bug",
@@ -118,7 +120,7 @@ describe("github actions", () => {
     it("classifies merged PRs correctly", async () => {
       mockQueryOne.mockResolvedValue({ owner: "owner", name: "repo", last_synced_at: null });
       const octokit = createMockOctokit();
-      (octokit.paginate as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      vi.mocked(octokit.paginate).mockResolvedValue([
         {
           number: 2,
           title: "Merged PR",
@@ -141,8 +143,7 @@ describe("github actions", () => {
       // Check that review_status is "Merged" (11th arg in the params array)
       const insertCall = mockExecute.mock.calls.find((c) => (c[1] as string).includes("INSERT INTO prs"));
       expect(insertCall).toBeDefined();
-      const params = insertCall?.[2] as unknown[];
-      expect(params[11]).toBe("Merged");
+      expect(insertCall?.[2]?.[11]).toBe("Merged");
     });
 
     it("throws when repo not found", async () => {
@@ -157,7 +158,7 @@ describe("github actions", () => {
     it("syncs comments and returns count", async () => {
       mockQueryOne.mockResolvedValue({ owner: "owner", name: "repo" });
       const octokit = createMockOctokit();
-      (octokit.paginate as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      vi.mocked(octokit.paginate).mockResolvedValue([
         {
           id: 100,
           user: { login: "reviewer1", avatar_url: null },

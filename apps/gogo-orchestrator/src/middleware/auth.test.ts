@@ -23,6 +23,7 @@ vi.mock("@claudekit/duckdb", () => ({
 }));
 
 import { queryOne } from "@claudekit/duckdb";
+import { createMockReply } from "../test-utils.js";
 
 describe("auth middleware", () => {
   let authHook: typeof import("./auth.js").authHook;
@@ -42,22 +43,6 @@ describe("auth middleware", () => {
       headers: {} as Record<string, string | undefined>,
       ...overrides,
     };
-  }
-
-  function createMockReply() {
-    const reply = {
-      _statusCode: 200,
-      _body: null as unknown,
-      status(code: number) {
-        reply._statusCode = code;
-        return reply;
-      },
-      send(body: unknown) {
-        reply._body = body;
-        return body;
-      },
-    };
-    return reply;
   }
 
   it("should skip auth for WebSocket upgrades", async () => {

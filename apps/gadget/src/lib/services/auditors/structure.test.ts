@@ -18,6 +18,10 @@ const mockReadFileSync = vi.mocked(fs.readFileSync);
 const mockReaddirSync = vi.mocked(fs.readdirSync);
 const mockStatSync = vi.mocked(fs.statSync);
 
+function createMockDirent(name: string, isDir: boolean): fs.Dirent {
+  return { name, isDirectory: () => isDir, isFile: () => !isDir } as fs.Dirent;
+}
+
 const stubPolicy = {
   id: "p1",
   name: "Test",
@@ -217,7 +221,7 @@ describe("auditStructure", () => {
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
     mockReaddirSync.mockReturnValue([
-      { name: "utils", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
+      createMockDirent("utils", true),
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     ] as any);
 
@@ -244,7 +248,7 @@ describe("resolveWorkspacePackages", () => {
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
     mockReaddirSync.mockReturnValue([
-      { name: "ui", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
+      createMockDirent("ui", true),
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     ] as any);
 
@@ -270,7 +274,7 @@ describe("resolveWorkspacePackages", () => {
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
     mockReaddirSync.mockReturnValue([
-      { name: "web", isDirectory: () => true, isFile: () => false } as unknown as fs.Dirent,
+      createMockDirent("web", true),
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     ] as any);
 

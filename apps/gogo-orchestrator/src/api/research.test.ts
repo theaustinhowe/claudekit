@@ -37,43 +37,7 @@ vi.mock("../utils/logger.js", () => ({
 
 import { queryAll, queryOne } from "@claudekit/duckdb";
 import { cancelResearchSession, getSessionSuggestions, startResearchSession } from "../services/research.js";
-
-interface RouteHandler {
-  method: string;
-  path: string;
-  handler: (request: unknown, reply: unknown) => Promise<unknown>;
-}
-
-function createMockFastify() {
-  const routes: RouteHandler[] = [];
-  const reg = (method: string) => (path: string, handler: (r: unknown, p: unknown) => Promise<unknown>) => {
-    routes.push({ method, path, handler });
-  };
-  return {
-    routes,
-    instance: {
-      get: reg("GET"),
-      post: reg("POST"),
-      delete: reg("DELETE"),
-    },
-  };
-}
-
-function createMockReply() {
-  const reply = {
-    _statusCode: 200,
-    _body: null as unknown,
-    status(code: number) {
-      reply._statusCode = code;
-      return reply;
-    },
-    send(body: unknown) {
-      reply._body = body;
-      return body;
-    },
-  };
-  return reply;
-}
+import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 
 describe("research API", () => {
   let routes: RouteHandler[];

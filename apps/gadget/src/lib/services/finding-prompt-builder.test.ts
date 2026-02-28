@@ -43,7 +43,7 @@ describe("buildFindingsFixPrompt", () => {
   });
 
   it("omits details when null", () => {
-    const prompt = buildFindingsFixPrompt([makeFinding({ details: null as unknown as string })], "/repo");
+    const prompt = buildFindingsFixPrompt([makeFinding({ details: null })], "/repo");
     expect(prompt).not.toContain("Details:");
   });
 

@@ -68,8 +68,22 @@ describe("GeneralSettings", () => {
     } as never);
     vi.mocked(useUpdateSettings).mockReturnValue({
       mutate: mockMutate,
+      mutateAsync: vi.fn(),
       isPending: false,
-    } as unknown as ReturnType<typeof useUpdateSettings>);
+      isIdle: true,
+      isSuccess: false,
+      isError: false,
+      status: "idle",
+      data: undefined,
+      error: null,
+      variables: undefined,
+      failureCount: 0,
+      failureReason: null,
+      reset: vi.fn(),
+      context: undefined,
+      isPaused: false,
+      submittedAt: 0,
+    } as ReturnType<typeof useUpdateSettings>);
   });
 
   afterEach(() => {

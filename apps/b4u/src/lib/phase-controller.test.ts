@@ -105,9 +105,13 @@ function createESInstance(): MockESInstance {
 }
 
 // Set EventSource globally before module evaluation
-(globalThis as unknown as { EventSource: unknown }).EventSource = function MockEventSource() {
-  return createESInstance();
-};
+Object.defineProperty(globalThis, "EventSource", {
+  value: function MockEventSource() {
+    return createESInstance();
+  },
+  writable: true,
+  configurable: true,
+});
 
 // ---------------------------------------------------------------------------
 // Helpers

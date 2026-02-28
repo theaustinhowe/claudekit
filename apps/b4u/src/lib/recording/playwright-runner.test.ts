@@ -201,11 +201,9 @@ describe("recordFlow", () => {
 
   it("closes session even when steps throw", async () => {
     const { recordFlow } = await import("./playwright-runner");
-    const { navigateTo } = (await import("@claudekit/playwright")) as unknown as {
-      navigateTo: ReturnType<typeof vi.fn>;
-    };
+    const { navigateTo } = await import("@claudekit/playwright");
 
-    navigateTo.mockRejectedValueOnce(new Error("Navigation failed"));
+    vi.mocked(navigateTo).mockRejectedValueOnce(new Error("Navigation failed"));
 
     await expect(
       recordFlow({

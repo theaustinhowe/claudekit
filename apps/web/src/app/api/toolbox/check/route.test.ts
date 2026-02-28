@@ -35,7 +35,7 @@ function makeRequest(body: unknown) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  }) as unknown as NextRequest;
+  }) as NextRequest;
 }
 
 describe("POST /api/toolbox/check", () => {
