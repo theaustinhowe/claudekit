@@ -28,6 +28,8 @@ import {
   writeSharedSettingsJson,
 } from "./claude-config";
 
+type ReaddirDirent = Extract<ReturnType<typeof fs.readdirSync>, fs.Dirent[]>[number];
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -126,8 +128,7 @@ describe("claude-config", () => {
 
   describe("readRulesFiles", () => {
     it("reads .md files sorted from rules directory", async () => {
-      vi.mocked(fs.readdirSync).mockReturnValue(["b-rule.md", "a-rule.md", "not-md.txt"] as string[] &
-        fs.Dirent<Buffer>[]);
+      vi.mocked(fs.readdirSync).mockReturnValue(["b-rule.md", "a-rule.md", "not-md.txt"] as string[] & ReaddirDirent[]);
       vi.mocked(fs.readFileSync).mockReturnValueOnce("Rule A content").mockReturnValueOnce("Rule B content");
 
       const result = await readRulesFiles("/repo");

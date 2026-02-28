@@ -157,6 +157,8 @@ describe("issues API", () => {
 
     it("should create job successfully from local DB issue", async () => {
       const localIssue = {
+        id: "issue-42",
+        repositoryId: "repo-1",
         number: 42,
         title: "Fix bug",
         body: "Bug description",
@@ -164,6 +166,12 @@ describe("issues API", () => {
         state: "open",
         labels: [],
         authorLogin: "user",
+        authorAvatarUrl: null,
+        authorHtmlUrl: null,
+        githubCreatedAt: null,
+        githubUpdatedAt: null,
+        closedAt: null,
+        lastSyncedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),
       };
