@@ -216,6 +216,52 @@ export async function refreshAllSources(): Promise<{ success: boolean; message: 
   return { success: failures.length === 0, message };
 }
 
+export async function updateConceptSource(
+  id: string,
+  updates: { name?: string; github_url?: string; list_url?: string },
+): Promise<{ success: boolean; message: string }> {
+  if (id === CURATED_SOURCE_ID || id === CLAUDE_CONFIG_SOURCE_ID) {
+    return { success: false, message: "Cannot edit built-in source" };
+  }
+
+  const db = await getDb();
+  const source = await queryOne<{ id: string; source_type: string }>(
+    db,
+    "SELECT id, source_type FROM concept_sources WHERE id = ?",
+    [id],
+  );
+  if (!source) return { success: false, message: "Source not found" };
+
+  const sets: string[] = [];
+  const params: unknown[] = [];
+
+  if (updates.name !== undefined) {
+    sets.push("name = ?");
+    params.push(updates.name);
+  }
+
+  if (updates.github_url !== undefined && source.source_type === "github_repo") {
+    const parsed = parseGitHubUrl(updates.github_url);
+    if (!parsed) return { success: false, message: "Invalid GitHub URL" };
+    sets.push("github_url = ?", "github_owner = ?", "github_repo = ?");
+    params.push(updates.github_url, parsed.owner, parsed.repo);
+  }
+
+  if (updates.list_url !== undefined && source.source_type === "mcp_list") {
+    sets.push("list_url = ?");
+    params.push(updates.list_url);
+  }
+
+  if (sets.length === 0) return { success: false, message: "No updates provided" };
+
+  sets.push("updated_at = CAST(current_timestamp AS VARCHAR)");
+  params.push(id);
+
+  await execute(db, `UPDATE concept_sources SET ${sets.join(", ")} WHERE id = ?`, params);
+
+  return { success: true, message: "Source updated" };
+}
+
 /**
  * Store concepts from a source into the DB.
  * Uses name as the key since many source concepts share the same relative_path (.mcp.json).

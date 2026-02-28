@@ -22,10 +22,8 @@ import {
   Code2,
   Info,
   Link2,
-  Loader2,
   Plus,
   Puzzle,
-  RefreshCw,
   Search,
   Server,
   Sparkles,
@@ -39,7 +37,9 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { AddSourceDialog } from "@/components/concepts/add-source-dialog";
 import { ConceptSourcesPanel } from "@/components/concepts/concept-sources-panel";
+import { EditSourceDialog } from "@/components/concepts/edit-source-dialog";
 import { InstallConceptDialog } from "@/components/concepts/install-concept-dialog";
+import { ViewSourceDialog } from "@/components/concepts/view-source-dialog";
 import { PageBanner } from "@/components/layout/page-banner";
 import { PageTabs, type Tab } from "@/components/layout/page-tabs";
 import { refreshAllSources } from "@/lib/actions/concept-sources";
@@ -196,6 +196,8 @@ export function PatternsLibraryClient({
   const [showAddSource, setShowAddSource] = useState(false);
   const [showSources, setShowSources] = useState(false);
   const [isRescanningAll, setIsRescanningAll] = useState(false);
+  const [editingSource, setEditingSource] = useState<ConceptSourceWithStats | null>(null);
+  const [viewingSource, setViewingSource] = useState<ConceptSourceWithStats | null>(null);
 
   const handleRescanAll = useCallback(async () => {
     setIsRescanningAll(true);
@@ -296,24 +298,10 @@ export function PatternsLibraryClient({
         value={activeType}
         onValueChange={setActiveType}
         actions={
-          <>
-            <Button variant="outline" size="sm" onClick={handleRescanAll} disabled={isRescanningAll}>
-              {isRescanningAll ? (
-                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4 mr-1.5" />
-              )}
-              {isRescanningAll ? "Scanning..." : "Rescan All"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowSources(!showSources)}>
-              {showSources ? <ChevronUp className="w-4 h-4 mr-1.5" /> : <ChevronDown className="w-4 h-4 mr-1.5" />}
-              Sources ({formatNumber(visibleSources.length)})
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowAddSource(true)}>
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Source
-            </Button>
-          </>
+          <Button variant="outline" size="sm" onClick={() => setShowSources(!showSources)}>
+            {showSources ? <ChevronUp className="w-4 h-4 mr-1.5" /> : <ChevronDown className="w-4 h-4 mr-1.5" />}
+            Sources ({formatNumber(visibleSources.length)})
+          </Button>
         }
       />
       <div className="flex-1">
@@ -321,7 +309,15 @@ export function PatternsLibraryClient({
           {/* Sources panel (collapsible) */}
           {showSources && (
             <div className="mb-6">
-              <ConceptSourcesPanel sources={visibleSources} hiddenGitHubCount={hiddenSourceCount} />
+              <ConceptSourcesPanel
+                sources={visibleSources}
+                hiddenGitHubCount={hiddenSourceCount}
+                onRescanAll={handleRescanAll}
+                isRescanningAll={isRescanningAll}
+                onAddSource={() => setShowAddSource(true)}
+                onEditSource={setEditingSource}
+                onViewSource={setViewingSource}
+              />
             </div>
           )}
 
@@ -628,6 +624,20 @@ export function PatternsLibraryClient({
 
       {/* Add source dialog */}
       <AddSourceDialog open={showAddSource} onOpenChange={setShowAddSource} />
+
+      {/* Edit source dialog */}
+      <EditSourceDialog
+        source={editingSource}
+        open={!!editingSource}
+        onOpenChange={(open) => !open && setEditingSource(null)}
+      />
+
+      {/* View source dialog (builtin) */}
+      <ViewSourceDialog
+        source={viewingSource}
+        open={!!viewingSource}
+        onOpenChange={(open) => !open && setViewingSource(null)}
+      />
     </div>
   );
 }
