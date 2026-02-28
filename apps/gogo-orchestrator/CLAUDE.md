@@ -21,8 +21,8 @@ pnpm db:reset     # Delete DuckDB data file (full reset)
 See `.env.example`. Key variables:
 - `PORT` — HTTP port (default: 2201)
 - `DATABASE_PATH` — DuckDB file path (default: `./data/gogo.duckdb`)
-- `ALLOWED_ORIGINS` — CORS origins (comma-separated, default: localhost:2200,localhost:3000)
-- GitHub tokens are configured per-repository via the settings API
+- `ALLOWED_ORIGINS` — CORS origins (comma-separated, default: localhost:2200, 127.0.0.1:2200, localhost:3000, 127.0.0.1:3000)
+- `GITHUB_PERSONAL_ACCESS_TOKEN` — Fallback GitHub token used by setup flow (per-repo tokens also configurable via settings API)
 
 ## Architecture
 
@@ -58,6 +58,7 @@ src/
 │   ├── agent-runner.ts           # Job run lifecycle (workspace setup, worktree creation)
 │   ├── claude-code-agent.ts      # Claude CLI spawning, stream-JSON parsing
 │   ├── agents/
+│   │   ├── index.ts              # Auto-registers Claude Code runner, barrel exports
 │   │   ├── types.ts              # AgentRunner interface
 │   │   ├── registry.ts           # Singleton agent registry
 │   │   ├── known-agents.ts       # Built-in agent definitions
@@ -80,8 +81,12 @@ src/
 │   ├── github/
 │   │   ├── client.ts             # Octokit wrapper, rate limit tracking
 │   │   ├── repo-service.ts       # Repository config queries
+│   │   ├── errors.ts             # Re-exports from @claudekit/github
+│   │   ├── types.ts              # Re-exports + RepoConfig type
 │   │   └── index.ts              # Issue creation, PR creation, comments, labels
 │   ├── research.ts               # Research session orchestration
+│   ├── session-bridge.ts         # @claudekit/session integration for GoGo
+│   ├── mock-agent.ts             # Mock agent for testing/development
 │   ├── settings-helper.ts        # Load/validate settings
 │   └── test-runner.ts            # Execute test commands
 ├── ws/
@@ -106,9 +111,11 @@ queued → planning → awaiting_plan_approval → running → ready_to_pr → p
                                                ↓
                                           running (response received)
 
-Any state → paused (user action or timeout)
-Any state → failed (error or cancel)
-paused → queued (resume) | running (resume_with_agent)
+Any active state → paused (user action or timeout)
+Any active state → failed (error or cancel)
+paused → queued (resume) | running (resume_with_agent) | planning | failed
+failed → queued (retry)
+done has no outgoing transitions (terminal)
 ```
 
 **Atomic transitions**: All status changes use `applyTransitionAtomic()` / `applyActionAtomic()` with `withTransaction()` for job update + event creation in one operation.
@@ -129,6 +136,8 @@ paused → queued (resume) | running (resume_with_agent)
 | `research_sessions` | Research session tracking |
 | `research_suggestions` | Research findings |
 | `settings` | Key-value configuration (JSON values) |
+| `sessions` | @claudekit/session integration — tracks Claude process runs within jobs |
+| `session_logs` | Session log entries (status, progress updates) |
 
 ### Startup Sequence
 
@@ -158,8 +167,9 @@ Runs every 60s (configurable). Sequence:
 ### WebSocket (`/ws`)
 
 - Client subscribes to job logs: replays ring buffer (last 500 entries) from `lastSequence`
-- Real-time broadcast: `job:log` (log entries), `job:updated` (state changes), `job:created`
+- Real-time broadcast: `job:log` (log entries), `job:updated` (state changes), `job:created`, `issue:synced`, `health:event`, `research:updated`, `research:suggestion`, `research:output`
 - Subscription protocol: `subscribe` / `unsubscribe` / `subscribe_repo` / `unsubscribe_repo` / `ping` / `pong`
+- Connection lifecycle: `connection:established`, `subscribed`, `unsubscribed`, `subscribed_repo`, `unsubscribed_repo`, `error`
 
 ### Agent System
 

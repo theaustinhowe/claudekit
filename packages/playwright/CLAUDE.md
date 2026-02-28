@@ -13,11 +13,13 @@ src/
 ├── video.ts           # Video file finalization
 ├── types.ts           # Shared types
 ├── testing.ts         # Testing module exports
+├── *.test.ts          # Tests for browser, navigation, screenshot, video
 └── testing/
     ├── base-config.ts # Playwright config factory for ClaudeKit apps
     ├── fixtures.ts    # appTest fixture (auto-navigate to baseURL)
     ├── assertions.ts  # expectPageTitle, expectVisible, expectUrl
-    └── page-objects.ts # BasePage abstract class
+    ├── page-objects.ts # BasePage abstract class
+    └── *.test.ts      # Tests for each testing module
 ```
 
 ## Browser Automation

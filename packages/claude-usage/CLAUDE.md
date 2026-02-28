@@ -7,6 +7,7 @@ Shared Claude Code usage tracking — types, pricing, rate limits, session parsi
 - `@claudekit/claude-usage` — types + pricing (safe anywhere, client or server)
 - `@claudekit/claude-usage/server` — Node.js service functions (server-only)
 - `@claudekit/claude-usage/components/usage-shared` — React UI components (client)
+- `@claudekit/claude-usage/components/usage-section` — drop-in header usage section (client)
 
 ## API
 
@@ -29,3 +30,7 @@ Shared Claude Code usage tracking — types, pricing, rate limits, session parsi
 
 - `ClaudeUsageDialog` — full usage details dialog (rate limits, stats, costs, model usage)
 - `HeaderUsageWidget` — compact header widget showing utilization bar + countdown
+
+### Components (from `@claudekit/claude-usage/components/usage-section`)
+
+- `UsageSection` — drop-in header section that wires up `HeaderUsageWidget` + `ClaudeUsageDialog` with auto-refresh via `useClaudeUsageRefresh`. Accepts `getUsageStats` and `getRateLimits` server action props.

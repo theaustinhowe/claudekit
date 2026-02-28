@@ -26,6 +26,7 @@ src/
 │   ├── dashboard-client.tsx
 │   ├── [database]/
 │   │   ├── layout.tsx        # Validates database ID
+│   │   ├── page.tsx          # Redirects to tables
 │   │   ├── tables/
 │   │   │   ├── page.tsx      # Table list
 │   │   │   └── [table]/
@@ -33,11 +34,13 @@ src/
 │   │   └── query/
 │   │       └── page.tsx      # SQL editor
 ├── components/
-│   ├── layout/               # App shell (sidebar, nav)
+│   ├── layout/               # App shell (sidebar, nav, config)
+│   ├── refreshed-at.tsx      # Relative timestamp display
 │   ├── database/             # Database cards, status badges
-│   ├── data/                 # Data grid, pagination, edit/delete dialogs
+│   ├── data/                 # Data grid, column filters, column picker, row edit sheet,
+│   │                         #   delete dialog, field editors
 │   ├── tables/               # Column schema table
-│   └── query/                # SQL editor, query results
+│   └── query/                # SQL editor (CodeMirror), query results, history panel
 ├── lib/
 │   ├── db/                   # Registry + connection manager
 │   │   ├── registry.ts       # Static database entries
@@ -49,9 +52,12 @@ src/
 │   │   └── query.ts          # executeQuery
 │   ├── types.ts              # Domain types
 │   ├── utils.ts              # Identifier validation, formatting
+│   ├── format-relative-time.ts  # Relative time formatting
 │   └── constants.ts          # APP_NAME
 └── hooks/
-    └── use-query-history.ts  # localStorage-backed query history
+    ├── use-query-history.ts  # localStorage-backed query history
+    ├── use-column-visibility.ts  # Column show/hide state
+    └── use-column-order.ts   # Column drag-reorder state
 ```
 
 ## Database Registry

@@ -20,8 +20,9 @@ Source of truth for job status transitions. 11 states:
 
 ```
 queued → planning → awaiting_plan_approval → running → ready_to_pr → pr_opened → pr_reviewing → done
-                                                    ↘ needs_info ↗
+                  ↘ needs_info ↗                     ↗ (retry)     ↗ (back to running)
 Any non-terminal state can transition to: paused, failed
+paused → running, queued, planning, failed
 failed → queued (retry), done has no transitions (terminal)
 ```
 
@@ -30,26 +31,32 @@ failed → queued (retry), done has no transitions (terminal)
 - `VALID_TRANSITIONS` — `Record<JobStatus, JobStatus[]>` defining all legal transitions
 - `ARCHIVABLE_STATUSES` — `["done", "failed", "paused"]` for archive/inactive views
 - `JOB_STATUS_LABELS` — Human-readable display names (e.g. `awaiting_plan_approval` → `"Plan Review"`)
-- `JobActionType` — Client-initiated operations: pause, resume, cancel, inject, approve_plan, reject_plan, etc.
+- `JobActionType` — Client-initiated operations: pause, resume, resume_with_agent, cancel, inject, request_info, retry, force_stop, approve_plan, reject_plan
 
 ### Core Types
 
 - **`Job`** — Long-running orchestration work unit (status, issue tracking, Claude session, plan content, PR info)
 - **`JobEvent`** — State change log (event type, from/to status, message, metadata)
-- **`JobLog`** — Console output capture with `LogStream` (stdout, stderr, system, tool, thinking, content)
+- **`JobLog`** — Console output capture with `LogStream` (stdout, stdout:tool, stdout:thinking, stdout:content, stderr, system)
 - **`Repository`** — GitHub repo config (token, trigger label, work directory)
 - **`Issue` / `IssueComment`** — Locally cached GitHub data with sync tracking
 - **`ResearchSession` / `ResearchSuggestion`** — Repository analysis subsystem (8 categories, 4 severities)
+- **`SettingsEntry`** — Key-value settings store entry
+- **`NetworkInfo`** — Device connection info (ips, port, wsPort)
+- **`AgentProviderType`** / **`JobSource`** / **`InjectMode`** — Enum-like union types for agent config
+- **`JobEventType`** / **`JobStatus`** / **`LogStream`** — Status and event union types
+- **`ResearchCategory`** / **`ResearchSeverity`** / **`ResearchSessionStatus`** — Research enum types
 
 ### WebSocket Protocol
 
 - `WsMessageType` — Server → client events (job:updated, job:log, job:created, issue:synced, research:*, etc.)
-- `WsClientMessageType` — Client → server (subscribe, unsubscribe, subscribe_repo, ping)
+- `WsClientMessageType` — Client → server (subscribe, unsubscribe, subscribe_repo, unsubscribe_repo, ping)
+- `WsMessage` / `WsClientMessage` — Typed message interfaces for server and client payloads
 
 ### API Wrappers
 
 - `ApiResponse<T>` — Generic `{ data?, error? }` response
-- `PaginatedResponse<T>` — With total, limit, offset
+- `PaginatedResponse<T>` — With `data: T[]` and `pagination: { total, limit, offset }`
 
 ## Patterns
 

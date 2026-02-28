@@ -4,13 +4,13 @@ This file provides guidance to Claude Code when working in this monorepo.
 
 ## Overview
 
-**ClaudeKit** is a pnpm workspace monorepo containing local-first dev tool apps and shared packages. All apps run locally on macOS and persist data via DuckDB (except `apps/web` which is file-based). The monorepo uses `pnpm@9.15.0` and requires Node.js >= 20.
+**ClaudeKit** is a pnpm workspace monorepo containing local-first dev tool apps and shared packages. All apps run locally on macOS and persist data via DuckDB (except `apps/web` which is file-based). The monorepo uses `pnpm@10.30.2` and requires Node.js >= 20.
 
 ## Apps
 
 | App | Port | Framework | Description |
 |-----|------|-----------|-------------|
-| `apps/web` | 2000 | Next.js 16 | ClaudeKit dashboard, app health monitor, log viewer |
+| `apps/web` | 2000 | Next.js 16 | ClaudeKit dashboard, app health monitor, log viewer, toolbox |
 | `apps/ducktails` | 2050 | Next.js 16 | DuckDB admin UI — browse, query, edit all ClaudeKit databases |
 | `apps/gadget` | 2100 | Next.js 16 | Repository auditor, AI integrations |
 | `apps/inside` | 2150 | Next.js 16 | Project creation, scaffolding, design workspace |
@@ -26,16 +26,16 @@ Each app has its own `CLAUDE.md` with domain-specific context.
 | Package | Description |
 |---------|-------------|
 | `@claudekit/ui` | shadcn/ui (Base UI primitives, not Radix) + cn() utility, shared layout, security headers for Next.js, Storybook on port 6006 |
-| `@claudekit/hooks` | Shared React hooks (useAppTheme, useAutoScroll, useIsMobile, useSessionStream) |
+| `@claudekit/hooks` | Shared React hooks (useAppTheme, useAutoScroll, useIsMobile, useSessionStream, useClaudeUsageRefresh) + ThemeFOUCScript |
 | `@claudekit/duckdb` | DuckDB connection factory, query helpers, migration runner (async mutex, typed params) |
-| `@claudekit/session` | Session lifecycle manager (ring buffer, batch log flush, DI persistence) |
+| `@claudekit/session` | Session lifecycle manager (ring buffer, batch log flush, DI persistence) with SSE response helpers and `@claudekit/session/next` subpath for Next.js route handlers |
 | `@claudekit/claude-runner` | Claude CLI spawn + stream-json parsing, progress estimator, JSON extractor |
 | `@claudekit/logger` | Pino-based structured logging with daily-rotating NDJSON files + log querying utilities |
 | `@claudekit/github` | GitHub API client (Octokit wrapper), rate limit tracking, error hierarchy |
 | `@claudekit/gogo-shared` | GoGo domain types, Zod schemas, typed API client |
-| `@claudekit/claude-usage` | Claude API usage tracking |
+| `@claudekit/claude-usage` | Claude API usage tracking + UsageSection component |
 | `@claudekit/mcp-logs` | MCP server for log file access (5 tools) |
-| `@claudekit/validation` | Shared Zod v4 validation schemas |
+| `@claudekit/validation` | Shared Zod v4 request validation (parseBody, parseQuery) |
 | `@claudekit/playwright` | Playwright browser automation helpers (browser session, navigation, screenshot, video) + E2E testing infrastructure |
 
 Most packages export from `src/index.ts` using direct TypeScript source (no build step — consumers bundle them). The `gogo-orchestrator` is the exception, building to `dist/` via `tsc`.
@@ -157,7 +157,7 @@ All apps share 9 color themes via `@claudekit/hooks`:
 
 ### Security Headers
 
-All Next.js apps import `securityHeaders()` from `@claudekit/ui/next-config` in their `next.config.ts`. DuckDB, Playwright, and Pino bindings are listed in `serverExternalPackages` to exclude them from bundling.
+All Next.js apps use `createNextConfig()` from `@claudekit/ui/next-config` in their `next.config.ts`, which applies security headers automatically. DuckDB, Playwright, and Pino bindings are listed in `serverExternalPackages` to exclude them from bundling.
 
 ### Logging
 

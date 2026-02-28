@@ -39,34 +39,57 @@ src/
 │   ├── page.tsx            # Dashboard (server component)
 │   ├── dashboard-client.tsx
 │   ├── skills/             # Skill Builder workflow
+│   │   ├── page.tsx        # Skills list
+│   │   ├── new/            # New analysis
+│   │   └── [analysisId]/   # Analysis detail
 │   ├── splitter/           # PR Splitter workflow
 │   ├── resolver/           # Comment Resolver workflow
-│   └── settings/           # Settings page
+│   ├── settings/           # Settings page
+│   └── api/sessions/       # Session management API
+│       ├── route.ts        # Create session
+│       ├── [sessionId]/
+│       │   ├── stream/route.ts  # SSE session stream
+│       │   └── cancel/route.ts  # Cancel session
+│       └── cleanup/route.ts     # Cleanup stale sessions
 ├── components/
-│   ├── layout/             # App shell (sidebar, topbar, drawer)
-│   ├── skills/             # Skill cards, detail drawer
-│   ├── splitter/           # Sub-PR cards, diff preview
-│   └── resolver/           # Comment cards
+│   ├── layout/             # App shell (sidebar, topbar)
+│   ├── providers.tsx       # Client providers wrapper
+│   ├── repo/               # Repo selector
+│   ├── sessions/           # Session context, indicator, panel
+│   ├── settings/           # General, preferences, skill group tabs
+│   ├── skills/             # Skill cards, detail drawer, trend chart, groups panel
+│   └── splitter/           # Sub-PR cards, diff preview
 ├── lib/
-│   ├── db/                 # DuckDB connection + migrations
-│   ├── actions/            # Server Actions (github, prs, skills, splitter, resolver, settings)
+│   ├── db/                 # DuckDB connection + migrations (2 migration files)
+│   ├── actions/            # Server Actions (account, claude-usage, github, prs, resolver,
+│   │                       #   reviewers, sessions, settings, skill-groups, skills, splitter)
 │   ├── github.ts           # Octokit client factory
+│   ├── git-operations.ts   # Local repo clone management (~/.inspector/repos/)
+│   ├── comment-classifier.ts # Review comment classification
+│   ├── export.ts           # Data export utilities
+│   ├── logger.ts           # Pino logger instance
 │   ├── types.ts            # Domain types
 │   ├── constants.ts        # Size thresholds, color maps
 │   └── prompts.ts          # Claude prompt templates
-└── hooks/                  # App-specific hooks
+└── hooks/
+    └── use-pr-filters.ts   # PR filtering hook
 ```
 
 ## Database
 
 DuckDB at `~/.inspector/data.duckdb` with tables:
-- `repos` — Connected GitHub repositories
-- `prs` — Cached pull requests with size classification
+- `repos` — Connected GitHub repositories (with optional `local_path` for clones)
+- `prs` — Cached pull requests with size classification, account-wide support (`user_relationship`, `repo_full_name`)
 - `pr_comments` — Review comments with AI-classified severity/category
-- `skill_analyses` / `skills` — Skill analysis results (comment IDs stored as JSON on skills)
+- `github_user` — Authenticated GitHub user cache
+- `skill_analyses` / `skills` — Skill analysis results (comment IDs as JSON, optional `group_id` and `rule_content`)
+- `skill_groups` — Skill categorization groups (e.g., react-components, css-styling)
 - `split_plans` — PR split plans (sub-PRs stored as JSON)
+- `split_executions` — Execution tracking per sub-PR (branch, PR URL, status)
 - `comment_fixes` — AI-generated fix diffs
+- `fix_executions` — Fix execution tracking (branch, commit SHA, status)
 - `settings` — Key-value user preferences
+- `sessions` / `session_logs` — Session lifecycle tracking (@claudekit/session integration)
 
 ## Key Patterns
 

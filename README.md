@@ -6,7 +6,7 @@ A local-first monorepo of developer tools and dashboards built with Next.js, Fas
 
 | App | Port | Description |
 |-----|------|-------------|
-| **Web** | 2000 | Dashboard, app health monitor, and log viewer |
+| **Web** | 2000 | Dashboard, app health monitor, log viewer, and toolbox |
 | **DuckTails** | 2050 | DuckDB admin UI — browse, query, and edit all ClaudeKit databases |
 | **Gadget** | 2100 | Repository auditor with AI integrations and MCP tool support |
 | **Inside** | 2150 | Project creation, scaffolding, and design workspace |
@@ -19,23 +19,23 @@ A local-first monorepo of developer tools and dashboards built with Next.js, Fas
 
 | Package | Description |
 |---------|-------------|
-| `@claudekit/ui` | shadcn/ui component library + `cn()` utility |
-| `@claudekit/hooks` | Shared React hooks — `useAppTheme`, `useAutoScroll`, `useIsMobile`, `useSessionStream` |
+| `@claudekit/ui` | shadcn/ui component library (54 components) + `cn()` utility, shared layout, security headers, Storybook on port 6006 |
+| `@claudekit/hooks` | Shared React hooks — `useAppTheme`, `useAutoScroll`, `useIsMobile`, `useSessionStream`, `useClaudeUsageRefresh` + `ThemeFOUCScript` |
 | `@claudekit/duckdb` | DuckDB connection factory, query helpers, and migration runner |
 | `@claudekit/claude-runner` | Claude CLI spawn with stream-JSON parsing and progress estimation |
-| `@claudekit/session` | Session lifecycle manager (ring buffer, batch log flush, DI persistence) |
-| `@claudekit/logger` | Pino-based structured logging with daily-rotating NDJSON files |
+| `@claudekit/session` | Session lifecycle manager with SSE response helpers and `@claudekit/session/next` subpath for Next.js route handlers |
+| `@claudekit/logger` | Pino-based structured logging with daily-rotating NDJSON files + log querying utilities |
 | `@claudekit/mcp-logs` | MCP server exposing 5 log-querying tools |
 | `@claudekit/gogo-shared` | GoGo domain types, Zod schemas, job state machine, typed API client |
 | `@claudekit/github` | GitHub API client with rate-limit tracking |
-| `@claudekit/claude-usage` | Claude API usage tracking with pricing data |
+| `@claudekit/claude-usage` | Claude API usage tracking + UsageSection component |
 | `@claudekit/playwright` | Browser automation helpers and E2E testing infrastructure |
-| `@claudekit/validation` | Shared Zod validation schemas |
+| `@claudekit/validation` | Shared Zod v4 request validation (parseBody, parseQuery) |
 
 ## Prerequisites
 
 - **Node.js** >= 20 (22 recommended)
-- **pnpm** 9.15.0 — pinned via `packageManager` in `package.json`
+- **pnpm** 10.30.2 — pinned via `packageManager` in `package.json`
 - **Claude CLI** — required by apps that use `@claudekit/claude-runner`
 
 ## Getting Started
@@ -83,7 +83,8 @@ pnpm dev:web
 | `pnpm format` | Biome format |
 | `pnpm test` | Run all tests (Vitest) |
 | `pnpm test:coverage` | Run tests with coverage |
-| `pnpm check` | Full CI check — typecheck + lint + test + build |
+| `pnpm check` | Full CI check — typecheck + lint + test:coverage + build |
+| `pnpm knip` | Dead code / unused dependency detection |
 | `pnpm db:reset` | Reset all app databases |
 | `pnpm clean` | Remove build artifacts |
 | `pnpm storybook` | Launch UI component Storybook (port 6006) |
@@ -173,7 +174,7 @@ Each app has a `.env.example` listing its supported variables. Copy to `.env.loc
 ## Tech Stack
 
 - **Runtime:** Node.js 20+
-- **Package Manager:** pnpm 9 (workspaces)
+- **Package Manager:** pnpm 10 (workspaces)
 - **Frontend:** Next.js 16 (App Router), React, Tailwind CSS v4
 - **Backend:** Fastify 5 (GoGo Orchestrator)
 - **Database:** DuckDB (via `@duckdb/node-api`)

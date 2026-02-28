@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-ClaudeKit is a **pnpm workspace monorepo** with 8 Next.js/Fastify apps and 10+ shared packages. All apps are local-first developer tools (not SaaS). The stack is **Next.js 16 App Router**, **DuckDB** for persistence, **Tailwind CSS v4**, and **Biome** for linting/formatting.
+ClaudeKit is a **pnpm workspace monorepo** with 8 Next.js/Fastify apps and 12 shared packages. All apps are local-first developer tools (not SaaS). The stack is **Next.js 16 App Router**, **DuckDB** for persistence, **Tailwind CSS v4**, and **Biome** for linting/formatting.
 
 ## Code Review Standards
 

@@ -9,6 +9,7 @@ Shared DuckDB connection and query helpers for all claudekit apps.
 - `createDatabase(config)` — factory returning `{ getDb, close }`
   - `dbPath`: path to `.duckdb` file
   - `useGlobalCache`: cache on `globalThis` for Next.js HMR survival (default: true)
+  - `walAutocheckpoint`: WAL autocheckpoint size (default: `"256KB"`)
   - `onInit(conn)`: callback for schema/seed initialization
   - WAL corruption auto-recovery (removes `.wal` and retries)
 
@@ -22,12 +23,18 @@ Shared DuckDB connection and query helpers for all claudekit apps.
 
 All helpers use an async mutex (DuckDB doesn't support concurrent prepared statements on one connection).
 
+### Migrations
+
+- `runMigrations(connection, options)` — run pending `.sql` migrations from a directory, returns count applied
+  - `options.migrationsDir`: path to numbered `.sql` files (e.g., `001_initial.sql`)
+  - `options.logger`: optional log function (pass `false` to disable)
+  - Creates a `_migrations` tracking table automatically
+
 ### Utilities
 
-- `buildUpdate(table, id, data, jsonFields?, timestampFn?)` — dynamic UPDATE
-- `buildInClause(column, values)` — builds `column IN ($1, $2, ...)` with params
+- `buildUpdate(table, id, data, jsonFields?, timestampFn?)` — dynamic UPDATE, returns `{ sql, params } | null`
+- `buildInClause(column, values)` — builds `column IN (?, ?, ?)` with params
 - `parseJsonField<T>(value, fallback)` — safe JSON parse for TEXT columns
-- `convertRow<T>(row)` — converts DuckDB wrapper types (UUID, Timestamp, BigInt) to JS primitives
 
 ### Parameter Binding
 

@@ -37,7 +37,7 @@ Standalone functions for multi-token monitoring:
 - `getRateLimitInfo(token)` — cached limits for one token
 - `shouldThrottleRequests(token)` — check if requests need delay
 - `updateRateLimitFromResponse(token, headers)` — manual header parsing
-- `getAllRateLimitInfo()` — aggregate across all tokens (`lowestRemaining`, `hasWarning`, `hasCritical`)
+- `getAllRateLimitInfo()` — aggregate across all tokens (`tokenCount`, `lowestRemaining`, `hasWarning`, `hasCritical`)
 
 ## Error Hierarchy
 

@@ -22,7 +22,7 @@ See `.env.example`. Key variables:
 - `MCP_API_TOKEN` — required for MCP programmatic access (Bearer token auth)
 - `DATABASE_PATH` — override database location (default: `~/.gadget/data.duckdb`)
 - `GITHUB_PERSONAL_ACCESS_TOKEN` — for GitHub API integration
-- Additional optional keys for MCP server integrations (Brave, Firecrawl, Exa, Tavily, Notion, Stripe, OpenAI, Replicate, etc.)
+- Additional optional keys for MCP server integrations (Brave, Firecrawl, Exa, Tavily, Notion, Stripe, etc.)
 
 ## Architecture
 
@@ -35,73 +35,73 @@ src/
 ├── app/                          # Next.js App Router
 │   ├── layout.tsx                # Root layout (force-dynamic, fonts, theme)
 │   ├── page.tsx                  # Dashboard
-│   ├── repos/                    # Repository listing + detail
-│   ├── repositories/             # Alternate repo routes
+│   ├── repositories/             # Repository listing + detail
 │   ├── scans/                    # Scan history + new scan wizard
 │   ├── policies/                 # Policy management
 │   ├── ai-integrations/          # Skills, MCP servers, agents
-│   ├── patterns/                 # Patterns library
-│   ├── concepts/                 # Concept management + sources
-│   ├── toolbox/                  # CLI tool checker
 │   ├── settings/                 # App settings
-│   └── api/                      # 18 REST endpoints
+│   └── api/                      # 19 REST endpoints
 ├── components/
-│   ├── ui/                       # shadcn/ui primitives (24 components)
-│   ├── layout/                   # Shell, sidebar, header, nav
+│   ├── ui/                       # shadcn/ui primitives (1 local: empty-state)
+│   ├── layout/                   # Shell, page banner, layout config
 │   ├── dashboard/                # Dashboard client
 │   ├── repos/                    # Repo detail tabs, Claude config editor
-│   ├── policies/                 # Policy form + listing
+│   ├── policies/                 # Policy form, rules tab
 │   ├── scans/                    # Scan wizard
-│   ├── sessions/                 # Session badge, terminal, panel, indicator, context
+│   ├── sessions/                 # Session badge, panel, indicator, context
 │   ├── code/                     # Code browser, file viewer, diff, commit views
 │   ├── settings/                 # Settings tabs, API keys
 │   ├── concepts/                 # Concept sources, install dialogs
-│   ├── patterns/                 # Patterns library
-│   └── toolbox/                  # Toolbox client
+│   └── patterns/                 # Patterns library
 ├── lib/
-│   ├── db/                       # DuckDB connection, schema, helpers, seed
-│   ├── actions/                  # 22 Server Action files ("use server")
+│   ├── db/                       # DuckDB init, migrations, seed
+│   ├── actions/                  # 15 Server Action files ("use server")
 │   ├── services/                 # Business logic, scanners, auditors, session system
 │   │   ├── auditors/             # 4 auditors: dependencies, ai-files, structure, custom-rules
-│   │   └── session-runners/      # 7 per-type session runner factories + index
+│   │   └── session-runners/      # 6 per-type session runner factories + index
+│   ├── constants/                # Permission suggestions, settings presets
 │   ├── types.ts                  # All domain types
 │   ├── constants.ts              # Sentinel IDs, discovery patterns, labels, session config
+│   ├── logger.ts                 # Pino logger via @claudekit/logger
 │   └── utils.ts                  # cn(), generateId(), nowTimestamp(), parsePolicy(), etc.
-└── hooks/
-    ├── use-mobile.ts             # Mobile detection hook
-    ├── use-color-scheme.ts       # Color scheme detection
-    ├── use-tab-navigation.ts     # Tab navigation state
-    ├── use-auto-scroll.ts        # Auto-scroll for terminal output
-    └── use-session-stream.ts     # SSE hook for session event streaming
+└── (no local hooks/ — uses @claudekit/hooks)
 ```
+
+### Shared Packages
+
+This app uses several `@claudekit/*` packages instead of local implementations:
+- **`@claudekit/duckdb`** — `createDatabase()`, `runMigrations()`, query helpers (`queryAll`, `queryOne`, `execute`, `buildUpdate`, etc.)
+- **`@claudekit/session`** — `createSessionManager()`, `reconcileSessionsOnInit()`, session constants
+- **`@claudekit/claude-runner`** — `runClaude()` for Claude CLI invocation with stream-json parsing
+- **`@claudekit/claude-usage`** — Claude API usage and rate limit tracking
+- **`@claudekit/logger`** — Pino-based structured logging
+- **`@claudekit/ui`** — shadcn/ui components, `cn()` utility, security headers
+- **`@claudekit/hooks`** — Shared React hooks (useAppTheme, useAutoScroll, useIsMobile, useSessionStream)
 
 ### Data Layer
 
-- **DuckDB** via `@duckdb/node-api` (async, promise-native API). DB file at `~/.gadget/data.duckdb`.
-- `src/lib/db/index.ts` — singleton `DuckDBInstance` + `DuckDBConnection`, cached on `globalThis` to survive Next.js HMR. Lazy async init with promise dedup. On startup: runs schema init, auto-recovers orphaned scans and sessions (stuck in 'running'/'pending' → marked 'error'), prunes old session logs (>7 days) and old sessions (>30 days), auto-seeds built-in data if not yet seeded. WAL corruption auto-recovery (removes `.wal` file and retries).
-- `src/lib/db/helpers.ts` — thin wrapper bridging `?` placeholders to DuckDB's `$1, $2, ...` positional params. Exports `queryAll<T>()`, `queryOne<T>()`, `execute()`, `checkpoint()`, `withTransaction()`, `buildUpdate()`. Includes an async mutex to serialize prepared statement execution (DuckDB doesn't support concurrent prepared statements on a single connection).
-- `src/lib/db/schema.ts` — 32 tables including `sessions` and `session_logs` for the unified session system. All tables use `CREATE TABLE IF NOT EXISTS`. Uses `BOOLEAN` columns (not INTEGER 0/1). Timestamps via `CAST(current_timestamp AS VARCHAR)`.
-- No migrations system — all tables use `CREATE IF NOT EXISTS` in schema.ts. Use `pnpm db:reset` for breaking schema changes.
-- `@duckdb/node-api` requires `serverExternalPackages` in `next.config.ts` and `pnpm.onlyBuiltDependencies` in `package.json` for native compilation.
+- **DuckDB** via `@claudekit/duckdb` using `createDatabase()`. DB file at `~/.gadget/data.duckdb`.
+- `src/lib/db/index.ts` — calls `createDatabase()` with `useGlobalCache: true`, runs numbered migrations via `runMigrations()`, reconciles orphaned scans/sessions, auto-seeds built-in data.
+- `src/lib/db/migrations/001_initial.sql` — 17 tables: scan_roots, scans, repos, policies, findings, fix_actions, snapshots, apply_runs, settings, github_accounts, concept_sources, concepts, concept_links, custom_rules, manual_findings, sessions, session_logs.
+- `src/lib/db/seed.ts` — Built-in policies, concept sources.
+- Query helpers (`queryAll`, `queryOne`, `execute`, `buildUpdate`, `withTransaction`, `checkpoint`, `parseJsonField`) are re-exported from `@claudekit/duckdb`.
 
 ### Session System
 
-The session system provides a unified abstraction for all long-running operations. All streaming operations go through sessions — there are no standalone streaming API routes.
+The session system provides a unified abstraction for all long-running operations via `@claudekit/session`. All streaming operations go through sessions.
 
-- **`src/lib/services/session-manager.ts`** — `globalThis`-cached singleton managing in-memory `LiveSession` objects. Handles create, start, cancel, subscribe, cleanup. Fans out `SessionEvent`s to SSE subscribers and batches log persistence to DuckDB.
-- **`src/lib/services/session-runners/`** — 7 runner factories (one per `SessionType`):
+- **`src/lib/services/session-manager.ts`** — wraps `createSessionManager()` from `@claudekit/session`, cached on `globalThis` for HMR survival.
+- **`src/lib/services/session-runners/`** — 6 runner factories (one per `SessionType`):
   - `scan` — repository scanning
   - `quick-improve` — quick repo improvements via Claude
   - `finding-fix` — finding-specific fixes via Claude
   - `fix-apply` — apply fix operations
   - `ai-file-gen` — AI file generation
   - `cleanup` — resource cleanup
-  - `toolbox-command` — toolbox command execution
-- **`src/lib/actions/sessions.ts`** — Server Actions for session DB records (`createSessionRecord`, `updateSessionRecord`, `getSessionRecord`, `insertSessionLogs`, etc.)
-- **`src/app/api/sessions/`** — REST endpoints: `POST /api/sessions` (create+start), `GET /api/sessions/[id]/stream` (SSE), `POST /api/sessions/[id]/cancel`.
-- **`src/hooks/use-session-stream.ts`** — client-side SSE hook for consuming session events.
-- **`src/components/sessions/`** — `session-terminal.tsx` (log viewer), `session-panel.tsx` (slide-over panel), `session-badge.tsx`, `session-indicator.tsx`, `session-context.tsx`.
-- Constants in `src/lib/constants.ts`: `SESSION_EVENT_BUFFER_SIZE=500`, `SESSION_LOG_FLUSH_INTERVAL_MS=2000`, `SESSION_HEARTBEAT_INTERVAL_MS=15000`.
+- **`src/lib/actions/sessions.ts`** — Server Actions for session DB records
+- **`src/app/api/sessions/`** — REST endpoints: `POST /api/sessions` (create+start), `GET /api/sessions/[id]/stream` (SSE), `POST /api/sessions/[id]/cancel`, `POST /api/sessions/cleanup`
+- **Client hook** — `useSessionStream()` from `@claudekit/hooks`
+- **`src/components/sessions/`** — `session-panel.tsx`, `session-badge.tsx`, `session-indicator.tsx`, `session-context.tsx`
 
 ### Server/Client Split
 
@@ -111,23 +111,27 @@ Every page follows the same pattern:
 
 ### Server Actions (`src/lib/actions/`)
 
-All DB reads/writes go through `"use server"` functions in 22 action files. These call `await getDb()` to get a DuckDB connection, then use async helper functions (`queryAll`, `queryOne`, `execute`).
+All DB reads/writes go through `"use server"` functions in 15 action files. These call `await getDb()` to get a DuckDB connection, then use async helper functions (`queryAll`, `queryOne`, `execute`).
 
-Key action files: `repos.ts`, `scans.ts`, `findings.ts`, `fixes.ts`, `policies.ts`, `concepts.ts`, `concept-sources.ts`, `settings.ts`, `claude-config.ts`, `claude-usage.ts`, `env-keys.ts`, `toolbox.ts`, `policy-templates.ts`, `custom-rules.ts`, `manual-findings.ts`, `code-browser.ts`, `prototype-files.ts`, `auto-fix.ts`, `screenshots.ts`, `upgrade-tasks.ts`, `sessions.ts`.
+Action files: `repos.ts`, `scans.ts`, `findings.ts`, `fixes.ts`, `policies.ts`, `concepts.ts`, `concept-sources.ts`, `settings.ts`, `claude-config.ts`, `claude-usage.ts`, `env-keys.ts`, `custom-rules.ts`, `manual-findings.ts`, `code-browser.ts`, `sessions.ts`.
 
 ### Route Handlers (API)
 
-18 REST endpoints under `src/app/api/`:
-- `scans/` — streaming scan execution (ReadableStream progress)
+19 REST endpoints under `src/app/api/`:
+- `scans/` — scan listing
 - `repos/` — repository CRUD
+- `repos/[repoId]/` — single repo operations
 - `repos/[repoId]/raw/` — raw repo data access
-- `findings/`, `fixes/`, `policies/`, `reports/` — audit data CRUD
+- `findings/` — audit findings
+- `fixes/` — fix action queries
 - `fixes/apply/`, `fixes/preview/`, `fixes/restore/` — fix lifecycle
 - `discover/` — repo discovery
+- `policies/` — policy CRUD
+- `reports/` — report export
 - `fs/browse/` — filesystem browsing
-- `toolbox/check/` — CLI tool checking
 - `claude-usage/` — Claude API usage tracking
 - `sessions/` — create and start sessions
+- `sessions/cleanup/` — session cleanup
 - `sessions/[sessionId]/` — session detail
 - `sessions/[sessionId]/stream/` — SSE event stream
 - `sessions/[sessionId]/cancel/` — cancel a running session
@@ -135,31 +139,27 @@ Key action files: `repos.ts`, `scans.ts`, `findings.ts`, `fixes.ts`, `policies.t
 ### Services (`src/lib/services/`)
 
 Key service files:
-- **`session-manager.ts`** — unified session lifecycle management (create, start, cancel, subscribe, cleanup)
-- **`session-runners/`** — 7 per-type runner factories dispatched via `sessionRunners` registry in `index.ts`
-- **`claude-runner.ts`** — invoke Claude CLI (`runClaude()`) with stream-json parsing, abort support, PID tracking
-- **`process-runner.ts`** — generic bash process spawning with abort support and stdout/stderr streaming
-- **`claude-usage-api.ts`** — Claude usage API integration
+- **`session-manager.ts`** — wraps `@claudekit/session` for session lifecycle management
+- **`session-runners/`** — 6 per-type runner factories dispatched via `sessionRunners` registry in `index.ts`
 - **`scanner.ts`** — walks filesystem from scan roots, finds `.git` directories, detects package managers/monorepos/repo types
 - **`auditors/`** — four auditors producing `AuditFinding[]`: `dependencies.ts`, `ai-files.ts`, `structure.ts`, `custom-rules.ts` (plus `index.ts` barrel)
 - **`fix-planner.ts`** — converts findings into fix actions with file diffs (before/after)
 - **`apply-engine.ts`** — snapshots files, applies fixes atomically (write to temp then rename), supports restore
-- **`auto-fix-engine.ts`** — automated error detection and fixing via Claude
 - **`reporter.ts`** — exports reports as JSON, Markdown, or PR description format
 - **`concept-scanner.ts`** / **`github-concept-scanner.ts`** / **`mcp-list-scanner.ts`** / **`claude-config-scanner.ts`** — discover concepts from various sources
-- **`claude-config.ts`** / **`claude-settings-schema.ts`** / **`claude-session-parser.ts`** — Claude config read/write/parse
+- **`claude-config.ts`** / **`claude-settings-schema.ts`** — Claude config read/write/parse
 - **`github-client.ts`** — GitHub API integration
 - **`encryption.ts`** — AES-256-GCM encryption for GitHub PATs
-- **`tool-checker.ts`** — CLI tool detection and version checking
-- **`policy-matcher.ts`** / **`version-resolver.ts`** — policy matching and version resolution
-- **`interface-design.ts`** — AI-powered interface design generation
+- **`process-runner.ts`** — generic bash process spawning with abort support and stdout/stderr streaming
+- **`git-utils.ts`** — Git utility functions
+- **`policy-matcher.ts`** — policy matching
 - **`language-detector.ts`** — programming language detection
 - **`finding-prompt-builder.ts`** / **`finding-classifier.ts`** — AI-powered finding analysis
 - **`quick-improve-prompts.ts`** — prompt generation for quick repo improvements
 
 ### UI Stack
 
-- **shadcn/ui** components in `src/components/ui/` (configured via `components.json`, RSC-enabled)
+- **shadcn/ui** components from `@claudekit/ui` (1 local component: `empty-state.tsx`)
 - **Tailwind CSS v4** via `@tailwindcss/postcss` plugin, with `@tailwindcss/typography`
 - **Design tokens** in `src/app/globals.css` — HSL CSS custom properties for light/dark themes, semantic colors (`success`, `warning`, `info`), sidebar theme tokens
 - **Motion** (Framer Motion v12) for animations, **Lucide** for icons, **next-themes** for theme switching
@@ -172,32 +172,22 @@ Key service files:
 - Async params: `params: Promise<{ repoId: string }>` — must `await params` before use
 - Root layout uses `export const dynamic = "force-dynamic"` — required because DuckDB pages can't be statically prerendered
 - Layout uses `next/dynamic` with `ssr: false` for sidebar/header components to avoid Motion SSR issues
-- Security headers configured in `next.config.ts` (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy)
+- Security headers configured in `next.config.ts` via `@claudekit/ui/next-config`
 
 ### DuckDB
 
 See `packages/duckdb/CLAUDE.md` for general DuckDB query patterns and gotchas. App-specific notes:
 - `getDb()` is async — always `const db = await getDb()`
-- JSON fields (policies' `expected_versions`, `banned_dependencies`, etc.) stored as TEXT, parsed with `JSON.parse` on read
-- No migrations system — all tables use `CREATE IF NOT EXISTS` in schema.ts. Use `pnpm db:reset` for breaking schema changes
+- JSON fields stored as native `JSON` type in DuckDB, parsed with `parseJsonField()` on read
+- Migrations are numbered `.sql` files in `src/lib/db/migrations/` (e.g., `001_initial.sql`)
+- Timestamps use `TIMESTAMPTZ DEFAULT now()` (not TEXT columns)
 
 ### Session System
 - All long-running operations go through the session system — do NOT create standalone streaming routes
-- To add a new operation type: add to `SessionType` union in `types.ts`, create a runner factory in `session-runners/`, register it in `session-runners/index.ts`, add label to `SESSION_TYPE_LABELS` in `constants.ts`
+- To add a new operation type: add to `SessionType` union in `types.ts`, create a runner factory in `session-runners/`, register it in `session-runners/index.ts`
 - `SessionRunner` signature: `(ctx: { onProgress, signal, sessionId }) => Promise<{ result? }>`
 - Runner factory signature: `(metadata: Record<string, unknown>, contextId?: string) => SessionRunner`
-- Emit `SessionEvent`s via `onProgress()` — types: `progress`, `log`, `done`, `error`, `cancelled`, `heartbeat`, `init`
-- Use `setCleanupFn()` for resource cleanup (e.g., git worktree removal) on cancel/error
-- Use `setSessionPid()` to track Claude CLI process IDs for killability
-- Sessions use `globalThis` caching (same pattern as DuckDB) to survive HMR
-
-### Claude CLI Integration
-- `runClaude()` in `src/lib/services/claude-runner.ts` is the standard way to invoke Claude CLI
-- Parses `--output-format stream-json` events for real-time progress
-- Supports abort via `AbortSignal`, PID tracking via `onPid`, configurable tool allowlists/disallowlists
-- Default: allows `Write`, disallows `Edit,Bash`
-- `runProcess()` in `src/lib/services/process-runner.ts` for generic bash command execution with abort support
-- Use `async import()` not `require()` for dynamic imports in services
+- Use `runClaude()` from `@claudekit/claude-runner` to invoke Claude CLI
 
 ### TypeScript / Code Style
 - All domain types defined in `src/lib/types.ts`
@@ -205,7 +195,6 @@ See `packages/duckdb/CLAUDE.md` for general DuckDB query patterns and gotchas. A
 - Timestamps via `nowTimestamp()` (returns `new Date().toISOString()`)
 - `as const` arrays need explicit `string[]` typing when passed to functions expecting mutable arrays
 - **Biome** for linting and formatting (replaces ESLint + Prettier). Config in `biome.json`: 2-space indent, 120 line width, double quotes, semicolons, trailing commas.
-- **Husky** + **lint-staged** run `biome check --write` on pre-commit for `*.{js,ts,jsx,tsx,css,json}` files
 - Scanner behavior controlled by constants in `src/lib/constants.ts`: `DEFAULT_EXCLUDE_PATTERNS`, `LOCKFILE_TO_PM`, `MONOREPO_INDICATORS`, `REPO_TYPE_INDICATORS`, `CONCEPT_DISCOVERY_PATTERNS`
 - Sentinel IDs: `LIBRARY_REPO_ID = "__library__"`, `CURATED_SOURCE_ID`, `CLAUDE_CONFIG_SOURCE_ID`
 

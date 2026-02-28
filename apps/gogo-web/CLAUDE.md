@@ -22,6 +22,7 @@ See `.env.example`. All are optional — the app auto-detects the orchestrator U
 - `NEXT_PUBLIC_API_URL` — Override orchestrator REST URL (default: auto-detect from browser hostname + port 2201)
 - `NEXT_PUBLIC_WS_URL` — Override WebSocket URL (default: auto-detect)
 - `NEXT_PUBLIC_ORCHESTRATOR_PORT` — Override orchestrator port (default: 2201)
+- `NEXT_PUBLIC_DEFAULT_DIRECTORY` — Default work directory for agent worktrees (default: /tmp/agent-worktrees)
 
 ## Architecture
 
@@ -33,6 +34,7 @@ See `.env.example`. All are optional — the app auto-detects the orchestrator U
 ├── app/                          # Next.js App Router
 │   ├── layout.tsx                # Root layout (providers, theme)
 │   ├── page.tsx                  # Dashboard home (Kanban board)
+│   ├── manifest.ts               # PWA manifest
 │   ├── archive/                  # Archived/completed jobs
 │   ├── health/                   # System health monitoring
 │   ├── issues/                   # GitHub issues management
@@ -41,18 +43,17 @@ See `.env.example`. All are optional — the app auto-detects the orchestrator U
 │   ├── setup/                    # Onboarding wizard
 │   └── worktrees/                # Git worktree management
 ├── components/
-│   ├── layout/                   # App shell, sidebar, header, connection badge
-│   ├── dashboard/                # Kanban board, job cards, detail drawer, log viewer (15 components)
-│   ├── settings/                 # GitHub, agents, repos, general settings
-│   ├── setup/                    # Setup wizard steps (5 steps)
-│   ├── issues/                   # Issue list, creation
-│   ├── research/                 # Research sessions, suggestions
+│   ├── layout/                   # Client layout, sidebar, connection badge, layout config
+│   ├── dashboard/                # Kanban board, job cards, detail drawer, log viewer (20 components)
+│   ├── settings/                 # GitHub, agents, repos, general, connect-device settings
+│   ├── setup/                    # Setup wizard steps (6 components)
+│   ├── issues/                   # Issue list, cards, content, detail drawer, creation dialog
+│   ├── research/                 # Suggestion card
 │   ├── archive/                  # Archived job cards
-│   ├── worktrees/                # Worktree panels, diff viewer
+│   ├── worktrees/                # Worktree card, file browser, changes drawer
 │   ├── theme/                    # Theme provider
-│   ├── repo/                     # Repository selector dropdown
-│   ├── providers.tsx             # Global providers (QueryClient, contexts)
-│   └── page-tabs.tsx             # Navigation tabs
+│   ├── repo/                     # Repo selector, repo badge, repo settings
+│   └── providers.tsx             # Global providers (QueryClient, contexts)
 ├── contexts/
 │   ├── repository-context.tsx    # Multi-repo selection (localStorage persistence)
 │   └── websocket-context.tsx     # WebSocket connection + message dispatch to TanStack Query cache
@@ -73,15 +74,14 @@ See `.env.example`. All are optional — the app auto-detects the orchestrator U
 │   ├── utils.ts                  # Formatting helpers
 │   └── actions/
 │       └── claude-usage.ts       # Claude usage tracking server action
-├── types/
-│   └── job.ts                    # Job status config, Kanban column groups
-└── data/                         # Static data
+└── types/
+    └── job.ts                    # Job status config, Kanban column groups
 ```
 
 ### State Management
 
 - **Server state**: TanStack React Query 5 — caching, polling (5–30s intervals), invalidation via mutations + WebSocket
-- **Real-time**: WebSocket context dispatches `job:updated`, `job:created`, `job:log` events directly to React Query cache
+- **Real-time**: WebSocket context dispatches `job:updated`, `job:created`, `job:log` events to React Query cache; `research:updated`, `research:suggestion`, `research:output` dispatched as DOM CustomEvents
 - **Client state**: React Context (repository selection, WebSocket) + localStorage (auth token, repo selection, theme)
 - **URL state**: `nuqs` for query parameters (job ID, filters)
 
@@ -108,7 +108,7 @@ NuqsAdapter → QueryClientProvider → WebSocketProvider → HealthCoordinator 
 ### WebSocket (`lib/ws.ts`)
 
 - Exponential backoff reconnection (1s → 30s max, 10 attempts)
-- Message types: subscribe/unsubscribe (job logs), ping/pong
+- Message types: subscribe/unsubscribe (job logs), subscribe_repo/unsubscribe_repo (repo events), ping/pong
 - Background reconnect every 30s on failure
 - Health check triggers reconnect when backend recovers
 

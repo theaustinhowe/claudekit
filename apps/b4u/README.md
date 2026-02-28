@@ -11,23 +11,32 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:2300](http://localhost:2300).
 
 ## Architecture
 
 ```
 src/
-├── app/           # Next.js App Router (single page)
+├── app/                    # Next.js App Router (single page + API routes)
+│   ├── page.tsx            # Main SPA page (client component)
+│   └── api/                # 39 REST endpoints (analyze, audio, chat, recording, sessions, runs, video, fs, etc.)
 ├── components/
-│   ├── chat/      # Chat panel, bubbles, typing, action cards
-│   ├── layout/    # Top bar stepper, resizable split panel
-│   └── phases/    # Right panel content for each of the 7 phases
+│   ├── chat/               # Chat panel, bubbles, typing indicator, action cards
+│   ├── layout/             # Layout shell, sidebar, header with phase stepper
+│   ├── phases/             # Right panel content for each of the 7 phases
+│   └── ui/                 # Shared UI primitives
 └── lib/
-    ├── mock-data.ts        # All hardcoded mock data
-    ├── types.ts            # TypeScript types
     ├── store.ts            # React context + useReducer state
     ├── phase-controller.ts # Phase orchestration logic
-    └── utils.ts            # Utilities
+    ├── types.ts            # TypeScript types
+    ├── db.ts               # DuckDB connection + migrations
+    ├── claude/              # Claude AI integration (prompts + session runners)
+    ├── recording/           # Playwright browser recording engine
+    ├── audio/               # ElevenLabs TTS audio generation
+    ├── video/               # FFmpeg video merging + chapter generation
+    ├── fs/                  # Filesystem scanner
+    ├── hooks/               # App-specific hooks (state-sync, thread-sync, run-param)
+    └── mock-data.ts         # Reference/mock data
 ```
 
 ## Workflow
@@ -46,7 +55,7 @@ The app walks through 7 phases via a chat-driven interface:
 
 - Next.js 16 (App Router)
 - TypeScript (strict mode)
-- Tailwind CSS 3
+- Tailwind CSS 4
 - React 19
 
 ## Design System

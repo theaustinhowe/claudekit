@@ -6,7 +6,7 @@ B4U is a prototype UI for an automated repo walkthrough video generator. It uses
 ## Tech Stack
 - **Framework**: Next.js 16 (App Router, Turbopack)
 - **Language**: TypeScript (strict mode)
-- **Styling**: Tailwind CSS v3 with HSL-based semantic tokens
+- **Styling**: Tailwind CSS v4 with HSL-based semantic tokens (CSS-based config, no `tailwind.config.*`)
 - **State**: React `useReducer` + Context (`src/lib/store.ts`)
 - **Database**: DuckDB (singleton via `globalThis` pattern)
 - **Linting/Formatting**: Biome.js (not ESLint)
@@ -41,10 +41,16 @@ B4U is a prototype UI for an automated repo walkthrough video generator. It uses
 - DuckDB instances must use `globalThis` caching pattern
 
 ## File Organization
-- `src/app/` — Next.js pages and API routes
+- `src/app/` — Next.js pages and API routes (39 endpoints)
 - `src/components/chat/` — Chat panel components
 - `src/components/layout/` — Layout shell, sidebar, header
-- `src/components/phases/` — Right panel phase content
+- `src/components/phases/` — Right panel phase content (7 phases)
 - `src/components/ui/` — Shared UI primitives
 - `src/lib/` — State, hooks, utilities, API clients
-- `src/lib/claude/` — Claude API integration and runners
+- `src/lib/db.ts` — DuckDB connection + migrations
+- `src/lib/claude/` — Claude AI prompts (7) and session runners (8)
+- `src/lib/recording/` — Playwright browser recording engine
+- `src/lib/audio/` — ElevenLabs TTS audio generation
+- `src/lib/video/` — FFmpeg video merging + chapter generation
+- `src/lib/fs/` — Filesystem scanner
+- `src/lib/hooks/` — App-specific hooks (state-sync, thread-sync, run-param)
