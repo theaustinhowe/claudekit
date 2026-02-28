@@ -5,6 +5,8 @@ import { cn } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+import { Input } from "@claudekit/ui/components/input";
 import { Progress } from "@claudekit/ui/components/progress";
 import {
   Sheet,
@@ -14,14 +16,25 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@claudekit/ui/components/sheet";
+import { Slider } from "@claudekit/ui/components/slider";
 import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
 import { parseStreamLog, resetStreamIdCounter, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
-import { ArrowDown, ClipboardCopy, GitBranch, Scissors, Square } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
+import {
+  ArrowDown,
+  ArrowDownAZ,
+  ArrowUpAZ,
+  ClipboardCopy,
+  Filter,
+  GitBranch,
+  Scissors,
+  Search,
+  Square,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { PRFilterBar } from "@/components/pr-filter-bar";
 import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
 import { SubPRCard } from "@/components/splitter/sub-pr-card";
 import { useRepoContext } from "@/contexts/repo-context";
@@ -29,9 +42,31 @@ import { usePRFilters } from "@/hooks/use-pr-filters";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "@/lib/actions/splitter";
 import { SIZE_CLASSES, SUB_PR_COLORS } from "@/lib/constants";
 import { exportSplitPlanToMarkdown } from "@/lib/export";
-import type { PRWithComments, SplitExecution, SubPR } from "@/lib/types";
+import type { PRSortField, PRWithComments, SplitExecution, SubPR } from "@/lib/types";
 
 type Phase = "select" | "analyzing" | "results";
+
+const sortOptions: { value: PRSortField; label: string }[] = [
+  { value: "created", label: "Created" },
+  { value: "updated", label: "Updated" },
+  { value: "size", label: "Size" },
+  { value: "comments", label: "Comments" },
+  { value: "title", label: "A\u2013Z" },
+];
+
+const stateOptions: { value: "all" | "open" | "closed"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "open", label: "Open" },
+  { value: "closed", label: "Closed" },
+];
+
+const sizeOptions: { value: "all" | "S" | "M" | "L" | "XL"; label: string }[] = [
+  { value: "all", label: "Any size" },
+  { value: "S", label: "S" },
+  { value: "M", label: "M" },
+  { value: "L", label: "L" },
+  { value: "XL", label: "XL" },
+];
 
 interface SplitterClientProps {
   repoId: string | null;
@@ -46,13 +81,23 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
   const repoPRs = selectedRepoId === "all" ? largePRs : largePRs.filter((p) => p.repoId === selectedRepoId);
   const {
     filters: prFilters,
-    filtered: filteredPRs,
+    filtered: hookFiltered,
     setSearch,
-    setState: setStateFilter,
+    setState: setPRState,
     setSize,
     setSortField,
     toggleDirection,
   } = usePRFilters(repoPRs, { defaultSortField: "size", defaultSortDirection: "desc" });
+
+  const [minComments, setMinComments] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const filteredPRs = useMemo(
+    () => hookFiltered.filter((pr) => pr.commentCount >= minComments),
+    [hookFiltered, minComments],
+  );
+
+  const hasActiveFilters = prFilters.state !== "all" || prFilters.size !== "all" || minComments > 1;
 
   const [selectedPR, setSelectedPR] = useState<string | null>(
     preselected && repoId ? `${repoId}#${preselected}` : null,
@@ -333,85 +378,184 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
     );
   }
 
+  const prCountLabel =
+    filteredPRs.length !== repoPRs.length
+      ? `${filteredPRs.length.toLocaleString()} of ${repoPRs.length.toLocaleString()} PRs`
+      : `${repoPRs.length.toLocaleString()} PR${repoPRs.length !== 1 ? "s" : ""}`;
+
   return (
     <>
       <div>
         <h1 className="text-2xl font-bold mb-1">PR Splitter</h1>
-        <p className="text-sm text-muted-foreground">Select a large PR to analyze for intelligent splitting</p>
+        <p className="text-sm text-muted-foreground">
+          Select a large PR to analyze for intelligent splitting &middot; {prCountLabel}
+        </p>
       </div>
 
-      <PRFilterBar
-        filters={prFilters}
-        resultCount={filteredPRs.length}
-        totalCount={repoPRs.length}
-        onSearchChange={setSearch}
-        onStateChange={setStateFilter}
-        onSizeChange={setSize}
-        onSortFieldChange={setSortField}
-        onToggleDirection={toggleDirection}
-      />
-
-      <Card>
-        <CardContent className="p-2 space-y-1">
-          {filteredPRs.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">
-              No large PRs found. PRs sized L or XL will appear here.
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search PRs..."
+              value={prFilters.search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-8 text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <select
+              value={prFilters.sortField}
+              onChange={(e) => setSortField(e.target.value as PRSortField)}
+              className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none"
+            >
+              {sortOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={toggleDirection}>
+                    {prFilters.sortDirection === "desc" ? (
+                      <ArrowDownAZ className="h-3.5 w-3.5" />
+                    ) : (
+                      <ArrowUpAZ className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{prFilters.sortDirection === "desc" ? "Descending" : "Ascending"}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <CollapsibleTrigger asChild>
+              <Button variant={filtersOpen ? "default" : "ghost"} size="sm" className="h-7 px-2 text-xs gap-1.5">
+                <Filter className="h-3 w-3" />
+                <span>Filters</span>
+                {hasActiveFilters && !filtersOpen && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+        </div>
+        <CollapsibleContent className="pt-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="space-y-1">
+              <span className="text-xs font-medium text-muted-foreground">State</span>
+              <div className="flex items-center gap-0.5">
+                {stateOptions.map((opt) => (
+                  <Button
+                    key={opt.value}
+                    variant={prFilters.state === opt.value ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setPRState(opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
             </div>
-          ) : (
-            filteredPRs.map((pr) => {
-              const linesChanged = pr.linesAdded + pr.linesDeleted;
-              return (
-                <button
-                  type="button"
-                  key={pr.id}
-                  className={cn(
-                    "flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer transition-colors w-full text-left",
-                    selectedPR === pr.id ? "bg-primary/10 border border-primary/30" : "hover:bg-muted/50",
-                  )}
-                  onClick={() => handleSelect(pr)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{pr.title}</span>
-                      <span className="text-xs text-muted-foreground">#{pr.number}</span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>{linesChanged} lines</span>
-                      <span>{pr.filesChanged} files</span>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className={cn("text-[10px] border", SIZE_CLASSES[pr.size])}>
-                    {pr.size}
-                  </Badge>
-                  {pr.complexity != null && (
-                    <div
-                      className={cn(
-                        "h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold",
-                        pr.complexity >= 7
-                          ? "border-status-error text-status-error"
-                          : pr.complexity >= 4
-                            ? "border-status-warning text-status-warning"
-                            : "border-status-success text-status-success",
-                      )}
-                    >
-                      {pr.complexity}
-                    </div>
-                  )}
-                </button>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
+            <div className="space-y-1">
+              <span className="text-xs font-medium text-muted-foreground">Size</span>
+              <div className="flex items-center gap-0.5">
+                {sizeOptions.map((opt) => (
+                  <Button
+                    key={opt.value}
+                    variant={prFilters.size === opt.value ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setSize(opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1 min-w-[160px]">
+              <span className="text-xs font-medium text-muted-foreground">Min comments: {minComments}</span>
+              <Slider value={[minComments]} onValueChange={([v]) => setMinComments(v)} min={1} max={20} step={1} />
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
-      <Button
-        className="gradient-primary text-primary-foreground w-full"
-        disabled={!selectedPR}
-        onClick={handleAnalyze}
-      >
-        <Scissors className="h-4 w-4 mr-2" />
-        Analyze for Splitting
-      </Button>
+      <div className="flex-1 flex flex-col min-h-0">
+        <Card className="flex-1 min-h-0">
+          <CardContent className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-320px)]">
+            {filteredPRs.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                No large PRs found. PRs sized L or XL will appear here.
+              </div>
+            ) : (
+              filteredPRs.map((pr) => {
+                const linesChanged = pr.linesAdded + pr.linesDeleted;
+                return (
+                  <button
+                    type="button"
+                    key={pr.id}
+                    className={cn(
+                      "flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer transition-colors w-full text-left",
+                      selectedPR === pr.id ? "bg-primary/10 border border-primary/30" : "hover:bg-muted/50",
+                    )}
+                    onClick={() => handleSelect(pr)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{pr.title}</span>
+                        <span className="text-xs text-muted-foreground">#{pr.number}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <span>{linesChanged} lines</span>
+                        <span>&middot;</span>
+                        <span>{pr.filesChanged} files</span>
+                        {pr.githubCreatedAt && (
+                          <>
+                            <span>&middot;</span>
+                            <span>
+                              {new Date(pr.githubCreatedAt).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={cn("text-[10px] border", SIZE_CLASSES[pr.size])}>
+                      {pr.size}
+                    </Badge>
+                    {pr.complexity != null && (
+                      <div
+                        className={cn(
+                          "h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold",
+                          pr.complexity >= 7
+                            ? "border-status-error text-status-error"
+                            : pr.complexity >= 4
+                              ? "border-status-warning text-status-warning"
+                              : "border-status-success text-status-success",
+                        )}
+                      >
+                        {pr.complexity}
+                      </div>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+
+        <Button
+          className="gradient-primary text-primary-foreground w-full mt-3 shrink-0"
+          disabled={!selectedPR}
+          onClick={handleAnalyze}
+        >
+          <Scissors className="h-4 w-4 mr-2" />
+          Analyze for Splitting
+        </Button>
+      </div>
     </>
   );
 }

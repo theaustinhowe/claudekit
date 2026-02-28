@@ -3,9 +3,11 @@
 import { Button } from "@claudekit/ui/components/button";
 import { Brain, Plus } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { AnalysisHistory, type AnalysisHistoryEntry } from "@/components/skills/analysis-history";
 import { useRepoContext } from "@/contexts/repo-context";
+import { deleteAnalysis } from "@/lib/actions/skills";
 
 interface HistoryEntryWithRepo extends AnalysisHistoryEntry {
   repoId: string;
@@ -15,13 +17,28 @@ interface SkillsListClientProps {
   history: HistoryEntryWithRepo[];
 }
 
-export function SkillsListClient({ history }: SkillsListClientProps) {
+export function SkillsListClient({ history: initialHistory }: SkillsListClientProps) {
   const { selectedRepoId } = useRepoContext();
+  const [history, setHistory] = useState(initialHistory);
+  const [, startTransition] = useTransition();
 
   const filtered = useMemo(
     () => (selectedRepoId === "all" ? history : history.filter((h) => h.repoId === selectedRepoId)),
     [history, selectedRepoId],
   );
+
+  const handleDelete = (analysisId: string) => {
+    setHistory((prev) => prev.filter((h) => h.id !== analysisId));
+    startTransition(async () => {
+      try {
+        await deleteAnalysis(analysisId);
+        toast.success("Analysis deleted");
+      } catch {
+        setHistory(initialHistory);
+        toast.error("Failed to delete analysis");
+      }
+    });
+  };
 
   return (
     <>
@@ -59,7 +76,7 @@ export function SkillsListClient({ history }: SkillsListClientProps) {
           </Button>
         </div>
       ) : (
-        <AnalysisHistory history={filtered} linkMode />
+        <AnalysisHistory history={filtered} linkMode onDelete={handleDelete} />
       )}
     </>
   );

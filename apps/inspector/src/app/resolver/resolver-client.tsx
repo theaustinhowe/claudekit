@@ -6,26 +6,33 @@ import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+import { Input } from "@claudekit/ui/components/input";
 import { Progress } from "@claudekit/ui/components/progress";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { Slider } from "@claudekit/ui/components/slider";
 import type { StreamEntry } from "@claudekit/ui/components/streaming-display";
 import { parseStreamLog, resetStreamIdCounter, StreamingDisplay } from "@claudekit/ui/components/streaming-display";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import {
+  ArrowDownAZ,
+  ArrowUpAZ,
   Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   ClipboardCopy,
+  Filter,
   GitCommit,
   Loader2,
   MessageSquare,
+  Search,
   Square,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { PRFilterBar } from "@/components/pr-filter-bar";
 import { useRepoContext } from "@/contexts/repo-context";
 import { usePRFilters } from "@/hooks/use-pr-filters";
 import { getPRComments } from "@/lib/actions/prs";
@@ -40,9 +47,30 @@ import {
 } from "@/lib/actions/resolver";
 import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
 import { exportFixesToMarkdown } from "@/lib/export";
-import type { CommentStatus, PRWithComments } from "@/lib/types";
+import type { CommentStatus, PRSortField, PRWithComments } from "@/lib/types";
 
 type Phase = "select-pr" | "select-comments" | "fixing" | "results";
+
+const sortOptions: { value: PRSortField; label: string }[] = [
+  { value: "created", label: "Created" },
+  { value: "updated", label: "Updated" },
+  { value: "comments", label: "Comments" },
+  { value: "title", label: "A\u2013Z" },
+];
+
+const stateOptions: { value: "all" | "open" | "closed"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "open", label: "Open" },
+  { value: "closed", label: "Closed" },
+];
+
+const sizeOptions: { value: "all" | "S" | "M" | "L" | "XL"; label: string }[] = [
+  { value: "all", label: "Any size" },
+  { value: "S", label: "S" },
+  { value: "M", label: "M" },
+  { value: "L", label: "L" },
+  { value: "XL", label: "XL" },
+];
 
 const statusConfig: Record<CommentStatus, { label: string; color: string; icon: typeof Check }> = {
   open: { label: "Open", color: "text-muted-foreground", icon: MessageSquare },
@@ -80,13 +108,23 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
     selectedRepoId === "all" ? prsWithComments : prsWithComments.filter((p) => p.repoId === selectedRepoId);
   const {
     filters: prFilters,
-    filtered: filteredPRs,
+    filtered: hookFiltered,
     setSearch,
-    setState: setStateFilter,
+    setState: setPRState,
     setSize,
     setSortField,
     toggleDirection,
   } = usePRFilters(repoPRs, { defaultSortField: "comments", defaultSortDirection: "desc" });
+
+  const [minComments, setMinComments] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const filteredPRs = useMemo(
+    () => hookFiltered.filter((pr) => pr.commentCount >= minComments),
+    [hookFiltered, minComments],
+  );
+
+  const hasActiveFilters = prFilters.state !== "all" || prFilters.size !== "all" || minComments > 1;
 
   const [selectedPR, setSelectedPR] = useState<PRWithComments | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -582,26 +620,110 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
   }
 
   // Phase: Select PR
+  const prCountLabel =
+    filteredPRs.length !== repoPRs.length
+      ? `${filteredPRs.length.toLocaleString()} of ${repoPRs.length.toLocaleString()} PRs`
+      : `${repoPRs.length.toLocaleString()} PR${repoPRs.length !== 1 ? "s" : ""}`;
+
   return (
     <>
       <div>
         <h1 className="text-2xl font-bold mb-1">Comment Resolver</h1>
-        <p className="text-sm text-muted-foreground">Select a PR to auto-fix review comments with AI</p>
+        <p className="text-sm text-muted-foreground">
+          Select a PR to auto-fix review comments with AI &middot; {prCountLabel}
+        </p>
       </div>
 
-      <PRFilterBar
-        filters={prFilters}
-        resultCount={filteredPRs.length}
-        totalCount={repoPRs.length}
-        onSearchChange={setSearch}
-        onStateChange={setStateFilter}
-        onSizeChange={setSize}
-        onSortFieldChange={setSortField}
-        onToggleDirection={toggleDirection}
-      />
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search PRs..."
+              value={prFilters.search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-8 text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <select
+              value={prFilters.sortField}
+              onChange={(e) => setSortField(e.target.value as PRSortField)}
+              className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none"
+            >
+              {sortOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={toggleDirection}>
+                    {prFilters.sortDirection === "desc" ? (
+                      <ArrowDownAZ className="h-3.5 w-3.5" />
+                    ) : (
+                      <ArrowUpAZ className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{prFilters.sortDirection === "desc" ? "Descending" : "Ascending"}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <CollapsibleTrigger asChild>
+              <Button variant={filtersOpen ? "default" : "ghost"} size="sm" className="h-7 px-2 text-xs gap-1.5">
+                <Filter className="h-3 w-3" />
+                <span>Filters</span>
+                {hasActiveFilters && !filtersOpen && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+        </div>
+        <CollapsibleContent className="pt-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="space-y-1">
+              <span className="text-xs font-medium text-muted-foreground">State</span>
+              <div className="flex items-center gap-0.5">
+                {stateOptions.map((opt) => (
+                  <Button
+                    key={opt.value}
+                    variant={prFilters.state === opt.value ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setPRState(opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-xs font-medium text-muted-foreground">Size</span>
+              <div className="flex items-center gap-0.5">
+                {sizeOptions.map((opt) => (
+                  <Button
+                    key={opt.value}
+                    variant={prFilters.size === opt.value ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setSize(opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1 min-w-[160px]">
+              <span className="text-xs font-medium text-muted-foreground">Min comments: {minComments}</span>
+              <Slider value={[minComments]} onValueChange={([v]) => setMinComments(v)} min={1} max={20} step={1} />
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       <Card>
-        <CardContent className="p-2 space-y-1">
+        <CardContent className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-320px)]">
           {filteredPRs.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
               No PRs with review comments found. Sync your repository first.
@@ -633,6 +755,18 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
                     <span>
                       {pr.commentCount} comment{pr.commentCount !== 1 ? "s" : ""}
                     </span>
+                    {pr.githubCreatedAt && (
+                      <>
+                        <span>&middot;</span>
+                        <span>
+                          {new Date(pr.githubCreatedAt).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <Badge variant="secondary" className="text-xs shrink-0">

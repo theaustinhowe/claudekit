@@ -128,6 +128,12 @@ export async function updateSkillActionItem(skillId: string, actionItem: string)
   await execute(db, "UPDATE skills SET action_item = ? WHERE id = ?", [actionItem, skillId]);
 }
 
+export async function deleteAnalysis(analysisId: string) {
+  const db = await getDb();
+  await execute(db, "DELETE FROM skills WHERE analysis_id = ?", [analysisId]);
+  await execute(db, "DELETE FROM skill_analyses WHERE id = ?", [analysisId]);
+}
+
 export async function getAnalysisHistory(repoId: string) {
   const db = await getDb();
   const analyses = await queryAll<{
@@ -141,13 +147,13 @@ export async function getAnalysisHistory(repoId: string) {
     prNumbers: number[];
     createdAt: string;
     skillCount: number;
-    topSkills: string[];
+    topSkills: { name: string; description: string | null }[];
   }[] = [];
 
   for (const analysis of analyses) {
-    const skills = await queryAll<{ name: string }>(
+    const skills = await queryAll<{ name: string; description: string | null }>(
       db,
-      "SELECT name FROM skills WHERE analysis_id = ? ORDER BY frequency DESC LIMIT 3",
+      "SELECT name, description FROM skills WHERE analysis_id = ? ORDER BY frequency DESC LIMIT 3",
       [analysis.id],
     );
     const totalSkills = await queryOne<{ count: number }>(
@@ -161,7 +167,7 @@ export async function getAnalysisHistory(repoId: string) {
       prNumbers: JSON.parse(analysis.pr_numbers),
       createdAt: analysis.created_at,
       skillCount: Number(totalSkills?.count ?? 0),
-      topSkills: skills.map((s) => s.name),
+      topSkills: skills.map((s) => ({ name: s.name, description: s.description })),
     });
   }
 

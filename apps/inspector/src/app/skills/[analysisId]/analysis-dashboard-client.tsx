@@ -54,7 +54,13 @@ export function AnalysisDashboardClient({
   // History panel
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<
-    { id: string; prNumbers: number[]; createdAt: string; skillCount: number; topSkills: string[] }[]
+    {
+      id: string;
+      prNumbers: number[];
+      createdAt: string;
+      skillCount: number;
+      topSkills: { name: string; description: string | null }[];
+    }[]
   >([]);
   const [compareMode, setCompareMode] = useState(false);
   const [compareIds, setCompareIds] = useState<[string | null, string | null]>([null, null]);

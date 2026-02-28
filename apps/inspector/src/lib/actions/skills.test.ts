@@ -140,7 +140,10 @@ describe("skills actions", () => {
     it("returns formatted history with parsed prNumbers, skillCount, topSkills", async () => {
       mockQueryAll
         .mockResolvedValueOnce([{ id: "a1", pr_numbers: "[1,2,3]", created_at: "2025-01-01" }])
-        .mockResolvedValueOnce([{ name: "Error Handling" }, { name: "Testing" }]);
+        .mockResolvedValueOnce([
+          { name: "Error Handling", description: "Handling errors well" },
+          { name: "Testing", description: null },
+        ]);
       mockQueryOne.mockResolvedValueOnce({ count: 5 });
 
       const result = await getAnalysisHistory("repo1");
@@ -151,7 +154,10 @@ describe("skills actions", () => {
           prNumbers: [1, 2, 3],
           createdAt: "2025-01-01",
           skillCount: 5,
-          topSkills: ["Error Handling", "Testing"],
+          topSkills: [
+            { name: "Error Handling", description: "Handling errors well" },
+            { name: "Testing", description: null },
+          ],
         },
       ]);
     });
