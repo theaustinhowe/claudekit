@@ -52,6 +52,7 @@ export interface GeneratorProject {
   inspiration_urls: string[];
   color_scheme: { primary?: string; accent?: string };
   custom_features: string[];
+  tool_versions: Record<string, string>;
   scaffold_logs: { log: string; logType: string }[] | null;
 }
 

@@ -10,7 +10,18 @@ import { Label } from "@claudekit/ui/components/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@claudekit/ui/components/select";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Textarea } from "@claudekit/ui/components/textarea";
-import { ChevronDown, ChevronRight, Folder, Layers, Loader2, Sparkles } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  Layers,
+  Loader2,
+  Paintbrush,
+  Rocket,
+  Sparkles,
+  Wrench,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +37,7 @@ import {
   CONSTRAINT_OPTIONS,
   EMAIL_OPTIONS,
   FRAMEWORK_OPTIONS,
+  FRAMEWORK_VERSIONS,
   PAYMENT_OPTIONS,
 } from "@/lib/constants";
 import type { ToolCheckResult } from "@/lib/types";
@@ -37,6 +49,162 @@ const examplePrompts = [
   "E-commerce store with cart and checkout",
 ];
 
+const OVERVIEW_STEPS = [
+  {
+    label: "Describe",
+    brief: "Your idea, stack, and constraints",
+    icon: Sparkles,
+    bullets: [
+      "Write a plain-language description of what you want to build",
+      "Pick a framework, backend, auth, and any services you need",
+      "Toggle constraints like TypeScript strict, Biome, Tailwind",
+    ],
+    preview: [
+      "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510",
+      "\u2502 \u2728 Design                        \u2502",
+      "\u2502 Project Title  [My App_____]   \u2502",
+      "\u2502 Description    [____________]  \u2502",
+      "\u2502                                \u2502",
+      "\u2502 \u25a6 Technical Stack               \u2502",
+      "\u2502 [Next.js] [React] [Node]       \u2502",
+      "\u2502 [\u2713 TypeScript] [\u2713 Biome]       \u2502",
+      "\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518",
+    ],
+  },
+  {
+    label: "Scaffold",
+    brief: "Working prototype with mock data",
+    icon: Rocket,
+    bullets: [
+      "Claude generates a complete, runnable project in seconds",
+      "Uses realistic mock data \u2014 no API keys or databases needed",
+      "Run it immediately with your package manager",
+    ],
+    preview: [
+      "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510",
+      "\u2502 \u25b6 Scaffolding...           82%  \u2502",
+      "\u2502 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e  \u2502",
+      "\u2502                                \u2502",
+      "\u2502 \u2713 Created project structure    \u2502",
+      "\u2502 \u2713 Installed dependencies       \u2502",
+      "\u2502 \u2713 Generated components         \u2502",
+      "\u2502 \u25cb Writing API routes...        \u2502",
+      "\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518",
+    ],
+  },
+  {
+    label: "Design",
+    brief: "Iterate on UI with Claude",
+    icon: Paintbrush,
+    bullets: [
+      "Chat with Claude to refine pages, components, and layouts",
+      "See a live UI spec with pages, routes, and component tree",
+      "Iterate until the design feels right",
+    ],
+    preview: [
+      "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510",
+      '\u2502 \ud83d\udcac "Add a settings page"       \u2502',
+      "\u2502                                \u2502",
+      "\u2502  Pages  Components  Layouts    \u2502",
+      "\u2502 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510   \u2502",
+      "\u2502 \u2502 /dash   \u2502\u2502 <Sidebar />  \u2502   \u2502",
+      "\u2502 \u2502 /settings\u2502 <UserCard /> \u2502   \u2502",
+      "\u2502 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518   \u2502",
+      "\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518",
+    ],
+  },
+  {
+    label: "Upgrade",
+    brief: "Swap in real services",
+    icon: Wrench,
+    bullets: [
+      "Claude generates a step-by-step plan to integrate real services",
+      "Database, auth, payments, email \u2014 one task at a time",
+      "Sets up .env.example with all required keys",
+    ],
+    preview: [
+      "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510",
+      "\u2502 Upgrade Plan                   \u2502",
+      "\u2502                                \u2502",
+      "\u2502 \u2713 Set up Supabase Auth         \u2502",
+      "\u2502 \u2713 Connect PostgreSQL            \u2502",
+      "\u2502 \u25b6 Integrate Stripe payments     \u2502",
+      "\u2502 \u25cb Configure environment vars    \u2502",
+      "\u2502                                \u2502",
+      "\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518",
+    ],
+  },
+];
+
+function OverviewBanner({ onDismiss }: { onDismiss: () => void }) {
+  const [activeStep, setActiveStep] = useState<number>(0);
+
+  return (
+    <div className="relative rounded-lg border bg-muted/30 p-4 pr-10">
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="absolute top-3 right-3 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        aria-label="Dismiss"
+      >
+        <X className="w-4 h-4" />
+      </button>
+      <h2 className="font-semibold">How it works</h2>
+      <div className="grid grid-cols-4 gap-3 mt-3">
+        {OVERVIEW_STEPS.map((step, i) => {
+          const Icon = step.icon;
+          const isSelected = activeStep === i;
+          return (
+            <button
+              type="button"
+              key={step.label}
+              onClick={() => setActiveStep(i)}
+              className={`rounded-lg border p-3 text-left transition-colors ${
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                  : "border-transparent bg-muted/50 hover:border-muted-foreground/30 hover:bg-muted"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 ${
+                    isSelected ? "bg-primary text-primary-foreground" : "bg-muted-foreground/15 text-muted-foreground"
+                  }`}
+                >
+                  {i + 1}
+                </div>
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                <span className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
+                  {step.label}
+                </span>
+              </div>
+              <p className="text-xs mt-1.5 pl-8 text-muted-foreground">{step.brief}</p>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 rounded-lg border bg-background p-4 grid grid-cols-[1fr_auto] gap-6 items-start">
+        <div>
+          <h3 className="text-sm font-semibold">
+            {activeStep + 1}. {OVERVIEW_STEPS[activeStep].label}
+          </h3>
+          <ul className="mt-2 space-y-1.5">
+            {OVERVIEW_STEPS[activeStep].bullets.map((b) => (
+              <li key={b} className="text-sm text-muted-foreground flex gap-2">
+                <span className="text-muted-foreground/50 shrink-0">{"\u2022"}</span>
+                {b}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <pre className="text-[11px] leading-tight text-muted-foreground font-mono bg-muted/50 rounded-md p-3 select-none hidden sm:block">
+          {OVERVIEW_STEPS[activeStep].preview.join("\n")}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
 interface DescribeStepProps {
   defaultPath: string;
   installedPMs: ToolCheckResult[];
@@ -45,6 +213,10 @@ interface DescribeStepProps {
 export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [overviewDismissed, setOverviewDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("inside:new-overview-dismissed") === "1";
+  });
 
   // Design
   const [idea, setIdea] = useState("");
@@ -61,6 +233,18 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   const [constraints, setConstraints] = useState<string[]>(
     CONSTRAINT_OPTIONS.filter((c) => c.defaultOn).map((c) => c.id),
   );
+
+  // Optional section toggles
+  const [backendEnabled, setBackendEnabled] = useState(false);
+  const [authEnabled, setAuthEnabled] = useState(false);
+  const [featuresEnabled, setFeaturesEnabled] = useState(false);
+  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+  const [paymentsEnabled, setPaymentsEnabled] = useState(false);
+
+  // Version selection
+  const [toolVersions, setToolVersions] = useState<Record<string, string>>({});
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Project
   const [projectName, setProjectName] = useState("");
@@ -113,6 +297,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
         inspiration_urls: inspirationUrls,
         color_scheme: colorScheme,
         custom_features: customFeatures,
+        tool_versions: Object.keys(toolVersions).length > 0 ? toolVersions : undefined,
       });
       router.push(`/${project.id}`);
     } catch (err) {
@@ -123,6 +308,16 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Overview */}
+      {!overviewDismissed && (
+        <OverviewBanner
+          onDismiss={() => {
+            setOverviewDismissed(true);
+            localStorage.setItem("inside:new-overview-dismissed", "1");
+          }}
+        />
+      )}
+
       {/* Design */}
       <Card>
         <CardHeader>
@@ -213,100 +408,214 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
             </div>
           </div>
 
+          {/* Advanced Options */}
+          {FRAMEWORK_VERSIONS[platform] && (
+            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+              <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {advancedOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                Advanced Options
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                <div className="max-w-xs">
+                  <Label className="mb-2 block">Version</Label>
+                  <Select
+                    value={toolVersions[platform] ?? FRAMEWORK_VERSIONS[platform].find((v) => v.isLatest)?.value ?? ""}
+                    onValueChange={(value) => setToolVersions((prev) => ({ ...prev, [platform]: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FRAMEWORK_VERSIONS[platform].map((v) => (
+                        <SelectItem key={v.value} value={v.value}>
+                          {v.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           {/* Backend */}
           <div>
-            <Label className="mb-2 block">Backend</Label>
-            <div className="flex flex-wrap gap-2">
-              {BACKEND_OPTIONS.map((opt) => (
-                <Badge
-                  key={opt.id}
-                  variant={services.includes(opt.id) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleService(opt.id)}
-                >
-                  {opt.label}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <Label>Backend</Label>
+              <Switch
+                checked={backendEnabled}
+                onCheckedChange={(checked) => {
+                  setBackendEnabled(checked);
+                  if (!checked) {
+                    const backendIds = BACKEND_OPTIONS.map((o) => o.id);
+                    setServices((prev) => prev.filter((s) => !backendIds.includes(s)));
+                  }
+                }}
+              />
             </div>
+            {backendEnabled && (
+              <div className="flex flex-wrap gap-2">
+                {BACKEND_OPTIONS.map((opt) => (
+                  <Badge
+                    key={opt.id}
+                    variant={services.includes(opt.id) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    onClick={() => toggleService(opt.id)}
+                  >
+                    {opt.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Auth */}
           <div>
-            <Label className="mb-2 block">Auth</Label>
-            <div className="flex flex-wrap gap-2">
-              {AUTH_OPTIONS.map((opt) => (
-                <Badge
-                  key={opt.id}
-                  variant={services.includes(opt.id) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleService(opt.id)}
-                >
-                  {opt.label}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <Label>Auth</Label>
+              <Switch
+                checked={authEnabled}
+                onCheckedChange={(checked) => {
+                  setAuthEnabled(checked);
+                  if (!checked) {
+                    const authIds = AUTH_OPTIONS.map((o) => o.id);
+                    setServices((prev) => prev.filter((s) => !authIds.includes(s)));
+                  }
+                }}
+              />
             </div>
+            {authEnabled && (
+              <div className="flex flex-wrap gap-2">
+                {AUTH_OPTIONS.map((opt) => (
+                  <Badge
+                    key={opt.id}
+                    variant={services.includes(opt.id) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    onClick={() => toggleService(opt.id)}
+                  >
+                    {opt.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Features */}
           <div>
-            <Label className="mb-2 block">Features</Label>
-            <FeaturesInput
-              selectedFeatures={selectedFeatures}
-              customFeatures={customFeatures}
-              onFeaturesChange={setSelectedFeatures}
-              onCustomChange={setCustomFeatures}
-            />
+            <div className="flex items-center justify-between mb-2">
+              <Label>Features</Label>
+              <Switch
+                checked={featuresEnabled}
+                onCheckedChange={(checked) => {
+                  setFeaturesEnabled(checked);
+                  if (!checked) {
+                    setSelectedFeatures([]);
+                    setCustomFeatures([]);
+                  }
+                }}
+              />
+            </div>
+            {featuresEnabled && (
+              <FeaturesInput
+                selectedFeatures={selectedFeatures}
+                customFeatures={customFeatures}
+                onFeaturesChange={setSelectedFeatures}
+                onCustomChange={setCustomFeatures}
+              />
+            )}
           </div>
 
           {/* Email */}
           <div>
-            <Label className="mb-2 block">Email</Label>
-            <div className="flex flex-wrap gap-2">
-              {EMAIL_OPTIONS.map((opt) => (
-                <Badge
-                  key={opt.id}
-                  variant={services.includes(opt.id) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleService(opt.id)}
-                >
-                  {opt.label}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <Label>Email</Label>
+              <Switch
+                checked={emailEnabled}
+                onCheckedChange={(checked) => {
+                  setEmailEnabled(checked);
+                  if (!checked) {
+                    const emailIds = EMAIL_OPTIONS.map((o) => o.id);
+                    setServices((prev) => prev.filter((s) => !emailIds.includes(s)));
+                  }
+                }}
+              />
             </div>
+            {emailEnabled && (
+              <div className="flex flex-wrap gap-2">
+                {EMAIL_OPTIONS.map((opt) => (
+                  <Badge
+                    key={opt.id}
+                    variant={services.includes(opt.id) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    onClick={() => toggleService(opt.id)}
+                  >
+                    {opt.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Analytics */}
           <div>
-            <Label className="mb-2 block">Analytics</Label>
-            <div className="flex flex-wrap gap-2">
-              {ANALYTICS_OPTIONS.map((opt) => (
-                <Badge
-                  key={opt.id}
-                  variant={services.includes(opt.id) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleService(opt.id)}
-                >
-                  {opt.label}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <Label>Analytics</Label>
+              <Switch
+                checked={analyticsEnabled}
+                onCheckedChange={(checked) => {
+                  setAnalyticsEnabled(checked);
+                  if (!checked) {
+                    const analyticsIds = ANALYTICS_OPTIONS.map((o) => o.id);
+                    setServices((prev) => prev.filter((s) => !analyticsIds.includes(s)));
+                  }
+                }}
+              />
             </div>
+            {analyticsEnabled && (
+              <div className="flex flex-wrap gap-2">
+                {ANALYTICS_OPTIONS.map((opt) => (
+                  <Badge
+                    key={opt.id}
+                    variant={services.includes(opt.id) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    onClick={() => toggleService(opt.id)}
+                  >
+                    {opt.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Payments */}
           <div>
-            <Label className="mb-2 block">Payments</Label>
-            <div className="flex flex-wrap gap-2">
-              {PAYMENT_OPTIONS.map((opt) => (
-                <Badge
-                  key={opt.id}
-                  variant={services.includes(opt.id) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleService(opt.id)}
-                >
-                  {opt.label}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <Label>Payments</Label>
+              <Switch
+                checked={paymentsEnabled}
+                onCheckedChange={(checked) => {
+                  setPaymentsEnabled(checked);
+                  if (!checked) {
+                    const paymentIds = PAYMENT_OPTIONS.map((o) => o.id);
+                    setServices((prev) => prev.filter((s) => !paymentIds.includes(s)));
+                  }
+                }}
+              />
             </div>
+            {paymentsEnabled && (
+              <div className="flex flex-wrap gap-2">
+                {PAYMENT_OPTIONS.map((opt) => (
+                  <Badge
+                    key={opt.id}
+                    variant={services.includes(opt.id) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    onClick={() => toggleService(opt.id)}
+                  >
+                    {opt.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Constraints */}

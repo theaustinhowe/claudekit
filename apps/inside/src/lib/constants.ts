@@ -14,8 +14,8 @@ export const CONSTRAINT_OPTIONS = [
   { id: "typescript-strict", label: "TypeScript Strict", defaultOn: true },
   { id: "biome", label: "Biome (Lint + Format)", defaultOn: true },
   { id: "tailwind", label: "Tailwind CSS", defaultOn: true },
-  { id: "shadcn", label: "shadcn/ui", defaultOn: false },
-  { id: "vitest", label: "Vitest", defaultOn: false },
+  { id: "shadcn", label: "shadcn/ui", defaultOn: true },
+  { id: "vitest", label: "Vitest", defaultOn: true },
   { id: "ai-files", label: "AI Files (CLAUDE.md etc.)", defaultOn: true },
 ] as const;
 
@@ -50,14 +50,71 @@ export const AUTH_OPTIONS = [
   { id: "lucia", label: "Lucia" },
 ];
 
-export const FEATURE_OPTIONS = [
-  { id: "real-time", label: "Real-time" },
-  { id: "file-upload", label: "File Upload" },
-  { id: "dark-mode", label: "Dark Mode" },
-  { id: "i18n", label: "i18n" },
-  { id: "search", label: "Search" },
-  { id: "notifications", label: "Notifications" },
+export const FEATURE_CATEGORIES = [
+  {
+    label: "UI & UX",
+    features: [
+      { id: "dark-mode", label: "Dark Mode" },
+      { id: "responsive", label: "Responsive Design" },
+      { id: "accessibility", label: "Accessibility" },
+      { id: "animations", label: "Animations" },
+      { id: "pwa", label: "PWA" },
+    ],
+  },
+  {
+    label: "Data & Communication",
+    features: [
+      { id: "real-time", label: "Real-time" },
+      { id: "file-upload", label: "File Upload" },
+      { id: "search", label: "Search" },
+      { id: "notifications", label: "Notifications" },
+      { id: "caching", label: "Caching" },
+    ],
+  },
+  {
+    label: "Content & Media",
+    features: [
+      { id: "markdown", label: "Markdown Editor" },
+      { id: "rich-text", label: "Rich Text Editor" },
+      { id: "image-optimization", label: "Image Optimization" },
+    ],
+  },
+  {
+    label: "Platform & Infra",
+    features: [
+      { id: "i18n", label: "i18n" },
+      { id: "seo", label: "SEO" },
+      { id: "rate-limiting", label: "Rate Limiting" },
+      { id: "logging", label: "Logging" },
+      { id: "error-tracking", label: "Error Tracking" },
+    ],
+  },
 ];
+
+export const FEATURE_OPTIONS = FEATURE_CATEGORIES.flatMap((c) => c.features);
+
+interface FrameworkVersion {
+  label: string;
+  value: string;
+  isLatest?: boolean;
+}
+
+export const FRAMEWORK_VERSIONS: Record<string, FrameworkVersion[]> = {
+  nextjs: [
+    { label: "Next.js 16 (latest)", value: "16", isLatest: true },
+    { label: "Next.js 15", value: "15" },
+    { label: "Next.js 14", value: "14" },
+  ],
+  "react-spa": [
+    { label: "React 19 + Vite (latest)", value: "react19-vite", isLatest: true },
+    { label: "React 18 + Vite", value: "react18-vite" },
+  ],
+  "node-api": [
+    { label: "Node 22 LTS (latest)", value: "node22", isLatest: true },
+    { label: "Node 20 LTS", value: "node20" },
+  ],
+  "tanstack-start": [{ label: "TanStack Start 1.x (latest)", value: "1.x", isLatest: true }],
+};
 
 export const EMAIL_OPTIONS = [
   { id: "sendgrid", label: "SendGrid" },
@@ -101,9 +158,9 @@ export const SERVICE_NEXT_STEPS: Record<string, NextStep> = {
     url: "https://dashboard.clerk.com",
   },
   "next-auth": {
-    label: "NextAuth.js",
-    description: "Configure authentication providers in your NextAuth config",
-    url: "https://next-auth.js.org/getting-started",
+    label: "Auth.js",
+    description: "Configure authentication providers in your Auth.js config",
+    url: "https://authjs.dev/getting-started",
   },
   lucia: {
     label: "Lucia",

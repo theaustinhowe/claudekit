@@ -59,6 +59,7 @@ function fakeProject(overrides: Partial<GeneratorProject> = {}): GeneratorProjec
     inspiration_urls: [],
     color_scheme: {},
     custom_features: [],
+    tool_versions: {},
     ...overrides,
   } as GeneratorProject;
 }

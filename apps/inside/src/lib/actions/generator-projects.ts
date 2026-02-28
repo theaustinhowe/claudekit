@@ -15,6 +15,7 @@ function parseProject(row: Record<string, unknown>): GeneratorProject {
     inspiration_urls: parseJsonField(row.inspiration_urls, []),
     color_scheme: parseJsonField(row.color_scheme, {}),
     custom_features: parseJsonField(row.custom_features, []),
+    tool_versions: parseJsonField(row.tool_versions, {}),
     scaffold_logs: parseJsonField(row.scaffold_logs, null),
   } as unknown as GeneratorProject;
 }
@@ -44,6 +45,7 @@ export async function createGeneratorProject(data: {
   inspiration_urls?: string[];
   color_scheme?: { primary?: string; accent?: string };
   custom_features?: string[];
+  tool_versions?: Record<string, string>;
 }): Promise<GeneratorProject> {
   const db = await getDb();
   const id = generateId();
@@ -64,8 +66,8 @@ export async function createGeneratorProject(data: {
 
   await execute(
     db,
-    `INSERT INTO generator_projects (id, title, idea_description, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO generator_projects (id, title, idea_description, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, tool_versions, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       data.title,
@@ -84,6 +86,7 @@ export async function createGeneratorProject(data: {
       JSON.stringify(data.inspiration_urls || []),
       JSON.stringify(data.color_scheme || {}),
       JSON.stringify(data.custom_features || []),
+      JSON.stringify(data.tool_versions || {}),
       now,
       now,
     ],

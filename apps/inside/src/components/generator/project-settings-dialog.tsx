@@ -27,7 +27,7 @@ for (const list of [
   ANALYTICS_OPTIONS,
   PAYMENT_OPTIONS,
   FEATURE_OPTIONS,
-]) {
+] as { id: string; label: string }[][]) {
   for (const o of list) {
     ALL_OPTIONS.set(o.id, o.label);
   }

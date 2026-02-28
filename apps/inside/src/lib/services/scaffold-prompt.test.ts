@@ -32,6 +32,7 @@ function makeProject(overrides: Partial<GeneratorProject> = {}): GeneratorProjec
     inspiration_urls: [],
     color_scheme: {},
     custom_features: [],
+    tool_versions: {},
     scaffold_logs: null,
     ...overrides,
   };

@@ -34,6 +34,18 @@ const SERVICE_LABEL_MAP: Record<string, string> = {
   i18n: "Internationalization",
   search: "Search",
   notifications: "Notifications",
+  responsive: "Responsive Design",
+  accessibility: "Accessibility",
+  animations: "Animations",
+  pwa: "Progressive Web App",
+  caching: "Caching",
+  markdown: "Markdown Editor",
+  "rich-text": "Rich Text Editor",
+  "image-optimization": "Image Optimization",
+  seo: "SEO",
+  "rate-limiting": "Rate Limiting",
+  logging: "Logging",
+  "error-tracking": "Error Tracking",
 };
 
 function resolveServiceLabels(services: string[]): string[] {
@@ -57,14 +69,23 @@ function getPlatformInfo(project: GeneratorProject) {
 
 function getPlatformInstructions(project: GeneratorProject, projectDir: string): string {
   const pm = project.package_manager;
+  const versions = project.tool_versions ?? {};
+  const constraints = project.constraints ?? [];
+  const hasBiome = constraints.includes("biome");
+  const hasTailwind = constraints.includes("tailwind");
 
   switch (project.platform) {
-    case "nextjs":
+    case "nextjs": {
+      const version = versions.nextjs ?? "latest";
+      const versionSuffix = version === "latest" ? "@latest" : `@${version}`;
+      const eslintFlag = hasBiome ? " --no-eslint" : " --eslint";
+      const tailwindFlag = hasTailwind ? " --tailwind" : "";
       return `
-- Initialize a Next.js project using \`${pm} create next-app@latest ${project.project_name} --ts --app --tailwind --eslint --src-dir --import-alias "@/*"\` inside "${expandTilde(project.project_path)}"
+- Initialize a Next.js project using \`${pm} create next-app${versionSuffix} ${project.project_name} --ts --app${tailwindFlag}${eslintFlag} --src-dir --import-alias "@/*"\` inside "${expandTilde(project.project_path)}"
 - Use the App Router with server components by default
 - Use TypeScript throughout
 - Structure: src/app/ for routes, src/components/ for UI, src/lib/ for utilities`;
+    }
     case "react-spa":
       return `
 - Initialize a React + Vite project using \`${pm} create vite ${project.project_name} --template react-ts\` inside "${expandTilde(project.project_path)}"
@@ -249,7 +270,7 @@ ${project.idea_description}`);
           break;
         case "next-auth":
           serviceDetails.push(
-            `### ${label} (Auth)\n- Set up NextAuth.js with next-auth\n- Configure providers (e.g. Google, GitHub)\n- Add session provider and auth API route\n- Configure environment variables: NEXTAUTH_SECRET, NEXTAUTH_URL`,
+            `### ${label} (Auth)\n- Set up Auth.js with next-auth@5\n- Configure providers (e.g. Google, GitHub)\n- Add session provider and auth API route\n- Configure environment variables: AUTH_SECRET, AUTH_URL`,
           );
           break;
         case "lucia":

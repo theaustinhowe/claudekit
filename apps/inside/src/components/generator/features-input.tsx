@@ -6,7 +6,7 @@ import { Input } from "@claudekit/ui/components/input";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FEATURE_OPTIONS } from "@/lib/constants";
+import { FEATURE_CATEGORIES } from "@/lib/constants";
 
 interface FeaturesInputProps {
   selectedFeatures: string[];
@@ -62,16 +62,23 @@ export function FeaturesInput({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-1.5">
-        {FEATURE_OPTIONS.map((feature) => (
-          <Badge
-            key={feature.id}
-            variant={selectedFeatures.includes(feature.id) ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => toggleFeature(feature.id)}
-          >
-            {feature.label}
-          </Badge>
+      <div className="space-y-3">
+        {FEATURE_CATEGORIES.map((category) => (
+          <div key={category.label}>
+            <p className="text-xs text-muted-foreground mb-1.5">{category.label}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {category.features.map((feature) => (
+                <Badge
+                  key={feature.id}
+                  variant={selectedFeatures.includes(feature.id) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => toggleFeature(feature.id)}
+                >
+                  {feature.label}
+                </Badge>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
       <div className="flex gap-2">
