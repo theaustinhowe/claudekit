@@ -1,8 +1,9 @@
 "use client";
 
+import { cn } from "@claudekit/ui";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
+
 import {
   Dialog,
   DialogBody,
@@ -14,9 +15,11 @@ import {
 } from "@claudekit/ui/components/dialog";
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
 import {
   CheckCircle2,
   ChevronRight,
+  ChevronsUpDown,
   Folder,
   FolderGit2,
   FolderOpen,
@@ -25,10 +28,9 @@ import {
   Lock,
   Search,
   Tag,
-  Trash2,
   XCircle,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useBrowseDirectory } from "@/hooks/use-setup";
 import type { DiscoveredRepo, VerifyRepositoryResponse } from "@/lib/api";
 import type { SelectedRepo } from "./setup-wizard";
@@ -63,7 +65,7 @@ export function RepositoryStep({
   existingRepoKeys,
   onToggleRepo,
   onUpdateRepo,
-  onRemoveRepo,
+  onRemoveRepo: _onRemoveRepo,
   onBack,
   onContinue,
   isVerifying,
@@ -118,7 +120,18 @@ export function RepositoryStep({
   }, [browseResolvedPath, onDiscoveryPathSelect]);
 
   // Filter to only show repos with GitHub remote
-  const githubRepos = discoveredRepos.filter((repo) => repo.owner && repo.name);
+  const githubRepos = useMemo(
+    () =>
+      discoveredRepos
+        .filter((repo) => repo.owner && repo.name)
+        .sort((a, b) => {
+          const aExisting = existingRepoKeys.has(repoKey(a.owner || "", a.name || ""));
+          const bExisting = existingRepoKeys.has(repoKey(b.owner || "", b.name || ""));
+          if (aExisting === bExisting) return 0;
+          return aExisting ? 1 : -1;
+        }),
+    [discoveredRepos, existingRepoKeys],
+  );
 
   return (
     <Card>
@@ -164,63 +177,115 @@ export function RepositoryStep({
             </div>
           )}
 
-          {/* Discovered repos — multi-select */}
+          {/* Discovered repos — popover multi-select with inline config */}
           {githubRepos.length > 0 && (
             <div className="space-y-2">
-              <Label>Found Repositories ({githubRepos.length})</Label>
-              <div className="max-h-60 space-y-2 overflow-y-auto rounded-lg border p-2">
-                {[...githubRepos]
-                  .sort((a, b) => {
-                    const aExisting = existingRepoKeys.has(repoKey(a.owner || "", a.name || ""));
-                    const bExisting = existingRepoKeys.has(repoKey(b.owner || "", b.name || ""));
-                    if (aExisting === bExisting) return 0;
-                    return aExisting ? 1 : -1;
-                  })
-                  .map((repo) => {
+              <Label>Found Repositories</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent transition-colors"
+                  >
+                    <span>
+                      {selectedRepos.length > 0
+                        ? `${selectedRepos.length} of ${githubRepos.length} repositories selected`
+                        : `${githubRepos.length} repositories found`}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="max-h-80 overflow-y-auto p-1"
+                  style={{ width: "var(--anchor-width)" }}
+                  side="bottom"
+                  align="start"
+                >
+                  {githubRepos.map((repo) => {
                     const key = repoKey(repo.owner || "", repo.name || "");
                     const isExisting = existingRepoKeys.has(key);
-                    const isSelected = selectedRepos.some((r) => repoKey(r.owner, r.name) === key);
+                    const selectedIndex = selectedRepos.findIndex((r) => repoKey(r.owner, r.name) === key);
+                    const isSelected = selectedIndex !== -1;
+                    const selectedRepo = isSelected ? selectedRepos[selectedIndex] : null;
+                    const verifyResult = isSelected ? verificationResults.get(key) : null;
+                    const failed = verifyResult && !verifyResult.success;
                     return (
-                      <button
-                        type="button"
-                        key={repo.path}
-                        onClick={() => !isExisting && onToggleRepo(repo)}
-                        disabled={isExisting}
-                        className={`w-full rounded-lg border p-3 text-left transition-colors ${
-                          isExisting
-                            ? "border-border bg-muted/50 opacity-60 cursor-not-allowed"
-                            : isSelected
-                              ? "border-primary bg-primary/5 hover:bg-accent"
-                              : "border-border hover:bg-accent"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">
-                            {repo.owner}/{repo.name}
+                      <div key={repo.path} className={cn("rounded-md transition-colors", isSelected && "bg-primary/5")}>
+                        <button
+                          type="button"
+                          onClick={() => !isExisting && onToggleRepo(repo)}
+                          disabled={isExisting}
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                            isExisting
+                              ? "opacity-50 cursor-not-allowed"
+                              : isSelected
+                                ? "text-primary"
+                                : "hover:bg-accent",
+                          )}
+                        >
+                          <span className="flex min-w-0 flex-1 items-center gap-2">
+                            <span className="truncate font-medium">
+                              {repo.owner}/{repo.name}
+                            </span>
+                            <span
+                              className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
+                              title={repo.path}
+                            >
+                              <GitBranch className="h-3 w-3" />
+                              {repo.currentBranch}
+                            </span>
                           </span>
                           {isExisting ? (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Lock className="h-3 w-3" />
-                              Already added
-                            </span>
+                            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                           ) : isSelected ? (
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                          ) : null}
-                        </div>
-                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1 truncate" title={repo.path}>
-                            <FolderGit2 className="h-3 w-3" />
-                            {repo.path}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <GitBranch className="h-3 w-3" />
-                            {repo.currentBranch}
-                          </span>
-                        </div>
-                      </button>
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          ) : (
+                            <span className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                        </button>
+                        {isSelected && selectedRepo && (
+                          <div className="px-2 pb-2 pt-0.5">
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <div className="relative">
+                                <Tag className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                  value={selectedRepo.triggerLabel}
+                                  onChange={(e) =>
+                                    onUpdateRepo(selectedIndex, {
+                                      triggerLabel: e.target.value,
+                                    })
+                                  }
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-7 pl-6 text-xs"
+                                  placeholder="Trigger label"
+                                />
+                              </div>
+                              <Input
+                                value={selectedRepo.baseBranch}
+                                onChange={(e) =>
+                                  onUpdateRepo(selectedIndex, {
+                                    baseBranch: e.target.value,
+                                  })
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-7 text-xs"
+                                placeholder="Base branch"
+                              />
+                            </div>
+                            {failed && (
+                              <div className="mt-1 flex items-center gap-1.5 text-xs text-destructive">
+                                <XCircle className="h-3 w-3" />
+                                <span>{verifyResult?.error || "Verification failed"}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
-              </div>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
@@ -233,90 +298,6 @@ export function RepositoryStep({
             </div>
           )}
         </div>
-
-        {/* Selected repos — per-repo collapsibles */}
-        {selectedRepos.length > 0 && (
-          <div className="space-y-2">
-            <Label>Selected Repositories ({selectedRepos.length})</Label>
-            {selectedRepos.map((repo, index) => {
-              const key = repoKey(repo.owner, repo.name);
-              const verifyResult = verificationResults.get(key);
-              const failed = verifyResult && !verifyResult.success;
-              return (
-                <Collapsible key={key} defaultOpen={false}>
-                  <div
-                    className={`rounded-lg border ${
-                      failed ? "border-destructive/30 bg-destructive/5" : "border-border"
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <CollapsibleTrigger asChild>
-                        <button
-                          type="button"
-                          className="flex flex-1 items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent transition-colors group"
-                        >
-                          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[open]:rotate-90" />
-                          <span className="font-medium flex-1">
-                            {repo.owner}/{repo.name}
-                          </span>
-                          {failed && <XCircle className="h-3.5 w-3.5 text-destructive" />}
-                        </button>
-                      </CollapsibleTrigger>
-                      <button
-                        type="button"
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent mr-2"
-                        onClick={() => onRemoveRepo(index)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <CollapsibleContent>
-                      <div className="px-3 pb-3 space-y-2">
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Trigger Label</Label>
-                            <div className="relative">
-                              <Tag className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                              <Input
-                                value={repo.triggerLabel}
-                                onChange={(e) =>
-                                  onUpdateRepo(index, {
-                                    triggerLabel: e.target.value,
-                                  })
-                                }
-                                className="h-8 pl-7 text-sm"
-                                placeholder="agent"
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Base Branch</Label>
-                            <Input
-                              value={repo.baseBranch}
-                              onChange={(e) =>
-                                onUpdateRepo(index, {
-                                  baseBranch: e.target.value,
-                                })
-                              }
-                              className="h-8 text-sm"
-                              placeholder="main"
-                            />
-                          </div>
-                        </div>
-                        {failed && (
-                          <div className="flex items-center gap-2 text-sm text-destructive">
-                            <XCircle className="h-3.5 w-3.5" />
-                            <span>{verifyResult?.error || "Verification failed"}</span>
-                          </div>
-                        )}
-                      </div>
-                    </CollapsibleContent>
-                  </div>
-                </Collapsible>
-              );
-            })}
-          </div>
-        )}
 
         {/* Verify error */}
         {verifyError && (
