@@ -4,10 +4,10 @@ export const APP_NAME = "Inside";
 
 export const PLATFORMS = [
   { id: "nextjs", label: "Next.js", description: "Full-stack React with server components" },
+  { id: "tanstack-start", label: "TanStack Start", description: "Full-stack React with TanStack Router" },
   { id: "react-spa", label: "React SPA", description: "Client-side React with Vite" },
   { id: "node-api", label: "Node.js API", description: "Backend REST/GraphQL server" },
   { id: "cli", label: "CLI Tool", description: "Command-line application" },
-  { id: "tanstack-start", label: "TanStack Start", description: "Full-stack React with TanStack Router" },
 ] as const;
 
 export const CONSTRAINT_OPTIONS = [

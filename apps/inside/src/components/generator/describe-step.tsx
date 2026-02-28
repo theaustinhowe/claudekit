@@ -7,12 +7,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/
 import { ColorSchemePicker } from "@claudekit/ui/components/color-scheme-picker";
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@claudekit/ui/components/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@claudekit/ui/components/select";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Textarea } from "@claudekit/ui/components/textarea";
 import {
   AlertTriangle,
-  ArrowRight,
   ChevronDown,
   ChevronRight,
   Folder,
@@ -258,9 +257,9 @@ interface DescribeStepProps {
 export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
-  const [overviewDismissed, setOverviewDismissed] = useState(() => {
+  const [overviewCollapsed, setOverviewCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
-    return localStorage.getItem("inside:new-overview-dismissed") === "1";
+    return localStorage.getItem("inside:new-overview-collapsed") === "1";
   });
 
   // Design
@@ -290,6 +289,9 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   // Version selection
   const [toolVersions, setToolVersions] = useState<Record<string, string>>(() => getDefaultsForPlatform("nextjs"));
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [designOptionsOpen, setDesignOptionsOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const [constraintsOpen, setConstraintsOpen] = useState(false);
 
   // CLI constraint auto-disable
   const [constraintNote, setConstraintNote] = useState<string | null>(null);
@@ -453,11 +455,23 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Overview */}
-      {!overviewDismissed && (
+      {overviewCollapsed ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOverviewCollapsed(false);
+            localStorage.setItem("inside:new-overview-collapsed", "0");
+          }}
+          className="w-full flex items-center gap-2 rounded-lg border bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+          <span className="font-medium">How it works</span>
+        </button>
+      ) : (
         <OverviewBanner
           onDismiss={() => {
-            setOverviewDismissed(true);
-            localStorage.setItem("inside:new-overview-dismissed", "1");
+            setOverviewCollapsed(true);
+            localStorage.setItem("inside:new-overview-collapsed", "1");
           }}
         />
       )}
@@ -492,37 +506,43 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
               className="mt-1 min-h-[120px]"
             />
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">Examples</p>
-            <div className="flex flex-wrap gap-2">
-              {examplePrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => {
-                    setIdea(prompt);
-                    if (!title) setTitle(prompt.split(" with ")[0]);
-                  }}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 border-l-2 border-muted-foreground/25 pl-2 py-0.5"
-                >
-                  <ArrowRight className="w-3 h-3 shrink-0" />
-                  {prompt}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {examplePrompts.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => {
+                  setIdea(prompt);
+                  setTitle(prompt.split(" with ")[0]);
+                }}
+                className={`text-xs rounded-full px-3 py-1 transition-colors ${
+                  idea === prompt ? "bg-primary/10 text-primary" : "text-muted-foreground bg-muted/50 hover:bg-muted"
+                }`}
+              >
+                {prompt}
+              </button>
+            ))}
           </div>
-          <div>
-            <Label className="mb-3 block">Design Vibes</Label>
-            <VibesSelector value={vibes} onChange={setVibes} />
-          </div>
-          <div>
-            <Label className="mb-3 block">Inspiration URLs</Label>
-            <InspirationInput urls={inspirationUrls} onChange={setInspirationUrls} />
-          </div>
-          <div>
-            <Label className="mb-3 block">Color Scheme</Label>
-            <ColorSchemePicker value={colorScheme} onChange={setColorScheme} />
-          </div>
+          <Collapsible open={designOptionsOpen} onOpenChange={setDesignOptionsOpen}>
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              {designOptionsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              Design Options
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3 space-y-4">
+              <div>
+                <Label className="mb-3 block">Design Vibes</Label>
+                <VibesSelector value={vibes} onChange={setVibes} />
+              </div>
+              <div>
+                <Label className="mb-3 block">Inspiration URLs</Label>
+                <InspirationInput urls={inspirationUrls} onChange={setInspirationUrls} />
+              </div>
+              <div>
+                <Label className="mb-3 block">Color Scheme</Label>
+                <ColorSchemePicker value={colorScheme} onChange={setColorScheme} />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 
@@ -562,21 +582,23 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
                 {advancedOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 Advanced Options
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 space-y-4">
+              <CollapsibleContent className="mt-3 space-y-4 p-1">
                 {visibleOptions.map((co) => {
                   const opt = co.option;
 
                   if (opt.type === "select") {
+                    const currentValue = toolVersions[opt.key] ?? opt.options.find((o) => o.isDefault)?.value ?? "";
+                    const currentLabel = opt.options.find((o) => o.value === currentValue)?.label;
                     return (
                       <div key={opt.key} className="max-w-xs">
                         <Label className="mb-2 block">{opt.label}</Label>
                         {opt.description && <p className="text-xs text-muted-foreground mb-2">{opt.description}</p>}
                         <Select
-                          value={toolVersions[opt.key] ?? opt.options.find((o) => o.isDefault)?.value ?? ""}
+                          value={currentValue}
                           onValueChange={(value) => setToolVersions((prev) => ({ ...prev, [opt.key]: value }))}
                         >
                           <SelectTrigger>
-                            <SelectValue />
+                            <span>{currentLabel}</span>
                           </SelectTrigger>
                           <SelectContent>
                             {opt.options.map((o) => (
@@ -635,205 +657,278 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
             </Collapsible>
           )}
 
-          {/* Backend */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Backend</Label>
-              <Switch
-                checked={backendEnabled}
-                onCheckedChange={(checked) => {
-                  setBackendEnabled(checked);
-                  if (!checked) {
-                    const backendIds = BACKEND_OPTIONS.map((o) => o.id);
-                    setServices((prev) => prev.filter((s) => !backendIds.includes(s)));
-                  }
-                }}
-              />
-            </div>
-            {backendEnabled && (
-              <div className="flex flex-wrap gap-2">
-                {BACKEND_OPTIONS.map((opt) => (
-                  <Badge
-                    key={opt.id}
-                    variant={services.includes(opt.id) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => toggleService(opt.id)}
-                  >
-                    {opt.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Auth */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Auth</Label>
-              <Switch
-                checked={authEnabled}
-                onCheckedChange={(checked) => {
-                  setAuthEnabled(checked);
-                  if (!checked) {
-                    const authIds = AUTH_OPTIONS.map((o) => o.id);
-                    setServices((prev) => prev.filter((s) => !authIds.includes(s)));
-                  }
-                }}
-              />
-            </div>
-            {authEnabled && (
-              <div className="flex flex-wrap gap-2">
-                {AUTH_OPTIONS.map((opt) => (
-                  <Badge
-                    key={opt.id}
-                    variant={services.includes(opt.id) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => toggleService(opt.id)}
-                  >
-                    {opt.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Features */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Features</Label>
-              <Switch
-                checked={featuresEnabled}
-                onCheckedChange={(checked) => {
-                  setFeaturesEnabled(checked);
-                  if (!checked) {
-                    setSelectedFeatures([]);
-                    setCustomFeatures([]);
-                  }
-                }}
-              />
-            </div>
-            {featuresEnabled && (
-              <FeaturesInput
-                selectedFeatures={selectedFeatures}
-                customFeatures={customFeatures}
-                onFeaturesChange={setSelectedFeatures}
-                onCustomChange={setCustomFeatures}
-              />
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Email</Label>
-              <Switch
-                checked={emailEnabled}
-                onCheckedChange={(checked) => {
-                  setEmailEnabled(checked);
-                  if (!checked) {
-                    const emailIds = EMAIL_OPTIONS.map((o) => o.id);
-                    setServices((prev) => prev.filter((s) => !emailIds.includes(s)));
-                  }
-                }}
-              />
-            </div>
-            {emailEnabled && (
-              <div className="flex flex-wrap gap-2">
-                {EMAIL_OPTIONS.map((opt) => (
-                  <Badge
-                    key={opt.id}
-                    variant={services.includes(opt.id) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => toggleService(opt.id)}
-                  >
-                    {opt.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Analytics */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Analytics</Label>
-              <Switch
-                checked={analyticsEnabled}
-                onCheckedChange={(checked) => {
-                  setAnalyticsEnabled(checked);
-                  if (!checked) {
-                    const analyticsIds = ANALYTICS_OPTIONS.map((o) => o.id);
-                    setServices((prev) => prev.filter((s) => !analyticsIds.includes(s)));
-                  }
-                }}
-              />
-            </div>
-            {analyticsEnabled && (
-              <div className="flex flex-wrap gap-2">
-                {ANALYTICS_OPTIONS.map((opt) => (
-                  <Badge
-                    key={opt.id}
-                    variant={services.includes(opt.id) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => toggleService(opt.id)}
-                  >
-                    {opt.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Payments */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Payments</Label>
-              <Switch
-                checked={paymentsEnabled}
-                onCheckedChange={(checked) => {
-                  setPaymentsEnabled(checked);
-                  if (!checked) {
-                    const paymentIds = PAYMENT_OPTIONS.map((o) => o.id);
-                    setServices((prev) => prev.filter((s) => !paymentIds.includes(s)));
-                  }
-                }}
-              />
-            </div>
-            {paymentsEnabled && (
-              <div className="flex flex-wrap gap-2">
-                {PAYMENT_OPTIONS.map((opt) => (
-                  <Badge
-                    key={opt.id}
-                    variant={services.includes(opt.id) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => toggleService(opt.id)}
-                  >
-                    {opt.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Constraints */}
-          <div>
-            <Label className="mb-3 block">Constraints</Label>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {CONSTRAINT_OPTIONS.map((c) => (
-                // biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label
-                <label
-                  key={c.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors text-left ${
-                    constraints.includes(c.id) ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+          {/* Services */}
+          <Collapsible open={servicesOpen} onOpenChange={setServicesOpen}>
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              {servicesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              Services
+              {!servicesOpen && (
+                <span className="text-xs text-muted-foreground/70">
+                  {(() => {
+                    const enabled = [
+                      backendEnabled && "Backend",
+                      authEnabled && "Auth",
+                      featuresEnabled && "Features",
+                      emailEnabled && "Email",
+                      analyticsEnabled && "Analytics",
+                      paymentsEnabled && "Payments",
+                    ].filter(Boolean);
+                    return enabled.length > 0 ? `\u2014 ${enabled.join(", ")}` : "\u2014 None selected";
+                  })()}
+                </span>
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3">
+              <div className="grid sm:grid-cols-2 gap-3">
+                {/* Backend */}
+                <div
+                  className={`p-3 rounded-lg border transition-colors ${
+                    backendEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
                   }`}
                 >
-                  <span className="text-sm font-medium">{c.label}</span>
-                  <Switch checked={constraints.includes(c.id)} onCheckedChange={() => toggleConstraint(c.id)} />
-                </label>
-              ))}
-            </div>
-            {constraintNote && <p className="text-xs text-muted-foreground mt-2 italic">{constraintNote}</p>}
-          </div>
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm font-medium">Backend</span>
+                    <Switch
+                      checked={backendEnabled}
+                      onCheckedChange={(checked) => {
+                        setBackendEnabled(checked);
+                        if (!checked) {
+                          const backendIds = BACKEND_OPTIONS.map((o) => o.id);
+                          setServices((prev) => prev.filter((s) => !backendIds.includes(s)));
+                        }
+                      }}
+                    />
+                  </label>
+                  {backendEnabled && (
+                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                      {BACKEND_OPTIONS.map((opt) => (
+                        <Badge
+                          key={opt.id}
+                          variant={services.includes(opt.id) ? "default" : "outline"}
+                          className="cursor-pointer transition-colors"
+                          onClick={() => toggleService(opt.id)}
+                        >
+                          {opt.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Auth */}
+                <div
+                  className={`p-3 rounded-lg border transition-colors ${
+                    authEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                  }`}
+                >
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm font-medium">Auth</span>
+                    <Switch
+                      checked={authEnabled}
+                      onCheckedChange={(checked) => {
+                        setAuthEnabled(checked);
+                        if (!checked) {
+                          const authIds = AUTH_OPTIONS.map((o) => o.id);
+                          setServices((prev) => prev.filter((s) => !authIds.includes(s)));
+                        }
+                      }}
+                    />
+                  </label>
+                  {authEnabled && (
+                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                      {AUTH_OPTIONS.map((opt) => (
+                        <Badge
+                          key={opt.id}
+                          variant={services.includes(opt.id) ? "default" : "outline"}
+                          className="cursor-pointer transition-colors"
+                          onClick={() => toggleService(opt.id)}
+                        >
+                          {opt.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div
+                  className={`p-3 rounded-lg border transition-colors ${
+                    emailEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                  }`}
+                >
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm font-medium">Email</span>
+                    <Switch
+                      checked={emailEnabled}
+                      onCheckedChange={(checked) => {
+                        setEmailEnabled(checked);
+                        if (!checked) {
+                          const emailIds = EMAIL_OPTIONS.map((o) => o.id);
+                          setServices((prev) => prev.filter((s) => !emailIds.includes(s)));
+                        }
+                      }}
+                    />
+                  </label>
+                  {emailEnabled && (
+                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                      {EMAIL_OPTIONS.map((opt) => (
+                        <Badge
+                          key={opt.id}
+                          variant={services.includes(opt.id) ? "default" : "outline"}
+                          className="cursor-pointer transition-colors"
+                          onClick={() => toggleService(opt.id)}
+                        >
+                          {opt.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Analytics */}
+                <div
+                  className={`p-3 rounded-lg border transition-colors ${
+                    analyticsEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                  }`}
+                >
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm font-medium">Analytics</span>
+                    <Switch
+                      checked={analyticsEnabled}
+                      onCheckedChange={(checked) => {
+                        setAnalyticsEnabled(checked);
+                        if (!checked) {
+                          const analyticsIds = ANALYTICS_OPTIONS.map((o) => o.id);
+                          setServices((prev) => prev.filter((s) => !analyticsIds.includes(s)));
+                        }
+                      }}
+                    />
+                  </label>
+                  {analyticsEnabled && (
+                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                      {ANALYTICS_OPTIONS.map((opt) => (
+                        <Badge
+                          key={opt.id}
+                          variant={services.includes(opt.id) ? "default" : "outline"}
+                          className="cursor-pointer transition-colors"
+                          onClick={() => toggleService(opt.id)}
+                        >
+                          {opt.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Payments */}
+                <div
+                  className={`p-3 rounded-lg border transition-colors ${
+                    paymentsEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                  }`}
+                >
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm font-medium">Payments</span>
+                    <Switch
+                      checked={paymentsEnabled}
+                      onCheckedChange={(checked) => {
+                        setPaymentsEnabled(checked);
+                        if (!checked) {
+                          const paymentIds = PAYMENT_OPTIONS.map((o) => o.id);
+                          setServices((prev) => prev.filter((s) => !paymentIds.includes(s)));
+                        }
+                      }}
+                    />
+                  </label>
+                  {paymentsEnabled && (
+                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                      {PAYMENT_OPTIONS.map((opt) => (
+                        <Badge
+                          key={opt.id}
+                          variant={services.includes(opt.id) ? "default" : "outline"}
+                          className="cursor-pointer transition-colors"
+                          onClick={() => toggleService(opt.id)}
+                        >
+                          {opt.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Features */}
+                <div
+                  className={`sm:col-span-2 p-3 rounded-lg border transition-colors ${
+                    featuresEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                  }`}
+                >
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm font-medium">Features</span>
+                    <Switch
+                      checked={featuresEnabled}
+                      onCheckedChange={(checked) => {
+                        setFeaturesEnabled(checked);
+                        if (!checked) {
+                          setSelectedFeatures([]);
+                          setCustomFeatures([]);
+                        }
+                      }}
+                    />
+                  </label>
+                  {featuresEnabled && (
+                    <div className="mt-2 pt-2 border-t border-border/50">
+                      <FeaturesInput
+                        selectedFeatures={selectedFeatures}
+                        customFeatures={customFeatures}
+                        onFeaturesChange={setSelectedFeatures}
+                        onCustomChange={setCustomFeatures}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Constraints */}
+          <Collapsible open={constraintsOpen} onOpenChange={setConstraintsOpen}>
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              {constraintsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              Constraints
+              {!constraintsOpen && (
+                <span className="text-xs text-muted-foreground/70">
+                  {(() => {
+                    const active = CONSTRAINT_OPTIONS.filter((c) => constraints.includes(c.id)).map((c) => c.label);
+                    if (active.length === 0) return "\u2014 None selected";
+                    if (active.length <= 3) return `\u2014 ${active.join(", ")}`;
+                    return `\u2014 ${active.slice(0, 3).join(", ")}, +${active.length - 3} more`;
+                  })()}
+                </span>
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {CONSTRAINT_OPTIONS.map((c) => (
+                  // biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label
+                  <label
+                    key={c.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors text-left ${
+                      constraints.includes(c.id) ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{c.label}</span>
+                    <Switch checked={constraints.includes(c.id)} onCheckedChange={() => toggleConstraint(c.id)} />
+                  </label>
+                ))}
+              </div>
+              {constraintNote && <p className="text-xs text-muted-foreground mt-2 italic">{constraintNote}</p>}
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 
@@ -905,7 +1000,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
                   <Label>Package Manager</Label>
                   <Select value={packageManager} onValueChange={setPackageManager}>
                     <SelectTrigger className="mt-1">
-                      <SelectValue />
+                      <span>{packageManager}</span>
                     </SelectTrigger>
                     <SelectContent>
                       {installedPMs.map((pm) => (
