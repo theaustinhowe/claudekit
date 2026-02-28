@@ -2,6 +2,7 @@
 
 import type { SessionStreamEvent } from "@claudekit/hooks";
 import { useSessionStream } from "@claudekit/hooks";
+import { formatNumber } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { SessionTerminal } from "@claudekit/ui/components/session-terminal";
@@ -240,11 +241,11 @@ export function ScaffoldTerminal({
           <TooltipTrigger asChild>
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 gap-1 cursor-default">
               <FileCode className="w-3 h-3" />
-              {fileCount}
+              {formatNumber(fileCount)}
             </Badge>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {fileCount} file{fileCount !== 1 ? "s" : ""} touched
+            {formatNumber(fileCount)} file{fileCount !== 1 ? "s" : ""} touched
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

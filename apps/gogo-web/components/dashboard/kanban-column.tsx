@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "@claudekit/ui";
 import { ScrollArea } from "@claudekit/ui/components/scroll-area";
 import type { ColumnGroup, Job, JobStatus } from "@/types/job";
 import { JobCard } from "./job-card";
@@ -42,7 +43,7 @@ export function KanbanColumn({ group, jobs, onJobClick, compact }: KanbanColumnP
       <div className="flex items-center gap-2 p-3 pb-2">
         <h2 className={`text-sm font-semibold ${group.color}`}>{group.label}</h2>
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
-          {filteredJobs.length}
+          {formatNumber(filteredJobs.length)}
         </span>
       </div>
 

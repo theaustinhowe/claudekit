@@ -1,6 +1,7 @@
 "use client";
 
 import type { WsMessage } from "@claudekit/gogo-shared";
+import { formatNumber } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
@@ -334,11 +335,14 @@ function ResearchPageContent() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h2 className="text-base font-semibold">
-                      {suggestions.length}
+                      {formatNumber(suggestions.length)}
                       {categoryFilter ? ` ${CATEGORY_LABELS[categoryFilter] ?? categoryFilter}` : ""} Suggestion
                       {suggestions.length !== 1 ? "s" : ""}
                       {categoryFilter && (
-                        <span className="text-muted-foreground font-normal"> of {allSuggestions.length}</span>
+                        <span className="text-muted-foreground font-normal">
+                          {" "}
+                          of {formatNumber(allSuggestions.length)}
+                        </span>
                       )}
                     </h2>
                     {isRunning && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
@@ -369,7 +373,7 @@ function ResearchPageContent() {
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
                     >
-                      All ({allSuggestions.length})
+                      All ({formatNumber(allSuggestions.length)})
                     </button>
                     {categories.map((cat) => (
                       <button
@@ -382,7 +386,7 @@ function ResearchPageContent() {
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}
                       >
-                        {CATEGORY_LABELS[cat] ?? cat} ({categoryCounts[cat]})
+                        {CATEGORY_LABELS[cat] ?? cat} ({formatNumber(categoryCounts[cat])})
                       </button>
                     ))}
                   </div>

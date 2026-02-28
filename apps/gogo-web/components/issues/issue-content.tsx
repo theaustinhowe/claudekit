@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "@claudekit/ui";
 import { Button } from "@claudekit/ui/components/button";
 import { Separator } from "@claudekit/ui/components/separator";
 import { Skeleton } from "@claudekit/ui/components/skeleton";
@@ -163,7 +164,7 @@ export function IssueComments({ repositoryId, issueNumber, issueUrl, showAddComm
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">Comments {!isLoading && `(${comments.length})`}</h3>
+          <h3 className="text-sm font-medium">Comments {!isLoading && `(${formatNumber(comments.length)})`}</h3>
         </div>
         {issueUrl && (
           <a

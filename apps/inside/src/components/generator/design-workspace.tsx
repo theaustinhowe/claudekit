@@ -1,7 +1,7 @@
 "use client";
 
 import { useSessionStream } from "@claudekit/hooks";
-import { cn } from "@claudekit/ui";
+import { cn, formatNumber } from "@claudekit/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -249,9 +249,9 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
       // Build initial welcome message summarizing what was scaffolded
       const parts: string[] = [];
       if (stats.filesCreated > 0)
-        parts.push(`**${stats.filesCreated}** file${stats.filesCreated !== 1 ? "s" : ""} created`);
+        parts.push(`**${formatNumber(stats.filesCreated)}** file${stats.filesCreated !== 1 ? "s" : ""} created`);
       if (stats.filesEdited > 0)
-        parts.push(`**${stats.filesEdited}** file${stats.filesEdited !== 1 ? "s" : ""} edited`);
+        parts.push(`**${formatNumber(stats.filesEdited)}** file${stats.filesEdited !== 1 ? "s" : ""} edited`);
       if (stats.commandsRun > 0)
         parts.push(`**${stats.commandsRun}** command${stats.commandsRun !== 1 ? "s" : ""} run`);
 

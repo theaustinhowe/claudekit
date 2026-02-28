@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "@claudekit/ui";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@claudekit/ui/components/table";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
@@ -18,7 +19,7 @@ export function QueryResults({ result }: { result: QueryResult }) {
               <p className="text-sm text-muted-foreground mt-1 font-mono whitespace-pre-wrap">{result.error}</p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">{result.executionTimeMs}ms</p>
+          <p className="text-xs text-muted-foreground mt-3">{formatNumber(result.executionTimeMs)}ms</p>
         </CardContent>
       </Card>
     );
@@ -29,7 +30,8 @@ export function QueryResults({ result }: { result: QueryResult }) {
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <CheckCircle2 className="h-4 w-4 text-green-500" />
         <span>
-          {result.rowCount} row{result.rowCount !== 1 ? "s" : ""} in {result.executionTimeMs}ms
+          {formatNumber(result.rowCount)} row{result.rowCount !== 1 ? "s" : ""} in{" "}
+          {formatNumber(result.executionTimeMs)}ms
         </span>
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "@claudekit/ui";
 import { Button } from "@claudekit/ui/components/button";
 import { DiffViewer } from "@claudekit/ui/components/diff-viewer";
 import { ScrollArea } from "@claudekit/ui/components/scroll-area";
@@ -127,7 +128,7 @@ export function ChangesDrawer({ jobId, worktreePath, title, open, onOpenChange }
             {/* File browser on the left */}
             <div className="w-72 shrink-0 border-r">
               <div className="border-b px-4 py-2">
-                <h3 className="text-sm font-medium">Changed Files ({files.length})</h3>
+                <h3 className="text-sm font-medium">Changed Files ({formatNumber(files.length)})</h3>
               </div>
               {filesLoading ? (
                 <div className="flex items-center justify-center p-8">

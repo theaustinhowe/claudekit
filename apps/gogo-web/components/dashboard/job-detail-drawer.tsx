@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "@claudekit/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -266,7 +267,9 @@ export function JobDetailDrawer({ jobId, open, onOpenChange, queuePosition, jobs
                         // Count files from change summary
                         const lines = job.changeSummary.split("\n").filter(Boolean);
                         const fileCount = lines.length;
-                        return fileCount > 0 ? `${fileCount} file${fileCount > 1 ? "s" : ""} modified.` : "";
+                        return fileCount > 0
+                          ? `${formatNumber(fileCount)} file${fileCount > 1 ? "s" : ""} modified.`
+                          : "";
                       })()}
                     </span>
                   )}
@@ -710,7 +713,7 @@ export function JobDetailDrawer({ jobId, open, onOpenChange, queuePosition, jobs
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-medium">Event History</h3>
                       <span className="text-xs text-muted-foreground">
-                        ({events.length} {events.length === 1 ? "event" : "events"})
+                        ({formatNumber(events.length)} {events.length === 1 ? "event" : "events"})
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

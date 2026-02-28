@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@claudekit/ui";
+import { cn, formatNumber } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { AlertCircle, CheckCircle2, Filter } from "lucide-react";
@@ -53,7 +53,7 @@ export function JobFilters({ jobs, activeFilter, onFilterChange }: JobFiltersPro
       >
         Active
         <Badge variant="outline" className="ml-1.5 h-5 px-1.5">
-          {activeCount}
+          {formatNumber(activeCount)}
         </Badge>
       </Button>
 
@@ -72,7 +72,7 @@ export function JobFilters({ jobs, activeFilter, onFilterChange }: JobFiltersPro
           variant={attentionCount > 0 && activeFilter !== "attention" ? "destructive" : "outline"}
           className="ml-1.5 h-5 px-1.5"
         >
-          {attentionCount}
+          {formatNumber(attentionCount)}
         </Badge>
       </Button>
 
@@ -86,7 +86,7 @@ export function JobFilters({ jobs, activeFilter, onFilterChange }: JobFiltersPro
         <span className="hidden sm:inline">Completed</span>
         <span className="sm:hidden">Done</span>
         <Badge variant="outline" className="ml-1.5 h-5 px-1.5">
-          {completedCount}
+          {formatNumber(completedCount)}
         </Badge>
       </Button>
 

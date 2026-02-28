@@ -1,7 +1,7 @@
 "use client";
 
 import { useSessionStream } from "@claudekit/hooks";
-import { cn } from "@claudekit/ui";
+import { cn, formatNumber } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
@@ -543,7 +543,7 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
             {selectedComments.size === comments.length ? "Deselect All" : "Select All"}
           </Button>
           <span className="text-xs text-muted-foreground">
-            {comments.length} comment{comments.length !== 1 ? "s" : ""} available
+            {formatNumber(comments.length)} comment{comments.length !== 1 ? "s" : ""} available
           </span>
         </div>
 
@@ -622,8 +622,8 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
   // Phase: Select PR
   const prCountLabel =
     filteredPRs.length !== repoPRs.length
-      ? `${filteredPRs.length.toLocaleString()} of ${repoPRs.length.toLocaleString()} PRs`
-      : `${repoPRs.length.toLocaleString()} PR${repoPRs.length !== 1 ? "s" : ""}`;
+      ? `${formatNumber(filteredPRs.length)} of ${formatNumber(repoPRs.length)} PRs`
+      : `${formatNumber(repoPRs.length)} PR${repoPRs.length !== 1 ? "s" : ""}`;
 
   return (
     <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@claudekit/ui";
+import { cn, formatNumber } from "@claudekit/ui";
 import { Badge } from "@claudekit/ui/components/badge";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
@@ -52,7 +52,7 @@ export function SubPRCard({ subPR, color, onFileClick, onDescriptionChange, exec
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={cn("text-[10px] border", SIZE_CLASSES[subPR.size])}>
-              {subPR.size} &middot; {subPR.linesChanged}L
+              {subPR.size} &middot; {formatNumber(subPR.linesChanged)}L
             </Badge>
             {executionStatus && (
               <Badge
@@ -120,8 +120,10 @@ export function SubPRCard({ subPR, color, onFileClick, onDescriptionChange, exec
                   >
                     <FileCode className="h-3 w-3 text-muted-foreground shrink-0" />
                     <span className="truncate">{f.path}</span>
-                    <span className="ml-auto text-status-success shrink-0">+{f.additions}</span>
-                    {f.deletions > 0 && <span className="text-status-error shrink-0">-{f.deletions}</span>}
+                    <span className="ml-auto text-status-success shrink-0">+{formatNumber(f.additions)}</span>
+                    {f.deletions > 0 && (
+                      <span className="text-status-error shrink-0">-{formatNumber(f.deletions)}</span>
+                    )}
                   </button>
                 ))}
               </div>
