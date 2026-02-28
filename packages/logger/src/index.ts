@@ -58,7 +58,7 @@ export function parseLogFileName(filename: string): { app: string; date: string 
 
 export function listLogFiles(logDir: string = DEFAULT_LOG_DIR): LogFileEntry[] {
   ensureLogDir(logDir);
-  return readdirSync(logDir)
+  return readdirSync(logDir, "utf-8")
     .filter((f) => f.endsWith(".ndjson"))
     .map((f) => {
       const parsed = parseLogFileName(f);
@@ -69,7 +69,7 @@ export function listLogFiles(logDir: string = DEFAULT_LOG_DIR): LogFileEntry[] {
 export function pruneOldLogs(logDir: string = DEFAULT_LOG_DIR): void {
   ensureLogDir(logDir);
   const cutoff = Date.now() - MAX_LOG_AGE_DAYS * 24 * 60 * 60 * 1000;
-  for (const file of readdirSync(logDir)) {
+  for (const file of readdirSync(logDir, "utf-8")) {
     if (!file.endsWith(".ndjson")) continue;
     const filePath = join(logDir, file);
     try {

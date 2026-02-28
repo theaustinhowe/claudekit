@@ -15,13 +15,19 @@ const mockedReaddirSync = vi.mocked(fs.readdirSync);
 const mockedRenameSync = vi.mocked(fs.renameSync);
 const mockedRmSync = vi.mocked(fs.rmSync);
 
+// vi.mocked resolves readdirSync to the Dirent-returning overload;
+// our source uses the string-returning overload (with "utf-8" encoding)
+function mockReaddir(files: string[]) {
+  mockedReaddirSync.mockReturnValue(files as never);
+}
+
 beforeEach(() => {
   vi.resetAllMocks();
 });
 
 describe("finalizeVideo", () => {
   it("renames .webm to destPath, cleans up rawDir, returns destPath", () => {
-    mockedReaddirSync.mockReturnValue(["recording.webm"]);
+    mockReaddir(["recording.webm"]);
 
     const result = finalizeVideo("/tmp/raw", "/output/video.webm");
 
@@ -31,7 +37,7 @@ describe("finalizeVideo", () => {
   });
 
   it("uses the first .webm file when multiple exist", () => {
-    mockedReaddirSync.mockReturnValue(["first.webm", "second.webm"]);
+    mockReaddir(["first.webm", "second.webm"]);
 
     finalizeVideo("/tmp/raw", "/output/video.webm");
 
@@ -39,7 +45,7 @@ describe("finalizeVideo", () => {
   });
 
   it("filters to .webm files only", () => {
-    mockedReaddirSync.mockReturnValue(["notes.txt", "thumb.png", "recording.webm"]);
+    mockReaddir(["notes.txt", "thumb.png", "recording.webm"]);
 
     finalizeVideo("/tmp/raw", "/output/video.webm");
 
@@ -47,13 +53,13 @@ describe("finalizeVideo", () => {
   });
 
   it("throws when no .webm file found", () => {
-    mockedReaddirSync.mockReturnValue(["notes.txt", "thumb.png"]);
+    mockReaddir(["notes.txt", "thumb.png"]);
 
     expect(() => finalizeVideo("/tmp/raw", "/output/video.webm")).toThrow("No video file produced");
   });
 
   it("throws on empty directory", () => {
-    mockedReaddirSync.mockReturnValue([]);
+    mockReaddir([]);
 
     expect(() => finalizeVideo("/tmp/raw", "/output/video.webm")).toThrow("No video file produced");
   });

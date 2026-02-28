@@ -13,10 +13,16 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { GET } from "@/app/api/audio/serve/route";
 import { concatenateAudioFiles } from "@/lib/video/ffmpeg-merger";
 
-const mockReaddir = vi.mocked(readdir);
+const mockReaddirRaw = vi.mocked(readdir);
 const mockReadFile = vi.mocked(readFile);
 const mockStat = vi.mocked(stat);
 const mockConcatenate = vi.mocked(concatenateAudioFiles);
+
+// vi.mocked resolves readdir to the Dirent-returning overload;
+// our source uses the string-returning overload (with "utf-8" encoding)
+function mockReaddir(files: string[]) {
+  mockReaddirRaw.mockResolvedValue(files as never);
+}
 
 const audioDir = `${process.cwd()}/data/audio`;
 const fakeBuffer = Buffer.from("fake-audio-data");
@@ -28,7 +34,7 @@ beforeEach(() => {
 
 describe("GET /api/audio/serve", () => {
   it("returns 404 when readdir throws", async () => {
-    mockReaddir.mockRejectedValue(new Error("ENOENT"));
+    mockReaddirRaw.mockRejectedValue(new Error("ENOENT"));
 
     const response = await GET();
     const data = await response.json();
@@ -38,7 +44,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("returns 404 when directory is empty", async () => {
-    mockReaddir.mockResolvedValue([] as string[]);
+    mockReaddir([]);
 
     const response = await GET();
     const data = await response.json();
@@ -48,7 +54,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("serves single MP3 file directly without concatenation", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3"] as string[]);
+    mockReaddir(["flow-1.mp3"]);
 
     const response = await GET();
 
@@ -58,7 +64,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("concatenates multiple files when combined file does not exist", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as string[]);
+    mockReaddir(["flow-1.mp3", "flow-2.mp3"]);
     mockStat.mockImplementation((p: unknown) => {
       const filePath = p as string;
       if (filePath.includes("combined")) {
@@ -77,7 +83,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("skips regeneration when combined file is fresh", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as string[]);
+    mockReaddir(["flow-1.mp3", "flow-2.mp3"]);
     mockStat.mockImplementation((p: unknown) => {
       const filePath = p as string;
       if (filePath.includes("combined")) {
@@ -93,7 +99,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("regenerates when combined file is stale", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as string[]);
+    mockReaddir(["flow-1.mp3", "flow-2.mp3"]);
     mockStat.mockImplementation((p: unknown) => {
       const filePath = p as string;
       if (filePath.includes("combined")) {
@@ -112,7 +118,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("excludes combined-* files from source listing", async () => {
-    mockReaddir.mockResolvedValue(["combined-old.mp3", "combined-walkthrough.mp3", "flow-1.mp3"] as string[]);
+    mockReaddir(["combined-old.mp3", "combined-walkthrough.mp3", "flow-1.mp3"]);
 
     const response = await GET();
 
@@ -122,7 +128,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("returns correct headers", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3"] as string[]);
+    mockReaddir(["flow-1.mp3"]);
 
     const response = await GET();
 

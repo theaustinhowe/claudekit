@@ -22,7 +22,8 @@ function createMockSession() {
     },
     close: vi.fn().mockResolvedValue(undefined),
   };
-  mockedCreateBrowserSession.mockResolvedValue(session);
+  // BrowserSession has browser/context fields that aren't needed for screenshot tests
+  mockedCreateBrowserSession.mockResolvedValue(session as never);
   return session;
 }
 

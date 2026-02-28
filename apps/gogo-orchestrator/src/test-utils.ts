@@ -10,7 +10,7 @@ export interface RouteHandler {
   handler: (request: unknown, reply: unknown) => Promise<unknown>;
 }
 
-export interface MockReply {
+interface MockReply {
   _statusCode: number;
   _body: unknown;
   status(code: number): MockReply;

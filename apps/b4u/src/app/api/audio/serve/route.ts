@@ -10,7 +10,7 @@ export async function GET() {
     // List all MP3 files (one per flow)
     let files: string[];
     try {
-      const entries = await readdir(audioDir);
+      const entries = await readdir(audioDir, "utf-8");
       files = entries
         .filter((f) => f.endsWith(".mp3") && !f.startsWith("combined"))
         .map((f) => join(audioDir, f))

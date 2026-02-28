@@ -10,7 +10,7 @@ import path from "node:path";
  * @returns The destination path
  */
 export function finalizeVideo(rawDir: string, destPath: string): string {
-  const files = fs.readdirSync(rawDir).filter((f) => f.endsWith(".webm"));
+  const files = fs.readdirSync(rawDir, "utf-8").filter((f) => f.endsWith(".webm"));
   if (files.length === 0) {
     throw new Error("No video file produced");
   }

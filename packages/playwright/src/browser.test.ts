@@ -11,6 +11,12 @@ import { createBrowserSession, createVideoSession } from "./browser";
 
 const mockedLaunch = vi.mocked(chromium.launch);
 
+// Playwright's Browser type has many EventEmitter methods that can't be
+// realistically mocked; centralize the type bypass in this helper
+function mockLaunchReturn(browser: { newContext: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> }) {
+  mockedLaunch.mockResolvedValue(browser as never);
+}
+
 /** Build a mock chain: launch → browser → newContext → context → newPage → page. */
 function createMockChain() {
   const page = { mockPage: true };
@@ -22,7 +28,7 @@ function createMockChain() {
     newContext: vi.fn().mockResolvedValue(context),
     close: vi.fn().mockResolvedValue(undefined),
   };
-  mockedLaunch.mockResolvedValue(browser);
+  mockLaunchReturn(browser);
   return { browser, context, page };
 }
 
@@ -156,7 +162,7 @@ describe("error handling", () => {
       newContext: vi.fn().mockRejectedValue(new Error("Context creation failed")),
       close: vi.fn().mockResolvedValue(undefined),
     };
-    mockedLaunch.mockResolvedValue(browser);
+    mockLaunchReturn(browser);
 
     await expect(createBrowserSession()).rejects.toThrow("Context creation failed");
   });
@@ -170,7 +176,7 @@ describe("error handling", () => {
       newContext: vi.fn().mockResolvedValue(context),
       close: vi.fn().mockResolvedValue(undefined),
     };
-    mockedLaunch.mockResolvedValue(browser);
+    mockLaunchReturn(browser);
 
     await expect(createBrowserSession()).rejects.toThrow("Page creation failed");
   });

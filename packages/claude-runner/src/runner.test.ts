@@ -1,3 +1,4 @@
+import type { ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 
@@ -13,8 +14,18 @@ import type { ProgressInfo } from "./types";
 const mockedExecSync = vi.mocked(execSync);
 const mockedSpawn = vi.mocked(spawn);
 
-/** Create a fake ChildProcess with controllable stdout/stderr/stdin streams. */
-function createFakeChild() {
+/** Fake ChildProcess with non-null stdio streams for testing */
+type FakeChild = ChildProcess & {
+  stdout: EventEmitter;
+  stderr: EventEmitter;
+  stdin: { write: MockInstance; end: MockInstance };
+  kill: MockInstance;
+};
+
+/** Create a fake ChildProcess with controllable stdout/stderr/stdin streams.
+ *  ChildProcess has internal properties (stdio, killed, connected, etc.)
+ *  that cannot be realistically mocked; double-cast needed. */
+function createFakeChild(): FakeChild {
   const stdout = new EventEmitter();
   const stderr = new EventEmitter();
   const child = new EventEmitter() as EventEmitter & {
@@ -29,7 +40,7 @@ function createFakeChild() {
   child.stdin = { write: vi.fn(), end: vi.fn() };
   child.pid = 12345;
   child.kill = vi.fn();
-  return child;
+  return child as unknown as FakeChild;
 }
 
 beforeEach(() => {
