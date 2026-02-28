@@ -10,3 +10,4 @@ dist/
 coverage/
 apps/staging/
 *.log
+next-env.d.ts
