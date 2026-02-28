@@ -10,8 +10,8 @@ import { execSync, spawn } from "node:child_process";
 import { isClaudeCliAvailable, runClaude } from "./runner";
 import type { ProgressInfo } from "./types";
 
-const mockedExecSync = execSync as unknown as MockInstance;
-const mockedSpawn = spawn as unknown as MockInstance;
+const mockedExecSync = vi.mocked(execSync);
+const mockedSpawn = vi.mocked(spawn);
 
 /** Create a fake ChildProcess with controllable stdout/stderr/stdin streams. */
 function createFakeChild() {

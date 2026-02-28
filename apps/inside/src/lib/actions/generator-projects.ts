@@ -1,10 +1,11 @@
 "use server";
 
+import fs from "node:fs";
 import { buildUpdate, execute, getDb, parseJsonField, queryAll, queryOne } from "@/lib/db";
 import { buildImplementationPrompt } from "@/lib/services/scaffold-prompt";
 import { deleteScreenshotFiles } from "@/lib/services/screenshot-service";
 import type { DesignMessage, GeneratorProject, MockEntity, SpecDiff, UiSpec } from "@/lib/types";
-import { generateId, nowTimestamp } from "@/lib/utils";
+import { expandTilde, generateId, nowTimestamp } from "@/lib/utils";
 
 function parseProject(row: GeneratorProject): GeneratorProject {
   return {
@@ -221,4 +222,8 @@ export async function createDesignMessage(data: {
     suggestions: data.suggestions || null,
     created_at: nowTimestamp(),
   };
+}
+
+export async function checkPathExists(fullPath: string): Promise<boolean> {
+  return fs.existsSync(expandTilde(fullPath));
 }

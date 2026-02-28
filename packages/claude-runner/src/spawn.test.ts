@@ -9,7 +9,7 @@ vi.mock("node:child_process", () => ({
 import { spawn } from "node:child_process";
 import { buildArgs, spawnClaude } from "./spawn";
 
-const mockedSpawn = spawn as unknown as MockInstance;
+const mockedSpawn = vi.mocked(spawn);
 
 /** Create a fake ChildProcess with controllable stdout/stderr/stdin streams. */
 function createFakeChild() {

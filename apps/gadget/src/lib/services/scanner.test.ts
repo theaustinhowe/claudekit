@@ -67,12 +67,12 @@ describe("discoverRepos", () => {
     mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
-        return [makeDirent("my-app", true)] as unknown as fs.Dirent[];
+        return [makeDirent("my-app", true)];
       }
       if (path.endsWith("my-app")) {
-        return [makeDirent(".git", true), makeDirent("package.json", false, true)] as unknown as fs.Dirent[];
+        return [makeDirent(".git", true), makeDirent("package.json", false, true)];
       }
-      return [] as unknown as fs.Dirent[];
+      return [];
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
@@ -119,9 +119,9 @@ describe("discoverRepos", () => {
     mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
-        return [makeDirent("node_modules", true), makeDirent("dist", true)] as unknown as fs.Dirent[];
+        return [makeDirent("node_modules", true), makeDirent("dist", true)];
       }
-      return [] as unknown as fs.Dirent[];
+      return [];
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
@@ -139,9 +139,9 @@ describe("discoverRepos", () => {
     mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
-        return [makeDirent(".hidden", true)] as unknown as fs.Dirent[];
+        return [makeDirent(".hidden", true)];
       }
-      return [] as unknown as fs.Dirent[];
+      return [];
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
@@ -160,12 +160,12 @@ describe("discoverRepos", () => {
     mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
-        return [makeDirent("mono", true)] as unknown as fs.Dirent[];
+        return [makeDirent("mono", true)];
       }
       if (path.endsWith("mono")) {
-        return [makeDirent(".git", true)] as unknown as fs.Dirent[];
+        return [makeDirent(".git", true)];
       }
-      return [] as unknown as fs.Dirent[];
+      return [];
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
@@ -190,12 +190,12 @@ describe("discoverRepos", () => {
     mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
-        return [makeDirent("level1", true)] as unknown as fs.Dirent[];
+        return [makeDirent("level1", true)];
       }
       if (path.endsWith("level1")) {
-        return [makeDirent("level2", true)] as unknown as fs.Dirent[];
+        return [makeDirent("level2", true)];
       }
-      return [] as unknown as fs.Dirent[];
+      return [];
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 
@@ -227,12 +227,12 @@ describe("discoverRepos", () => {
     mockReaddirSync.mockImplementation(((p: unknown) => {
       const path = p as string;
       if (path === "/projects") {
-        return [makeDirent("unnamed", true)] as unknown as fs.Dirent[];
+        return [makeDirent("unnamed", true)];
       }
       if (path.endsWith("unnamed")) {
-        return [makeDirent(".git", true)] as unknown as fs.Dirent[];
+        return [makeDirent(".git", true)];
       }
-      return [] as unknown as fs.Dirent[];
+      return [];
       // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
     }) as any);
 

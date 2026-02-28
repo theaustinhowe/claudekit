@@ -11,9 +11,9 @@ vi.mock("node:fs", () => ({
 import fs from "node:fs";
 import { finalizeVideo } from "./video";
 
-const mockedReaddirSync = fs.readdirSync as unknown as ReturnType<typeof vi.fn>;
-const mockedRenameSync = fs.renameSync as unknown as ReturnType<typeof vi.fn>;
-const mockedRmSync = fs.rmSync as unknown as ReturnType<typeof vi.fn>;
+const mockedReaddirSync = vi.mocked(fs.readdirSync);
+const mockedRenameSync = vi.mocked(fs.renameSync);
+const mockedRmSync = vi.mocked(fs.rmSync);
 
 beforeEach(() => {
   vi.resetAllMocks();

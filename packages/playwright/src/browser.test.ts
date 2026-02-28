@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("playwright", () => ({
   chromium: {
@@ -9,7 +9,7 @@ vi.mock("playwright", () => ({
 import { chromium } from "playwright";
 import { createBrowserSession, createVideoSession } from "./browser";
 
-const mockedLaunch = chromium.launch as unknown as MockInstance;
+const mockedLaunch = vi.mocked(chromium.launch);
 
 /** Build a mock chain: launch → browser → newContext → context → newPage → page. */
 function createMockChain() {

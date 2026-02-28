@@ -38,7 +38,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("returns 404 when directory is empty", async () => {
-    mockReaddir.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof readdir>>);
+    mockReaddir.mockResolvedValue([] as string[]);
 
     const response = await GET();
     const data = await response.json();
@@ -48,7 +48,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("serves single MP3 file directly without concatenation", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3"] as unknown as Awaited<ReturnType<typeof readdir>>);
+    mockReaddir.mockResolvedValue(["flow-1.mp3"] as string[]);
 
     const response = await GET();
 
@@ -58,7 +58,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("concatenates multiple files when combined file does not exist", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as unknown as Awaited<ReturnType<typeof readdir>>);
+    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as string[]);
     mockStat.mockImplementation((p: unknown) => {
       const filePath = p as string;
       if (filePath.includes("combined")) {
@@ -77,7 +77,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("skips regeneration when combined file is fresh", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as unknown as Awaited<ReturnType<typeof readdir>>);
+    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as string[]);
     mockStat.mockImplementation((p: unknown) => {
       const filePath = p as string;
       if (filePath.includes("combined")) {
@@ -93,7 +93,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("regenerates when combined file is stale", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as unknown as Awaited<ReturnType<typeof readdir>>);
+    mockReaddir.mockResolvedValue(["flow-1.mp3", "flow-2.mp3"] as string[]);
     mockStat.mockImplementation((p: unknown) => {
       const filePath = p as string;
       if (filePath.includes("combined")) {
@@ -112,9 +112,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("excludes combined-* files from source listing", async () => {
-    mockReaddir.mockResolvedValue(["combined-old.mp3", "combined-walkthrough.mp3", "flow-1.mp3"] as unknown as Awaited<
-      ReturnType<typeof readdir>
-    >);
+    mockReaddir.mockResolvedValue(["combined-old.mp3", "combined-walkthrough.mp3", "flow-1.mp3"] as string[]);
 
     const response = await GET();
 
@@ -124,7 +122,7 @@ describe("GET /api/audio/serve", () => {
   });
 
   it("returns correct headers", async () => {
-    mockReaddir.mockResolvedValue(["flow-1.mp3"] as unknown as Awaited<ReturnType<typeof readdir>>);
+    mockReaddir.mockResolvedValue(["flow-1.mp3"] as string[]);
 
     const response = await GET();
 
