@@ -3,6 +3,7 @@
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@claudekit/ui/components/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Code, Download, FolderOpen } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -40,7 +41,7 @@ export function SkillGroupsPanel({ groups }: SkillGroupsPanelProps) {
                   <p className="text-sm font-medium">{group.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {group.skillCount.toLocaleString()} skill{group.skillCount !== 1 ? "s" : ""} &middot;{" "}
-                    {group.category}
+                    {group.category.replace(/-/g, " ")}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -64,30 +65,37 @@ export function SkillGroupsPanel({ groups }: SkillGroupsPanelProps) {
                     <Code className="h-3 w-3 mr-1" />
                     Preview
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    disabled={isPending}
-                    onClick={() => {
-                      startTransition(async () => {
-                        try {
-                          const result = await exportSkillGroupAsFiles(group.id, "global");
-                          toast.success(`Exported ${result.filesWritten.toLocaleString()} SKILL.md files`, {
-                            description: result.directory,
-                            duration: 5000,
-                          });
-                        } catch (err) {
-                          toast.error("Export failed", {
-                            description: err instanceof Error ? err.message : "Unknown error",
-                          });
-                        }
-                      });
-                    }}
-                  >
-                    <Download className="h-3 w-3 mr-1" />
-                    Export
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          disabled={isPending}
+                          onClick={() => {
+                            startTransition(async () => {
+                              try {
+                                const result = await exportSkillGroupAsFiles(group.id, "global");
+                                toast.success(`Exported ${result.filesWritten.toLocaleString()} SKILL.md files`, {
+                                  description: result.directory,
+                                  duration: 5000,
+                                });
+                              } catch (err) {
+                                toast.error("Export failed", {
+                                  description: err instanceof Error ? err.message : "Unknown error",
+                                });
+                              }
+                            });
+                          }}
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          Export
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Exports SKILL.md files to ~/.claude/skills/</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             ))}

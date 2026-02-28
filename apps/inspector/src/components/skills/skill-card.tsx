@@ -2,12 +2,18 @@
 
 import { cn } from "@claudekit/ui";
 import { Card, CardContent } from "@claudekit/ui/components/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
+import { Star } from "lucide-react";
 import { SEVERITY_COLORS, TREND_ICONS } from "@/lib/constants";
 import type { SkillWithComments } from "@/lib/types";
 
 interface SkillCardProps {
   skill: SkillWithComments;
   onClick?: () => void;
+}
+
+function formatSkillName(name: string): string {
+  return name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function SkillCard({ skill, onClick }: SkillCardProps) {
@@ -25,21 +31,38 @@ export function SkillCard({ skill, onClick }: SkillCardProps) {
       onClick={onClick}
     >
       <CardContent className="p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={cn("h-2.5 w-2.5 rounded-full", SEVERITY_COLORS[skill.severity])} />
-            <h3 className="font-semibold text-sm">{skill.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2 min-w-0">
+            <div className={cn("h-2.5 w-2.5 rounded-full mt-1 shrink-0", SEVERITY_COLORS[skill.severity])} />
+            <h3 className="font-semibold text-sm leading-tight">{formatSkillName(skill.name)}</h3>
           </div>
-          <span className="text-xs text-muted-foreground">
-            {TREND_ICONS[skill.trend ?? ""] ?? ""} {skill.trend}
-          </span>
+          {skill.trend === "New pattern" ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-muted-foreground shrink-0">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>New pattern</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <span className="text-xs text-muted-foreground shrink-0">
+              {TREND_ICONS[skill.trend ?? ""] ?? ""} {skill.trend}
+            </span>
+          )}
         </div>
+
+        {skill.description && (
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{skill.description}</p>
+        )}
 
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Frequency</span>
             <span>
-              {skill.frequency}/{skill.totalPRs} PRs
+              {skill.frequency.toLocaleString()}/{skill.totalPRs.toLocaleString()} PRs
             </span>
           </div>
           <div className="h-1.5 bg-muted rounded-full overflow-hidden">

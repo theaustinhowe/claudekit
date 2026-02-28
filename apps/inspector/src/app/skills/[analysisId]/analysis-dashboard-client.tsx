@@ -308,6 +308,15 @@ export function AnalysisDashboardClient({
 
       <SkillGroupsPanel groups={currentSkillGroups} />
 
+      {skills.length > 0 && (
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">
+            {skills.length.toLocaleString()} Pattern{skills.length !== 1 ? "s" : ""}
+          </h3>
+          <span className="text-xs text-muted-foreground">across {prNumbers.length.toLocaleString()} PRs</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {skills.map((skill, i) => (
           <motion.div

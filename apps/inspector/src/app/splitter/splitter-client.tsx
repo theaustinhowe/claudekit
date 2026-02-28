@@ -25,6 +25,7 @@ import {
   ArrowDownAZ,
   ArrowUpAZ,
   ClipboardCopy,
+  ExternalLink,
   Filter,
   GitBranch,
   Scissors,
@@ -506,7 +507,7 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
                         <span className="text-xs text-muted-foreground">#{pr.number}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <span>{linesChanged} lines</span>
+                        <span>{linesChanged.toLocaleString()} lines</span>
                         <span>&middot;</span>
                         <span>{pr.filesChanged} files</span>
                         {pr.githubCreatedAt && (
@@ -526,6 +527,24 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
                     <Badge variant="outline" className={cn("text-[10px] border", SIZE_CLASSES[pr.size])}>
                       {pr.size}
                     </Badge>
+                    {pr.htmlUrl && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={pr.htmlUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>Open in GitHub</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                     {pr.complexity != null && (
                       <div
                         className={cn(
