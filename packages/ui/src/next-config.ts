@@ -1,3 +1,12 @@
+import type { NextConfig } from "next";
+
+export function createNextConfig(options?: { serverExternalPackages?: string[] }): NextConfig {
+  return {
+    serverExternalPackages: options?.serverExternalPackages ?? [],
+    headers: async () => securityHeaders(),
+  };
+}
+
 export function securityHeaders() {
   return [
     {

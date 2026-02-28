@@ -1,9 +1,5 @@
-import { securityHeaders } from "@claudekit/ui/next-config";
-import type { NextConfig } from "next";
+import { createNextConfig } from "@claudekit/ui/next-config";
 
-const nextConfig: NextConfig = {
+export default createNextConfig({
   serverExternalPackages: ["@duckdb/node-api", "@duckdb/node-bindings", "pino", "pino-pretty"],
-  headers: async () => securityHeaders(),
-};
-
-export default nextConfig;
+});
