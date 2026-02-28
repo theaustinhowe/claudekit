@@ -5,12 +5,16 @@ import { Badge } from "@claudekit/ui/components/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@claudekit/ui/components/popover";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useWebSocketContext } from "@/contexts/websocket-context";
 import { useHealth } from "@/hooks/use-jobs";
 
 export function ConnectionBadge() {
   const { connectionState } = useWebSocketContext();
   const { data: health } = useHealth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const isDbOk = health?.database?.connected ?? false;
   const isPollingOk = health?.polling?.active ?? false;
@@ -24,6 +28,15 @@ export function ConnectionBadge() {
       : !isPollingOk
         ? "GitHub polling paused"
         : "Rate limit critical";
+
+  if (!mounted) {
+    return (
+      <Badge variant="secondary" className="gap-1.5 text-xs">
+        <span className="h-2 w-2 rounded-full bg-muted-foreground" />
+        Offline
+      </Badge>
+    );
+  }
 
   return (
     <Popover>
