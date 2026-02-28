@@ -2,6 +2,7 @@
 
 import { THEMES, useAppTheme } from "@claudekit/hooks";
 import { cn } from "@claudekit/ui";
+import { AboutCard } from "@claudekit/ui/components/about-card";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
@@ -11,7 +12,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claud
 import {
   ChevronDown,
   FolderOpen,
-  Info,
   Loader2,
   Monitor,
   Moon,
@@ -415,27 +415,9 @@ export function SettingsClient({
 
               {/* About */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Info className="w-5 h-5" />
-                      About
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Version</span>
-                      <span className="font-mono">Gadget 1.0.0-beta</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Build</span>
-                      <span className="font-mono text-sm">2025.02.10</span>
-                    </div>
-                    <div className="border-t pt-4">
-                      <DevServerCleanup />
-                    </div>
-                  </CardContent>
-                </Card>
+                <AboutCard appName="Gadget" version="1.0.0-beta" port={2100}>
+                  <DevServerCleanup />
+                </AboutCard>
               </motion.div>
             </div>
           )}

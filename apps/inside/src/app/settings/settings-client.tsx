@@ -2,6 +2,7 @@
 
 import { THEMES, useAppTheme } from "@claudekit/hooks";
 import { cn } from "@claudekit/ui";
+import { AboutCard } from "@claudekit/ui/components/about-card";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { Label } from "@claudekit/ui/components/label";
@@ -132,6 +133,8 @@ export function SettingsClient({ defaultProjectPath: initialPath }: SettingsClie
           </div>
         </CardContent>
       </Card>
+
+      <AboutCard appName="Inside" version="0.1.0" port={2150} />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useAppTheme, useSessionStream } from "@claudekit/hooks";
 import { cn } from "@claudekit/ui";
+import { AboutCard } from "@claudekit/ui/components/about-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -465,6 +466,8 @@ export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, sk
           </div>
         </CardContent>
       </Card>
+
+      <AboutCard appName="Inspector" version="0.1.0" port={2400} />
     </>
   );
 }
