@@ -11,10 +11,12 @@ import {
   AlertTriangle,
   Archive,
   BookOpen,
+  CircleDot,
   ExternalLink,
   Eye,
   GitFork,
   Github,
+  GitPullRequest,
   Globe,
   KanbanSquare,
   Loader2,
@@ -193,11 +195,26 @@ export function GitHubTabContent({ repoId, gitRemote, hasGitHubPat }: GitHubTabC
               <span className="font-medium">{settings.watchers_count.toLocaleString()}</span>
               <span className="text-sm text-muted-foreground">watchers</span>
             </div>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-muted-foreground" />
-              <span className="font-medium">{settings.open_issues_count.toLocaleString()}</span>
+            <a
+              href={`${settings.html_url}/issues`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-primary transition-colors"
+            >
+              <CircleDot className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium">{settings.open_issues.toLocaleString()}</span>
               <span className="text-sm text-muted-foreground">open issues</span>
-            </div>
+            </a>
+            <a
+              href={`${settings.html_url}/pulls`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-primary transition-colors"
+            >
+              <GitPullRequest className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium">{settings.open_prs.toLocaleString()}</span>
+              <span className="text-sm text-muted-foreground">open PRs</span>
+            </a>
           </div>
 
           {/* Details grid */}

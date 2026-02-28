@@ -393,6 +393,8 @@ export interface GitHubRepoSettings {
   stargazers_count: number;
   forks_count: number;
   open_issues_count: number;
+  open_issues: number;
+  open_prs: number;
   watchers_count: number;
   language: string | null;
   size: number;
@@ -457,7 +459,20 @@ type GitHubRepoSettingsUpdate = Partial<
 >;
 
 export async function getRepoSettings(pat: string, owner: string, repo: string): Promise<GitHubRepoSettings> {
-  return githubFetch<GitHubRepoSettings>(pat, `/repos/${owner}/${repo}`);
+  const [settings, issueCount, prCount] = await Promise.all([
+    githubFetch<GitHubRepoSettings>(pat, `/repos/${owner}/${repo}`),
+    githubFetch<{ total_count: number }>(pat, "/search/issues", {
+      q: `repo:${owner}/${repo} is:issue is:open`,
+      per_page: "1",
+    }).catch(() => ({ total_count: 0 })),
+    githubFetch<{ total_count: number }>(pat, "/search/issues", {
+      q: `repo:${owner}/${repo} is:pr is:open`,
+      per_page: "1",
+    }).catch(() => ({ total_count: 0 })),
+  ]);
+  settings.open_issues = issueCount.total_count;
+  settings.open_prs = prCount.total_count;
+  return settings;
 }
 
 export async function updateRepoSettings(
