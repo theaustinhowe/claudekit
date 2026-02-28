@@ -1,8 +1,9 @@
 import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { ContentContainer } from "@/components/layout/content-container";
 
 export default function ResolverLoading() {
   return (
-    <>
+    <ContentContainer>
       <div>
         <Skeleton className="h-8 w-48 mb-2" />
         <Skeleton className="h-4 w-64" />
@@ -14,6 +15,6 @@ export default function ResolverLoading() {
           <Skeleton key={i} className="h-16 w-full rounded-lg" />
         ))}
       </div>
-    </>
+    </ContentContainer>
   );
 }

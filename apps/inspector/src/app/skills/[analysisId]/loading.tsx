@@ -1,8 +1,9 @@
 import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { ContentContainer } from "@/components/layout/content-container";
 
 export default function AnalysisDashboardLoading() {
   return (
-    <>
+    <ContentContainer>
       <div className="flex items-center justify-between">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
@@ -22,6 +23,6 @@ export default function AnalysisDashboardLoading() {
           <Skeleton key={i} className="h-40 w-full rounded-lg" />
         ))}
       </div>
-    </>
+    </ContentContainer>
   );
 }

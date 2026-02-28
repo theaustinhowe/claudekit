@@ -1,8 +1,9 @@
 import { Skeleton } from "@claudekit/ui/components/skeleton";
+import { ContentContainer } from "@/components/layout/content-container";
 
 export default function SplitterLoading() {
   return (
-    <>
+    <ContentContainer>
       <div>
         <Skeleton className="h-8 w-32 mb-2" />
         <Skeleton className="h-4 w-72" />
@@ -16,6 +17,6 @@ export default function SplitterLoading() {
       </div>
 
       <Skeleton className="h-10 w-full rounded-lg" />
-    </>
+    </ContentContainer>
   );
 }

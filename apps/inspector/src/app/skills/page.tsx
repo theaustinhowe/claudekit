@@ -1,3 +1,4 @@
+import { ContentContainer } from "@/components/layout/content-container";
 import { hasValidPAT } from "@/lib/actions/account";
 import { getConnectedRepos } from "@/lib/actions/github";
 import { getAnalysisHistory } from "@/lib/actions/skills";
@@ -7,9 +8,11 @@ export default async function SkillsPage() {
   const hasPAT = await hasValidPAT();
   if (!hasPAT) {
     return (
-      <div className="flex items-center justify-center h-full p-8">
-        <p className="text-muted-foreground">Set up your GitHub PAT in Settings to get started.</p>
-      </div>
+      <ContentContainer>
+        <div className="flex items-center justify-center h-full p-8">
+          <p className="text-muted-foreground">Set up your GitHub PAT in Settings to get started.</p>
+        </div>
+      </ContentContainer>
     );
   }
 
@@ -24,5 +27,9 @@ export default async function SkillsPage() {
   );
   const history = allHistory.flat().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  return <SkillsListClient history={history} />;
+  return (
+    <ContentContainer>
+      <SkillsListClient history={history} />
+    </ContentContainer>
+  );
 }

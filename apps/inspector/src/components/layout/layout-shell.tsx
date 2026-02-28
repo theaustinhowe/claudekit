@@ -22,7 +22,7 @@ export function LayoutShell({ children, repos }: LayoutShellProps) {
           statusIndicator={<SessionIndicator />}
           contextSwitcher={repos.length > 0 ? RepoSelector : undefined}
         >
-          <div className="max-w-5xl mx-auto w-full p-6 space-y-6">{children}</div>
+          {children}
         </AppLayout>
         <SessionPanel />
       </InspectorSessionProvider>

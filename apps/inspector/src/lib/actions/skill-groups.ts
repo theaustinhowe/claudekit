@@ -3,7 +3,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { getDb, queryAll, queryOne } from "@/lib/db";
+import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { createServiceLogger } from "@/lib/logger";
 import type { SkillGroup } from "@/lib/types";
 
@@ -83,11 +83,57 @@ function generateSkillMdContent(
   return lines.join("\n");
 }
 
-export async function getSkillGroupPreview(groupId: string): Promise<string[]> {
+export async function getSkillGroupPreview(groupId: string): Promise<{ name: string; content: string }[]> {
   const group = await getSkillGroup(groupId);
   if (!group) return [];
 
-  return group.skills.map((skill) => generateSkillMdContent(skill, group.category));
+  return group.skills.map((skill) => ({
+    name: skill.name,
+    content: generateSkillMdContent(skill, group.category),
+  }));
+}
+
+export async function createSkillGroup(name: string, category: string, description?: string): Promise<SkillGroup> {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await execute(
+    db,
+    "INSERT INTO skill_groups (id, name, category, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [id, name, category, description ?? null, now, now],
+  );
+  log.info({ id, name, category }, "Skill group created");
+  return { id, name, category, description: description ?? null, createdAt: now, updatedAt: now, skillCount: 0 };
+}
+
+export async function updateSkillGroup(
+  id: string,
+  name: string,
+  category: string,
+  description?: string,
+): Promise<void> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  await execute(db, "UPDATE skill_groups SET name = ?, category = ?, description = ?, updated_at = ? WHERE id = ?", [
+    name,
+    category,
+    description ?? null,
+    now,
+    id,
+  ]);
+  log.info({ id, name, category }, "Skill group updated");
+}
+
+export async function deleteSkillGroup(id: string): Promise<{ orphanedSkills: number }> {
+  const db = await getDb();
+  const countResult = await queryOne<{ cnt: number }>(db, "SELECT COUNT(*) as cnt FROM skills WHERE group_id = ?", [
+    id,
+  ]);
+  const orphanedSkills = Number(countResult?.cnt ?? 0);
+  await execute(db, "UPDATE skills SET group_id = NULL WHERE group_id = ?", [id]);
+  await execute(db, "DELETE FROM skill_groups WHERE id = ?", [id]);
+  log.info({ id, orphanedSkills }, "Skill group deleted");
+  return { orphanedSkills };
 }
 
 export async function exportSkillGroupAsFiles(

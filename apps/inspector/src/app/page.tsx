@@ -1,3 +1,4 @@
+import { ContentContainer } from "@/components/layout/content-container";
 import { getAccountPRs, getAccountStats, getAuthenticatedUser, hasValidPAT } from "@/lib/actions/account";
 import { getConnectedRepos } from "@/lib/actions/github";
 import { getWeeklyPRCounts } from "@/lib/actions/prs";
@@ -9,18 +10,20 @@ export default async function DashboardPage() {
 
   if (!hasPAT) {
     return (
-      <DashboardClient
-        prs={[]}
-        stats={{ totalPRs: 0, avgLinesChanged: 0, topSkillGap: null, splittablePRs: 0 }}
-        hasRepo={false}
-        sparklineData={[]}
-        lastSyncedAt={null}
-        repoId={null}
-        user={null}
-        accountStats={null}
-        reviewerStats={[]}
-        userStats={null}
-      />
+      <ContentContainer>
+        <DashboardClient
+          prs={[]}
+          stats={{ totalPRs: 0, avgLinesChanged: 0, topSkillGap: null, splittablePRs: 0 }}
+          hasRepo={false}
+          sparklineData={[]}
+          lastSyncedAt={null}
+          repoId={null}
+          user={null}
+          accountStats={null}
+          reviewerStats={[]}
+          userStats={null}
+        />
+      </ContentContainer>
     );
   }
 
@@ -45,22 +48,24 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <DashboardClient
-      prs={accountPRs}
-      stats={{
-        totalPRs: accountStats.totalPRs,
-        avgLinesChanged: accountStats.avgLinesChanged,
-        topSkillGap: accountStats.topSkillGap,
-        splittablePRs: accountStats.splittablePRs,
-      }}
-      hasRepo={accountStats.totalPRs > 0}
-      sparklineData={sparklineData}
-      lastSyncedAt={lastSyncedAt}
-      repoId={activeRepo?.id ?? null}
-      user={user}
-      accountStats={accountStats}
-      reviewerStats={reviewerStats}
-      userStats={userStats}
-    />
+    <ContentContainer>
+      <DashboardClient
+        prs={accountPRs}
+        stats={{
+          totalPRs: accountStats.totalPRs,
+          avgLinesChanged: accountStats.avgLinesChanged,
+          topSkillGap: accountStats.topSkillGap,
+          splittablePRs: accountStats.splittablePRs,
+        }}
+        hasRepo={accountStats.totalPRs > 0}
+        sparklineData={sparklineData}
+        lastSyncedAt={lastSyncedAt}
+        repoId={activeRepo?.id ?? null}
+        user={user}
+        accountStats={accountStats}
+        reviewerStats={reviewerStats}
+        userStats={userStats}
+      />
+    </ContentContainer>
   );
 }

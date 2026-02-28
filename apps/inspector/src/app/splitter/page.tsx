@@ -1,3 +1,4 @@
+import { ContentContainer } from "@/components/layout/content-container";
 import { getConnectedRepos } from "@/lib/actions/github";
 import { getLargePRs } from "@/lib/actions/prs";
 import { SplitterClient } from "./splitter-client";
@@ -10,13 +11,19 @@ export default async function SplitterPage() {
 
   if (largePRs.length === 0 && repos.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full p-8">
-        <p className="text-muted-foreground">
-          Connect a repository in Settings or sync your account PRs from the dashboard.
-        </p>
-      </div>
+      <ContentContainer>
+        <div className="flex items-center justify-center h-full p-8">
+          <p className="text-muted-foreground">
+            Connect a repository in Settings or sync your account PRs from the dashboard.
+          </p>
+        </div>
+      </ContentContainer>
     );
   }
 
-  return <SplitterClient repoId={repos[0]?.id ?? null} largePRs={largePRs} />;
+  return (
+    <ContentContainer>
+      <SplitterClient repoId={repos[0]?.id ?? null} largePRs={largePRs} />
+    </ContentContainer>
+  );
 }
