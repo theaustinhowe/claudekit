@@ -1,8 +1,8 @@
-import type { Repository } from "@claudekit/gogo-shared";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RepositoryProvider, useRepositoryContext } from "@/contexts/repository-context";
+import type { RepositoryInfo } from "@/lib/api";
 
 const mockLocalStorage: Record<string, string> = {};
 
@@ -29,7 +29,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function makeRepo(overrides: Partial<Repository> & { id: string }): Repository {
+function makeRepo(overrides: Partial<RepositoryInfo> & { id: string }): RepositoryInfo {
   return {
     owner: "testowner",
     name: "testrepo",
@@ -41,13 +41,16 @@ function makeRepo(overrides: Partial<Repository> & { id: string }): Repository {
     isActive: true,
     autoCreateJobs: true,
     removeLabelAfterCreate: false,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01"),
+    pollIntervalMs: null,
+    testCommand: null,
+    agentProvider: null,
+    createdAt: "2024-01-01T00:00:00.000Z",
+    updatedAt: "2024-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
 
-function createWrapper(repos: Repository[], isLoading = false) {
+function createWrapper(repos: RepositoryInfo[], isLoading = false) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <RepositoryProvider repositories={repos} isLoading={isLoading}>

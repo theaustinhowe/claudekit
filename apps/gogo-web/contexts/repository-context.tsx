@@ -1,13 +1,14 @@
 "use client";
 
-import type { Repository } from "@claudekit/gogo-shared";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 
+import type { RepositoryInfo } from "@/lib/api";
+
 interface RepositoryContextValue {
-  repositories: Repository[];
+  repositories: RepositoryInfo[];
   selectedRepoId: string | "all";
   setSelectedRepoId: (id: string | "all") => void;
-  selectedRepository: Repository | null;
+  selectedRepository: RepositoryInfo | null;
   isLoading: boolean;
 }
 
@@ -21,7 +22,7 @@ export function RepositoryProvider({
   isLoading,
 }: {
   children: ReactNode;
-  repositories: Repository[];
+  repositories: RepositoryInfo[];
   isLoading: boolean;
 }) {
   const [selectedRepoId, setSelectedRepoIdState] = useState<string | "all">("all");
