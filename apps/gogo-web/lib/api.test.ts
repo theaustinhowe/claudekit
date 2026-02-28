@@ -73,6 +73,37 @@ describe("API functions", () => {
     vi.restoreAllMocks();
   });
 
+  describe("auth headers", () => {
+    it("includes Authorization header when token is in localStorage", async () => {
+      // Set a token in localStorage
+      localStorage.setItem("gogo_api_token", "test-token-123");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      });
+
+      await api.fetchSettings();
+      const headers = mockFetch.mock.calls[0][1]?.headers as Record<string, string>;
+      expect(headers.Authorization).toBe("Bearer test-token-123");
+
+      localStorage.removeItem("gogo_api_token");
+    });
+
+    it("omits Authorization header when no token", async () => {
+      localStorage.removeItem("gogo_api_token");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      });
+
+      await api.fetchSettings();
+      const headers = mockFetch.mock.calls[0][1]?.headers as Record<string, string>;
+      expect(headers.Authorization).toBeUndefined();
+    });
+  });
+
   describe("fetchJobs", () => {
     it("fetches jobs without params", async () => {
       mockFetch.mockResolvedValueOnce({
@@ -361,6 +392,22 @@ describe("API functions", () => {
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({ token: "ghp_test123" }),
+        }),
+      );
+    });
+
+    it("verifies using env token option", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true, data: { username: "envuser" } }),
+      });
+
+      await api.verifyGitHub({ useEnvToken: true });
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:2201/api/setup/verify-github",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ useEnvToken: true }),
         }),
       );
     });
@@ -908,6 +955,15 @@ describe("API functions", () => {
       });
 
       await expect(api.createIssueComment("repo-1", 42, "test")).rejects.toThrow("Forbidden");
+    });
+
+    it("throws generic error when response has no message field", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({}),
+      });
+
+      await expect(api.createIssueComment("repo-1", 42, "test")).rejects.toThrow("Failed to create comment");
     });
   });
 });

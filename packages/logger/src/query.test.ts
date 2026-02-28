@@ -220,11 +220,20 @@ describe("filterLogEntries", () => {
   });
 
   it("filters by since timestamp", () => {
-    const result = filterLogEntries(entries, { since: "1s" });
-    // parseSince("1s") with fake time would return a large number
-    // In real usage, since is converted to ms, but entries here have very small times
-    // So all would be filtered. Let's test with direct minLevel instead
-    expect(result).toBeDefined();
+    // Use entries with realistic timestamps
+    const now = Date.now();
+    const timedEntries = [
+      { level: 30, time: now - 7200_000, msg: "old entry" }, // 2 hours ago
+      { level: 30, time: now - 3600_000, msg: "medium entry" }, // 1 hour ago
+      { level: 30, time: now - 1800_000, msg: "recent entry" }, // 30 min ago
+      { level: 30, time: now - 60_000, msg: "very recent entry" }, // 1 min ago
+    ];
+
+    // Filter to last 1 hour
+    const result = filterLogEntries(timedEntries, { since: "1h" });
+    // Should exclude the 2-hour-old entry
+    expect(result).toHaveLength(3);
+    expect(result[0].msg).toBe("medium entry");
   });
 
   it("limits results from end", () => {
@@ -251,6 +260,84 @@ describe("filterLogEntries", () => {
     expect(result).toHaveLength(2);
     expect(result[0].msg).toBe("info msg");
     expect(result[1].msg).toBe("error msg");
+  });
+
+  it("filters by since with minutes unit", () => {
+    const now = Date.now();
+    const timedEntries = [
+      { level: 30, time: now - 600_000, msg: "10 min ago" },
+      { level: 30, time: now - 120_000, msg: "2 min ago" },
+      { level: 30, time: now - 30_000, msg: "30 sec ago" },
+    ];
+
+    const result = filterLogEntries(timedEntries, { since: "5m" });
+    expect(result).toHaveLength(2);
+    expect(result[0].msg).toBe("2 min ago");
+  });
+
+  it("filters by since with days unit", () => {
+    const now = Date.now();
+    const timedEntries = [
+      { level: 30, time: now - 3 * 24 * 60 * 60 * 1000, msg: "3 days ago" },
+      { level: 30, time: now - 60_000, msg: "1 min ago" },
+    ];
+
+    const result = filterLogEntries(timedEntries, { since: "2d" });
+    expect(result).toHaveLength(1);
+    expect(result[0].msg).toBe("1 min ago");
+  });
+
+  it("handles since with invalid format (returns all entries)", () => {
+    const result = filterLogEntries(entries, { since: "invalid" });
+    // parseSince("invalid") returns 0, so all entries with time >= 0 pass
+    expect(result).toHaveLength(6);
+  });
+
+  it("handles limit of 0 (no entries)", () => {
+    const result = filterLogEntries(entries, { limit: 0 });
+    // slice(-0) returns entire array in JS
+    expect(result).toHaveLength(6);
+  });
+
+  it("handles limit larger than entries length", () => {
+    const result = filterLogEntries(entries, { limit: 100 });
+    expect(result).toHaveLength(6);
+  });
+
+  it("handles limit of 1 (only last entry)", () => {
+    const result = filterLogEntries(entries, { limit: 1 });
+    expect(result).toHaveLength(1);
+    expect(result[0].msg).toBe("fatal msg");
+  });
+
+  it("chains level, query, since, and limit filters", () => {
+    const now = Date.now();
+    const complexEntries = [
+      { level: 30, time: now - 7200_000, msg: "old info", service: "web" },
+      { level: 40, time: now - 3600_000, msg: "old warn", service: "api" },
+      { level: 30, time: now - 1800_000, msg: "recent info", service: "web" },
+      { level: 40, time: now - 60_000, msg: "recent warn", service: "web" },
+      { level: 50, time: now - 30_000, msg: "recent error", service: "web" },
+    ];
+
+    const result = filterLogEntries(complexEntries, {
+      minLevel: 40,
+      query: "web",
+      since: "1h",
+      limit: 1,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].msg).toBe("recent error");
+  });
+
+  it("query finds matches in nested object values", () => {
+    const entriesWithExtra = [
+      { level: 30, time: 1000, msg: "normal", extra: { detail: "special-value" } },
+      { level: 30, time: 2000, msg: "other" },
+    ];
+    const result = filterLogEntries(entriesWithExtra, { query: "special-value" });
+    expect(result).toHaveLength(1);
+    expect(result[0].msg).toBe("normal");
   });
 });
 

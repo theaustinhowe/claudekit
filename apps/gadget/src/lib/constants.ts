@@ -84,11 +84,7 @@ export const IMAGE_MIME_TYPES: Record<string, string> = {
 
 // --- Session Constants (re-exported from shared package) ---
 
-export {
-  SESSION_EVENT_BUFFER_SIZE,
-  SESSION_HEARTBEAT_INTERVAL_MS,
-  SESSION_LOG_FLUSH_INTERVAL_MS,
-} from "@claudekit/session";
+export { SESSION_HEARTBEAT_INTERVAL_MS } from "@claudekit/session";
 
 export const SESSION_TYPE_LABELS: Record<string, string> = {
   scan: "Scan",

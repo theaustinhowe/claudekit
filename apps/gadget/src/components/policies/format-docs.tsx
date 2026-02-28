@@ -16,7 +16,7 @@ interface FormatDocsProps {
   children?: React.ReactNode;
 }
 
-export function FormatDocs({ title = "Export Format Reference", example, fields, children }: FormatDocsProps) {
+function FormatDocs({ title = "Export Format Reference", example, fields, children }: FormatDocsProps) {
   return (
     <Collapsible defaultOpen={false}>
       <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 group cursor-pointer">

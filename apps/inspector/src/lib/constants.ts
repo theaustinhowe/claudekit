@@ -2,11 +2,7 @@ export const APP_NAME = "Inspector";
 
 // --- Session Constants (re-exported from shared package) ---
 
-export {
-  SESSION_EVENT_BUFFER_SIZE,
-  SESSION_HEARTBEAT_INTERVAL_MS,
-  SESSION_LOG_FLUSH_INTERVAL_MS,
-} from "@claudekit/session";
+export { SESSION_HEARTBEAT_INTERVAL_MS } from "@claudekit/session";
 
 export const SIZE_THRESHOLDS = {
   S: 100,

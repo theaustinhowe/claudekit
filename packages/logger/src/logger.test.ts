@@ -209,4 +209,103 @@ describe("ensureLogDir", () => {
 
     expect(mockedMkdirSync).not.toHaveBeenCalled();
   });
+
+  it("uses default log directory when no argument is provided", async () => {
+    mockedExistsSync.mockReturnValue(false);
+
+    const { ensureLogDir } = await import("./index.js");
+    ensureLogDir();
+
+    // Should have been called with the default ~/.claudekit/logs path
+    expect(mockedMkdirSync).toHaveBeenCalledWith(expect.stringContaining(".claudekit"), { recursive: true });
+  });
+});
+
+describe("pruneOldLogs edge cases", () => {
+  it("removes multiple old files in a single call", async () => {
+    mockedExistsSync.mockReturnValue(true);
+    mockedReaddirSync.mockReturnValue(["old1.ndjson", "old2.ndjson", "new.ndjson"] as unknown as ReturnType<
+      typeof readdirSync
+    >);
+
+    const now = Date.now();
+    const twentyDaysAgo = now - 20 * 24 * 60 * 60 * 1000;
+    const oneDayAgo = now - 1 * 24 * 60 * 60 * 1000;
+
+    mockedStatSync.mockImplementation((filePath) => {
+      const p = String(filePath);
+      if (p.includes("new.ndjson")) {
+        return { mtimeMs: oneDayAgo } as ReturnType<typeof statSync>;
+      }
+      return { mtimeMs: twentyDaysAgo } as ReturnType<typeof statSync>;
+    });
+
+    const { pruneOldLogs } = await import("./index.js");
+    pruneOldLogs("/tmp/logs");
+
+    expect(mockedUnlinkSync).toHaveBeenCalledTimes(2);
+    expect(mockedUnlinkSync).toHaveBeenCalledWith(join("/tmp/logs", "old1.ndjson"));
+    expect(mockedUnlinkSync).toHaveBeenCalledWith(join("/tmp/logs", "old2.ndjson"));
+  });
+
+  it("handles empty directory", async () => {
+    mockedExistsSync.mockReturnValue(true);
+    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+
+    const { pruneOldLogs } = await import("./index.js");
+    pruneOldLogs("/tmp/logs");
+
+    expect(mockedStatSync).not.toHaveBeenCalled();
+    expect(mockedUnlinkSync).not.toHaveBeenCalled();
+  });
+
+  it("handles mixed file types and only processes .ndjson files", async () => {
+    mockedExistsSync.mockReturnValue(true);
+    mockedReaddirSync.mockReturnValue(["readme.md", "data.json", "old.ndjson", "config.yaml"] as unknown as ReturnType<
+      typeof readdirSync
+    >);
+
+    const twentyDaysAgo = Date.now() - 20 * 24 * 60 * 60 * 1000;
+    mockedStatSync.mockReturnValue({ mtimeMs: twentyDaysAgo } as ReturnType<typeof statSync>);
+
+    const { pruneOldLogs } = await import("./index.js");
+    pruneOldLogs("/tmp/logs");
+
+    // Only .ndjson files should be stat'd
+    expect(mockedStatSync).toHaveBeenCalledTimes(1);
+    expect(mockedUnlinkSync).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses default log directory when no argument is provided", async () => {
+    mockedExistsSync.mockReturnValue(true);
+    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+
+    const { pruneOldLogs } = await import("./index.js");
+    pruneOldLogs();
+
+    // Should use the default path
+    expect(mockedReaddirSync).toHaveBeenCalledWith(expect.stringContaining(".claudekit"));
+  });
+});
+
+describe("listLogFiles edge cases", () => {
+  it("uses default log directory when no argument is provided", async () => {
+    mockedExistsSync.mockReturnValue(true);
+    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+
+    const { listLogFiles } = await import("./index.js");
+    listLogFiles();
+
+    expect(mockedReaddirSync).toHaveBeenCalledWith(expect.stringContaining(".claudekit"));
+  });
+});
+
+describe("getLogFilePath edge cases", () => {
+  it("uses default log directory when no logDir argument is provided", async () => {
+    const { getLogFilePath } = await import("./index.js");
+    const result = getLogFilePath("web");
+    expect(result).toContain(".claudekit");
+    expect(result).toContain("web.");
+    expect(result).toContain(".ndjson");
+  });
 });

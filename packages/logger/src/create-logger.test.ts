@@ -67,4 +67,64 @@ describe("createServiceLogger", () => {
 
     expect(child.level).toBe("warn");
   });
+
+  it("creates multiple child loggers from same parent", () => {
+    const parent = createLogger({ app: "gadget", fileLogging: false, pretty: false });
+    const scanner = createServiceLogger(parent, "scanner");
+    const auditor = createServiceLogger(parent, "auditor");
+
+    expect(scanner.bindings().service).toBe("scanner");
+    expect(auditor.bindings().service).toBe("auditor");
+    // Both share the same app
+    expect(scanner.bindings().app).toBe("gadget");
+    expect(auditor.bindings().app).toBe("gadget");
+  });
+});
+
+describe("createLogger with pretty mode", () => {
+  it("creates logger with pretty output enabled", () => {
+    const logger = createLogger({ app: "web", fileLogging: false, pretty: true });
+
+    expect(logger).toBeDefined();
+    expect(typeof logger.info).toBe("function");
+    expect(logger.bindings().app).toBe("web");
+  });
+});
+
+describe("createLogger with different log levels", () => {
+  it("sets trace level", () => {
+    const logger = createLogger({ app: "gadget", level: "trace", fileLogging: false, pretty: false });
+    expect(logger.level).toBe("trace");
+  });
+
+  it("sets error level", () => {
+    const logger = createLogger({ app: "gadget", level: "error", fileLogging: false, pretty: false });
+    expect(logger.level).toBe("error");
+  });
+
+  it("sets fatal level", () => {
+    const logger = createLogger({ app: "gadget", level: "fatal", fileLogging: false, pretty: false });
+    expect(logger.level).toBe("fatal");
+  });
+
+  it("sets warn level", () => {
+    const logger = createLogger({ app: "gadget", level: "warn", fileLogging: false, pretty: false });
+    expect(logger.level).toBe("warn");
+  });
+});
+
+describe("createLogger with file logging", () => {
+  it("creates logger with file logging and non-pretty console", () => {
+    const logger = createLogger({ app: "gadget", logDir: "/tmp/test-logs", pretty: false });
+
+    expect(logger).toBeDefined();
+    expect(logger.bindings().app).toBe("gadget");
+  });
+
+  it("creates logger with file logging and pretty console", () => {
+    const logger = createLogger({ app: "web", logDir: "/tmp/test-logs", pretty: true });
+
+    expect(logger).toBeDefined();
+    expect(logger.bindings().app).toBe("web");
+  });
 });

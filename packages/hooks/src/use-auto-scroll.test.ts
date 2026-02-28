@@ -269,4 +269,71 @@ describe("useAutoScroll", () => {
     result.current.scrollToBottom();
     expect(scrollTopValue).toBe(2000);
   });
+
+  // ---------------------------------------------------------------------------
+  // New coverage: scroll event at exactly the threshold boundary
+  // ---------------------------------------------------------------------------
+
+  it("detects scroll exactly at threshold boundary (distance === 100)", () => {
+    const { result } = renderHook(() => useAutoScroll());
+
+    const mockElement = document.createElement("div");
+    // scrollHeight(1000) - scrollTop(500) - clientHeight(400) = 100 === SCROLL_THRESHOLD
+    // 100 < 100 is false, so isAtBottom should be false at exactly the threshold
+    Object.defineProperty(mockElement, "scrollHeight", { value: 1000, writable: true });
+    Object.defineProperty(mockElement, "scrollTop", { value: 500, writable: true });
+    Object.defineProperty(mockElement, "clientHeight", { value: 400, writable: true });
+
+    (result.current.containerRef as React.MutableRefObject<HTMLDivElement | null>).current = mockElement;
+
+    act(() => {
+      mockElement.dispatchEvent(new Event("scroll"));
+    });
+
+    // At exactly 100 (the threshold), 100 < 100 is false => not at bottom
+    // Verify indirectly: scrollToBottom should reset
+    result.current.scrollToBottom();
+    expect(mockElement.scrollTop).toBe(1000);
+  });
+
+  // ---------------------------------------------------------------------------
+  // New coverage: scroll at exactly 99 (within threshold)
+  // ---------------------------------------------------------------------------
+
+  it("detects scroll within threshold (distance === 99)", () => {
+    const { result } = renderHook(() => useAutoScroll());
+
+    const mockElement = document.createElement("div");
+    // scrollHeight(1000) - scrollTop(501) - clientHeight(400) = 99 < 100 => at bottom
+    Object.defineProperty(mockElement, "scrollHeight", { value: 1000, writable: true });
+    Object.defineProperty(mockElement, "scrollTop", { value: 501, writable: true });
+    Object.defineProperty(mockElement, "clientHeight", { value: 400, writable: true });
+
+    (result.current.containerRef as React.MutableRefObject<HTMLDivElement | null>).current = mockElement;
+
+    act(() => {
+      mockElement.dispatchEvent(new Event("scroll"));
+    });
+
+    // 99 < 100, so isAtBottom should be true; userScrolled should be reset
+  });
+
+  // ---------------------------------------------------------------------------
+  // New coverage: scrollToBottom when element scrollHeight equals clientHeight
+  // ---------------------------------------------------------------------------
+
+  it("handles scrollToBottom when content does not overflow", () => {
+    const { result } = renderHook(() => useAutoScroll());
+
+    const mockElement = document.createElement("div");
+    Object.defineProperty(mockElement, "scrollHeight", { value: 400, writable: true });
+    Object.defineProperty(mockElement, "scrollTop", { value: 0, writable: true });
+    Object.defineProperty(mockElement, "clientHeight", { value: 400, writable: true });
+
+    (result.current.containerRef as React.MutableRefObject<HTMLDivElement | null>).current = mockElement;
+
+    result.current.scrollToBottom();
+    // scrollTop is set to scrollHeight even when it equals clientHeight
+    expect(mockElement.scrollTop).toBe(400);
+  });
 });

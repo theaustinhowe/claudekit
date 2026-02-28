@@ -118,4 +118,60 @@ describe("createVideoSession", () => {
 
     expect(session.videoDir).toBe("/tmp/video");
   });
+
+  it("close() calls context.close then browser.close", async () => {
+    const mocks = createMockChain();
+
+    const session = await createVideoSession({ videoDir: "/tmp/video" });
+    await session.close();
+
+    expect(mocks.context.close).toHaveBeenCalled();
+    expect(mocks.browser.close).toHaveBeenCalled();
+  });
+
+  it("uses headless false when specified", async () => {
+    createMockChain();
+
+    await createVideoSession({ videoDir: "/tmp/video", headless: false });
+
+    expect(mockedLaunch).toHaveBeenCalledWith({ headless: false });
+  });
+});
+
+describe("error handling", () => {
+  it("createBrowserSession propagates launch errors", async () => {
+    mockedLaunch.mockRejectedValue(new Error("Browser launch failed"));
+
+    await expect(createBrowserSession()).rejects.toThrow("Browser launch failed");
+  });
+
+  it("createVideoSession propagates launch errors", async () => {
+    mockedLaunch.mockRejectedValue(new Error("Browser launch failed"));
+
+    await expect(createVideoSession({ videoDir: "/tmp/video" })).rejects.toThrow("Browser launch failed");
+  });
+
+  it("createBrowserSession propagates newContext errors", async () => {
+    const browser = {
+      newContext: vi.fn().mockRejectedValue(new Error("Context creation failed")),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    mockedLaunch.mockResolvedValue(browser);
+
+    await expect(createBrowserSession()).rejects.toThrow("Context creation failed");
+  });
+
+  it("createBrowserSession propagates newPage errors", async () => {
+    const context = {
+      newPage: vi.fn().mockRejectedValue(new Error("Page creation failed")),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    const browser = {
+      newContext: vi.fn().mockResolvedValue(context),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    mockedLaunch.mockResolvedValue(browser);
+
+    await expect(createBrowserSession()).rejects.toThrow("Page creation failed");
+  });
 });

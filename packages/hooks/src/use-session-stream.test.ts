@@ -888,6 +888,32 @@ describe("useSessionStream", () => {
   });
 
   // ---------------------------------------------------------------------------
+  // New coverage: chunk event type
+  // ---------------------------------------------------------------------------
+
+  it("handles chunk event type with data payload", async () => {
+    const mock = createMockStream();
+    globalThis.fetch = mockFetchWithStream(mock);
+
+    const onEvent = vi.fn();
+    const { result } = renderHook(() => useSessionStream({ sessionId: "s1", onEvent }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    await act(async () => {
+      mock.send({ type: "chunk", data: { key: "value" } });
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(result.current.events).toHaveLength(1);
+    expect(result.current.events[0].type).toBe("chunk");
+    expect(result.current.events[0].data).toEqual({ key: "value" });
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "chunk" }));
+  });
+
+  // ---------------------------------------------------------------------------
   // New coverage: progress updates without phase
   // ---------------------------------------------------------------------------
 

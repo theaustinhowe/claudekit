@@ -413,4 +413,122 @@ describe("useWebSocket", () => {
     consoleSpy.mockRestore();
     unmount();
   });
+
+  it("handles WebSocket error event gracefully", () => {
+    const onMessage = vi.fn();
+    const { result, unmount } = renderHook(() => useWebSocket(onMessage));
+
+    act(() => {
+      mockInstances[0].simulateOpen();
+    });
+
+    // Error should not crash - close event will handle reconnection
+    act(() => {
+      mockInstances[0].simulateError();
+    });
+
+    expect(result.current.connected).toBe(true);
+    unmount();
+  });
+
+  it("does not send messages when WebSocket is not open", () => {
+    const onMessage = vi.fn();
+    const { result, unmount } = renderHook(() => useWebSocket(onMessage));
+
+    // WebSocket is still CONNECTING, not OPEN
+    act(() => {
+      result.current.subscribe("job-1");
+    });
+
+    // Should not have attempted to send
+    expect(mockInstances[0].send).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it("doubles backoff delay on successive reconnection attempts", () => {
+    const onMessage = vi.fn();
+    const { unmount } = renderHook(() => useWebSocket(onMessage));
+
+    act(() => {
+      mockInstances[0].simulateOpen();
+    });
+
+    // First disconnect -> 1s backoff
+    act(() => {
+      mockInstances[0].simulateClose();
+    });
+
+    // After 1s, first reconnect
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    expect(mockInstances.length).toBe(2);
+
+    // Second disconnect -> 2s backoff (doubled)
+    act(() => {
+      mockInstances[1].simulateClose();
+    });
+
+    // After 1.5s, should NOT have reconnected yet (backoff is 2s)
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(mockInstances.length).toBe(2);
+
+    // After another 600ms (total 2.1s), should have reconnected
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(mockInstances.length).toBe(3);
+
+    // Third disconnect -> 4s backoff (doubled again)
+    act(() => {
+      mockInstances[2].simulateClose();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(3500);
+    });
+    expect(mockInstances.length).toBe(3); // Should NOT have reconnected yet
+
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(mockInstances.length).toBe(4); // Now should have reconnected
+
+    unmount();
+  });
+
+  it("triggerReconnect from failed state resets and reconnects", () => {
+    const onMessage = vi.fn();
+    const { result, unmount } = renderHook(() => useWebSocket(onMessage));
+
+    act(() => {
+      mockInstances[0].simulateOpen();
+    });
+
+    // Exhaust all reconnect attempts
+    for (let i = 0; i < 11; i++) {
+      act(() => {
+        mockInstances[mockInstances.length - 1].simulateClose();
+      });
+      act(() => {
+        vi.advanceTimersByTime(35000);
+      });
+    }
+
+    expect(result.current.connectionState).toBe("failed");
+
+    const countBefore = mockInstances.length;
+
+    // Manual trigger should reset and reconnect
+    act(() => {
+      result.current.triggerReconnect();
+    });
+
+    expect(mockInstances.length).toBeGreaterThan(countBefore);
+    expect(result.current.reconnectAttempt).toBe(0);
+
+    unmount();
+  });
 });

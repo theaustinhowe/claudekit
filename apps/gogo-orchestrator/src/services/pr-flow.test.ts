@@ -445,6 +445,217 @@ describe("pr-flow", () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain("Failed to push branch");
     });
+
+    it("should handle PR creation failure and remain in ready_to_pr", async () => {
+      const job = makeJob();
+      const repo = makeRepo();
+
+      vi.mocked(queryOne)
+        .mockResolvedValueOnce(job) // job lookup
+        .mockResolvedValueOnce(repo) // repo lookup
+        .mockResolvedValueOnce(undefined); // getNextLogSequence
+
+      vi.mocked(runTests).mockResolvedValue({
+        success: true,
+        output: "passed",
+        exitCode: 0,
+        commandsRun: ["npm test"],
+      });
+      vi.mocked(findExistingPrForRepo).mockResolvedValue(null);
+      vi.mocked(isWorkingTreeClean).mockResolvedValue(true);
+      vi.mocked(hasCommits).mockResolvedValue(true);
+      vi.mocked(getCommitLog).mockResolvedValue("commit");
+      // updateJob: queryOne for broadcast
+      vi.mocked(queryOne).mockResolvedValueOnce(job);
+      vi.mocked(pushBranch).mockResolvedValue(undefined);
+      vi.mocked(createPullRequestForRepo).mockRejectedValue(new Error("GitHub API error: 422"));
+
+      const result = await processReadyToPr("job-1");
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Failed to create pull request");
+      expect(result.error).toContain("GitHub API error: 422");
+      // applyTransitionAtomic should NOT have been called to change from ready_to_pr
+      // (the job stays in ready_to_pr for retry)
+      expect(applyTransitionAtomic).not.toHaveBeenCalledWith("job-1", "failed", expect.anything(), expect.anything());
+    });
+
+    it("should handle auto-commit failure", async () => {
+      const job = makeJob();
+      const repo = makeRepo();
+
+      vi.mocked(queryOne)
+        .mockResolvedValueOnce(job) // job lookup
+        .mockResolvedValueOnce(repo) // repo lookup
+        .mockResolvedValueOnce(undefined); // getNextLogSequence
+
+      vi.mocked(runTests).mockResolvedValue({
+        success: true,
+        output: "passed",
+        exitCode: 0,
+        commandsRun: ["npm test"],
+      });
+      vi.mocked(findExistingPrForRepo).mockResolvedValue(null);
+      vi.mocked(isWorkingTreeClean).mockResolvedValue(false);
+      vi.mocked(commitAllChanges).mockRejectedValue(new Error("nothing to commit"));
+
+      const result = await processReadyToPr("job-1");
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Failed to auto-commit");
+    });
+
+    it("should skip issue comment for manual jobs (negative issue number)", async () => {
+      const job = makeJob({ issue_number: -1 });
+      const repo = makeRepo();
+
+      vi.mocked(queryOne)
+        .mockResolvedValueOnce(job) // job lookup
+        .mockResolvedValueOnce(repo) // repo lookup
+        .mockResolvedValueOnce(undefined); // getNextLogSequence
+
+      vi.mocked(runTests).mockResolvedValue({
+        success: true,
+        output: "passed",
+        exitCode: 0,
+        commandsRun: ["npm test"],
+      });
+      vi.mocked(findExistingPrForRepo).mockResolvedValue(null);
+      vi.mocked(isWorkingTreeClean).mockResolvedValue(true);
+      vi.mocked(hasCommits).mockResolvedValue(true);
+      vi.mocked(getCommitLog).mockResolvedValue("commit log");
+      // updateJob: queryOne for broadcast
+      vi.mocked(queryOne).mockResolvedValueOnce(job);
+      vi.mocked(pushBranch).mockResolvedValue(undefined);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue({
+        number: 200,
+        html_url: "https://github.com/testowner/testrepo/pull/200",
+      } as never);
+
+      const result = await processReadyToPr("job-1");
+
+      expect(result.success).toBe(true);
+      expect(createIssueCommentForRepo).not.toHaveBeenCalled();
+    });
+
+    it("should handle auto-commit message for manual jobs", async () => {
+      const job = makeJob({ issue_number: -1 });
+      const repo = makeRepo();
+
+      vi.mocked(queryOne)
+        .mockResolvedValueOnce(job) // job lookup
+        .mockResolvedValueOnce(repo) // repo lookup
+        .mockResolvedValueOnce(undefined); // getNextLogSequence
+
+      vi.mocked(runTests).mockResolvedValue({
+        success: true,
+        output: "passed",
+        exitCode: 0,
+        commandsRun: ["npm test"],
+      });
+      vi.mocked(findExistingPrForRepo).mockResolvedValue(null);
+      vi.mocked(isWorkingTreeClean).mockResolvedValue(false);
+      vi.mocked(commitAllChanges).mockResolvedValue(undefined);
+      vi.mocked(getCommitLog).mockResolvedValue("commit log");
+      // updateJob: queryOne for broadcast
+      vi.mocked(queryOne).mockResolvedValueOnce(job);
+      vi.mocked(pushBranch).mockResolvedValue(undefined);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue({
+        number: 201,
+        html_url: "https://github.com/testowner/testrepo/pull/201",
+      } as never);
+
+      await processReadyToPr("job-1");
+
+      // For manual jobs (issue_number < 0), commit message should NOT contain "for issue #"
+      expect(commitAllChanges).toHaveBeenCalledWith("/tmp/worktrees/issue-42", "chore: auto-commit remaining changes");
+    });
+
+    it("should return error when job has no repository_id", async () => {
+      vi.mocked(queryOne).mockResolvedValueOnce(makeJob({ repository_id: null }));
+
+      const result = await processReadyToPr("job-1");
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("does not have a repository ID");
+    });
+
+    it("should handle test failure on first attempt (retry count starts at 0)", async () => {
+      const job = makeJob({ test_retry_count: null }); // null defaults to 0
+      const repo = makeRepo();
+
+      vi.mocked(queryOne).mockResolvedValueOnce(job).mockResolvedValueOnce(repo).mockResolvedValueOnce(undefined);
+
+      vi.mocked(runTests).mockResolvedValue({
+        success: false,
+        output: "FAIL: some test",
+        exitCode: 1,
+        commandsRun: ["npm test"],
+      });
+
+      const result = await processReadyToPr("job-1");
+
+      expect(result.success).toBe(false);
+      expect(result.retriedToRunning).toBe(true);
+      expect(applyTransitionAtomic).toHaveBeenCalledWith(
+        "job-1",
+        "running",
+        "Test failure - agent to fix",
+        expect.objectContaining({ test_retry_count: 1 }),
+      );
+    });
+
+    it("should include test output in retry metadata", async () => {
+      const job = makeJob({ test_retry_count: 0 });
+      const repo = makeRepo();
+
+      vi.mocked(queryOne).mockResolvedValueOnce(job).mockResolvedValueOnce(repo).mockResolvedValueOnce(undefined);
+
+      vi.mocked(runTests).mockResolvedValue({
+        success: false,
+        output: "TypeError: Cannot read property 'foo' of undefined",
+        exitCode: 1,
+        commandsRun: ["npm test"],
+      });
+
+      await processReadyToPr("job-1");
+
+      expect(applyTransitionAtomic).toHaveBeenCalledWith(
+        "job-1",
+        "running",
+        expect.any(String),
+        expect.objectContaining({
+          last_test_output: "TypeError: Cannot read property 'foo' of undefined",
+        }),
+      );
+    });
+
+    it("should include failure_reason when max retries exhausted", async () => {
+      const job = makeJob({ test_retry_count: 2 });
+      const repo = makeRepo();
+
+      vi.mocked(queryOne).mockResolvedValueOnce(job).mockResolvedValueOnce(repo).mockResolvedValueOnce(undefined);
+
+      vi.mocked(getMaxTestRetries).mockResolvedValue(3);
+      vi.mocked(runTests).mockResolvedValue({
+        success: false,
+        output: "FAIL",
+        exitCode: 1,
+        commandsRun: ["npm test"],
+      });
+
+      const result = await processReadyToPr("job-1");
+
+      expect(result.success).toBe(false);
+      expect(applyTransitionAtomic).toHaveBeenCalledWith(
+        "job-1",
+        "failed",
+        expect.stringContaining("Tests failed after 3 attempts"),
+        expect.objectContaining({
+          failure_reason: "Tests failed after 3 attempts",
+          test_retry_count: 3,
+        }),
+      );
+    });
   });
 
   describe("pollReadyToPrJobs", () => {
@@ -501,6 +712,43 @@ describe("pr-flow", () => {
       await pollReadyToPrJobs();
 
       expect(createPullRequestForRepo).toHaveBeenCalled();
+    });
+
+    it("should skip jobs that belong to repos without autoCreatePr", async () => {
+      const job = makeJob({ repository_id: "repo-2" }); // Not in auto-create list
+
+      vi.mocked(queryAll)
+        .mockResolvedValueOnce([{ id: "repo-1" }]) // Only repo-1 has autoCreatePr
+        .mockResolvedValueOnce([job]); // job belongs to repo-2
+
+      await pollReadyToPrJobs();
+
+      // processReadyToPr should NOT have been called (no queryOne for job lookup)
+      expect(createPullRequestForRepo).not.toHaveBeenCalled();
+    });
+
+    it("should handle no eligible jobs gracefully", async () => {
+      vi.mocked(queryAll)
+        .mockResolvedValueOnce([{ id: "repo-1" }]) // repos with autoCreatePr
+        .mockResolvedValueOnce([]); // No ready jobs
+
+      await pollReadyToPrJobs();
+
+      expect(createPullRequestForRepo).not.toHaveBeenCalled();
+    });
+
+    it("should handle processReadyToPr throwing an error gracefully", async () => {
+      const job = makeJob();
+
+      vi.mocked(queryAll)
+        .mockResolvedValueOnce([{ id: "repo-1" }])
+        .mockResolvedValueOnce([job]);
+
+      // Make the inner queryOne throw to simulate unexpected error
+      vi.mocked(queryOne).mockRejectedValueOnce(new Error("DB connection lost"));
+
+      // Should not throw - error is caught internally
+      await expect(pollReadyToPrJobs()).resolves.not.toThrow();
     });
   });
 });

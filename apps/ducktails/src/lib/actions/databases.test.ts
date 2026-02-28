@@ -105,6 +105,33 @@ describe("listDatabases", () => {
 
     expect(databases[0].fileSize).toBe(4096);
   });
+
+  it("returns 0 file size on error when file does not exist", async () => {
+    vi.mocked(databaseFileExists).mockReturnValue(true);
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    const { getConnection } = await import("@/lib/db/connection-manager");
+    vi.mocked(getConnection)
+      .mockRejectedValueOnce(new Error("File gone"))
+      .mockResolvedValueOnce(mockConn as never);
+
+    const { databases } = await listDatabases();
+
+    expect(databases[0].fileSize).toBe(0);
+  });
+
+  it("handles non-Error exceptions in listDatabases", async () => {
+    vi.mocked(databaseFileExists).mockReturnValue(true);
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    const { getConnection } = await import("@/lib/db/connection-manager");
+    vi.mocked(getConnection)
+      .mockRejectedValueOnce("string error")
+      .mockResolvedValueOnce(mockConn as never);
+
+    const { databases } = await listDatabases();
+
+    expect(databases[0].status).toBe("error");
+    expect(databases[0].error).toBe("string error");
+  });
 });
 
 describe("getDatabaseEntry", () => {

@@ -340,4 +340,18 @@ describe("withWritableConn (via insertRow)", () => {
 
     await expect(insertRow("test", "users", { id: 1 })).rejects.toThrow("Permission denied");
   });
+
+  it("detects lock keyword in non-Error exception messages", async () => {
+    vi.mocked(getWritableConnection).mockRejectedValue("Could not set lock");
+
+    await expect(insertRow("test", "users", { id: 1 })).rejects.toThrow(
+      "Database is locked by the owning app. Stop the app first to make edits.",
+    );
+  });
+
+  it("re-throws non-Error exceptions without lock keyword", async () => {
+    vi.mocked(getWritableConnection).mockRejectedValue("Some other error");
+
+    await expect(insertRow("test", "users", { id: 1 })).rejects.toBe("Some other error");
+  });
 });
