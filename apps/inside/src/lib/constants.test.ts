@@ -8,10 +8,10 @@ import {
   DESIGN_VIBES,
   EMAIL_OPTIONS,
   FEATURE_OPTIONS,
-  FRAMEWORK_OPTIONS,
   IMAGE_EXTENSIONS,
   IMAGE_MIME_TYPES,
   PAYMENT_OPTIONS,
+  PLATFORM_ADVANCED_OPTIONS,
   PLATFORM_NEXT_STEPS,
   PLATFORMS,
   SERVICE_NEXT_STEPS,
@@ -19,6 +19,7 @@ import {
   SESSION_HEARTBEAT_INTERVAL_MS,
   SESSION_LOG_FLUSH_INTERVAL_MS,
   SESSION_TYPE_LABELS,
+  TS_ONLY_CONSTRAINTS,
 } from "./constants";
 
 describe("APP_NAME", () => {
@@ -40,8 +41,54 @@ describe("PLATFORMS", () => {
     }
   });
 
-  it("includes nextjs", () => {
+  it("includes nextjs and tanstack-start", () => {
     expect(PLATFORMS.find((p) => p.id === "nextjs")).toBeDefined();
+    expect(PLATFORMS.find((p) => p.id === "tanstack-start")).toBeDefined();
+  });
+
+  it("does not include monorepo as a standalone platform", () => {
+    const ids = PLATFORMS.map((p) => p.id) as string[];
+    expect(ids).not.toContain("monorepo");
+  });
+});
+
+describe("PLATFORM_ADVANCED_OPTIONS", () => {
+  it("has options for all platforms", () => {
+    for (const p of PLATFORMS) {
+      expect(PLATFORM_ADVANCED_OPTIONS[p.id]).toBeDefined();
+      expect(PLATFORM_ADVANCED_OPTIONS[p.id].length).toBeGreaterThan(0);
+    }
+  });
+
+  it("nextjs has version, router, and monorepo options", () => {
+    const keys = PLATFORM_ADVANCED_OPTIONS.nextjs.map((co) => co.option.key);
+    expect(keys).toContain("nextjs-version");
+    expect(keys).toContain("nextjs-router");
+    expect(keys).toContain("monorepo");
+  });
+
+  it("node-api has framework option", () => {
+    const keys = PLATFORM_ADVANCED_OPTIONS["node-api"].map((co) => co.option.key);
+    expect(keys).toContain("node-framework");
+  });
+
+  it("cli has language option", () => {
+    const keys = PLATFORM_ADVANCED_OPTIONS.cli.map((co) => co.option.key);
+    expect(keys).toContain("cli-language");
+  });
+
+  it("tanstack-start has libraries multi-select", () => {
+    const libs = PLATFORM_ADVANCED_OPTIONS["tanstack-start"].find((co) => co.option.key === "tanstack-libraries");
+    expect(libs).toBeDefined();
+    expect(libs?.option.type).toBe("multi-select");
+  });
+});
+
+describe("TS_ONLY_CONSTRAINTS", () => {
+  it("contains expected constraint ids", () => {
+    expect(TS_ONLY_CONSTRAINTS.has("typescript-strict")).toBe(true);
+    expect(TS_ONLY_CONSTRAINTS.has("biome")).toBe(true);
+    expect(TS_ONLY_CONSTRAINTS.has("ai-files")).toBe(false);
   });
 });
 
@@ -73,13 +120,6 @@ describe("DESIGN_VIBES", () => {
   });
 });
 
-describe("FRAMEWORK_OPTIONS", () => {
-  it("includes all PLATFORMS plus tanstack-start", () => {
-    expect(FRAMEWORK_OPTIONS.length).toBe(PLATFORMS.length + 1);
-    expect(FRAMEWORK_OPTIONS.find((f) => f.id === "tanstack-start")).toBeDefined();
-  });
-});
-
 describe("BACKEND_OPTIONS", () => {
   it("has 5 options", () => {
     expect(BACKEND_OPTIONS).toHaveLength(5);
@@ -100,8 +140,8 @@ describe("AUTH_OPTIONS", () => {
 });
 
 describe("FEATURE_OPTIONS", () => {
-  it("has 6 options", () => {
-    expect(FEATURE_OPTIONS).toHaveLength(6);
+  it("has 18 options (flattened from FEATURE_CATEGORIES)", () => {
+    expect(FEATURE_OPTIONS).toHaveLength(18);
   });
 });
 

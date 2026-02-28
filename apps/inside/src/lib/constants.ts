@@ -3,11 +3,11 @@ export const APP_NAME = "Inside";
 // --- Generator Project Constants ---
 
 export const PLATFORMS = [
-  { id: "nextjs", label: "Next.js App Router", description: "Full-stack React with server components" },
+  { id: "nextjs", label: "Next.js", description: "Full-stack React with server components" },
   { id: "react-spa", label: "React SPA", description: "Client-side React with Vite" },
   { id: "node-api", label: "Node.js API", description: "Backend REST/GraphQL server" },
-  { id: "monorepo", label: "Monorepo", description: "Multi-package workspace" },
   { id: "cli", label: "CLI Tool", description: "Command-line application" },
+  { id: "tanstack-start", label: "TanStack Start", description: "Full-stack React with TanStack Router" },
 ] as const;
 
 export const CONSTRAINT_OPTIONS = [
@@ -28,11 +28,6 @@ export const DESIGN_VIBES = [
   { id: "data-analysis", label: "Analytical", description: "Charts, dashboards, metrics-first" },
   { id: "retro", label: "Retro", description: "Nostalgic, pixel-inspired, vintage" },
   { id: "playful", label: "Playful", description: "Animated, colorful, fun" },
-];
-
-export const FRAMEWORK_OPTIONS: { id: string; label: string; description: string }[] = [
-  ...PLATFORMS,
-  { id: "tanstack-start", label: "TanStack Start", description: "Full-stack React with TanStack Router" },
 ];
 
 export const BACKEND_OPTIONS = [
@@ -93,28 +88,168 @@ export const FEATURE_CATEGORIES = [
 
 export const FEATURE_OPTIONS = FEATURE_CATEGORIES.flatMap((c) => c.features);
 
-interface FrameworkVersion {
+// --- Platform Advanced Options ---
+
+interface SelectChoice {
   label: string;
   value: string;
-  isLatest?: boolean;
+  isDefault?: boolean;
+  detail?: string;
 }
 
-export const FRAMEWORK_VERSIONS: Record<string, FrameworkVersion[]> = {
+export type AdvancedOption =
+  | { key: string; label: string; description?: string; type: "select"; options: SelectChoice[] }
+  | {
+      key: string;
+      label: string;
+      description?: string;
+      type: "multi-select";
+      options: SelectChoice[];
+      defaultValues?: string[];
+    }
+  | { key: string; label: string; description?: string; type: "boolean"; defaultValue: boolean };
+
+export interface ConditionalOption {
+  option: AdvancedOption;
+  visibleWhen?: (toolVersions: Record<string, string>) => boolean;
+}
+
+const MONOREPO_WRAPPER_OPTIONS: ConditionalOption[] = [
+  {
+    option: {
+      key: "monorepo",
+      label: "Wrap in monorepo",
+      description: "Scaffold inside a workspace structure",
+      type: "boolean",
+      defaultValue: false,
+    },
+  },
+  {
+    option: {
+      key: "monorepo-tool",
+      label: "Build orchestrator",
+      type: "select",
+      options: [
+        { label: "Turborepo", value: "turborepo", isDefault: true },
+        { label: "pnpm workspaces", value: "pnpm" },
+      ],
+    },
+    visibleWhen: (tv) => tv.monorepo === "true",
+  },
+];
+
+export const PLATFORM_ADVANCED_OPTIONS: Record<string, ConditionalOption[]> = {
   nextjs: [
-    { label: "Next.js 16 (latest)", value: "16", isLatest: true },
-    { label: "Next.js 15", value: "15" },
-    { label: "Next.js 14", value: "14" },
+    {
+      option: {
+        key: "nextjs-version",
+        label: "Version",
+        type: "select",
+        options: [
+          { label: "Next.js 16 (latest)", value: "16", isDefault: true },
+          { label: "Next.js 15", value: "15" },
+          { label: "Next.js 14", value: "14" },
+        ],
+      },
+    },
+    {
+      option: {
+        key: "nextjs-router",
+        label: "Router",
+        type: "select",
+        options: [
+          { label: "App Router", value: "app", isDefault: true },
+          { label: "Pages Router", value: "pages" },
+        ],
+      },
+      visibleWhen: (tv) => tv["nextjs-version"] === "14",
+    },
+    ...MONOREPO_WRAPPER_OPTIONS,
   ],
   "react-spa": [
-    { label: "React 19 + Vite (latest)", value: "react19-vite", isLatest: true },
-    { label: "React 18 + Vite", value: "react18-vite" },
+    {
+      option: {
+        key: "react-spa-version",
+        label: "Version",
+        type: "select",
+        options: [
+          { label: "React 19 + Vite (latest)", value: "react19-vite", isDefault: true },
+          { label: "React 18 + Vite", value: "react18-vite" },
+        ],
+      },
+    },
+    ...MONOREPO_WRAPPER_OPTIONS,
   ],
   "node-api": [
-    { label: "Node 22 LTS (latest)", value: "node22", isLatest: true },
-    { label: "Node 20 LTS", value: "node20" },
+    {
+      option: {
+        key: "node-version",
+        label: "Node version",
+        type: "select",
+        options: [
+          { label: "Node 22 LTS (latest)", value: "node22", isDefault: true },
+          { label: "Node 20 LTS", value: "node20" },
+        ],
+      },
+    },
+    {
+      option: {
+        key: "node-framework",
+        label: "HTTP Framework",
+        type: "select",
+        options: [
+          { label: "Hono", value: "hono", isDefault: true },
+          { label: "Express", value: "express" },
+          { label: "Fastify", value: "fastify" },
+        ],
+      },
+    },
+    ...MONOREPO_WRAPPER_OPTIONS,
   ],
-  "tanstack-start": [{ label: "TanStack Start 1.x (latest)", value: "1.x", isLatest: true }],
+  cli: [
+    {
+      option: {
+        key: "cli-language",
+        label: "Language",
+        type: "select",
+        options: [
+          { label: "TypeScript", value: "typescript", isDefault: true },
+          { label: "Go", value: "go" },
+          { label: "Rust", value: "rust" },
+          { label: "Python", value: "python" },
+        ],
+      },
+    },
+  ],
+  "tanstack-start": [
+    {
+      option: {
+        key: "tanstack-version",
+        label: "Version",
+        type: "select",
+        options: [{ label: "TanStack Start 1.x (latest)", value: "1.x", isDefault: true }],
+      },
+    },
+    {
+      option: {
+        key: "tanstack-libraries",
+        label: "Libraries",
+        description: "Additional TanStack libraries to include",
+        type: "multi-select",
+        options: [
+          { label: "Query", value: "tanstack-query" },
+          { label: "Table", value: "tanstack-table" },
+          { label: "Form", value: "tanstack-form" },
+          { label: "Virtual", value: "tanstack-virtual" },
+        ],
+      },
+    },
+    ...MONOREPO_WRAPPER_OPTIONS,
+  ],
 };
+
+/** Constraints that only apply to TypeScript/JS projects */
+export const TS_ONLY_CONSTRAINTS = new Set(["typescript-strict", "biome", "tailwind", "shadcn", "vitest"]);
 
 export const EMAIL_OPTIONS = [
   { id: "sendgrid", label: "SendGrid" },

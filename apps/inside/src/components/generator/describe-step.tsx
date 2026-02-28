@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@claudekit/ui/components/switch";
 import { Textarea } from "@claudekit/ui/components/textarea";
 import {
+  AlertTriangle,
+  ArrowRight,
   ChevronDown,
   ChevronRight,
   Folder,
@@ -23,22 +25,24 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DirectoryPicker } from "@/components/directory-picker";
 import { FeaturesInput } from "@/components/generator/features-input";
 import { InspirationInput } from "@/components/generator/inspiration-input";
 import { VibesSelector } from "@/components/generator/vibes-selector";
-import { createGeneratorProject } from "@/lib/actions/generator-projects";
+import { checkPathExists, createGeneratorProject } from "@/lib/actions/generator-projects";
+import type { ConditionalOption } from "@/lib/constants";
 import {
   ANALYTICS_OPTIONS,
   AUTH_OPTIONS,
   BACKEND_OPTIONS,
   CONSTRAINT_OPTIONS,
   EMAIL_OPTIONS,
-  FRAMEWORK_OPTIONS,
-  FRAMEWORK_VERSIONS,
   PAYMENT_OPTIONS,
+  PLATFORM_ADVANCED_OPTIONS,
+  PLATFORMS,
+  TS_ONLY_CONSTRAINTS,
 } from "@/lib/constants";
 import type { ToolCheckResult } from "@/lib/types";
 
@@ -205,6 +209,47 @@ function OverviewBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
+// --- Advanced option helpers ---
+
+function getVisibleOptions(options: ConditionalOption[], toolVersions: Record<string, string>): ConditionalOption[] {
+  return options.filter((co) => !co.visibleWhen || co.visibleWhen(toolVersions));
+}
+
+function getDefaultsForPlatform(platformId: string): Record<string, string> {
+  const opts = PLATFORM_ADVANCED_OPTIONS[platformId];
+  if (!opts) return {};
+  const defaults: Record<string, string> = {};
+  for (const co of opts) {
+    const opt = co.option;
+    if (opt.type === "select") {
+      const def = opt.options.find((o) => o.isDefault);
+      if (def) defaults[opt.key] = def.value;
+    } else if (opt.type === "boolean") {
+      defaults[opt.key] = String(opt.defaultValue);
+    }
+    // multi-select defaults to empty (no defaultValues to pre-fill)
+  }
+  return defaults;
+}
+
+function getKeysForPlatform(platformId: string): Set<string> {
+  const opts = PLATFORM_ADVANCED_OPTIONS[platformId];
+  if (!opts) return new Set();
+  return new Set(opts.map((co) => co.option.key));
+}
+
+// --- Folder collision helpers ---
+
+function suggestUniqueName(baseName: string): string {
+  const match = baseName.match(/^(.+)-(\d+)$/);
+  if (match) {
+    return `${match[1]}-${Number(match[2]) + 1}`;
+  }
+  return `${baseName}-2`;
+}
+
+// --- Component ---
+
 interface DescribeStepProps {
   defaultPath: string;
   installedPMs: ToolCheckResult[];
@@ -243,8 +288,12 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   const [paymentsEnabled, setPaymentsEnabled] = useState(false);
 
   // Version selection
-  const [toolVersions, setToolVersions] = useState<Record<string, string>>({});
+  const [toolVersions, setToolVersions] = useState<Record<string, string>>(() => getDefaultsForPlatform("nextjs"));
   const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  // CLI constraint auto-disable
+  const [constraintNote, setConstraintNote] = useState<string | null>(null);
+  const prevConstraintsRef = useRef<string[] | null>(null);
 
   // Project
   const [projectName, setProjectName] = useState("");
@@ -253,6 +302,11 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   const [packageManager, setPackageManager] = useState(installedPMs.find((r) => r.installed)?.toolId ?? "pnpm");
   const [initGit, setInitGit] = useState(true);
   const [projectOpen, setProjectOpen] = useState(false);
+
+  // Folder collision check
+  const [pathExists, setPathExists] = useState(false);
+  const [checkingPath, setCheckingPath] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const slugify = (text: string) =>
     text
@@ -264,12 +318,98 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   const effectiveProjectName = projectNameTouched ? projectName : title ? slugify(title) : "my-app";
   const fullPath = `${projectPath}/${effectiveProjectName}`;
 
+  // --- Folder collision debounced check ---
+  const checkPath = useCallback((pathToCheck: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setCheckingPath(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const exists = await checkPathExists(pathToCheck);
+        setPathExists(exists);
+      } catch {
+        setPathExists(false);
+      } finally {
+        setCheckingPath(false);
+      }
+    }, 500);
+  }, []);
+
+  useEffect(() => {
+    checkPath(fullPath);
+  }, [fullPath, checkPath]);
+
+  // --- Platform change: clear stale keys, set defaults ---
+  const handlePlatformChange = useCallback(
+    (newPlatform: string) => {
+      const oldKeys = getKeysForPlatform(platform);
+      const newDefaults = getDefaultsForPlatform(newPlatform);
+
+      setToolVersions((prev) => {
+        const next: Record<string, string> = {};
+        // Keep keys that don't belong to the old platform
+        for (const [k, v] of Object.entries(prev)) {
+          if (!oldKeys.has(k)) next[k] = v;
+        }
+        // Apply new defaults
+        return { ...next, ...newDefaults };
+      });
+
+      setPlatform(newPlatform);
+      setConstraintNote(null);
+
+      // If switching away from CLI with non-TS language, restore constraints
+      if (platform === "cli" && prevConstraintsRef.current) {
+        setConstraints(prevConstraintsRef.current);
+        prevConstraintsRef.current = null;
+      }
+    },
+    [platform],
+  );
+
+  // --- CLI constraint auto-disable ---
+  useEffect(() => {
+    if (platform !== "cli") {
+      if (prevConstraintsRef.current) {
+        setConstraints(prevConstraintsRef.current);
+        prevConstraintsRef.current = null;
+        setConstraintNote(null);
+      }
+      return;
+    }
+
+    const lang = toolVersions["cli-language"] ?? "typescript";
+    if (lang !== "typescript") {
+      // Save current constraints before stripping
+      if (!prevConstraintsRef.current) {
+        prevConstraintsRef.current = constraints;
+      }
+      setConstraints((prev) => prev.filter((c) => !TS_ONLY_CONSTRAINTS.has(c)));
+      const langLabel = lang.charAt(0).toUpperCase() + lang.slice(1);
+      setConstraintNote(`Constraints adjusted for ${langLabel}`);
+    } else {
+      // Restore if switching back to TS
+      if (prevConstraintsRef.current) {
+        setConstraints(prevConstraintsRef.current);
+        prevConstraintsRef.current = null;
+      }
+      setConstraintNote(null);
+    }
+  }, [platform, toolVersions["cli-language"]]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const toggleService = (id: string) => {
     setServices((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
   };
 
   const toggleConstraint = (id: string) => {
     setConstraints((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  };
+
+  const toggleMultiSelect = (key: string, value: string) => {
+    setToolVersions((prev) => {
+      const current = prev[key]?.split(",").filter(Boolean) ?? [];
+      const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      return { ...prev, [key]: next.join(",") };
+    });
   };
 
   const handleGenerate = async () => {
@@ -305,6 +445,10 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
       setCreating(false);
     }
   };
+
+  // --- Advanced options for current platform ---
+  const platformOptions = PLATFORM_ADVANCED_OPTIONS[platform] ?? [];
+  const visibleOptions = getVisibleOptions(platformOptions, toolVersions);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -348,21 +492,24 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
               className="mt-1 min-h-[120px]"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
-            {examplePrompts.map((prompt) => (
-              <Button
-                key={prompt}
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setIdea(prompt);
-                  if (!title) setTitle(prompt.split(" with ")[0]);
-                }}
-                className="text-xs"
-              >
-                {prompt}
-              </Button>
-            ))}
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Examples</p>
+            <div className="flex flex-wrap gap-2">
+              {examplePrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => {
+                    setIdea(prompt);
+                    if (!title) setTitle(prompt.split(" with ")[0]);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 border-l-2 border-muted-foreground/25 pl-2 py-0.5"
+                >
+                  <ArrowRight className="w-3 h-3 shrink-0" />
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
           <div>
             <Label className="mb-3 block">Design Vibes</Label>
@@ -393,13 +540,13 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
           <div>
             <Label className="mb-3 block">Framework</Label>
             <div className="grid sm:grid-cols-3 lg:grid-cols-3 gap-3">
-              {FRAMEWORK_OPTIONS.map((p) => (
+              {PLATFORMS.map((p) => (
                 <Card
                   key={p.id}
                   className={`cursor-pointer transition-all p-3 ${
                     platform === p.id ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/50"
                   }`}
-                  onClick={() => setPlatform(p.id)}
+                  onClick={() => handlePlatformChange(p.id)}
                 >
                   <p className="font-medium text-sm">{p.label}</p>
                   <p className="text-xs text-muted-foreground mt-1">{p.description}</p>
@@ -409,31 +556,81 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
           </div>
 
           {/* Advanced Options */}
-          {FRAMEWORK_VERSIONS[platform] && (
+          {visibleOptions.length > 0 && (
             <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
               <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {advancedOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 Advanced Options
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3">
-                <div className="max-w-xs">
-                  <Label className="mb-2 block">Version</Label>
-                  <Select
-                    value={toolVersions[platform] ?? FRAMEWORK_VERSIONS[platform].find((v) => v.isLatest)?.value ?? ""}
-                    onValueChange={(value) => setToolVersions((prev) => ({ ...prev, [platform]: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FRAMEWORK_VERSIONS[platform].map((v) => (
-                        <SelectItem key={v.value} value={v.value}>
-                          {v.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <CollapsibleContent className="mt-3 space-y-4">
+                {visibleOptions.map((co) => {
+                  const opt = co.option;
+
+                  if (opt.type === "select") {
+                    return (
+                      <div key={opt.key} className="max-w-xs">
+                        <Label className="mb-2 block">{opt.label}</Label>
+                        {opt.description && <p className="text-xs text-muted-foreground mb-2">{opt.description}</p>}
+                        <Select
+                          value={toolVersions[opt.key] ?? opt.options.find((o) => o.isDefault)?.value ?? ""}
+                          onValueChange={(value) => setToolVersions((prev) => ({ ...prev, [opt.key]: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {opt.options.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  }
+
+                  if (opt.type === "multi-select") {
+                    const selected = toolVersions[opt.key]?.split(",").filter(Boolean) ?? [];
+                    return (
+                      <div key={opt.key}>
+                        <Label className="mb-2 block">{opt.label}</Label>
+                        {opt.description && <p className="text-xs text-muted-foreground mb-2">{opt.description}</p>}
+                        <div className="flex flex-wrap gap-2">
+                          {opt.options.map((o) => (
+                            <Badge
+                              key={o.value}
+                              variant={selected.includes(o.value) ? "default" : "outline"}
+                              className="cursor-pointer transition-colors"
+                              onClick={() => toggleMultiSelect(opt.key, o.value)}
+                            >
+                              {o.label}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (opt.type === "boolean") {
+                    return (
+                      <div key={opt.key} className="flex items-center justify-between max-w-xs">
+                        <div>
+                          <Label>{opt.label}</Label>
+                          {opt.description && <p className="text-xs text-muted-foreground">{opt.description}</p>}
+                        </div>
+                        <Switch
+                          checked={toolVersions[opt.key] === "true"}
+                          onCheckedChange={(checked) =>
+                            setToolVersions((prev) => ({ ...prev, [opt.key]: String(checked) }))
+                          }
+                        />
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
               </CollapsibleContent>
             </Collapsible>
           )}
@@ -635,6 +832,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
                 </label>
               ))}
             </div>
+            {constraintNote && <p className="text-xs text-muted-foreground mt-2 italic">{constraintNote}</p>}
           </div>
         </CardContent>
       </Card>
@@ -680,6 +878,28 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground font-mono bg-muted/50 rounded px-2 py-1.5">{fullPath}</p>
+              {pathExists && !checkingPath && (
+                <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400 text-xs bg-amber-500/10 border border-amber-500/20 rounded px-2.5 py-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <div>
+                    <p>This folder already exists. Scaffolding will add files into it.</p>
+                    <p className="mt-1">
+                      Suggestion:{" "}
+                      <button
+                        type="button"
+                        className="underline hover:no-underline font-medium"
+                        onClick={() => {
+                          const suggested = suggestUniqueName(effectiveProjectName);
+                          setProjectName(suggested);
+                          setProjectNameTouched(true);
+                        }}
+                      >
+                        {suggestUniqueName(effectiveProjectName)}
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Package Manager</Label>

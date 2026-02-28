@@ -46,6 +46,23 @@ const SERVICE_LABEL_MAP: Record<string, string> = {
   "rate-limiting": "Rate Limiting",
   logging: "Logging",
   "error-tracking": "Error Tracking",
+  // HTTP frameworks
+  hono: "Hono",
+  express: "Express",
+  fastify: "Fastify",
+  // CLI languages
+  typescript: "TypeScript",
+  go: "Go",
+  rust: "Rust",
+  python: "Python",
+  // Monorepo tools
+  turborepo: "Turborepo",
+  pnpm: "pnpm workspaces",
+  // TanStack libraries
+  "tanstack-query": "TanStack Query",
+  "tanstack-table": "TanStack Table",
+  "tanstack-form": "TanStack Form",
+  "tanstack-virtual": "TanStack Virtual",
 };
 
 function resolveServiceLabels(services: string[]): string[] {
@@ -67,6 +84,22 @@ function getPlatformInfo(project: GeneratorProject) {
   };
 }
 
+function getMonorepoInstructions(versions: Record<string, string>, pm: string): string {
+  if (versions.monorepo !== "true") return "";
+  const tool = versions["monorepo-tool"] ?? "pnpm";
+  if (tool === "turborepo") {
+    return `
+- Wrap the project in a Turborepo monorepo structure
+- Add a root \`turbo.json\` with build/dev/lint pipeline configuration
+- Place the app in \`apps/\` and shared code in \`packages/\`
+- Use ${pm} workspaces for package linking`;
+  }
+  return `
+- Wrap the project in a pnpm workspaces monorepo structure
+- Place the app in \`apps/\` and shared code in \`packages/\`
+- Add a root \`pnpm-workspace.yaml\` with workspace configuration`;
+}
+
 function getPlatformInstructions(project: GeneratorProject, projectDir: string): string {
   const pm = project.package_manager;
   const versions = project.tool_versions ?? {};
@@ -74,53 +107,98 @@ function getPlatformInstructions(project: GeneratorProject, projectDir: string):
   const hasBiome = constraints.includes("biome");
   const hasTailwind = constraints.includes("tailwind");
 
+  let instructions: string;
+
   switch (project.platform) {
     case "nextjs": {
-      const version = versions.nextjs ?? "latest";
+      const version = versions["nextjs-version"] ?? "latest";
       const versionSuffix = version === "latest" ? "@latest" : `@${version}`;
       const eslintFlag = hasBiome ? " --no-eslint" : " --eslint";
       const tailwindFlag = hasTailwind ? " --tailwind" : "";
-      return `
-- Initialize a Next.js project using \`${pm} create next-app${versionSuffix} ${project.project_name} --ts --app${tailwindFlag}${eslintFlag} --src-dir --import-alias "@/*"\` inside "${expandTilde(project.project_path)}"
-- Use the App Router with server components by default
+      const router = versions["nextjs-router"] ?? "app";
+      const appFlag = router === "pages" ? " --no-app" : " --app";
+      const routerNote =
+        router === "pages"
+          ? "- Use the Pages Router with src/pages/ directory structure"
+          : "- Use the App Router with server components by default";
+      instructions = `
+- Initialize a Next.js project using \`${pm} create next-app${versionSuffix} ${project.project_name} --ts${appFlag}${tailwindFlag}${eslintFlag} --src-dir --import-alias "@/*"\` inside "${expandTilde(project.project_path)}"
+${routerNote}
 - Use TypeScript throughout
-- Structure: src/app/ for routes, src/components/ for UI, src/lib/ for utilities`;
+- Structure: ${router === "pages" ? "src/pages/ for routes" : "src/app/ for routes"}, src/components/ for UI, src/lib/ for utilities`;
+      break;
     }
     case "react-spa":
-      return `
+      instructions = `
 - Initialize a React + Vite project using \`${pm} create vite ${project.project_name} --template react-ts\` inside "${expandTilde(project.project_path)}"
 - Use React with TypeScript throughout
 - Structure: src/pages/ for routes, src/components/ for UI, src/lib/ for utilities`;
-    case "node-api":
-      return `
+      break;
+    case "node-api": {
+      const framework = versions["node-framework"] ?? "hono";
+      const frameworkLabel = SERVICE_LABEL_MAP[framework] ?? framework;
+      instructions = `
 - Create the project directory "${projectDir}" and run \`${pm} init\`
 - Set up a Node.js API server with TypeScript
-- Use Express or Hono as the HTTP framework
+- Use ${frameworkLabel} as the HTTP framework
 - Structure: src/routes/ for API routes, src/services/ for business logic, src/lib/ for utilities`;
-    case "monorepo":
-      return `
-- Create the project directory "${projectDir}" and set up a monorepo workspace
-- Use ${pm} workspaces
-- Structure: packages/ for shared libraries, apps/ for applications
-- Include a root package.json with workspace configuration`;
-    case "cli":
-      return `
+      break;
+    }
+    case "cli": {
+      const lang = versions["cli-language"] ?? "typescript";
+      switch (lang) {
+        case "go":
+          instructions = `
+- Create the project directory "${projectDir}" and run \`go mod init\`
+- Set up a CLI tool using Go with the Cobra framework
+- Structure: cmd/ for CLI commands, internal/ for business logic
+- Include a main.go entry point`;
+          break;
+        case "rust":
+          instructions = `
+- Create the project directory "${projectDir}" using \`cargo init\`
+- Set up a CLI tool using Rust with the Clap framework
+- Structure: src/commands/ for CLI commands, src/lib.rs for library code
+- Include proper error handling with anyhow or thiserror`;
+          break;
+        case "python":
+          instructions = `
+- Create the project directory "${projectDir}" and initialize with \`uv init\` or \`poetry init\`
+- Set up a CLI tool using Python with Click or Typer
+- Structure: src/ for source code, commands/ for CLI commands
+- Include a pyproject.toml with proper entry points`;
+          break;
+        default:
+          instructions = `
 - Create the project directory "${projectDir}" and run \`${pm} init\`
 - Set up a CLI tool with TypeScript
 - Use a CLI framework like Commander.js or yargs
 - Structure: src/commands/ for CLI commands, src/lib/ for utilities
 - Include a bin entry in package.json`;
-    case "tanstack-start":
-      return `
+      }
+      break;
+    }
+    case "tanstack-start": {
+      const libs = versions["tanstack-libraries"]?.split(",").filter(Boolean) ?? [];
+      const libInstructions =
+        libs.length > 0
+          ? `\n- Install additional TanStack libraries: ${libs.map((l) => `\`${l.replace("tanstack-", "@tanstack/react-")}\``).join(", ")}`
+          : "";
+      instructions = `
 - Create the project directory "${projectDir}" and set up TanStack Start
 - Use TanStack Router for file-based routing
 - Use React with TypeScript throughout
-- Structure: app/routes/ for routes, app/components/ for UI, app/lib/ for utilities`;
+- Structure: app/routes/ for routes, app/components/ for UI, app/lib/ for utilities${libInstructions}`;
+      break;
+    }
     default:
-      return `
+      instructions = `
 - Create the project directory "${projectDir}" and run \`${pm} init\`
 - Use TypeScript throughout`;
   }
+
+  instructions += getMonorepoInstructions(versions, pm);
+  return instructions;
 }
 
 // ---------------------------------------------------------------------------
@@ -240,13 +318,31 @@ Create the full project with all files, directories, dependencies, and configura
 export function buildImplementationPrompt(project: GeneratorProject): string {
   const serviceLabels = resolveServiceLabels(project.services);
   const { label: platformLabel } = getPlatformInfo(project);
+  const versions = project.tool_versions ?? {};
 
   const sections: string[] = [];
 
+  const platformDetails: string[] = [`Platform: ${platformLabel}`];
+  // Include relevant advanced options in implementation context
+  if (project.platform === "nextjs" && versions["nextjs-router"] === "pages") {
+    platformDetails.push("Router: Pages Router");
+  }
+  if (project.platform === "node-api" && versions["node-framework"]) {
+    platformDetails.push(
+      `HTTP Framework: ${SERVICE_LABEL_MAP[versions["node-framework"]] ?? versions["node-framework"]}`,
+    );
+  }
+  if (project.platform === "cli" && versions["cli-language"] && versions["cli-language"] !== "typescript") {
+    platformDetails.push(`Language: ${SERVICE_LABEL_MAP[versions["cli-language"]] ?? versions["cli-language"]}`);
+  }
+  if (versions.monorepo === "true") {
+    platformDetails.push(`Monorepo: ${SERVICE_LABEL_MAP[versions["monorepo-tool"] ?? "pnpm"] ?? "pnpm workspaces"}`);
+  }
+  platformDetails.push(`Package Manager: ${project.package_manager}`);
+
   sections.push(`# Implementation Requirements for "${project.title}"
 
-Platform: ${platformLabel}
-Package Manager: ${project.package_manager}
+${platformDetails.join("\n")}
 
 ## Description
 ${project.idea_description}`);

@@ -14,8 +14,8 @@ import {
   DESIGN_VIBES,
   EMAIL_OPTIONS,
   FEATURE_OPTIONS,
-  FRAMEWORK_OPTIONS,
   PAYMENT_OPTIONS,
+  PLATFORMS,
 } from "@/lib/constants";
 import type { GeneratorProject } from "@/lib/types";
 
@@ -99,7 +99,7 @@ function DescriptionSection({ description }: { description: string }) {
 }
 
 export function ProjectSettingsDialog({ open, onOpenChange, project }: ProjectSettingsDialogProps) {
-  const framework = FRAMEWORK_OPTIONS.find((f) => f.id === project.platform);
+  const framework = PLATFORMS.find((f) => f.id === project.platform);
   const vibes = DESIGN_VIBES.filter((v) => project.design_vibes.includes(v.id));
   const constraints = [...CONSTRAINT_OPTIONS].filter((c) => project.constraints.includes(c.id));
 

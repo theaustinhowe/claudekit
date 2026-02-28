@@ -49,7 +49,7 @@ describe("buildPrototypePrompt", () => {
   it("includes platform info for nextjs", () => {
     const project = makeProject({ platform: "nextjs" });
     const prompt = buildPrototypePrompt(project);
-    expect(prompt).toContain("Next.js App Router");
+    expect(prompt).toContain("Next.js");
     expect(prompt).toContain("next-app");
   });
 
@@ -66,11 +66,11 @@ describe("buildPrototypePrompt", () => {
     expect(prompt).toContain("Node.js API");
   });
 
-  it("includes platform info for monorepo", () => {
-    const project = makeProject({ platform: "monorepo" });
+  it("includes monorepo wrapper instructions when enabled", () => {
+    const project = makeProject({ tool_versions: { monorepo: "true", "monorepo-tool": "turborepo" } });
     const prompt = buildPrototypePrompt(project);
-    expect(prompt).toContain("Monorepo");
-    expect(prompt).toContain("workspaces");
+    expect(prompt).toContain("Turborepo");
+    expect(prompt).toContain("monorepo");
   });
 
   it("includes platform info for cli", () => {
@@ -211,7 +211,7 @@ describe("buildImplementationPrompt", () => {
     const prompt = buildImplementationPrompt(project);
     expect(prompt).toContain("Test App");
     expect(prompt).toContain("A test application for testing");
-    expect(prompt).toContain("Next.js App Router");
+    expect(prompt).toContain("Next.js");
     expect(prompt).toContain("pnpm");
   });
 
@@ -246,7 +246,7 @@ describe("buildImplementationPrompt", () => {
     const project = makeProject({ services: ["next-auth"] });
     const prompt = buildImplementationPrompt(project);
     expect(prompt).toContain("NextAuth.js");
-    expect(prompt).toContain("NEXTAUTH_SECRET");
+    expect(prompt).toContain("AUTH_SECRET");
   });
 
   it("includes lucia service details", () => {
