@@ -28,8 +28,8 @@ Complete reference for all HTTP endpoints, WebSocket connections, and Server Act
 | Metric | Count |
 |--------|-------|
 | Total REST endpoints | ~150 |
-| Next.js API route files | 83 |
-| Fastify route groups | 11 |
+| Next.js API route files | 91 |
+| Fastify route groups | 10 |
 | Server Action files | 42 |
 | Exported server action functions | ~170 |
 | Apps with API routes | 6 |
@@ -138,6 +138,7 @@ Gadget, Inspector, Inside, and B4U share a session pattern from `@claudekit/sess
 | `GET` | `/api/sessions/[id]` | Get session details + recent logs |
 | `GET` | `/api/sessions/[id]/stream` | SSE stream of session events |
 | `POST` | `/api/sessions/[id]/cancel` | Cancel a running session |
+| `POST` | `/api/sessions/cleanup` | Clean up stale/orphaned sessions |
 
 **Session Create Body:**
 ```json
@@ -544,6 +545,26 @@ Runs tool availability checks.
 
 **Body:** `{ "toolIds": ["biome", "pnpm", "git"] }`
 **Response** `200`: `{ "results": {...} }`
+
+#### `POST /api/toolbox/run`
+
+Executes a tool install or update command. Returns an SSE stream of command output.
+
+**Body:** `{ "toolId": "node", "action": "install" | "update", "installMethod": "brew" }`
+**Response** `200`: `text/event-stream` (SSE with command output)
+
+#### `GET /api/toolbox/settings`
+
+Returns the list of selected toolbox tool IDs.
+
+**Response** `200`: `{ "toolIds": ["node", "pnpm", "biome"] }`
+
+#### `PUT /api/toolbox/settings`
+
+Updates toolbox tool selection.
+
+**Body:** `{ "toolIds": ["node", "pnpm", "biome"] }`
+**Response** `200`: `{ "ok": true }`
 
 ### Claude Usage
 
@@ -1661,6 +1682,51 @@ Saves run state.
 
 **Response** `200`: `{ "ok": true }`
 
+### Preflight
+
+#### `GET /api/preflight`
+
+Checks external dependency availability before starting a run.
+
+**Response** `200`:
+```json
+{
+  "ok": true,
+  "checks": [
+    { "name": "ffmpeg", "available": true, "message": "ffmpeg is installed" },
+    { "name": "elevenlabs", "available": false, "message": "ELEVENLABS_API_KEY not set..." }
+  ]
+}
+```
+
+### Phase Threads
+
+#### `GET /api/runs/[runId]/threads/[threadId]`
+
+Returns a phase thread (revision history for a specific phase).
+
+**Response** `200`: `{ "id": "...", "runId": "...", "phase": 2, "revision": 1, "messages": [...], "decisions": [...], "status": "...", "createdAt": 1234567890 }`
+**Response** `404`: `{ "error": "Thread not found" }`
+
+#### `PUT /api/runs/[runId]/threads/[threadId]`
+
+Creates or updates a phase thread.
+
+**Body:** `{ "phase": 2, "revision": 1, "messages": [...], "decisions": [...], "status": "active", "createdAt": "..." }`
+**Response** `200`: `{ "ok": true }`
+
+### Phase Validation
+
+#### `GET /api/runs/[runId]/validate-phase`
+
+Validates that prerequisites for a phase are met before advancement.
+
+| Parameter | In | Type | Description |
+|-----------|----|------|-------------|
+| `phase` | query | number (2–7) | Phase to validate |
+
+**Response** `200`: `{ "valid": true }` or `{ "valid": false, "message": "Complete Phase N first." }`
+
 ### Sessions & Filesystem
 
 See [Common Patterns > Session System](#session-system) and [Filesystem Browsing](#filesystem-browsing).
@@ -1690,15 +1756,17 @@ Inspector uses **server actions** as its primary data layer rather than REST API
 
 ### REST Routes
 
-See [Common Patterns > Session System](#session-system). Inspector exposes the standard `GET /api/sessions`, `POST /api/sessions`, `GET /api/sessions/[id]/stream`, and `POST /api/sessions/[id]/cancel` endpoints.
+See [Common Patterns > Session System](#session-system). Inspector exposes the standard `GET /api/sessions`, `POST /api/sessions`, `GET /api/sessions/[id]/stream`, `POST /api/sessions/[id]/cancel`, and `POST /api/sessions/cleanup` endpoints.
 
 ### Server Actions
 
 Inspector's functionality is accessed via Next.js Server Actions:
 
+- **Account:** `hasValidPAT`, `getAuthenticatedUser`, `startAccountSync`, `getAccountPRs`, `getAccountStats`
 - **GitHub sync:** `syncRepo`, `syncPRs`, `syncPRComments`, `fetchPRDiff`, `fetchFileContent`
 - **PR analysis:** `getRecentPRs`, `getDashboardStats`, `getPRsWithComments`, `getLargePRs`, `getWeeklyPRCounts`
 - **Skills:** `startSkillAnalysis`, `getSkillAnalyses`, `getSkillsForAnalysis`, `markSkillAddressed`, `getSkillTrends`, `compareAnalyses`
+- **Skill groups:** `getSkillGroups`, `getSkillGroupPreview`, `createSkillGroup`, `updateSkillGroup`, `deleteSkillGroup`, `exportSkillGroupAsFiles`
 - **PR splitting:** `startSplitAnalysis`, `getSplitPlan`, `updateSubPRDescription`
 - **Comment resolution:** `startCommentFixes`, `getCommentFixes`, `resolveCommentFix`, `resolveAllFixes`
 - **Reviewers:** `getReviewerStats`, `getReviewerComments`, `getReviewerFileStats`
@@ -1844,13 +1912,14 @@ All Server Actions use `"use server"` and are called via React Server Components
 | `insertSessionLogs` | gadget, inside, inspector | Batch-persist session logs |
 | `getSetting` / `setSetting` | gadget, inside, inspector | App-level key/value settings |
 
-### Gadget-Specific Actions (16 files)
+### Gadget-Specific Actions (15 files)
 
 | Module | Key Functions |
 |--------|---------------|
 | `repos` | `getRepos`, `getRepoById`, `deleteRepos`, `readRepoFile`, `getGitHubRepoSettings`, `updateGitHubRepoSettings`, `setupGitHubRemote` |
 | `scans` | `getScanRoots`, `createScanRoot`, `deleteScanRoot` |
 | `findings` | `getFindingsForRepo`, `refreshAIFileFindings`, `getAIFilesForRepo` |
+| `fixes` | Fix action queries and lifecycle management |
 | `policies` | `getPolicies`, `createPolicy`, `updatePolicy`, `deletePolicy` |
 | `claude-config` | `getClaudeConfig`, `saveClaudeSettingsJson`, `saveClaudeMd`, `saveDefaultClaudeSettings`, `saveRuleFile`, `removeRuleFile` |
 | `concepts` | `getConceptsForRepo`, `getAllConcepts`, `linkConcept`, `unlinkConcept`, `syncConceptToRepo`, `installConcept` |
@@ -1859,11 +1928,9 @@ All Server Actions use `"use server"` and are called via React Server Components
 | `manual-findings` | `createManualFinding`, `updateManualFinding`, `deleteManualFinding`, `resolveManualFinding` |
 | `code-browser` | `getDirectoryContents`, `getCodeFileContent`, `getBranches`, `getCommitLog`, `getReadmeContent`, `getFileTree`, `getGitStatus`, `commitChanges` |
 | `env-keys` | `readEnvLocal`, `writeEnvKey`, `getConfiguredEnvKeyNames`, `hasGitHubPat` |
-| `toolbox` | `getToolboxToolIds`, `setToolboxToolIds` |
-| `settings` | `getSetting`, `setSetting`, `getCleanupFiles`, `setCleanupFiles`, `getDashboardStats`, `getDashboardOnboardingState` |
-| `policy-templates` | `getPolicyTemplates`, `createPolicyTemplate`, `deletePolicyTemplate` |
+| `settings` | `getSetting`, `setSetting`, `getEncryptionKey`, `getCleanupFiles`, `setCleanupFiles`, `getDashboardStats`, `getDashboardOnboardingState` |
 
-### Inside-Specific Actions (8 files)
+### Inside-Specific Actions (9 files)
 
 | Module | Key Functions |
 |--------|---------------|
@@ -1872,17 +1939,21 @@ All Server Actions use `"use server"` and are called via React Server Components
 | `prototype-files` | `getProjectTree`, `getProjectFileContent` |
 | `auto-fix` | `saveAutoFixRun`, `updateAutoFixRun`, `getAutoFixHistory`, `getAutoFixEnabled`, `setAutoFixEnabled` |
 | `upgrade-tasks` | `getUpgradeTasks`, `createUpgradeTasks`, `updateUpgradeTask`, `deleteUpgradeTasks` |
+| `code-browser` | `openFolderInFinder` |
 
-### Inspector-Specific Actions (8 files)
+### Inspector-Specific Actions (11 files)
 
 | Module | Key Functions |
 |--------|---------------|
+| `account` | `hasValidPAT`, `getAuthenticatedUser`, `startAccountSync`, `getAccountPRs`, `getAccountStats` |
 | `github` | `syncRepo`, `syncPRs`, `syncPRComments`, `fetchPRDiff`, `fetchFileContent`, `getConnectedRepos`, `removeRepo` |
 | `prs` | `getRecentPRs`, `getDashboardStats`, `getPRsWithComments`, `getLargePRs`, `getWeeklyPRCounts`, `getPRComments` |
 | `skills` | `startSkillAnalysis`, `getSkillAnalyses`, `getSkillsForAnalysis`, `markSkillAddressed`, `getSkillTrends`, `compareAnalyses` |
+| `skill-groups` | `getSkillGroups`, `getSkillGroupPreview`, `createSkillGroup`, `updateSkillGroup`, `deleteSkillGroup`, `exportSkillGroupAsFiles` |
 | `splitter` | `startSplitAnalysis`, `getSplitPlan`, `updateSubPRDescription` |
 | `resolver` | `startCommentFixes`, `getCommentFixes`, `resolveCommentFix`, `resolveAllFixes` |
 | `reviewers` | `getReviewerStats`, `getReviewerComments`, `getReviewerFileStats` |
+| `settings` | `getSetting`, `setSetting` |
 
 ### DuckTails-Specific Actions (4 files)
 

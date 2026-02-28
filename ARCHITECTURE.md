@@ -94,7 +94,7 @@ claudekit/
 │   ├── duckdb/                 # Connection factory, query helpers, migrations
 │   ├── session/                # Session lifecycle, ring buffer, SSE streaming
 │   ├── claude-runner/          # Claude CLI spawn, stream-JSON parsing
-│   ├── ui/                     # 65+ shadcn/ui components, shared layouts
+│   ├── ui/                     # 54 shadcn/ui components, shared layouts
 │   ├── hooks/                  # useAppTheme, useAutoScroll, useSessionStream
 │   ├── logger/                 # Pino logging, daily rotation, log querying
 │   ├── gogo-shared/            # GoGo types, state machine, WebSocket protocol
@@ -183,7 +183,7 @@ apps/<app>/
 │  │                    Shared Packages Layer                         │   │
 │  │  ┌────┐ ┌───────┐ ┌────────┐ ┌────────┐ ┌──────┐ ┌──────────┐│   │
 │  │  │ UI │ │ Hooks │ │ GitHub │ │Validatn│ │ MCP  │ │Playwright││   │
-│  │  │65+ │ │Theme, │ │Octokit │ │  Zod   │ │ Logs │ │ Browser  ││   │
+│  │  │ 54 │ │Theme, │ │Octokit │ │  Zod   │ │ Logs │ │ Browser  ││   │
 │  │  │comp│ │Stream │ │RateLmt │ │schemas │ │5tools│ │ automate ││   │
 │  │  └────┘ └───────┘ └────────┘ └────────┘ └──────┘ └──────────┘│   │
 │  └─────────────────────────────────────────────────────────────────┘   │
@@ -242,9 +242,9 @@ apps/<app>/
 3. **Structure** — Monorepo patterns, package managers, repo type classification
 4. **Custom Rules** — User-defined policy-based findings
 
-**Session Runners** (7 types): `scan`, `quick-improve`, `finding-fix`, `fix-apply`, `ai-file-gen`, `cleanup`, `toolbox-command`
+**Session Runners** (6 types): `scan`, `quick-improve`, `finding-fix`, `fix-apply`, `ai-file-gen`, `cleanup`
 
-**Database**: DuckDB at `~/.gadget/data.duckdb` with 32 tables covering sessions, repos, scans, findings, fixes, policies, and configuration.
+**Database**: DuckDB at `~/.gadget/data.duckdb` with 17 tables covering sessions, repos, scans, findings, fixes, policies, concepts, and configuration.
 
 ### apps/gogo-web + apps/gogo-orchestrator — Job Orchestration
 
@@ -383,7 +383,7 @@ Spawns Claude CLI processes with stream-JSON output parsing.
 
 ### @claudekit/ui — Component Library
 
-65+ shadcn/ui-style components built on Base UI primitives.
+54 shadcn/ui-style components built on Base UI primitives, plus 6 shared layout components.
 
 **Categories**:
 - **Form**: input, textarea, checkbox, switch, select, slider, label
@@ -396,12 +396,13 @@ Spawns Claude CLI processes with stream-JSON output parsing.
 
 ### @claudekit/hooks — React Hooks
 
-**Hooks**:
+**Hooks** (5 hooks + ThemeFOUCScript):
 - `useAppTheme(options?)` — 9 color themes, localStorage persistence, CSS class switching on `<html>`
 - `useAutoScroll(enabled?)` — MutationObserver-based auto-scroll with user intent detection
 - `useIsMobile()` — 768px breakpoint
 - `useSessionStream(options)` — SSE consumer with reconnection (3 retries, exponential backoff), log accumulation (max 500)
 - `useClaudeUsageRefresh(options)` — Rate limit and usage polling
+- `ThemeFOUCScript` — Inline script component to prevent flash of unstyled content during hydration
 
 ### @claudekit/logger — Structured Logging
 
@@ -708,13 +709,13 @@ Apps reconcile state on startup:
 
 **Trade-off**: Different framework from the rest of the monorepo. Developers need to understand both Next.js and Fastify patterns.
 
-### File-Based Migrations vs CREATE IF NOT EXISTS
+### Numbered Migration Files
 
-**Decision**: GoGo Orchestrator uses numbered migration files (`001_initial.sql`, `002_add_column.sql`). Other apps use `CREATE TABLE IF NOT EXISTS` in schema files.
+**Decision**: All DuckDB apps use numbered `.sql` migration files (e.g., `001_initial.sql`, `002_add_column.sql`) tracked via `runMigrations()` from `@claudekit/duckdb`.
 
-**Rationale**: GoGo has a more complex schema that evolves over time and needs migration tracking. Simpler apps can reset their databases during development without migration overhead.
+**Rationale**: Numbered migrations provide a consistent, trackable way to evolve database schemas across all apps. The `_migrations` table in each database records which migrations have been applied, enabling idempotent execution.
 
-**Trade-off**: Apps without migrations can't safely evolve schemas in production. Breaking schema changes require `pnpm db:reset`.
+**Trade-off**: Migration files are additive-only. Destructive schema changes still require `pnpm db:reset` during development. Each app manages its own migration directory independently.
 
 ### REST + WebSocket Hybrid (GoGo)
 
