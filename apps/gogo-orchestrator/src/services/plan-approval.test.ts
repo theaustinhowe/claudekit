@@ -129,7 +129,7 @@ describe("plan-approval", () => {
             typeof call[1] === "string" &&
             call[1].includes("job_events") &&
             Array.isArray(call[2]) &&
-            (call[2] as unknown[]).includes("plan_approved"),
+            call[2].includes("plan_approved"),
         );
       expect(eventInsert).toBeDefined();
 

@@ -36,7 +36,7 @@ describe("PUT /api/toolbox/settings", () => {
       body: JSON.stringify(body),
     });
 
-    const response = await PUT(request as unknown as NextRequest);
+    const response = await PUT(request as NextRequest);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -52,7 +52,7 @@ describe("PUT /api/toolbox/settings", () => {
       body: JSON.stringify(body),
     });
 
-    const response = await PUT(request as unknown as NextRequest);
+    const response = await PUT(request as NextRequest);
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -67,7 +67,7 @@ describe("PUT /api/toolbox/settings", () => {
       body: "not json",
     });
 
-    const response = await PUT(request as unknown as NextRequest);
+    const response = await PUT(request as NextRequest);
 
     expect(response.status).toBe(500);
   });

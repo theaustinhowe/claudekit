@@ -30,6 +30,12 @@ import { emitEvent, getLiveSession } from "../services/session-bridge.js";
 import { broadcast, sendLogToSubscribers } from "../ws/handler.js";
 import { emitLog, getRingBuffer, type LogState, shutdownLogBuffers, updateJobStatus } from "./job-logging.js";
 
+type LiveSession = NonNullable<ReturnType<typeof getLiveSession>>;
+
+function createMockLiveSession(overrides: Partial<LiveSession>): LiveSession {
+  return { status: "running", events: [], ...overrides } as LiveSession;
+}
+
 describe("job-logging", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -78,10 +84,7 @@ describe("job-logging", () => {
     });
 
     it("should route through session when a live session exists", async () => {
-      vi.mocked(getLiveSession).mockReturnValue({
-        status: "running",
-        events: [],
-      } as unknown as ReturnType<typeof getLiveSession>);
+      vi.mocked(getLiveSession).mockReturnValue(createMockLiveSession({ status: "running" }));
 
       const state: LogState = { sequence: 0 };
 
@@ -109,10 +112,7 @@ describe("job-logging", () => {
     });
 
     it("should route through session when session status is pending", async () => {
-      vi.mocked(getLiveSession).mockReturnValue({
-        status: "pending",
-        events: [],
-      } as unknown as ReturnType<typeof getLiveSession>);
+      vi.mocked(getLiveSession).mockReturnValue(createMockLiveSession({ status: "pending" }));
 
       const state: LogState = { sequence: 0 };
 
@@ -184,14 +184,15 @@ describe("job-logging", () => {
 
   describe("getRingBuffer with session events", () => {
     it("should return session events when a live session has buffered events", () => {
-      vi.mocked(getLiveSession).mockReturnValue({
-        status: "running",
-        events: [
-          { log: "Session line 1", logType: "stdout" },
-          { log: "Session line 2", logType: "stderr" },
-          { type: "progress", progress: 50 }, // non-log event should be filtered
-        ],
-      } as unknown as ReturnType<typeof getLiveSession>);
+      vi.mocked(getLiveSession).mockReturnValue(
+        createMockLiveSession({
+          events: [
+            { log: "Session line 1", logType: "stdout" },
+            { log: "Session line 2", logType: "stderr" },
+            { type: "progress", progress: 50 }, // non-log event should be filtered
+          ] as LiveSession["events"],
+        }),
+      );
 
       const buffer = getRingBuffer("job-session-ring");
       expect(buffer).toHaveLength(2);

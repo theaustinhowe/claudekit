@@ -293,8 +293,8 @@ describe("Schema validation", () => {
           issue_number: 42,
         });
 
-      const job1 = await queryOne({} as unknown as Parameters<typeof queryOne>[0], "INSERT INTO jobs ...", []);
-      const job2 = await queryOne({} as unknown as Parameters<typeof queryOne>[0], "INSERT INTO jobs ...", []);
+      const job1 = await queryOne({} as Parameters<typeof queryOne>[0], "INSERT INTO jobs ...", []);
+      const job2 = await queryOne({} as Parameters<typeof queryOne>[0], "INSERT INTO jobs ...", []);
 
       expect((job1 as Record<string, unknown>).issue_number).toBe(42);
       expect((job2 as Record<string, unknown>).issue_number).toBe(42);

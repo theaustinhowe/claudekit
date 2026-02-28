@@ -14,7 +14,13 @@ vi.mock("node:fs", () => {
 });
 
 import fs from "node:fs";
+import type { DuckDBConnection } from "@duckdb/node-api";
 import { runMigrations } from "./migrate.js";
+
+/** Helper to create a typed mock of DuckDBConnection with only the methods tests need */
+function mockConnection(overrides: Partial<Record<keyof DuckDBConnection, unknown>>): DuckDBConnection {
+  return overrides as DuckDBConnection;
+}
 
 /** Create a mock DuckDB connection for migration tests */
 function createMockConnection() {
@@ -22,10 +28,12 @@ function createMockConnection() {
     getRows: vi.fn().mockResolvedValue([]),
   };
 
-  return {
-    run: vi.fn().mockResolvedValue(runResult),
-    _runResult: runResult,
-  } as unknown as Parameters<typeof runMigrations>[0] & { _runResult: typeof runResult };
+  return Object.assign(
+    mockConnection({
+      run: vi.fn().mockResolvedValue(runResult),
+    }),
+    { _runResult: runResult },
+  );
 }
 
 describe("runMigrations", () => {

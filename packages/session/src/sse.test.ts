@@ -51,7 +51,7 @@ function createMockManager(
       if (subscribeFn) return subscribeFn(cb);
       return vi.fn();
     }),
-  } as unknown as Pick<SessionManager, "getLiveSession" | "subscribe">;
+  } as Pick<SessionManager, "getLiveSession" | "subscribe">;
 }
 
 function createMockReplay(overrides?: Partial<SSEReplayCallbacks>): SSEReplayCallbacks {
@@ -64,9 +64,7 @@ function createMockReplay(overrides?: Partial<SSEReplayCallbacks>): SSEReplayCal
 
 function createMockRequest(): Request {
   const controller = new AbortController();
-  return {
-    signal: controller.signal,
-  } as unknown as Request;
+  return new Request("http://localhost/test", { signal: controller.signal });
 }
 
 describe("createSessionSSEResponse", () => {
@@ -424,7 +422,7 @@ describe("createSessionSSEResponse", () => {
         return unsubscribe;
       });
       const replay = createMockReplay();
-      const request = { signal: controller.signal } as unknown as Request;
+      const request = new Request("http://localhost/test", { signal: controller.signal });
 
       const response = createSessionSSEResponse({
         sessionId: "s1",

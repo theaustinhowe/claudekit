@@ -22,13 +22,18 @@ vi.mock("@duckdb/node-api", () => {
   return { DuckDBUUIDValue, DuckDBTimestampTZValue };
 });
 
+import type { DuckDBConnection } from "@duckdb/node-api";
 import { DuckDBTimestampTZValue, DuckDBUUIDValue } from "@duckdb/node-api";
 import { checkpoint, convertRow, execute, queryAll, queryOne, withTransaction } from "./helpers.js";
 
-// The real DuckDB classes have private constructors, but our mocks replace them.
-// Cast to constructable types to avoid TypeScript errors in tests.
+// DuckDB classes have private constructors; double-cast needed
 const MockUUID = DuckDBUUIDValue as unknown as new (value: string) => { toString(): string };
 const MockTimestamp = DuckDBTimestampTZValue as unknown as new (micros: bigint) => { micros: bigint };
+
+/** Helper to create a typed mock of DuckDBConnection with only the methods tests need */
+function mockConnection(overrides: Partial<Record<keyof DuckDBConnection, unknown>>): DuckDBConnection {
+  return overrides as DuckDBConnection;
+}
 
 /** Create a mock DuckDB prepared statement */
 function createMockPrepared(rows: Record<string, unknown>[] = []) {
@@ -46,9 +51,9 @@ function createMockPrepared(rows: Record<string, unknown>[] = []) {
 
 /** Create a mock DuckDB connection */
 function createMockConn(prepared = createMockPrepared()) {
-  return {
+  return mockConnection({
     prepare: vi.fn().mockResolvedValue(prepared),
-  } as unknown as Parameters<typeof queryAll>[0];
+  });
 }
 
 describe("convertRow", () => {
@@ -293,12 +298,12 @@ describe("withTransaction", () => {
   it("wraps function in BEGIN/COMMIT", async () => {
     const calls: string[] = [];
     const prepared = createMockPrepared();
-    const conn = {
+    const conn = mockConnection({
       prepare: vi.fn().mockImplementation((sql: string) => {
         calls.push(sql);
         return Promise.resolve(prepared);
       }),
-    } as unknown as Parameters<typeof withTransaction>[0];
+    });
 
     const result = await withTransaction(conn, async () => {
       calls.push("user-fn");
@@ -315,12 +320,12 @@ describe("withTransaction", () => {
   it("rolls back on error", async () => {
     const calls: string[] = [];
     const prepared = createMockPrepared();
-    const conn = {
+    const conn = mockConnection({
       prepare: vi.fn().mockImplementation((sql: string) => {
         calls.push(sql);
         return Promise.resolve(prepared);
       }),
-    } as unknown as Parameters<typeof withTransaction>[0];
+    });
 
     const error = new Error("test error");
 

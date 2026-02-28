@@ -94,9 +94,8 @@ describe("health-events", () => {
       await vi.waitFor(() => {
         expect(execute).toHaveBeenCalled();
       });
-      const params = vi.mocked(execute).mock.calls[0][2] as unknown[];
       // metadata param should be null (index 3: id, type, message, metadata, timestamp)
-      expect(params[3]).toBeNull();
+      expect(vi.mocked(execute).mock.calls[0][2]?.[3]).toBeNull();
     });
 
     it("should maintain ring buffer of max 100 events", async () => {

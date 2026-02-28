@@ -25,7 +25,7 @@ function makeRouteContext(params: Record<string, string>) {
 
 function makeMockRequest(url = "http://localhost/api") {
   const controller = new AbortController();
-  return { url, signal: controller.signal } as unknown as Request;
+  return new Request(url, { signal: controller.signal });
 }
 
 // ---------------------------------------------------------------------------

@@ -220,7 +220,7 @@ describe("skill-groups actions", () => {
     it("sets description to null when not provided", async () => {
       await updateSkillGroup("g1", "Name", "category");
 
-      const params = mockExecute.mock.calls[0][2] as unknown[];
+      const params = mockExecute.mock.calls[0][2];
       expect(params).toContain(null);
     });
   });

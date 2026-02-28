@@ -67,23 +67,31 @@ function makePRItem(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
-describe("createAccountSyncRunner", () => {
-  let mockOctokit: {
-    rest: {
-      search: { issuesAndPullRequests: ReturnType<typeof vi.fn> };
-      pulls: { get: ReturnType<typeof vi.fn> };
-    };
+interface MockOctokit {
+  rest: {
+    search: { issuesAndPullRequests: ReturnType<typeof vi.fn> };
+    pulls: { get: ReturnType<typeof vi.fn> };
   };
+}
+
+function createMockOctokit(): MockOctokit & ReturnType<typeof getOctokit> {
+  // biome-ignore lint/suspicious/noExplicitAny: Test mock — partial Octokit structure
+  const mock: any = {
+    rest: {
+      search: { issuesAndPullRequests: vi.fn() },
+      pulls: { get: vi.fn() },
+    },
+  };
+  return mock;
+}
+
+describe("createAccountSyncRunner", () => {
+  let mockOctokit: MockOctokit & ReturnType<typeof getOctokit>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockOctokit = {
-      rest: {
-        search: { issuesAndPullRequests: vi.fn() },
-        pulls: { get: vi.fn() },
-      },
-    };
-    mockGetOctokit.mockReturnValue(mockOctokit as unknown as ReturnType<typeof getOctokit>);
+    mockOctokit = createMockOctokit();
+    mockGetOctokit.mockReturnValue(mockOctokit);
   });
 
   it("throws if no authenticated user", async () => {
