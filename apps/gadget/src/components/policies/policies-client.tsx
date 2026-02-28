@@ -43,8 +43,10 @@ import { toast } from "sonner";
 import { PageTabs } from "@/components/layout/page-tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTabNavigation } from "@/hooks/use-tab-navigation";
+import { createCustomRule } from "@/lib/actions/custom-rules";
 import { createPolicy, deletePolicy, updatePolicy } from "@/lib/actions/policies";
 import type { CustomRule, Policy } from "@/lib/types";
+import { PolicyFormatDocs } from "./format-docs";
 import { PolicyForm, type PolicyFormData } from "./policy-form";
 import { RulesTab } from "./rules-tab";
 
@@ -71,6 +73,7 @@ export function PoliciesClient({ policies: initialPolicies, rules }: PoliciesCli
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createDefaults, setCreateDefaults] = useState<Partial<Policy> | undefined>(undefined);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const importRuleInputRef = useRef<HTMLInputElement>(null);
   const [ruleCreateTrigger, setRuleCreateTrigger] = useState(0);
 
   // --- Edit ---
@@ -208,6 +211,40 @@ export function PoliciesClient({ policies: initialPolicies, rules }: PoliciesCli
     }
   };
 
+  // --- Rule Import ---
+  const handleRuleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.name || typeof data.name !== "string") {
+        toast.error("Invalid rule file: missing name");
+        return;
+      }
+      if (!data.rule_type || typeof data.rule_type !== "string") {
+        toast.error("Invalid rule file: missing rule_type");
+        return;
+      }
+      await createCustomRule({
+        name: data.name,
+        description: data.description ?? undefined,
+        category: data.category ?? "custom",
+        severity: data.severity ?? "warning",
+        rule_type: data.rule_type,
+        config: data.config ?? {},
+        suggested_actions: data.suggested_actions ?? [],
+        policy_id: data.policy_id ?? null,
+      });
+      toast.success("Rule imported");
+      router.refresh();
+    } catch {
+      toast.error("Failed to import rule — check JSON format");
+    } finally {
+      if (importRuleInputRef.current) importRuleInputRef.current.value = "";
+    }
+  };
+
   const tabActions = (() => {
     switch (activeTab) {
       case "policies":
@@ -225,10 +262,16 @@ export function PoliciesClient({ policies: initialPolicies, rules }: PoliciesCli
         );
       case "rules":
         return (
-          <Button size="sm" onClick={() => setRuleCreateTrigger((t) => t + 1)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Rule
-          </Button>
+          <>
+            <Button variant="outline" size="sm" onClick={() => importRuleInputRef.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+            <Button size="sm" onClick={() => setRuleCreateTrigger((t) => t + 1)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Rule
+            </Button>
+          </>
         );
       default:
         return null;
@@ -238,6 +281,7 @@ export function PoliciesClient({ policies: initialPolicies, rules }: PoliciesCli
   return (
     <div className="flex flex-col">
       <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+      <input ref={importRuleInputRef} type="file" accept=".json" className="hidden" onChange={handleRuleImport} />
       <PageTabs
         tabs={[
           { id: "policies", label: "Policies", count: policies.length },
@@ -406,6 +450,8 @@ export function PoliciesClient({ policies: initialPolicies, rules }: PoliciesCli
                   </Card>
                 </motion.div>
               ))}
+
+              <PolicyFormatDocs />
             </div>
           )}
 

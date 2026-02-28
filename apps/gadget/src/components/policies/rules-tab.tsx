@@ -15,12 +15,13 @@ import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent } from "@claudekit/ui/components/card";
 import { Switch } from "@claudekit/ui/components/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Download, Edit, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { createCustomRule, deleteCustomRule, toggleCustomRule, updateCustomRule } from "@/lib/actions/custom-rules";
 import type { CustomRule, Policy } from "@/lib/types";
+import { RuleFormatDocs } from "./format-docs";
 import { RuleForm, type RuleFormData } from "./rule-form";
 
 interface RulesTabProps {
@@ -101,6 +102,27 @@ export function RulesTab({ rules, policies, createTrigger = 0 }: RulesTabProps) 
     }
   };
 
+  const handleDownload = (rule: CustomRule) => {
+    const exportData = {
+      name: rule.name,
+      description: rule.description,
+      category: rule.category,
+      severity: rule.severity,
+      rule_type: rule.rule_type,
+      config: rule.config,
+      suggested_actions: rule.suggested_actions,
+      policy_id: rule.policy_id,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${rule.name.toLowerCase().replace(/\s+/g, "-")}.rule.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Rule downloaded");
+  };
+
   const ruleTypeBadge = (type: string) => {
     const labels: Record<string, string> = {
       file_exists: "File Exists",
@@ -170,6 +192,20 @@ export function RulesTab({ rules, policies, createTrigger = 0 }: RulesTabProps) 
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
+                          aria-label="Download rule"
+                          onClick={() => handleDownload(rule)}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Download</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => {
                             setRuleToDelete(rule);
                             setDeleteOpen(true);
@@ -197,6 +233,8 @@ export function RulesTab({ rules, policies, createTrigger = 0 }: RulesTabProps) 
             </Button>
           </div>
         )}
+
+        <RuleFormatDocs />
       </div>
 
       <RuleForm
