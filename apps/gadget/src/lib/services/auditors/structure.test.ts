@@ -18,8 +18,10 @@ const mockReadFileSync = vi.mocked(fs.readFileSync);
 const mockReaddirSync = vi.mocked(fs.readdirSync);
 const mockStatSync = vi.mocked(fs.statSync);
 
-function createMockDirent(name: string, isDir: boolean): fs.Dirent {
-  return { name, isDirectory: () => isDir, isFile: () => !isDir } as fs.Dirent;
+type ReaddirDirent = Extract<ReturnType<typeof fs.readdirSync>, fs.Dirent[]>[number];
+
+function createMockDirent(name: string, isDir: boolean): ReaddirDirent {
+  return { name, isDirectory: () => isDir, isFile: () => !isDir } as ReaddirDirent;
 }
 
 const stubPolicy = {

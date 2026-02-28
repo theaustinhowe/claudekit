@@ -205,14 +205,15 @@ describe("job-logging", () => {
     });
 
     it("should filter session events by lastSequence", () => {
-      vi.mocked(getLiveSession).mockReturnValue({
-        status: "running",
-        events: [
-          { log: "Line 0", logType: "stdout" },
-          { log: "Line 1", logType: "stdout" },
-          { log: "Line 2", logType: "stdout" },
-        ],
-      } as unknown as ReturnType<typeof getLiveSession>);
+      vi.mocked(getLiveSession).mockReturnValue(
+        createMockLiveSession({
+          events: [
+            { log: "Line 0", logType: "stdout" },
+            { log: "Line 1", logType: "stdout" },
+            { log: "Line 2", logType: "stdout" },
+          ] as LiveSession["events"],
+        }),
+      );
 
       const buffer = getRingBuffer("job-session-filter", 0);
       // Sequence is index-based (0, 1, 2), so > 0 means entries at index 1 and 2
@@ -224,10 +225,11 @@ describe("job-logging", () => {
     });
 
     it("should default logType to system when not provided in session events", () => {
-      vi.mocked(getLiveSession).mockReturnValue({
-        status: "running",
-        events: [{ log: "System message" }],
-      } as unknown as ReturnType<typeof getLiveSession>);
+      vi.mocked(getLiveSession).mockReturnValue(
+        createMockLiveSession({
+          events: [{ log: "System message" }] as LiveSession["events"],
+        }),
+      );
 
       const buffer = getRingBuffer("job-session-default-type");
       expect(buffer).toHaveLength(1);

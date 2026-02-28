@@ -36,8 +36,11 @@ import fs from "node:fs";
 import { isBinaryFile } from "@/lib/services/language-detector";
 import { getProjectFileContent, getProjectTree } from "./prototype-files";
 
-function createMockDirent(name: string, isDir: boolean) {
-  return { name, isDirectory: () => isDir, isFile: () => !isDir } as fs.Dirent<Buffer>;
+// Extract exact Dirent type from readdirSync withFileTypes overload
+type ReaddirDirent = Extract<ReturnType<typeof fs.readdirSync>, fs.Dirent[]>[number];
+
+function createMockDirent(name: string, isDir: boolean): ReaddirDirent {
+  return { name, isDirectory: () => isDir, isFile: () => !isDir } as ReaddirDirent;
 }
 
 const mockFs = vi.mocked(fs);
