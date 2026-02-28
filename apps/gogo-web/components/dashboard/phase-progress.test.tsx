@@ -1,3 +1,5 @@
+import type { JobLog } from "@claudekit/gogo-shared";
+import { cast } from "@claudekit/test-utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -14,7 +16,14 @@ vi.mock("lucide-react", () => ({
 import { PhaseProgress } from "@/components/dashboard/phase-progress";
 
 function makeLog(content: string) {
-  return { id: "1", content, stream: "stdout", jobId: "j1", sequence: 1, createdAt: "2024-01-01T00:00:00Z" } as never;
+  return cast<JobLog>({
+    id: "1",
+    content,
+    stream: "stdout",
+    jobId: "j1",
+    sequence: 1,
+    createdAt: "2024-01-01T00:00:00Z",
+  });
 }
 
 describe("PhaseProgress", () => {

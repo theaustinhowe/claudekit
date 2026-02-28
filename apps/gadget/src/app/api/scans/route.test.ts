@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -16,10 +17,12 @@ beforeEach(() => {
 
 describe("GET /api/scans", () => {
   it("returns scans ordered by created_at desc", async () => {
-    mockQueryAll.mockResolvedValue([
-      { id: "s1", created_at: "2024-01-02" },
-      { id: "s2", created_at: "2024-01-01" },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([
+        { id: "s1", created_at: "2024-01-02" },
+        { id: "s2", created_at: "2024-01-01" },
+      ]),
+    );
 
     const response = await GET();
     const data = await response.json();

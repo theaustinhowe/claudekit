@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -24,7 +25,7 @@ const mockedUnlinkSync = vi.mocked(unlinkSync);
 // vi.mocked resolves readdirSync to the Dirent-returning overload;
 // our source uses the string-returning overload (with "utf-8" encoding)
 function mockReaddir(files: string[]) {
-  mockedReaddirSync.mockReturnValue(files as never);
+  mockedReaddirSync.mockReturnValue(cast(files));
 }
 
 describe("getLogFilePath", () => {

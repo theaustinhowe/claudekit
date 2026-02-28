@@ -1,3 +1,5 @@
+import type { Job } from "@claudekit/gogo-shared";
+import { cast } from "@claudekit/test-utils";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -36,7 +38,7 @@ vi.mock("./create-manual-job-dialog", () => ({
 import { JobFilters } from "@/components/dashboard/job-filters";
 
 function makeJob(status: string) {
-  return { id: `job-${status}`, status } as never;
+  return cast<Job>({ id: `job-${status}`, status });
 }
 
 describe("JobFilters", () => {

@@ -6,6 +6,7 @@ vi.mock("@/lib/db", () => ({
   queryAll: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/chapter-markers/route";
 import { queryAll } from "@/lib/db";
 
@@ -21,10 +22,12 @@ beforeEach(() => {
 
 describe("GET /api/chapter-markers", () => {
   it("returns chapter markers with camelCase keys", async () => {
-    mockQueryAll.mockResolvedValue([
-      { flow_name: "Login Flow", start_time: "00:00:05" },
-      { flow_name: "Dashboard Flow", start_time: "00:02:30" },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([
+        { flow_name: "Login Flow", start_time: "00:00:05" },
+        { flow_name: "Dashboard Flow", start_time: "00:02:30" },
+      ]),
+    );
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();

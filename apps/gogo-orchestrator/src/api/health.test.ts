@@ -47,6 +47,7 @@ vi.mock("../ws/handler.js", () => ({
 }));
 
 import { queryAll } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { getAllRateLimitInfo } from "../services/github/index.js";
 import { getThrottleState } from "../services/polling.js";
 import { isShutdownInProgress } from "../services/shutdown.js";
@@ -77,7 +78,7 @@ describe("health", () => {
     vi.clearAllMocks();
 
     const mock = createMockFastify();
-    await healthRouter(mock.instance as never, {} as never);
+    await healthRouter(cast(mock.instance), cast({}));
     const route = mock.routes.find((r) => r.path === "/");
     if (!route) throw new Error("health route not registered");
     healthHandler = route.handler;

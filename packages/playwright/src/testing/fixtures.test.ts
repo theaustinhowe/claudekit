@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@playwright/test", () => ({
   test: {
     extend: (fixtures: Record<string, unknown>) => {
-      // biome-ignore lint/suspicious/noExplicitAny: storing captured fixtures for test assertions
-      (globalThis as any).__capturedFixtures = fixtures;
+      (globalThis as Record<string, unknown>).__capturedFixtures = fixtures;
       return { _fixtures: fixtures };
     },
   },
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { appTest } from "./fixtures";
 
 beforeEach(() => {
@@ -19,8 +19,7 @@ beforeEach(() => {
 
 // biome-ignore lint/suspicious/noExplicitAny: reading captured fixtures from hoisted mock
 function getCapturedFixtures(): Record<string, any> {
-  // biome-ignore lint/suspicious/noExplicitAny: reading captured fixtures from hoisted mock
-  return (globalThis as any).__capturedFixtures;
+  return cast<Record<string, unknown>>(globalThis).__capturedFixtures as Record<string, unknown>;
 }
 
 describe("appTest fixture", () => {

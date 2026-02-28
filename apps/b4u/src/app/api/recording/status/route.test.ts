@@ -5,6 +5,7 @@ vi.mock("@/lib/claude/session-manager", () => ({
   getRecoverableSessions: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/recording/status/route";
 import { getLiveSession, getRecoverableSessions } from "@/lib/claude/session-manager";
@@ -19,11 +20,13 @@ beforeEach(() => {
 
 describe("GET /api/recording/status", () => {
   it("returns session status when sessionId provided", async () => {
-    mockGetLiveSession.mockReturnValue({
-      id: "sess-1",
-      status: "running",
-      events: [{ type: "progress", data: "Recording..." }],
-    } as never);
+    mockGetLiveSession.mockReturnValue(
+      cast({
+        id: "sess-1",
+        status: "running",
+        events: [{ type: "progress", data: "Recording..." }],
+      }),
+    );
 
     const req = new NextRequest("http://localhost/api/recording/status?sessionId=sess-1");
     const response = await GET(req);
@@ -35,16 +38,18 @@ describe("GET /api/recording/status", () => {
   });
 
   it("returns recoverable sessions when no params provided", async () => {
-    mockGetRecoverableSessions.mockResolvedValue([
-      {
-        id: "sess-2",
-        sessionType: "recording",
-        status: "error",
-        label: "Test recording",
-        runId: "run-1",
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-    ] as never);
+    mockGetRecoverableSessions.mockResolvedValue(
+      cast([
+        {
+          id: "sess-2",
+          sessionType: "recording",
+          status: "error",
+          label: "Test recording",
+          runId: "run-1",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ]),
+    );
 
     const req = new NextRequest("http://localhost/api/recording/status");
     const response = await GET(req);
@@ -57,7 +62,7 @@ describe("GET /api/recording/status", () => {
   });
 
   it("returns 404 when session not found", async () => {
-    mockGetLiveSession.mockReturnValue(undefined as never);
+    mockGetLiveSession.mockReturnValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/recording/status?sessionId=nonexistent");
     const response = await GET(req);

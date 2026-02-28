@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RepoSelector } from "./repo-selector";
@@ -54,7 +55,7 @@ describe("RepoSelector", () => {
     mockContextValue = {
       ...mockContextValue,
       selectedRepoId: "repo-1",
-      selectedRepository: mockContextValue.repositories[0] as never,
+      selectedRepository: cast(mockContextValue.repositories[0]),
     };
     render(<RepoSelector />);
 
@@ -65,7 +66,7 @@ describe("RepoSelector", () => {
     mockContextValue = {
       ...mockContextValue,
       selectedRepoId: "repo-2",
-      selectedRepository: mockContextValue.repositories[1] as never,
+      selectedRepository: cast(mockContextValue.repositories[1]),
     };
     render(<RepoSelector />);
 

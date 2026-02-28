@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -17,7 +18,7 @@ beforeEach(() => {
 
 describe("GET /api/findings", () => {
   it("returns all findings with parsed suggested_actions", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "f1", severity: "critical", suggested_actions: '["fix it"]' }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "f1", severity: "critical", suggested_actions: '["fix it"]' }]));
 
     const req = new NextRequest("http://localhost/api/findings");
     const response = await GET(req);
@@ -28,7 +29,7 @@ describe("GET /api/findings", () => {
   });
 
   it("filters by repoId", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
 
     const req = new NextRequest("http://localhost/api/findings?repoId=r1");
     await GET(req);
@@ -41,7 +42,7 @@ describe("GET /api/findings", () => {
   });
 
   it("filters by severity", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
 
     const req = new NextRequest("http://localhost/api/findings?severity=warning");
     await GET(req);

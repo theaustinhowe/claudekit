@@ -10,6 +10,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import { createReadStream, statSync } from "node:fs";
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/video/serve/[id]/route";
 import { queryAll } from "@/lib/db";
 
@@ -23,7 +24,7 @@ beforeEach(() => {
 
 describe("GET /api/video/serve/[id]", () => {
   it("returns 404 when video not found", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
 
     const req = new Request("http://localhost/api/video/serve/vid-1");
     const response = await GET(req, { params: Promise.resolve({ id: "vid-1" }) });
@@ -34,8 +35,8 @@ describe("GET /api/video/serve/[id]", () => {
   });
 
   it("streams full video without range header", async () => {
-    mockQueryAll.mockResolvedValue([{ file_path: "/videos/out.mp4", format: "mp4" }] as never);
-    mockStatSync.mockReturnValue({ size: 1024 } as never);
+    mockQueryAll.mockResolvedValue(cast([{ file_path: "/videos/out.mp4", format: "mp4" }]));
+    mockStatSync.mockReturnValue(cast({ size: 1024 }));
 
     const { Readable } = await import("node:stream");
     const readable = new Readable({
@@ -43,7 +44,7 @@ describe("GET /api/video/serve/[id]", () => {
         this.push(null);
       },
     });
-    mockCreateReadStream.mockReturnValue(readable as never);
+    mockCreateReadStream.mockReturnValue(cast(readable));
 
     const req = new Request("http://localhost/api/video/serve/vid-1");
     const response = await GET(req, { params: Promise.resolve({ id: "vid-1" }) });
@@ -54,7 +55,7 @@ describe("GET /api/video/serve/[id]", () => {
   });
 
   it("returns 500 when file not accessible", async () => {
-    mockQueryAll.mockResolvedValue([{ file_path: "/missing/video.mp4", format: "mp4" }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ file_path: "/missing/video.mp4", format: "mp4" }]));
     mockStatSync.mockImplementation(() => {
       throw new Error("ENOENT");
     });

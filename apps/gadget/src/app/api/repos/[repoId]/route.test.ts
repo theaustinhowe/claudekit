@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -27,9 +28,9 @@ beforeEach(() => {
 
 describe("DELETE /api/repos/[repoId]", () => {
   it("deletes repo, removes directory, and cleans DB", async () => {
-    mockQueryOne.mockResolvedValue({ local_path: "/projects/repo" } as never);
-    mockRemoveDirectory.mockResolvedValue(undefined as never);
-    mockDeleteRepos.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast({ local_path: "/projects/repo" }));
+    mockRemoveDirectory.mockResolvedValue(cast(undefined));
+    mockDeleteRepos.mockResolvedValue(cast(undefined));
 
     const response = await DELETE(new Request("http://localhost"), {
       params: Promise.resolve({ repoId: "r1" }),
@@ -43,7 +44,7 @@ describe("DELETE /api/repos/[repoId]", () => {
   });
 
   it("returns 404 when repo not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
 
     const response = await DELETE(new Request("http://localhost"), {
       params: Promise.resolve({ repoId: "nonexistent" }),
@@ -55,7 +56,7 @@ describe("DELETE /api/repos/[repoId]", () => {
   });
 
   it("returns 500 on delete failure", async () => {
-    mockQueryOne.mockResolvedValue({ local_path: "/projects/repo" } as never);
+    mockQueryOne.mockResolvedValue(cast({ local_path: "/projects/repo" }));
     mockRemoveDirectory.mockRejectedValue(new Error("Permission denied"));
 
     const response = await DELETE(new Request("http://localhost"), {

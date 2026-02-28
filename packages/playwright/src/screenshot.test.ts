@@ -8,6 +8,7 @@ vi.mock("./navigation", () => ({
   navigateTo: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { createBrowserSession } from "./browser";
 import { navigateTo } from "./navigation";
 import { captureScreenshot } from "./screenshot";
@@ -23,7 +24,7 @@ function createMockSession() {
     close: vi.fn().mockResolvedValue(undefined),
   };
   // BrowserSession has browser/context fields that aren't needed for screenshot tests
-  mockedCreateBrowserSession.mockResolvedValue(session as never);
+  mockedCreateBrowserSession.mockResolvedValue(cast(session));
   return session;
 }
 

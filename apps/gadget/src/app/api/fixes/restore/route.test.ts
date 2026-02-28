@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/actions/fixes", () => ({
@@ -16,7 +17,7 @@ beforeEach(() => {
 
 describe("POST /api/fixes/restore", () => {
   it("restores an apply run successfully", async () => {
-    mockRestoreApplyRun.mockResolvedValue({ success: true } as never);
+    mockRestoreApplyRun.mockResolvedValue(cast({ success: true }));
 
     const req = new NextRequest("http://localhost/api/fixes/restore", {
       method: "POST",
@@ -31,7 +32,7 @@ describe("POST /api/fixes/restore", () => {
   });
 
   it("returns 400 on restore failure", async () => {
-    mockRestoreApplyRun.mockResolvedValue({ success: false, error: "No snapshot" } as never);
+    mockRestoreApplyRun.mockResolvedValue(cast({ success: false, error: "No snapshot" }));
 
     const req = new NextRequest("http://localhost/api/fixes/restore", {
       method: "POST",

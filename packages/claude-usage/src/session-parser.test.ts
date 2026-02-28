@@ -21,6 +21,7 @@ vi.mock("./pricing", () => ({
 import { createReadStream } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
+import { cast } from "@claudekit/test-utils";
 import { calculateModelCost } from "./pricing";
 import { getRecentDailyCosts, getTodayUsageWithCost } from "./session-parser";
 
@@ -72,19 +73,21 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("discovers .jsonl files recursively", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["project1"] as never);
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => true } as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["project1"]));
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => true }));
 
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: new Date() } as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: new Date() }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        makeAssistantEntry("m1", "claude-sonnet-4-5", new Date().toISOString(), {
-          input_tokens: 100,
-          output_tokens: 50,
-        }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          makeAssistantEntry("m1", "claude-sonnet-4-5", new Date().toISOString(), {
+            input_tokens: 100,
+            output_tokens: 50,
+          }),
+        ]),
+      ),
     );
 
     const result = await getTodayUsageWithCost();
@@ -93,15 +96,17 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("deduplicates messages by id (last write wins)", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
-        makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 200, output_tokens: 100 }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
+          makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 200, output_tokens: 100 }),
+        ]),
+      ),
     );
 
     const result = await getTodayUsageWithCost();
@@ -112,16 +117,18 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("aggregates tokens per model", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
-        makeAssistantEntry("m2", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 200, output_tokens: 100 }),
-        makeAssistantEntry("m3", "claude-opus-4-5", now.toISOString(), { input_tokens: 50, output_tokens: 25 }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
+          makeAssistantEntry("m2", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 200, output_tokens: 100 }),
+          makeAssistantEntry("m3", "claude-opus-4-5", now.toISOString(), { input_tokens: 50, output_tokens: 25 }),
+        ]),
+      ),
     );
 
     const result = await getTodayUsageWithCost();
@@ -131,14 +138,16 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("calculates cost via calculateModelCost", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
+        ]),
+      ),
     );
 
     vi.mocked(calculateModelCost).mockReturnValue(0.05);
@@ -149,16 +158,18 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("skips malformed JSON lines", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        "not valid json",
-        "{broken json}",
-        makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          "not valid json",
+          "{broken json}",
+          makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100, output_tokens: 50 }),
+        ]),
+      ),
     );
 
     const result = await getTodayUsageWithCost();
@@ -166,21 +177,23 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("skips entries missing required fields", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        JSON.stringify({ type: "assistant", timestamp: now.toISOString(), message: { id: "m1", usage: {} } }),
-        JSON.stringify({ type: "assistant", timestamp: now.toISOString(), message: { id: "m2", model: "sonnet" } }),
-        JSON.stringify({ type: "assistant", timestamp: now.toISOString(), message: { model: "sonnet", usage: {} } }),
-        JSON.stringify({
-          type: "human",
-          timestamp: now.toISOString(),
-          message: { id: "m3", model: "sonnet", usage: {} },
-        }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          JSON.stringify({ type: "assistant", timestamp: now.toISOString(), message: { id: "m1", usage: {} } }),
+          JSON.stringify({ type: "assistant", timestamp: now.toISOString(), message: { id: "m2", model: "sonnet" } }),
+          JSON.stringify({ type: "assistant", timestamp: now.toISOString(), message: { model: "sonnet", usage: {} } }),
+          JSON.stringify({
+            type: "human",
+            timestamp: now.toISOString(),
+            message: { id: "m3", model: "sonnet", usage: {} },
+          }),
+        ]),
+      ),
     );
 
     const result = await getTodayUsageWithCost();
@@ -189,12 +202,12 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("defaults missing token fields to 0", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), {})]) as never,
+      cast(createReadableFromLines([makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), {})])),
     );
 
     const result = await getTodayUsageWithCost();
@@ -207,14 +220,16 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("returns cached result within 60s TTL", async () => {
-    vi.mocked(readdir).mockResolvedValue(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValue(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValue({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValue(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100 }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100 }),
+        ]),
+      ),
     );
 
     const result1 = await getTodayUsageWithCost();
@@ -228,21 +243,21 @@ describe("getTodayUsageWithCost", () => {
   });
 
   it("skips inaccessible directories gracefully", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["accessible", "inaccessible"] as never);
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => true } as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["accessible", "inaccessible"]));
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => true }));
     vi.mocked(stat).mockRejectedValueOnce(new Error("EACCES"));
-    vi.mocked(readdir).mockResolvedValueOnce([] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast([]));
 
     const result = await getTodayUsageWithCost();
     expect(result).toBeDefined();
   });
 
   it("handles empty jsonl file", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["empty.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["empty.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
-    vi.mocked(createReadStream).mockReturnValue(createReadableFromLines([]) as never);
+    vi.mocked(createReadStream).mockReturnValue(cast(createReadableFromLines([])));
 
     const result = await getTodayUsageWithCost();
     if (!result) return expect(result).not.toBeNull();
@@ -269,14 +284,16 @@ describe("getRecentDailyCosts", () => {
   });
 
   it("returns daily cost entries for N-day window", async () => {
-    vi.mocked(readdir).mockResolvedValueOnce(["session.jsonl"] as never);
+    vi.mocked(readdir).mockResolvedValueOnce(cast(["session.jsonl"]));
     const now = new Date();
-    vi.mocked(stat).mockResolvedValueOnce({ isDirectory: () => false, mtime: now } as never);
+    vi.mocked(stat).mockResolvedValueOnce(cast({ isDirectory: () => false, mtime: now }));
 
     vi.mocked(createReadStream).mockReturnValue(
-      createReadableFromLines([
-        makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100 }),
-      ]) as never,
+      cast(
+        createReadableFromLines([
+          makeAssistantEntry("m1", "claude-sonnet-4-5", now.toISOString(), { input_tokens: 100 }),
+        ]),
+      ),
     );
 
     const result = await getRecentDailyCosts(7);
@@ -292,7 +309,7 @@ describe("getRecentDailyCosts", () => {
   });
 
   it("returns cached result within TTL", async () => {
-    vi.mocked(readdir).mockResolvedValue([] as never);
+    vi.mocked(readdir).mockResolvedValue(cast([]));
     const result1 = await getRecentDailyCosts(7);
     const callCount = vi.mocked(readdir).mock.calls.length;
 

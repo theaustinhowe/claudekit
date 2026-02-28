@@ -66,8 +66,8 @@ export async function createGeneratorProject(data: {
 
   await execute(
     db,
-    `INSERT INTO generator_projects (id, title, idea_description, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO generator_projects (id, title, idea_description, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, tool_versions, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       data.title,
@@ -86,6 +86,7 @@ export async function createGeneratorProject(data: {
       JSON.stringify(data.inspiration_urls || []),
       JSON.stringify(data.color_scheme || {}),
       JSON.stringify(data.custom_features || []),
+      JSON.stringify(data.tool_versions || {}),
       now,
       now,
     ],

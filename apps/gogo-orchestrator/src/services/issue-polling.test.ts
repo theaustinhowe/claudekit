@@ -26,6 +26,7 @@ vi.mock("./github/index.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { broadcast } from "../ws/handler.js";
 import { getIssuesWithLabel, removeLabelFromIssue } from "./github/index.js";
 import { pollForLabeledIssues } from "./issue-polling.js";
@@ -73,7 +74,7 @@ describe("issue-polling", () => {
       // jobExistsForIssue - job exists
       vi.mocked(queryOne).mockResolvedValue({ id: "existing-job" });
 
-      vi.mocked(getIssuesWithLabel).mockResolvedValue([makeIssue()] as never);
+      vi.mocked(getIssuesWithLabel).mockResolvedValue(cast([makeIssue()]));
 
       const result = await pollForLabeledIssues();
 
@@ -94,7 +95,7 @@ describe("issue-polling", () => {
         .mockResolvedValueOnce(undefined) // jobExistsForIssue - no job
         .mockResolvedValueOnce(newJob); // createJobFromIssue - fetch newly created job
 
-      vi.mocked(getIssuesWithLabel).mockResolvedValue([issue] as never);
+      vi.mocked(getIssuesWithLabel).mockResolvedValue(cast([issue]));
       vi.mocked(execute).mockResolvedValue(undefined);
 
       const result = await pollForLabeledIssues();
@@ -119,7 +120,7 @@ describe("issue-polling", () => {
         .mockResolvedValueOnce(undefined) // jobExistsForIssue
         .mockResolvedValueOnce(newJob); // createJobFromIssue fetch
 
-      vi.mocked(getIssuesWithLabel).mockResolvedValue([issue] as never);
+      vi.mocked(getIssuesWithLabel).mockResolvedValue(cast([issue]));
       vi.mocked(execute).mockResolvedValue(undefined);
 
       await pollForLabeledIssues();
@@ -138,7 +139,7 @@ describe("issue-polling", () => {
         .mockResolvedValueOnce(undefined) // jobExistsForIssue
         .mockResolvedValueOnce(newJob); // createJobFromIssue fetch
 
-      vi.mocked(getIssuesWithLabel).mockResolvedValue([issue] as never);
+      vi.mocked(getIssuesWithLabel).mockResolvedValue(cast([issue]));
       vi.mocked(execute).mockResolvedValue(undefined);
 
       await pollForLabeledIssues();
@@ -158,7 +159,7 @@ describe("issue-polling", () => {
         .mockResolvedValueOnce(undefined) // issue 2 has no job
         .mockResolvedValueOnce({ id: "new-job" }); // createJobFromIssue fetch
 
-      vi.mocked(getIssuesWithLabel).mockResolvedValue([issue1, issue2] as never);
+      vi.mocked(getIssuesWithLabel).mockResolvedValue(cast([issue1, issue2]));
       vi.mocked(execute).mockResolvedValue(undefined);
 
       const result = await pollForLabeledIssues();
@@ -180,8 +181,8 @@ describe("issue-polling", () => {
         .mockResolvedValueOnce({ id: "new-job-2" }); // repo2 createJobFromIssue
 
       vi.mocked(getIssuesWithLabel)
-        .mockResolvedValueOnce([makeIssue({ number: 1 })] as never)
-        .mockResolvedValueOnce([makeIssue({ number: 2 })] as never);
+        .mockResolvedValueOnce(cast([makeIssue({ number: 1 })]))
+        .mockResolvedValueOnce(cast([makeIssue({ number: 2 })]));
 
       vi.mocked(execute).mockResolvedValue(undefined);
 

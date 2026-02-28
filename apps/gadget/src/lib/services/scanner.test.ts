@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -64,17 +65,18 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation(((p: unknown) => {
-      const path = p as string;
-      if (path === "/projects") {
-        return [makeDirent("my-app", true)];
-      }
-      if (path.endsWith("my-app")) {
-        return [makeDirent(".git", true), makeDirent("package.json", false, true)];
-      }
-      return [];
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    }) as any);
+    mockReaddirSync.mockImplementation(
+      cast((p: unknown) => {
+        const path = p as string;
+        if (path === "/projects") {
+          return [makeDirent("my-app", true)];
+        }
+        if (path.endsWith("my-app")) {
+          return [makeDirent(".git", true), makeDirent("package.json", false, true)];
+        }
+        return [];
+      }),
+    );
 
     mockReadFileSync.mockImplementation((p: unknown) => {
       const path = p as string;
@@ -116,14 +118,15 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation(((p: unknown) => {
-      const path = p as string;
-      if (path === "/projects") {
-        return [makeDirent("node_modules", true), makeDirent("dist", true)];
-      }
-      return [];
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    }) as any);
+    mockReaddirSync.mockImplementation(
+      cast((p: unknown) => {
+        const path = p as string;
+        if (path === "/projects") {
+          return [makeDirent("node_modules", true), makeDirent("dist", true)];
+        }
+        return [];
+      }),
+    );
 
     const repos = discoverRepos({ roots: ["/projects"] });
     expect(repos).toHaveLength(0);
@@ -136,14 +139,15 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation(((p: unknown) => {
-      const path = p as string;
-      if (path === "/projects") {
-        return [makeDirent(".hidden", true)];
-      }
-      return [];
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    }) as any);
+    mockReaddirSync.mockImplementation(
+      cast((p: unknown) => {
+        const path = p as string;
+        if (path === "/projects") {
+          return [makeDirent(".hidden", true)];
+        }
+        return [];
+      }),
+    );
 
     const repos = discoverRepos({ roots: ["/projects"] });
     expect(repos).toHaveLength(0);
@@ -157,17 +161,18 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation(((p: unknown) => {
-      const path = p as string;
-      if (path === "/projects") {
-        return [makeDirent("mono", true)];
-      }
-      if (path.endsWith("mono")) {
-        return [makeDirent(".git", true)];
-      }
-      return [];
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    }) as any);
+    mockReaddirSync.mockImplementation(
+      cast((p: unknown) => {
+        const path = p as string;
+        if (path === "/projects") {
+          return [makeDirent("mono", true)];
+        }
+        if (path.endsWith("mono")) {
+          return [makeDirent(".git", true)];
+        }
+        return [];
+      }),
+    );
 
     mockStatSync.mockImplementation(() => {
       return { isDirectory: () => true, mtime: new Date() } as fs.Stats;
@@ -187,17 +192,18 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation(((p: unknown) => {
-      const path = p as string;
-      if (path === "/projects") {
-        return [makeDirent("level1", true)];
-      }
-      if (path.endsWith("level1")) {
-        return [makeDirent("level2", true)];
-      }
-      return [];
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    }) as any);
+    mockReaddirSync.mockImplementation(
+      cast((p: unknown) => {
+        const path = p as string;
+        if (path === "/projects") {
+          return [makeDirent("level1", true)];
+        }
+        if (path.endsWith("level1")) {
+          return [makeDirent("level2", true)];
+        }
+        return [];
+      }),
+    );
 
     const repos = discoverRepos({ roots: ["/projects"], maxDepth: 1 });
     expect(repos).toHaveLength(0);
@@ -209,8 +215,7 @@ describe("discoverRepos", () => {
       return path === "/home/user/projects";
     });
 
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    mockReaddirSync.mockReturnValue([] as any);
+    mockReaddirSync.mockReturnValue(cast([]));
 
     const repos = discoverRepos({ roots: ["~/projects"] });
     expect(repos).toHaveLength(0);
@@ -224,17 +229,18 @@ describe("discoverRepos", () => {
       return false;
     });
 
-    mockReaddirSync.mockImplementation(((p: unknown) => {
-      const path = p as string;
-      if (path === "/projects") {
-        return [makeDirent("unnamed", true)];
-      }
-      if (path.endsWith("unnamed")) {
-        return [makeDirent(".git", true)];
-      }
-      return [];
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    }) as any);
+    mockReaddirSync.mockImplementation(
+      cast((p: unknown) => {
+        const path = p as string;
+        if (path === "/projects") {
+          return [makeDirent("unnamed", true)];
+        }
+        if (path.endsWith("unnamed")) {
+          return [makeDirent(".git", true)];
+        }
+        return [];
+      }),
+    );
 
     mockReadFileSync.mockReturnValue(JSON.stringify({}));
     mockStatSync.mockReturnValue({ isDirectory: () => true, mtime: new Date() } as fs.Stats);

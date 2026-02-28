@@ -18,6 +18,7 @@ vi.mock("@/lib/services/dev-server-manager", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
+import { cast } from "@claudekit/test-utils";
 import { saveAutoFixRun, updateAutoFixRun } from "@/lib/actions/auto-fix";
 import { createAutoFixRunner } from "./auto-fix";
 
@@ -44,7 +45,7 @@ const defaultMetadata = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockRunClaude.mockResolvedValue({ exitCode: 0, stdout: "fixed", stderr: "" } as never);
+  mockRunClaude.mockResolvedValue(cast({ exitCode: 0, stdout: "fixed", stderr: "" }));
   mockSaveRun.mockResolvedValue("run-1");
 });
 
@@ -101,7 +102,7 @@ describe("createAutoFixRunner", () => {
   });
 
   it("updates run status to failed on non-zero exit code", async () => {
-    mockRunClaude.mockResolvedValue({ exitCode: 1, stdout: "", stderr: "error" } as never);
+    mockRunClaude.mockResolvedValue(cast({ exitCode: 1, stdout: "", stderr: "error" }));
     const runner = createAutoFixRunner(defaultMetadata);
 
     await expect(runner(makeContext())).rejects.toThrow("Claude exited with code 1");

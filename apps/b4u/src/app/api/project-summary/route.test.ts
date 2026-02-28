@@ -6,6 +6,7 @@ vi.mock("@/lib/db", () => ({
   queryAll: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/project-summary/route";
 import { queryAll } from "@/lib/db";
 
@@ -21,15 +22,17 @@ beforeEach(() => {
 
 describe("GET /api/project-summary", () => {
   it("returns project summary with mapped fields", async () => {
-    mockQueryAll.mockResolvedValue([
-      {
-        name: "My App",
-        framework: "Next.js",
-        directories: ["src", "public"],
-        auth: "NextAuth",
-        database_info: "PostgreSQL",
-      },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([
+        {
+          name: "My App",
+          framework: "Next.js",
+          directories: ["src", "public"],
+          auth: "NextAuth",
+          database_info: "PostgreSQL",
+        },
+      ]),
+    );
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -49,7 +52,7 @@ describe("GET /api/project-summary", () => {
   });
 
   it("returns 404 when no summary exists", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();

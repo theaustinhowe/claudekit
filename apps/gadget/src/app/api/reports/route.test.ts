@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/services/reporter", () => ({
@@ -20,7 +21,7 @@ beforeEach(() => {
 
 describe("GET /api/reports", () => {
   it("returns JSON report by default", async () => {
-    mockExportJSON.mockResolvedValue('{"findings": []}' as never);
+    mockExportJSON.mockResolvedValue(cast('{"findings": []}'));
 
     const req = new NextRequest("http://localhost/api/reports");
     const response = await GET(req);
@@ -31,7 +32,7 @@ describe("GET /api/reports", () => {
   });
 
   it("returns markdown report", async () => {
-    mockExportMarkdown.mockResolvedValue("# Report\n\nNo issues found." as never);
+    mockExportMarkdown.mockResolvedValue(cast("# Report\n\nNo issues found."));
 
     const req = new NextRequest("http://localhost/api/reports?format=markdown");
     const response = await GET(req);
@@ -43,7 +44,7 @@ describe("GET /api/reports", () => {
   });
 
   it("returns PR description", async () => {
-    mockExportPRDescription.mockResolvedValue("## Changes\n\n- Fixed X" as never);
+    mockExportPRDescription.mockResolvedValue(cast("## Changes\n\n- Fixed X"));
 
     const req = new NextRequest("http://localhost/api/reports?format=pr");
     const response = await GET(req);

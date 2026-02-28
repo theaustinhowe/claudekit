@@ -108,7 +108,7 @@ export function runClaude(options: RunClaudeOptions): Promise<ClaudeResult> {
         reject(new DOMException("Aborted", "AbortError"));
       };
       signal.addEventListener("abort", onAbort, { once: true });
-      proc.child.on("close", () => signal.removeEventListener("abort", onAbort));
+      proc.child?.on("close", () => signal.removeEventListener("abort", onAbort));
     }
 
     let pendingText: string | null = null;

@@ -7,14 +7,12 @@ export const dynamic = "force-dynamic";
 
 // GET /api/sessions — List sessions with optional filters
 export const GET = createSessionsListHandler({
-  // biome-ignore lint/suspicious/noExplicitAny: bridge between shared and app-specific filter/row types
-  listSessions: listSessions as any,
+  listSessions,
 });
 
 // POST /api/sessions — Create and start a new session
 export const POST = createSessionPOSTHandler({
-  // biome-ignore lint/suspicious/noExplicitAny: bridge between shared string types and app-specific SessionType
-  createSession: createSession as any,
+  createSession,
   startSession,
   sessionRunners,
 });

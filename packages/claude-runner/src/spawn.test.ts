@@ -8,6 +8,7 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { spawn } from "node:child_process";
+import { cast } from "@claudekit/test-utils";
 import { buildArgs, spawnClaude } from "./spawn";
 
 const mockedSpawn = vi.mocked(spawn);
@@ -38,7 +39,7 @@ function createFakeChild(): FakeChild {
   child.stdin = { write: vi.fn(), end: vi.fn() };
   child.pid = 99999;
   child.kill = vi.fn();
-  return child as unknown as FakeChild;
+  return cast<FakeChild>(child);
 }
 
 beforeEach(() => {

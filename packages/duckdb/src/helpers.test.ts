@@ -22,13 +22,14 @@ vi.mock("@duckdb/node-api", () => {
   return { DuckDBUUIDValue, DuckDBTimestampTZValue };
 });
 
+import { cast } from "@claudekit/test-utils";
 import type { DuckDBConnection } from "@duckdb/node-api";
 import { DuckDBTimestampTZValue, DuckDBUUIDValue } from "@duckdb/node-api";
 import { checkpoint, convertRow, execute, queryAll, queryOne, withTransaction } from "./helpers.js";
 
 // DuckDB classes have private constructors; double-cast needed
-const MockUUID = DuckDBUUIDValue as unknown as new (value: string) => { toString(): string };
-const MockTimestamp = DuckDBTimestampTZValue as unknown as new (micros: bigint) => { micros: bigint };
+const MockUUID = cast<new (value: string) => { toString(): string }>(DuckDBUUIDValue);
+const MockTimestamp = cast<new (micros: bigint) => { micros: bigint }>(DuckDBTimestampTZValue);
 
 /** Helper to create a typed mock of DuckDBConnection with only the methods tests need */
 function mockConnection(overrides: Partial<Record<keyof DuckDBConnection, unknown>>): DuckDBConnection {
@@ -119,8 +120,7 @@ describe("queryAll", () => {
     const result = await queryAll<{ id: string; name: string }>(conn, "SELECT * FROM jobs");
 
     expect(result).toEqual(rows);
-    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
-    expect((conn as any).prepare).toHaveBeenCalledWith("SELECT * FROM jobs");
+    expect(cast<{ prepare: unknown }>(conn).prepare).toHaveBeenCalledWith("SELECT * FROM jobs");
   });
 
   it("converts ? placeholders to $N parameters", async () => {
@@ -129,8 +129,9 @@ describe("queryAll", () => {
 
     await queryAll(conn, "SELECT * FROM jobs WHERE status = ? AND id = ?", ["running", "abc"]);
 
-    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
-    expect((conn as any).prepare).toHaveBeenCalledWith("SELECT * FROM jobs WHERE status = $1 AND id = $2");
+    expect(cast<{ prepare: unknown }>(conn).prepare).toHaveBeenCalledWith(
+      "SELECT * FROM jobs WHERE status = $1 AND id = $2",
+    );
   });
 
   it("binds null parameters with bindNull", async () => {
@@ -255,8 +256,7 @@ describe("execute", () => {
 
     await execute(conn, "INSERT INTO jobs (id) VALUES (?)", ["job-1"]);
 
-    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
-    expect((conn as any).prepare).toHaveBeenCalledWith("INSERT INTO jobs (id) VALUES ($1)");
+    expect(cast<{ prepare: unknown }>(conn).prepare).toHaveBeenCalledWith("INSERT INTO jobs (id) VALUES ($1)");
     expect(prepared.bindVarchar).toHaveBeenCalledWith(1, "job-1");
     expect(prepared.run).toHaveBeenCalled();
   });
@@ -267,8 +267,7 @@ describe("execute", () => {
 
     await execute(conn, "DELETE FROM jobs");
 
-    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
-    expect((conn as any).prepare).toHaveBeenCalledWith("DELETE FROM jobs");
+    expect(cast<{ prepare: unknown }>(conn).prepare).toHaveBeenCalledWith("DELETE FROM jobs");
     expect(prepared.run).toHaveBeenCalled();
   });
 });
@@ -284,8 +283,7 @@ describe("checkpoint", () => {
 
     await checkpoint(conn);
 
-    // biome-ignore lint/suspicious/noExplicitAny: accessing mock internals
-    expect((conn as any).prepare).toHaveBeenCalledWith("CHECKPOINT");
+    expect(cast<{ prepare: unknown }>(conn).prepare).toHaveBeenCalledWith("CHECKPOINT");
     expect(prepared.run).toHaveBeenCalled();
   });
 });

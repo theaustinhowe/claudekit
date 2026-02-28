@@ -36,6 +36,7 @@ vi.mock("../utils/logger.js", () => ({
 }));
 
 import { queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { cancelResearchSession, getSessionSuggestions, startResearchSession } from "../services/research.js";
 import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 
@@ -49,7 +50,7 @@ describe("research API", () => {
     const { researchRouter } = await import("./research.js");
     const mock = createMockFastify();
     routes = mock.routes;
-    await researchRouter(mock.instance as never, {} as never);
+    await researchRouter(cast(mock.instance), cast({}));
 
     getHandler = (method: string, path: string) => {
       const route = routes.find((r) => r.method === method && r.path === path);
@@ -73,7 +74,7 @@ describe("research API", () => {
   describe("GET /:id", () => {
     it("returns session with suggestions", async () => {
       vi.mocked(queryOne).mockResolvedValueOnce({ id: "s1", status: "done" });
-      vi.mocked(getSessionSuggestions).mockResolvedValue([{ id: "sg1" }] as never);
+      vi.mocked(getSessionSuggestions).mockResolvedValue(cast([{ id: "sg1" }]));
 
       const handler = getHandler("GET", "/:id");
       const result = (await handler({ params: { id: "s1" } }, createMockReply())) as {
@@ -96,7 +97,7 @@ describe("research API", () => {
 
   describe("POST /sessions", () => {
     it("starts a research session", async () => {
-      vi.mocked(startResearchSession).mockResolvedValue({ id: "s1", status: "running" } as never);
+      vi.mocked(startResearchSession).mockResolvedValue(cast({ id: "s1", status: "running" }));
 
       const handler = getHandler("POST", "/sessions");
       const result = await handler(
@@ -123,7 +124,7 @@ describe("research API", () => {
 
   describe("DELETE /:id", () => {
     it("cancels a research session", async () => {
-      vi.mocked(cancelResearchSession).mockResolvedValue(undefined as never);
+      vi.mocked(cancelResearchSession).mockResolvedValue(cast(undefined));
 
       const handler = getHandler("DELETE", "/:id");
       const result = await handler({ params: { id: "s1" } }, createMockReply());

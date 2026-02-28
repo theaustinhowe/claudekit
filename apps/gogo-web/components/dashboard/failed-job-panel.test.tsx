@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -38,22 +39,22 @@ describe("FailedJobPanel", () => {
   afterEach(() => cleanup());
 
   it("renders retry button", () => {
-    render(<FailedJobPanel job={makeJob() as never} />, { wrapper: createWrapper() });
+    render(<FailedJobPanel job={cast(makeJob())} />, { wrapper: createWrapper() });
     expect(screen.getByText("Retry Job")).toBeInTheDocument();
   });
 
   it("shows failure reason", () => {
-    render(<FailedJobPanel job={makeJob() as never} />, { wrapper: createWrapper() });
+    render(<FailedJobPanel job={cast(makeJob())} />, { wrapper: createWrapper() });
     expect(screen.getByText(/Test suite failed/)).toBeInTheDocument();
   });
 
   it("shows what happens next section", () => {
-    render(<FailedJobPanel job={makeJob() as never} />, { wrapper: createWrapper() });
+    render(<FailedJobPanel job={cast(makeJob())} />, { wrapper: createWrapper() });
     expect(screen.getByText(/what happens next/i)).toBeInTheDocument();
   });
 
   it("handles null failure reason", () => {
-    render(<FailedJobPanel job={makeJob({ failureReason: null }) as never} />, { wrapper: createWrapper() });
+    render(<FailedJobPanel job={cast(makeJob({ failureReason: null }))} />, { wrapper: createWrapper() });
     expect(screen.getByText("Retry Job")).toBeInTheDocument();
   });
 });

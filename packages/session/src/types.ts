@@ -18,7 +18,6 @@ export interface SessionRowBase {
   error_message: string | null;
   context_type?: string | null;
   context_id?: string | null;
-  [key: string]: unknown;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -32,23 +33,23 @@ describe("ArchivedJobCard", () => {
   afterEach(() => cleanup());
 
   it("renders issue number and title", () => {
-    render(<ArchivedJobCard job={makeJob() as never} />);
+    render(<ArchivedJobCard job={cast(makeJob())} />);
     expect(screen.getByText("#42")).toBeInTheDocument();
     expect(screen.getByText("Fix login bug")).toBeInTheDocument();
   });
 
   it("shows branch name", () => {
-    render(<ArchivedJobCard job={makeJob() as never} />);
+    render(<ArchivedJobCard job={cast(makeJob())} />);
     expect(screen.getByText("fix/login-42")).toBeInTheDocument();
   });
 
   it("shows restore button", () => {
-    render(<ArchivedJobCard job={makeJob() as never} />);
+    render(<ArchivedJobCard job={cast(makeJob())} />);
     expect(screen.getByText("Restore")).toBeInTheDocument();
   });
 
   it("hides branch when not present", () => {
-    render(<ArchivedJobCard job={makeJob({ branch: null }) as never} />);
+    render(<ArchivedJobCard job={cast(makeJob({ branch: null }))} />);
     expect(screen.queryByText("fix/login-42")).not.toBeInTheDocument();
   });
 });

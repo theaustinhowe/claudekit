@@ -31,6 +31,7 @@ vi.mock("../services/agents/index.js", () => ({
   KNOWN_AGENTS: [{ type: "claude-code", displayName: "Claude Code", description: "Anthropic Claude" }],
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { listAgents } from "../services/agent-executor.js";
 import { getClaudeRunnerStatus } from "../services/agents/claude-code-runner.js";
 import { agentRegistry } from "../services/agents/index.js";
@@ -45,13 +46,13 @@ describe("agents API", () => {
 
     const mock = createMockFastify();
     routes = mock.routes;
-    await agentsRouter(mock.instance as never, {} as never);
+    await agentsRouter(cast(mock.instance), cast({}));
   });
 
   describe("GET / (list agents)", () => {
     it("should return registered agents", async () => {
       const agents = [{ type: "claude-code", displayName: "Claude Code" }];
-      vi.mocked(listAgents).mockReturnValue(agents as never);
+      vi.mocked(listAgents).mockReturnValue(cast(agents));
 
       const handler = routes.find((r) => r.path === "/")?.handler;
       const result = await handler?.({}, createMockReply());
@@ -96,7 +97,7 @@ describe("agents API", () => {
         capabilities: { canResume: true, canInject: true, supportsStreaming: true },
         getActiveRunCount: () => 2,
       };
-      vi.mocked(agentRegistry.get).mockReturnValue(mockRunner as never);
+      vi.mocked(agentRegistry.get).mockReturnValue(cast(mockRunner));
 
       const handler = routes.find((r) => r.path === "/:type")?.handler;
       const result = await handler?.({ params: { type: "claude-code" } }, createMockReply());

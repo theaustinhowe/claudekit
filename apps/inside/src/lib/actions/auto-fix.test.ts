@@ -16,6 +16,7 @@ vi.mock("@/lib/actions/settings", () => ({
   setSetting: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { getSetting, setSetting } from "@/lib/actions/settings";
 import { execute, getDb, queryAll } from "@/lib/db";
 import { getAutoFixEnabled, getAutoFixHistory, saveAutoFixRun, setAutoFixEnabled, updateAutoFixRun } from "./auto-fix";
@@ -29,7 +30,7 @@ const mockSetSetting = vi.mocked(setSetting);
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetDb.mockResolvedValue({} as Awaited<ReturnType<typeof getDb>>);
-  mockExecute.mockResolvedValue(undefined as never);
+  mockExecute.mockResolvedValue(cast(undefined));
 });
 
 describe("saveAutoFixRun", () => {
@@ -115,19 +116,19 @@ describe("updateAutoFixRun", () => {
 
 describe("getAutoFixHistory", () => {
   it("returns history for a project", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "run-1" }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "run-1" }]));
     const result = await getAutoFixHistory("proj-1");
     expect(result).toHaveLength(1);
   });
 
   it("uses default limit of 20", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
     await getAutoFixHistory("proj-1");
     expect(mockQueryAll).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("LIMIT"), ["proj-1", 20]);
   });
 
   it("uses custom limit", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
     await getAutoFixHistory("proj-1", 5);
     expect(mockQueryAll).toHaveBeenCalledWith(expect.anything(), expect.anything(), ["proj-1", 5]);
   });

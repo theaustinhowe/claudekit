@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import type { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -44,7 +45,7 @@ describe("POST /api/toolbox/check", () => {
       { toolId: "node", installed: true, currentVersion: "22.0.0" },
       { toolId: "git", installed: true, currentVersion: "2.45.0" },
     ];
-    mockCheckTools.mockResolvedValue(results as never);
+    mockCheckTools.mockResolvedValue(cast(results));
 
     const response = await POST(makeRequest({ toolIds: ["node", "git"] }));
     const data = await response.json();

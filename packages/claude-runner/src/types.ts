@@ -58,8 +58,8 @@ export interface SpawnClaudeOptions {
 }
 
 export interface ClaudeProcess {
-  /** The underlying Node.js ChildProcess */
-  child: import("node:child_process").ChildProcess;
+  /** The underlying Node.js ChildProcess (null when pre-aborted) */
+  child: import("node:child_process").ChildProcess | null;
   /** Process ID (undefined if spawn failed) */
   pid: number | undefined;
   /** Subscribe to parsed stream-JSON events (one per newline-delimited JSON object) */

@@ -23,6 +23,7 @@ vi.mock("@claudekit/duckdb", () => ({
 }));
 
 import { queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { createMockReply } from "../test-utils.js";
 
 describe("auth middleware", () => {
@@ -51,7 +52,7 @@ describe("auth middleware", () => {
     });
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(200);
     expect(reply._body).toBeNull();
@@ -61,7 +62,7 @@ describe("auth middleware", () => {
     const request = createMockRequest({ url: "/api/health" });
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(200);
     expect(reply._body).toBeNull();
@@ -71,7 +72,7 @@ describe("auth middleware", () => {
     const request = createMockRequest({ url: "/api/setup" });
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(200);
     expect(reply._body).toBeNull();
@@ -83,7 +84,7 @@ describe("auth middleware", () => {
     const request = createMockRequest();
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(200);
     expect(reply._body).toBeNull();
@@ -99,7 +100,7 @@ describe("auth middleware", () => {
     const request = createMockRequest();
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(401);
     expect(reply._body).toEqual({ error: "Authentication required" });
@@ -117,7 +118,7 @@ describe("auth middleware", () => {
     });
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(401);
     expect(reply._body).toEqual({ error: "Authentication required" });
@@ -135,7 +136,7 @@ describe("auth middleware", () => {
     });
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(401);
     expect(reply._body).toEqual({ error: "Invalid token" });
@@ -153,7 +154,7 @@ describe("auth middleware", () => {
     });
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(200);
     expect(reply._body).toBeNull();
@@ -171,7 +172,7 @@ describe("auth middleware", () => {
     });
     const reply = createMockReply();
 
-    await mod.authHook(request as never, reply as never);
+    await mod.authHook(cast(request), cast(reply));
 
     expect(reply._statusCode).toBe(200);
     expect(reply._body).toBeNull();
@@ -185,8 +186,8 @@ describe("auth middleware", () => {
     const request = createMockRequest();
     const reply = createMockReply();
 
-    await authHook(request as never, reply as never);
-    await authHook(request as never, reply as never);
+    await authHook(cast(request), cast(reply));
+    await authHook(cast(request), cast(reply));
 
     expect(queryOne).toHaveBeenCalledTimes(1);
   });

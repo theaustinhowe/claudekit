@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { navigateTo, waitForSettle } from "./navigation";
 
@@ -17,7 +18,7 @@ describe("navigateTo", () => {
     const page = createMockPage();
     page.goto.mockResolvedValue(null);
 
-    await navigateTo(page as never, "http://localhost:3000");
+    await navigateTo(cast(page), "http://localhost:3000");
 
     expect(page.goto).toHaveBeenCalledWith("http://localhost:3000", {
       waitUntil: "networkidle",
@@ -29,7 +30,7 @@ describe("navigateTo", () => {
     const page = createMockPage();
     page.goto.mockResolvedValue(null);
 
-    await navigateTo(page as never, "http://localhost:3000", {
+    await navigateTo(cast(page), "http://localhost:3000", {
       waitUntil: "domcontentloaded",
       timeout: 5000,
     });
@@ -44,7 +45,7 @@ describe("navigateTo", () => {
     const page = createMockPage();
     page.goto.mockRejectedValueOnce(new Error("timeout")).mockResolvedValueOnce(null);
 
-    await navigateTo(page as never, "http://localhost:3000", {
+    await navigateTo(cast(page), "http://localhost:3000", {
       fallbackWaitUntil: "load",
     });
 
@@ -59,7 +60,7 @@ describe("navigateTo", () => {
     const page = createMockPage();
     page.goto.mockRejectedValue(new Error("timeout"));
 
-    await expect(navigateTo(page as never, "http://localhost:3000")).rejects.toThrow(
+    await expect(navigateTo(cast(page), "http://localhost:3000")).rejects.toThrow(
       "Navigation to http://localhost:3000 failed (waitUntil: networkidle, timeout: 30000ms)",
     );
   });
@@ -68,7 +69,7 @@ describe("navigateTo", () => {
     const page = createMockPage();
     page.goto.mockRejectedValue(new Error("timeout"));
 
-    await expect(navigateTo(page as never, "http://localhost:3000", { fallbackWaitUntil: "load" })).rejects.toThrow(
+    await expect(navigateTo(cast(page), "http://localhost:3000", { fallbackWaitUntil: "load" })).rejects.toThrow(
       "timeout",
     );
   });
@@ -78,7 +79,7 @@ describe("navigateTo", () => {
     page.goto.mockResolvedValue(null);
     page.waitForTimeout.mockResolvedValue(undefined);
 
-    await navigateTo(page as never, "http://localhost:3000", { settleMs: 500 });
+    await navigateTo(cast(page), "http://localhost:3000", { settleMs: 500 });
 
     expect(page.waitForTimeout).toHaveBeenCalledWith(500);
   });
@@ -87,7 +88,7 @@ describe("navigateTo", () => {
     const page = createMockPage();
     page.goto.mockResolvedValue(null);
 
-    await navigateTo(page as never, "http://localhost:3000", { settleMs: 0 });
+    await navigateTo(cast(page), "http://localhost:3000", { settleMs: 0 });
 
     expect(page.waitForTimeout).not.toHaveBeenCalled();
   });
@@ -97,7 +98,7 @@ describe("navigateTo", () => {
     page.goto.mockRejectedValueOnce(new Error("timeout")).mockResolvedValueOnce(null);
     page.waitForTimeout.mockResolvedValue(undefined);
 
-    await navigateTo(page as never, "http://localhost:3000", {
+    await navigateTo(cast(page), "http://localhost:3000", {
       fallbackWaitUntil: "load",
       settleMs: 1000,
     });
@@ -111,7 +112,7 @@ describe("waitForSettle", () => {
     const page = createMockPage();
     page.waitForTimeout.mockResolvedValue(undefined);
 
-    await waitForSettle(page as never);
+    await waitForSettle(cast(page));
 
     expect(page.waitForTimeout).toHaveBeenCalledWith(2000);
   });
@@ -120,7 +121,7 @@ describe("waitForSettle", () => {
     const page = createMockPage();
     page.waitForTimeout.mockResolvedValue(undefined);
 
-    await waitForSettle(page as never, 500);
+    await waitForSettle(cast(page), 500);
 
     expect(page.waitForTimeout).toHaveBeenCalledWith(500);
   });

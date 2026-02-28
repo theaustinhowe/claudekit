@@ -29,6 +29,7 @@ vi.mock("../ws/handler.js", () => ({
 }));
 
 import { buildUpdate, execute, queryOne, withTransaction } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { broadcast } from "../ws/handler.js";
 
 describe("state-machine", () => {
@@ -211,7 +212,7 @@ describe("state-machine", () => {
 
       // Mock withTransaction to execute callback
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       // queryOne: first for current job, second for re-read after update
@@ -235,7 +236,7 @@ describe("state-machine", () => {
 
     it("should return error for job not found", async () => {
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(undefined);
@@ -250,7 +251,7 @@ describe("state-machine", () => {
       const mockJob = { id: "job-1", status: "done" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob);
@@ -270,7 +271,7 @@ describe("state-machine", () => {
       };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -308,7 +309,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "paused" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -335,7 +336,7 @@ describe("state-machine", () => {
       const mockJob = { id: "job-1", status: "paused" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob);
@@ -351,7 +352,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "running" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -372,7 +373,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "paused" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -400,7 +401,7 @@ describe("state-machine", () => {
 
     it("should return error when job not found", async () => {
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(undefined);
@@ -415,7 +416,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "paused", pause_reason: "Stopped by user" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -435,7 +436,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "queued", failure_reason: null };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -455,7 +456,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "failed", failure_reason: "Cancelled by user" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -475,7 +476,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "queued", pause_reason: null };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -494,7 +495,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "running" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -513,7 +514,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "planning" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -529,7 +530,7 @@ describe("state-machine", () => {
 
     it("should not broadcast when result has no job", async () => {
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(undefined);
@@ -543,7 +544,7 @@ describe("state-machine", () => {
       const mockUpdatedJob = { id: "job-1", status: "running" };
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob).mockResolvedValueOnce(mockUpdatedJob);
@@ -646,7 +647,7 @@ describe("state-machine", () => {
 
   describe("applyAction - unknown action", () => {
     it("should return error for unknown action type", () => {
-      const result = applyAction("running", "nonexistent" as never);
+      const result = applyAction("running", cast("nonexistent"));
       expect(result.error).toContain("Unknown action: nonexistent");
       expect(result.newStatus).toBeNull();
     });

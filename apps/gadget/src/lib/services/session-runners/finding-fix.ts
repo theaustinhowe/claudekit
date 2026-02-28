@@ -125,8 +125,7 @@ export function createFindingFixRunner(metadata: Record<string, unknown>): Sessi
             repoId,
             repoPath,
             scanId: latestScan.id,
-            // biome-ignore lint/suspicious/noExplicitAny: policy shape is dynamic from DB
-            policy: policy as any,
+            policy,
           });
         }
       }

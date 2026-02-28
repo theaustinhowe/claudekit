@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -57,22 +58,22 @@ describe("PausedJobPanel", () => {
   afterEach(() => cleanup());
 
   it("renders resume button", () => {
-    render(<PausedJobPanel job={makeJob() as never} />, { wrapper: createWrapper() });
+    render(<PausedJobPanel job={cast(makeJob())} />, { wrapper: createWrapper() });
     expect(screen.getByRole("button", { name: /resume/i })).toBeInTheDocument();
   });
 
   it("shows pause reason", () => {
-    render(<PausedJobPanel job={makeJob() as never} />, { wrapper: createWrapper() });
+    render(<PausedJobPanel job={cast(makeJob())} />, { wrapper: createWrapper() });
     expect(screen.getByText(/user requested pause/i)).toBeInTheDocument();
   });
 
   it("shows inject modal", () => {
-    render(<PausedJobPanel job={makeJob() as never} />, { wrapper: createWrapper() });
+    render(<PausedJobPanel job={cast(makeJob())} />, { wrapper: createWrapper() });
     expect(screen.getByText("Guide Agent")).toBeInTheDocument();
   });
 
   it("shows orchestrator badge for orchestrator restarts", () => {
-    render(<PausedJobPanel job={makeJob({ pauseReason: "Orchestrator restart" }) as never} />, {
+    render(<PausedJobPanel job={cast(makeJob({ pauseReason: "Orchestrator restart" }))} />, {
       wrapper: createWrapper(),
     });
     expect(screen.getByText("Orchestrator restarted")).toBeInTheDocument();

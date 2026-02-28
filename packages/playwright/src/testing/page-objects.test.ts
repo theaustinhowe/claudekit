@@ -5,12 +5,13 @@ vi.mock("@playwright/test", () => ({
   // Provide type stubs
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { BasePage } from "./page-objects";
 
 // Create a concrete implementation for testing the abstract class
 class TestPage extends BasePage {
   constructor(page: ReturnType<typeof createMockPage>, path?: string) {
-    super(page as never, path);
+    super(cast(page), path);
   }
 }
 

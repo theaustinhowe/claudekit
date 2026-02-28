@@ -12,6 +12,7 @@ vi.mock("@/lib/utils", () => ({
   nowTimestamp: vi.fn().mockReturnValue("2024-01-01T00:00:00.000Z"),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import {
   createUpgradeTasks,
@@ -30,12 +31,12 @@ const mockQueryAll = vi.mocked(queryAll);
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetDb.mockResolvedValue({} as Awaited<ReturnType<typeof getDb>>);
-  mockExecute.mockResolvedValue(undefined as never);
+  mockExecute.mockResolvedValue(cast(undefined));
 });
 
 describe("getUpgradeTasks", () => {
   it("returns tasks for a project", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "t1", title: "Task 1" }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "t1", title: "Task 1" }]));
     const result = await getUpgradeTasks("proj-1");
     expect(result).toHaveLength(1);
     expect(mockQueryAll).toHaveBeenCalledWith(
@@ -116,40 +117,46 @@ describe("insertUpgradeTask", () => {
 
 describe("deleteSingleUpgradeTask", () => {
   it("deletes task when it exists and is pending", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "task-1",
-      project_id: "proj-1",
-      status: "pending",
-      order_index: 1,
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "task-1",
+        project_id: "proj-1",
+        status: "pending",
+        order_index: 1,
+      }),
+    );
     await deleteSingleUpgradeTask("task-1");
     expect(mockExecute).toHaveBeenCalledTimes(2); // DELETE + shift
   });
 
   it("deletes task when it exists and is failed", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "task-1",
-      project_id: "proj-1",
-      status: "failed",
-      order_index: 1,
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "task-1",
+        project_id: "proj-1",
+        status: "failed",
+        order_index: 1,
+      }),
+    );
     await deleteSingleUpgradeTask("task-1");
     expect(mockExecute).toHaveBeenCalledTimes(2);
   });
 
   it("does not delete task with completed status", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "task-1",
-      project_id: "proj-1",
-      status: "completed",
-      order_index: 1,
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "task-1",
+        project_id: "proj-1",
+        status: "completed",
+        order_index: 1,
+      }),
+    );
     await deleteSingleUpgradeTask("task-1");
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
   it("does nothing when task not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     await deleteSingleUpgradeTask("nonexistent");
     expect(mockExecute).not.toHaveBeenCalled();
   });

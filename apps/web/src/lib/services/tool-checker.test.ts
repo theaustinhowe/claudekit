@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Must mock before imports
@@ -48,32 +49,38 @@ function makeTool(overrides: Partial<ToolDefinition> = {}): ToolDefinition {
 
 /** Simulate promisify(execFile) by invoking the callback argument */
 function setupExecFile(stdout: string, stderr = "") {
-  mockExecFile.mockImplementation(((...args: unknown[]) => {
-    const cb = args.find((a) => typeof a === "function") as
-      | ((err: null, result: { stdout: string; stderr: string }) => void)
-      | undefined;
-    cb?.(null, { stdout, stderr });
-    return undefined as never;
-  }) as never);
+  mockExecFile.mockImplementation(
+    cast((...args: unknown[]) => {
+      const cb = args.find((a) => typeof a === "function") as
+        | ((err: null, result: { stdout: string; stderr: string }) => void)
+        | undefined;
+      cb?.(null, { stdout, stderr });
+      return cast(undefined);
+    }),
+  );
 }
 
 /** Simulate promisify(exec) by invoking the callback argument (for shellFunction tools) */
 function setupExec(stdout: string, stderr = "") {
-  mockExec.mockImplementation(((...args: unknown[]) => {
-    const cb = args.find((a) => typeof a === "function") as
-      | ((err: null, result: { stdout: string; stderr: string }) => void)
-      | undefined;
-    cb?.(null, { stdout, stderr });
-    return undefined as never;
-  }) as never);
+  mockExec.mockImplementation(
+    cast((...args: unknown[]) => {
+      const cb = args.find((a) => typeof a === "function") as
+        | ((err: null, result: { stdout: string; stderr: string }) => void)
+        | undefined;
+      cb?.(null, { stdout, stderr });
+      return cast(undefined);
+    }),
+  );
 }
 
 function setupExecFileError(error: NodeJS.ErrnoException & { killed?: boolean }) {
-  mockExecFile.mockImplementation(((...args: unknown[]) => {
-    const cb = args.find((a) => typeof a === "function") as ((err: Error) => void) | undefined;
-    cb?.(error);
-    return undefined as never;
-  }) as never);
+  mockExecFile.mockImplementation(
+    cast((...args: unknown[]) => {
+      const cb = args.find((a) => typeof a === "function") as ((err: Error) => void) | undefined;
+      cb?.(error);
+      return cast(undefined);
+    }),
+  );
 }
 
 beforeEach(() => {

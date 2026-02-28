@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/services/scanner", () => ({
@@ -16,17 +17,19 @@ beforeEach(() => {
 
 describe("POST /api/discover", () => {
   it("discovers repos from roots", async () => {
-    mockDiscoverRepos.mockReturnValue([
-      {
-        name: "my-app",
-        localPath: "/projects/my-app",
-        repoType: "app",
-        packageManager: "pnpm",
-        isMonorepo: false,
-        gitRemote: "git@github.com:user/my-app.git",
-        defaultBranch: "main",
-      },
-    ] as never);
+    mockDiscoverRepos.mockReturnValue(
+      cast([
+        {
+          name: "my-app",
+          localPath: "/projects/my-app",
+          repoType: "app",
+          packageManager: "pnpm",
+          isMonorepo: false,
+          gitRemote: "git@github.com:user/my-app.git",
+          defaultBranch: "main",
+        },
+      ]),
+    );
 
     const req = new NextRequest("http://localhost/api/discover", {
       method: "POST",

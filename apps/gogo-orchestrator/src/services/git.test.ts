@@ -37,6 +37,7 @@ vi.mock("../utils/timeout.js", () => ({
 
 import { execFile } from "node:child_process";
 import { access, mkdir, readFile, rm } from "node:fs/promises";
+import { cast } from "@claudekit/test-utils";
 import {
   commitAllChanges,
   createWorktree,
@@ -67,7 +68,7 @@ function mockExecFile(stdout = "", stderr = "") {
     } else if (typeof cb === "function") {
       (cb as (err: null, result: { stdout: string; stderr: string }) => void)(null, { stdout, stderr });
     }
-    return { pid: 1234 } as never;
+    return cast({ pid: 1234 });
   });
 }
 
@@ -82,7 +83,7 @@ function mockExecFileFail(message: string) {
     } else if (typeof cb === "function") {
       (cb as (err: Error) => void)(err);
     }
-    return { pid: 1234 } as never;
+    return cast({ pid: 1234 });
   });
 }
 
@@ -381,7 +382,7 @@ describe("git async operations (mocked)", () => {
             });
           }
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await hasCommits(baseConfig, "/tmp/worktree", "main");
@@ -406,7 +407,7 @@ describe("git async operations (mocked)", () => {
             });
           }
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await hasCommits(baseConfig, "/tmp/worktree", "main");
@@ -440,7 +441,7 @@ describe("git async operations (mocked)", () => {
             });
           }
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await hasCommits(baseConfig, "/tmp/worktree", "main");
@@ -464,7 +465,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await hasCommits(baseConfig, "/tmp/worktree", "main");
@@ -494,7 +495,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await hasCommits(baseConfig, "/tmp/worktree", "main");
@@ -547,7 +548,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getCommitLog(baseConfig, "/tmp/worktree", "main");
@@ -573,7 +574,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getCommitLog(baseConfig, "/tmp/worktree", "main");
@@ -597,7 +598,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getCommitLog(baseConfig, "/tmp/worktree", "main");
@@ -624,7 +625,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -663,7 +664,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -686,7 +687,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -720,7 +721,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "nothing to commit";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       await expect(commitAllChanges("/tmp/worktree", "test")).rejects.toThrow();
@@ -768,7 +769,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       await removeWorktree(config, worktreePath);
@@ -796,7 +797,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "failed";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       // rm also fails
@@ -825,7 +826,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       await removeWorktree(config, worktreePath);
@@ -880,7 +881,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await createWorktree(baseConfig, 42, "Fix the bug");
@@ -915,7 +916,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await createWorktree(baseConfig, -1, "manual task", "abcd1234-5678");
@@ -958,7 +959,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -1009,7 +1010,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -1063,7 +1064,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -1106,7 +1107,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -1130,7 +1131,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "failed";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -1154,7 +1155,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "failed";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -1197,7 +1198,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getChangedFiles(baseConfig, "/tmp/worktree", "main");
@@ -1232,7 +1233,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/newfile.ts");
@@ -1270,7 +1271,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/modified.ts");
@@ -1310,7 +1311,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/file.ts");
@@ -1357,7 +1358,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/file.ts");
@@ -1400,7 +1401,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/file.ts");
@@ -1428,7 +1429,7 @@ describe("git async operations (mocked)", () => {
           err.stderr = "all fail";
           (callback as (err: Error) => void)(err);
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/file.ts");
@@ -1458,7 +1459,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/gone.ts");
@@ -1497,7 +1498,7 @@ describe("git async operations (mocked)", () => {
             stderr: "",
           });
         }
-        return { pid: 1234 } as never;
+        return cast({ pid: 1234 });
       });
 
       const result = await getFileDiff(baseConfig, "/tmp/worktree", "main", "src/file.ts");

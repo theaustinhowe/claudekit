@@ -30,6 +30,7 @@
     }
   },
   "devDependencies": {
+    "@claudekit/test-utils": "workspace:*",
     "@playwright/test": "^1.58.2",
     "@types/node": "^22.10.0",
     "typescript": "^5.9.3",

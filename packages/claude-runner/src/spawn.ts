@@ -70,7 +70,7 @@ export function spawnClaude(options: SpawnClaudeOptions): ClaudeProcess {
     // Return a process handle that immediately errors
     const noop = () => {};
     const errProc: ClaudeProcess = {
-      child: null as never,
+      child: null,
       pid: undefined,
       onEvent: noop,
       onRawLine: noop,

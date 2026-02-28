@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -29,25 +30,25 @@ describe("KanbanColumn", () => {
   afterEach(() => cleanup());
 
   it("renders column label and count", () => {
-    render(<KanbanColumn group={group as never} jobs={jobs as never[]} onJobClick={vi.fn()} />);
+    render(<KanbanColumn group={cast(group)} jobs={cast(jobs)} onJobClick={vi.fn()} />);
     expect(screen.getByText("Active")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   it("filters jobs by group statuses", () => {
-    render(<KanbanColumn group={group as never} jobs={jobs as never[]} onJobClick={vi.fn()} />);
+    render(<KanbanColumn group={cast(group)} jobs={cast(jobs)} onJobClick={vi.fn()} />);
     expect(screen.getAllByTestId("job-card")).toHaveLength(2);
     expect(screen.getByText("Job 1")).toBeInTheDocument();
     expect(screen.getByText("Job 2")).toBeInTheDocument();
   });
 
   it("shows empty state when no jobs match", () => {
-    render(<KanbanColumn group={group as never} jobs={[]} onJobClick={vi.fn()} />);
+    render(<KanbanColumn group={cast(group)} jobs={[]} onJobClick={vi.fn()} />);
     expect(screen.getByText("No jobs")).toBeInTheDocument();
   });
 
   it("renders compact mode without column wrapper", () => {
-    render(<KanbanColumn group={group as never} jobs={jobs as never[]} onJobClick={vi.fn()} compact />);
+    render(<KanbanColumn group={cast(group)} jobs={cast(jobs)} onJobClick={vi.fn()} compact />);
     expect(screen.queryByText("Active")).not.toBeInTheDocument();
     expect(screen.getAllByTestId("job-card")).toHaveLength(2);
   });

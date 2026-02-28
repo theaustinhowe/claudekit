@@ -1,3 +1,5 @@
+import type { Job, JobLog } from "@claudekit/gogo-shared";
+import { cast } from "@claudekit/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -523,7 +525,7 @@ describe("useHealthEvents", () => {
 describe("updateJobInCache", () => {
   it("updates job in detail and list caches", () => {
     const queryClient = createQueryClient();
-    const updatedJob = { ...mockJob, status: "running" } as never;
+    const updatedJob = cast<Job>({ ...mockJob, status: "running" });
 
     // Seed the detail cache
     queryClient.setQueryData(jobKeys.detail("job-1"), mockJob);
@@ -551,12 +553,12 @@ describe("appendLogToCache", () => {
     };
     queryClient.setQueryData(jobKeys.logs("job-1"), [existingLog]);
 
-    const newLog = {
+    const newLog = cast<JobLog>({
       id: "log-2",
       sequence: 2,
       createdAt: "2024-01-01T00:00:02Z",
       content: "second",
-    } as never;
+    });
 
     appendLogToCache(queryClient, "job-1", newLog);
 
@@ -576,7 +578,7 @@ describe("appendLogToCache", () => {
     };
     queryClient.setQueryData(jobKeys.logs("job-1"), [existingLog]);
 
-    appendLogToCache(queryClient, "job-1", existingLog as never);
+    appendLogToCache(queryClient, "job-1", cast<JobLog>(existingLog));
 
     const logs = queryClient.getQueryData(jobKeys.logs("job-1")) as Array<{ id: string }>;
     expect(logs).toHaveLength(1);
@@ -584,12 +586,12 @@ describe("appendLogToCache", () => {
 
   it("creates new cache entry when none exists", () => {
     const queryClient = createQueryClient();
-    const newLog = {
+    const newLog = cast<JobLog>({
       id: "log-1",
       sequence: 1,
       createdAt: "2024-01-01T00:00:01Z",
       content: "first",
-    } as never;
+    });
 
     appendLogToCache(queryClient, "job-1", newLog);
 

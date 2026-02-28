@@ -14,6 +14,7 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 import fs from "node:fs/promises";
+import { cast } from "@claudekit/test-utils";
 import { NextRequest } from "next/server";
 import { GET } from "./route";
 
@@ -26,8 +27,8 @@ beforeEach(() => {
 
 describe("GET /api/fs/browse", () => {
   it("returns home directory when no path provided", async () => {
-    mockRealpath.mockResolvedValue("/home/testuser" as never);
-    mockReaddir.mockResolvedValue([{ name: "Documents", isDirectory: () => true, isFile: () => false }] as never);
+    mockRealpath.mockResolvedValue(cast("/home/testuser"));
+    mockReaddir.mockResolvedValue(cast([{ name: "Documents", isDirectory: () => true, isFile: () => false }]));
 
     const req = new NextRequest("http://localhost/api/fs/browse");
     const response = await GET(req);
@@ -41,14 +42,16 @@ describe("GET /api/fs/browse", () => {
   });
 
   it("returns directory entries for valid path within home", async () => {
-    mockRealpath.mockResolvedValueOnce("/home/testuser/projects" as never);
+    mockRealpath.mockResolvedValueOnce(cast("/home/testuser/projects"));
     // Main readdir
-    mockReaddir.mockResolvedValueOnce([
-      { name: "src", isDirectory: () => true, isFile: () => false },
-      { name: "README.md", isDirectory: () => false, isFile: () => true },
-    ] as never);
+    mockReaddir.mockResolvedValueOnce(
+      cast([
+        { name: "src", isDirectory: () => true, isFile: () => false },
+        { name: "README.md", isDirectory: () => false, isFile: () => true },
+      ]),
+    );
     // hasChildren check for "src"
-    mockReaddir.mockResolvedValueOnce([{ name: "components", isDirectory: () => true, isFile: () => false }] as never);
+    mockReaddir.mockResolvedValueOnce(cast([{ name: "components", isDirectory: () => true, isFile: () => false }]));
 
     const req = new NextRequest("http://localhost/api/fs/browse?path=/home/testuser/projects");
     const response = await GET(req);

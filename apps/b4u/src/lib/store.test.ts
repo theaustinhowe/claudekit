@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import { type AppState, appReducer, initialState } from "@/lib/store";
 import { createThread, emptyActiveThreadIds, emptyThreads } from "@/lib/thread-utils";
@@ -395,7 +396,7 @@ describe("appReducer", () => {
 
   describe("unknown action", () => {
     it("returns the same state for unknown action types", () => {
-      const state = appReducer(initialState, { type: "UNKNOWN" } as never);
+      const state = appReducer(initialState, cast({ type: "UNKNOWN" }));
       expect(state).toBe(initialState);
     });
   });

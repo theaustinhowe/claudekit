@@ -42,6 +42,7 @@ vi.mock("../services/issue-sync.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { mapIssue, mapRepositoryFull } from "../db/schema.js";
 import { syncIssuesForRepo } from "../services/issue-sync.js";
 import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
@@ -60,7 +61,7 @@ describe("issues API", () => {
 
     const mock = createMockFastify();
     routes = mock.routes;
-    await issuesRouter(mock.instance as never, {} as never);
+    await issuesRouter(cast(mock.instance), cast({}));
   });
 
   describe("GET /:id/issues (list issues)", () => {

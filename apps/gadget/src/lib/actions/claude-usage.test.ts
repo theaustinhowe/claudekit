@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@claudekit/claude-usage/server", () => ({
@@ -18,7 +19,7 @@ beforeEach(() => {
 describe("getClaudeUsageStatsAction", () => {
   it("returns usage stats from underlying function", async () => {
     const stats = { totalTokens: 1000, totalCost: 0.5 };
-    mockGetUsageStats.mockResolvedValue(stats as never);
+    mockGetUsageStats.mockResolvedValue(cast(stats));
 
     const result = await getClaudeUsageStatsAction();
     expect(result).toEqual(stats);
@@ -35,7 +36,7 @@ describe("getClaudeUsageStatsAction", () => {
 describe("getClaudeRateLimitsAction", () => {
   it("returns rate limits from underlying function", async () => {
     const limits = { remaining: 100, limit: 1000 };
-    mockGetRateLimits.mockResolvedValue(limits as never);
+    mockGetRateLimits.mockResolvedValue(cast(limits));
 
     const result = await getClaudeRateLimitsAction();
     expect(result).toEqual(limits);

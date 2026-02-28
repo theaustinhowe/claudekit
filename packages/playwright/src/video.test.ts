@@ -9,6 +9,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import fs from "node:fs";
+import { cast } from "@claudekit/test-utils";
 import { finalizeVideo } from "./video";
 
 const mockedReaddirSync = vi.mocked(fs.readdirSync);
@@ -18,7 +19,7 @@ const mockedRmSync = vi.mocked(fs.rmSync);
 // vi.mocked resolves readdirSync to the Dirent-returning overload;
 // our source uses the string-returning overload (with "utf-8" encoding)
 function mockReaddir(files: string[]) {
-  mockedReaddirSync.mockReturnValue(files as never);
+  mockedReaddirSync.mockReturnValue(cast(files));
 }
 
 beforeEach(() => {

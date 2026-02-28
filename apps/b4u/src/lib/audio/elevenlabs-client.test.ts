@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateSpeech, listVoices, previewVoice } from "@/lib/audio/elevenlabs-client";
 
@@ -90,8 +91,8 @@ describe("generateSpeech", () => {
 
     await generateSpeech("text", "v1");
     const body = JSON.parse(
-      ((mockFetch().mock.calls[0] as unknown[])[1] as string | (() => { body: string }))
-        ? String(((mockFetch().mock.calls[0] as unknown[])[1] as { body: string }).body)
+      (cast<unknown[]>(mockFetch().mock.calls[0])[1] as string | (() => { body: string }))
+        ? String((cast<unknown[]>(mockFetch().mock.calls[0])[1] as { body: string }).body)
         : "",
     );
     expect(body.voice_settings.stability).toBe(0.5);

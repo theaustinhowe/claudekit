@@ -10,6 +10,7 @@ vi.mock("@/lib/utils", () => ({
   nowTimestamp: vi.fn().mockReturnValue("2024-01-01T00:00:00.000Z"),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { execute, getDb, queryOne } from "@/lib/db";
 import { getSetting, setSetting } from "./settings";
 
@@ -24,13 +25,13 @@ beforeEach(() => {
 
 describe("getSetting", () => {
   it("returns value when setting exists", async () => {
-    mockQueryOne.mockResolvedValue({ value: "my-value" } as never);
+    mockQueryOne.mockResolvedValue(cast({ value: "my-value" }));
     const result = await getSetting("my-key");
     expect(result).toBe("my-value");
   });
 
   it("returns null when setting does not exist", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     const result = await getSetting("missing-key");
     expect(result).toBeNull();
   });
@@ -38,7 +39,7 @@ describe("getSetting", () => {
 
 describe("setSetting", () => {
   it("executes upsert query", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
     await setSetting("my-key", "my-value");
     expect(mockExecute).toHaveBeenCalledTimes(1);
     expect(mockExecute).toHaveBeenCalledWith(

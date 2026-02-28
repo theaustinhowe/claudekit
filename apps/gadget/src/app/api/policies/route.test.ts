@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -24,7 +25,7 @@ beforeEach(() => {
 
 describe("GET /api/policies", () => {
   it("returns policies", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "p1", name: "Default" }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "p1", name: "Default" }]));
 
     const response = await GET();
     const data = await response.json();
@@ -36,7 +37,7 @@ describe("GET /api/policies", () => {
 
 describe("POST /api/policies", () => {
   it("creates a policy", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/policies", {
       method: "POST",
@@ -54,7 +55,7 @@ describe("POST /api/policies", () => {
 
 describe("PUT /api/policies", () => {
   it("updates a policy", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/policies", {
       method: "PUT",

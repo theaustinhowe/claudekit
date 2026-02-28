@@ -10,6 +10,7 @@ vi.mock("@/lib/db", () => ({
   queryOne: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { cancelSession, createSession, getLiveSession, startSession, subscribe } from "@/lib/claude/session-manager";
 import { execute, getDb, queryOne } from "@/lib/db";
 
@@ -20,8 +21,8 @@ const mockGetDb = vi.mocked(getDb);
 beforeEach(() => {
   vi.clearAllMocks();
   vi.useFakeTimers();
-  mockGetDb.mockResolvedValue(mockConn as never);
-  mockExecute.mockResolvedValue(undefined as never);
+  mockGetDb.mockResolvedValue(cast(mockConn));
+  mockExecute.mockResolvedValue(cast(undefined));
 
   const g = globalThis as typeof globalThis & { __session_manager?: Map<string, unknown> };
   g.__session_manager = undefined;
@@ -76,24 +77,26 @@ describe("startSession", () => {
   it("starts a session and transitions to running", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQueryOne.mockResolvedValue({
-      id: sessionId,
-      session_type: "analyze-project",
-      status: "pending",
-      label: "Test",
-      context_type: null,
-      context_id: null,
-      context_name: null,
-      metadata_json: null,
-      pid: null,
-      progress: null,
-      phase: null,
-      started_at: null,
-      completed_at: null,
-      error_message: null,
-      result_json: null,
-      created_at: new Date().toISOString(),
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: sessionId,
+        session_type: "analyze-project",
+        status: "pending",
+        label: "Test",
+        context_type: null,
+        context_id: null,
+        context_name: null,
+        metadata_json: null,
+        pid: null,
+        progress: null,
+        phase: null,
+        started_at: null,
+        completed_at: null,
+        error_message: null,
+        result_json: null,
+        created_at: new Date().toISOString(),
+      }),
+    );
 
     const runner = vi.fn().mockResolvedValue({ result: { done: true } });
     const liveSession = await startSession(sessionId, runner);
@@ -109,7 +112,7 @@ describe("startSession", () => {
   });
 
   it("throws if session not found in DB", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
 
     await expect(startSession("nonexistent-id", vi.fn())).rejects.toThrow("Session nonexistent-id not found");
   });
@@ -117,24 +120,26 @@ describe("startSession", () => {
   it("returns existing session if already running", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQueryOne.mockResolvedValue({
-      id: sessionId,
-      session_type: "analyze-project",
-      status: "pending",
-      label: "Test",
-      context_type: null,
-      context_id: null,
-      context_name: null,
-      metadata_json: null,
-      pid: null,
-      progress: null,
-      phase: null,
-      started_at: null,
-      completed_at: null,
-      error_message: null,
-      result_json: null,
-      created_at: new Date().toISOString(),
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: sessionId,
+        session_type: "analyze-project",
+        status: "pending",
+        label: "Test",
+        context_type: null,
+        context_id: null,
+        context_name: null,
+        metadata_json: null,
+        pid: null,
+        progress: null,
+        phase: null,
+        started_at: null,
+        completed_at: null,
+        error_message: null,
+        result_json: null,
+        created_at: new Date().toISOString(),
+      }),
+    );
 
     const runner = vi
       .fn()
@@ -155,24 +160,26 @@ describe("subscribe", () => {
   it("replays buffered events and subscribes to new ones", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQueryOne.mockResolvedValue({
-      id: sessionId,
-      session_type: "analyze-project",
-      status: "pending",
-      label: "Test",
-      context_type: null,
-      context_id: null,
-      context_name: null,
-      metadata_json: null,
-      pid: null,
-      progress: null,
-      phase: null,
-      started_at: null,
-      completed_at: null,
-      error_message: null,
-      result_json: null,
-      created_at: new Date().toISOString(),
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: sessionId,
+        session_type: "analyze-project",
+        status: "pending",
+        label: "Test",
+        context_type: null,
+        context_id: null,
+        context_name: null,
+        metadata_json: null,
+        pid: null,
+        progress: null,
+        phase: null,
+        started_at: null,
+        completed_at: null,
+        error_message: null,
+        result_json: null,
+        created_at: new Date().toISOString(),
+      }),
+    );
 
     const runner = vi
       .fn()
@@ -199,24 +206,26 @@ describe("getLiveSession", () => {
   it("returns the live session after it is started", async () => {
     const sessionId = await createSession({ sessionType: "analyze-project", label: "Test" });
 
-    mockQueryOne.mockResolvedValue({
-      id: sessionId,
-      session_type: "analyze-project",
-      status: "pending",
-      label: "Test",
-      context_type: null,
-      context_id: null,
-      context_name: null,
-      metadata_json: null,
-      pid: null,
-      progress: null,
-      phase: null,
-      started_at: null,
-      completed_at: null,
-      error_message: null,
-      result_json: null,
-      created_at: new Date().toISOString(),
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: sessionId,
+        session_type: "analyze-project",
+        status: "pending",
+        label: "Test",
+        context_type: null,
+        context_id: null,
+        context_name: null,
+        metadata_json: null,
+        pid: null,
+        progress: null,
+        phase: null,
+        started_at: null,
+        completed_at: null,
+        error_message: null,
+        result_json: null,
+        created_at: new Date().toISOString(),
+      }),
+    );
 
     const runner = vi
       .fn()
@@ -231,54 +240,58 @@ describe("getLiveSession", () => {
 
 describe("cancelSession", () => {
   it("returns false for non-existent session with no DB record", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     const result = await cancelSession("nonexistent");
     expect(result).toBe(false);
   });
 
   it("returns false for already completed session", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "done-sess",
-      session_type: "analyze-project",
-      status: "done",
-      label: "Done",
-      context_type: null,
-      context_id: null,
-      context_name: null,
-      metadata_json: null,
-      pid: null,
-      progress: 100,
-      phase: null,
-      started_at: null,
-      completed_at: new Date().toISOString(),
-      error_message: null,
-      result_json: null,
-      created_at: new Date().toISOString(),
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "done-sess",
+        session_type: "analyze-project",
+        status: "done",
+        label: "Done",
+        context_type: null,
+        context_id: null,
+        context_name: null,
+        metadata_json: null,
+        pid: null,
+        progress: 100,
+        phase: null,
+        started_at: null,
+        completed_at: new Date().toISOString(),
+        error_message: null,
+        result_json: null,
+        created_at: new Date().toISOString(),
+      }),
+    );
 
     const result = await cancelSession("done-sess");
     expect(result).toBe(false);
   });
 
   it("cancels an orphaned running session in DB", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "orphan-sess",
-      session_type: "analyze-project",
-      status: "running",
-      label: "Orphan",
-      context_type: null,
-      context_id: null,
-      context_name: null,
-      metadata_json: null,
-      pid: null,
-      progress: 50,
-      phase: null,
-      started_at: new Date().toISOString(),
-      completed_at: null,
-      error_message: null,
-      result_json: null,
-      created_at: new Date().toISOString(),
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "orphan-sess",
+        session_type: "analyze-project",
+        status: "running",
+        label: "Orphan",
+        context_type: null,
+        context_id: null,
+        context_name: null,
+        metadata_json: null,
+        pid: null,
+        progress: 50,
+        phase: null,
+        started_at: new Date().toISOString(),
+        completed_at: null,
+        error_message: null,
+        result_json: null,
+        created_at: new Date().toISOString(),
+      }),
+    );
 
     const result = await cancelSession("orphan-sess");
     expect(result).toBe(true);

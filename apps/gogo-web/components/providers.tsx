@@ -1,9 +1,9 @@
 "use client";
 
+import type { Repository } from "@claudekit/gogo-shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { useState } from "react";
-
 import { Toaster } from "sonner";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -24,7 +24,7 @@ function RepositoryLoader({ children }: { children: React.ReactNode }) {
   const { data: repositories = [], isLoading } = useRepositories();
 
   return (
-    <RepositoryProvider repositories={repositories as never[]} isLoading={isLoading}>
+    <RepositoryProvider repositories={repositories as Repository[]} isLoading={isLoading}>
       {children}
     </RepositoryProvider>
   );

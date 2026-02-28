@@ -72,6 +72,7 @@ vi.mock("../utils/job-logging.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { commitAllChanges, getCommitLog, hasCommits, isWorkingTreeClean, pushBranch, removeWorktree } from "./git.js";
 import { createIssueCommentForRepo, createPullRequestForRepo, findExistingPrForRepo } from "./github/index.js";
 import { pollReadyToPrJobs, processReadyToPr } from "./pr-flow.js";
@@ -283,13 +284,17 @@ describe("pr-flow", () => {
       // updateJob: queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
       vi.mocked(pushBranch).mockResolvedValue(undefined);
-      vi.mocked(createPullRequestForRepo).mockResolvedValue({
-        number: 100,
-        html_url: "https://github.com/testowner/testrepo/pull/100",
-      } as never);
-      vi.mocked(createIssueCommentForRepo).mockResolvedValue({
-        id: 1,
-      } as never);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue(
+        cast({
+          number: 100,
+          html_url: "https://github.com/testowner/testrepo/pull/100",
+        }),
+      );
+      vi.mocked(createIssueCommentForRepo).mockResolvedValue(
+        cast({
+          id: 1,
+        }),
+      );
 
       const result = await processReadyToPr("job-1");
 
@@ -329,11 +334,13 @@ describe("pr-flow", () => {
       // updateJob (change_summary): queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
       vi.mocked(pushBranch).mockResolvedValue(undefined);
-      vi.mocked(createPullRequestForRepo).mockResolvedValue({
-        number: 100,
-        html_url: "https://github.com/testowner/testrepo/pull/100",
-      } as never);
-      vi.mocked(createIssueCommentForRepo).mockResolvedValue({ id: 1 } as never);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue(
+        cast({
+          number: 100,
+          html_url: "https://github.com/testowner/testrepo/pull/100",
+        }),
+      );
+      vi.mocked(createIssueCommentForRepo).mockResolvedValue(cast({ id: 1 }));
       // updateJob (worktree_path = null): queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
 
@@ -368,13 +375,17 @@ describe("pr-flow", () => {
       // updateJob: queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
       vi.mocked(pushBranch).mockResolvedValue(undefined);
-      vi.mocked(createPullRequestForRepo).mockResolvedValue({
-        number: 101,
-        html_url: "https://github.com/testowner/testrepo/pull/101",
-      } as never);
-      vi.mocked(createIssueCommentForRepo).mockResolvedValue({
-        id: 1,
-      } as never);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue(
+        cast({
+          number: 101,
+          html_url: "https://github.com/testowner/testrepo/pull/101",
+        }),
+      );
+      vi.mocked(createIssueCommentForRepo).mockResolvedValue(
+        cast({
+          id: 1,
+        }),
+      );
 
       const result = await processReadyToPr("job-1");
 
@@ -527,10 +538,12 @@ describe("pr-flow", () => {
       // updateJob: queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
       vi.mocked(pushBranch).mockResolvedValue(undefined);
-      vi.mocked(createPullRequestForRepo).mockResolvedValue({
-        number: 200,
-        html_url: "https://github.com/testowner/testrepo/pull/200",
-      } as never);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue(
+        cast({
+          number: 200,
+          html_url: "https://github.com/testowner/testrepo/pull/200",
+        }),
+      );
 
       const result = await processReadyToPr("job-1");
 
@@ -560,10 +573,12 @@ describe("pr-flow", () => {
       // updateJob: queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
       vi.mocked(pushBranch).mockResolvedValue(undefined);
-      vi.mocked(createPullRequestForRepo).mockResolvedValue({
-        number: 201,
-        html_url: "https://github.com/testowner/testrepo/pull/201",
-      } as never);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue(
+        cast({
+          number: 201,
+          html_url: "https://github.com/testowner/testrepo/pull/201",
+        }),
+      );
 
       await processReadyToPr("job-1");
 
@@ -701,13 +716,17 @@ describe("pr-flow", () => {
       // updateJob: queryOne for broadcast
       vi.mocked(queryOne).mockResolvedValueOnce(job);
       vi.mocked(pushBranch).mockResolvedValue(undefined);
-      vi.mocked(createPullRequestForRepo).mockResolvedValue({
-        number: 1,
-        html_url: "https://github.com/test/test/pull/1",
-      } as never);
-      vi.mocked(createIssueCommentForRepo).mockResolvedValue({
-        id: 1,
-      } as never);
+      vi.mocked(createPullRequestForRepo).mockResolvedValue(
+        cast({
+          number: 1,
+          html_url: "https://github.com/test/test/pull/1",
+        }),
+      );
+      vi.mocked(createIssueCommentForRepo).mockResolvedValue(
+        cast({
+          id: 1,
+        }),
+      );
 
       await pollReadyToPrJobs();
 

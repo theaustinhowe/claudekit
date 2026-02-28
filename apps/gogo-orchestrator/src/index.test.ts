@@ -99,6 +99,7 @@ vi.mock("./utils/logger.js", () => ({
 }));
 
 import { execute, queryAll } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { getDb } from "./db/index.js";
 import { createServer } from "./server.js";
 import { runDataPruning } from "./services/data-pruning.js";
@@ -145,9 +146,9 @@ describe("index.ts startup dependencies", () => {
     vi.mocked(formatValidationResults).mockReturnValue("Binary check results");
     vi.mocked(runDataPruning).mockResolvedValue(undefined);
     vi.mocked(startPolling).mockResolvedValue(undefined);
-    vi.mocked(createServer).mockResolvedValue(mockServer as never);
+    vi.mocked(createServer).mockResolvedValue(cast(mockServer));
     mockListen.mockResolvedValue(undefined);
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
   });
 
   describe("checkBinaries", () => {

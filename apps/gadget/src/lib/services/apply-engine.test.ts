@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -93,7 +94,7 @@ describe("applyFixes", () => {
       stdout: { on: vi.fn() },
       stderr: { on: vi.fn() },
     };
-    mockSpawn.mockReturnValue(mockChild as never);
+    mockSpawn.mockReturnValue(cast(mockChild));
 
     const result = await applyFixes({
       repoId: "repo1",
@@ -160,11 +161,13 @@ describe("applyFixes", () => {
 
     const { spawn } = await import("node:child_process");
     const mockSpawn = vi.mocked(spawn);
-    mockSpawn.mockReturnValue({
-      on: vi.fn((event: string, cb: (...args: unknown[]) => void) => {
-        if (event === "close") setTimeout(() => cb(0), 0);
+    mockSpawn.mockReturnValue(
+      cast({
+        on: vi.fn((event: string, cb: (...args: unknown[]) => void) => {
+          if (event === "close") setTimeout(() => cb(0), 0);
+        }),
       }),
-    } as never);
+    );
 
     await applyFixes({
       repoId: "repo1",

@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs/promises", () => ({
@@ -40,7 +41,7 @@ function setupWorkspaceRoot() {
       throw new Error("ENOENT");
     }
     if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) {
-      return "packages:\n  - apps/*" as never;
+      return cast("packages:\n  - apps/*");
     }
 
     // Default: not found
@@ -53,7 +54,7 @@ describe("loadSetupData", () => {
     vi.spyOn(process, "cwd").mockReturnValue(FAKE_ROOT);
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -106,10 +107,10 @@ describe("loadSetupData", () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
       if (p.endsWith("pnpm-workspace.yaml")) {
-        if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+        if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
         throw new Error("ENOENT");
       }
-      if (p.endsWith(".env.example")) return exampleContent as never;
+      if (p.endsWith(".env.example")) return cast(exampleContent);
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -125,8 +126,8 @@ describe("loadSetupData", () => {
     // Only root .env.example exists
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/.env.example`) return "KEY=val" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/.env.example`) return cast("KEY=val");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -142,8 +143,8 @@ describe("loadSetupData", () => {
     const vars = [{ key: "K", defaultValue: "", description: "", required: true, group: "" }];
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/.env.example`) return "K=v" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/.env.example`) return cast("K=v");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue(vars);
@@ -157,8 +158,8 @@ describe("loadSetupData", () => {
   it("reads .env.local files for existing values", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/.env.local`) return "EXISTING_KEY=hello\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/.env.local`) return cast("EXISTING_KEY=hello\n");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -172,8 +173,8 @@ describe("loadSetupData", () => {
   it("skips comments and blank lines in .env.local", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/.env.local`) return "# comment\n\nKEY=value\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/.env.local`) return cast("# comment\n\nKEY=value\n");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -187,8 +188,8 @@ describe("loadSetupData", () => {
   it("handles = in env.local values (URLs)", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/.env.local`) return "URL=https://example.com?a=1&b=2\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/.env.local`) return cast("URL=https://example.com?a=1&b=2\n");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -202,9 +203,9 @@ describe("loadSetupData", () => {
   it("first non-empty value wins across files", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/.env.local`) return "KEY=first\n" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "KEY=second\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/.env.local`) return cast("KEY=first\n");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return cast("KEY=second\n");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -220,7 +221,7 @@ describe("loadSetupData", () => {
     const appVars = { gadget: { label: "Gadget", variables: [] } };
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
       throw new Error("ENOENT");
     });
     mockParseEnvExample.mockReturnValue([]);
@@ -241,13 +242,13 @@ describe("saveSetupEnv", () => {
     vi.spyOn(process, "cwd").mockReturnValue(FAKE_ROOT);
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
       // buildKeyToApps reads these to map keys → app IDs
-      if (p === `${FAKE_ROOT}/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=\nLOG_LEVEL=" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
-      if (p === `${FAKE_ROOT}/apps/gadget/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=" as never;
-      if (p === `${FAKE_ROOT}/apps/gogo-orchestrator/.env.example`) return "GITHUB_PERSONAL_ACCESS_TOKEN=" as never;
-      if (p === `${FAKE_ROOT}/apps/gogo-web/.env.example`) return "" as never;
+      if (p === `${FAKE_ROOT}/.env.example`) return cast("GITHUB_PERSONAL_ACCESS_TOKEN=\nLOG_LEVEL=");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return cast("ELEVENLABS_API_KEY=");
+      if (p === `${FAKE_ROOT}/apps/gadget/.env.example`) return cast("GITHUB_PERSONAL_ACCESS_TOKEN=");
+      if (p === `${FAKE_ROOT}/apps/gogo-orchestrator/.env.example`) return cast("GITHUB_PERSONAL_ACCESS_TOKEN=");
+      if (p === `${FAKE_ROOT}/apps/gogo-web/.env.example`) return cast("");
       throw new Error(`ENOENT: ${p}`);
     });
     mockParseEnvExample.mockImplementation((content: string) => {
@@ -289,9 +290,9 @@ describe("saveSetupEnv", () => {
   it("updates existing active line", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "ELEVENLABS_API_KEY=old-key\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return cast("ELEVENLABS_API_KEY=");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return cast("ELEVENLABS_API_KEY=old-key\n");
       throw new Error("ENOENT");
     });
 
@@ -305,9 +306,9 @@ describe("saveSetupEnv", () => {
   it("updates existing commented line", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "# ELEVENLABS_API_KEY=\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return cast("ELEVENLABS_API_KEY=");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return cast("# ELEVENLABS_API_KEY=\n");
       throw new Error("ENOENT");
     });
 
@@ -321,9 +322,9 @@ describe("saveSetupEnv", () => {
   it("appends new keys not in file", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "OTHER=value\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return cast("ELEVENLABS_API_KEY=");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return cast("OTHER=value\n");
       throw new Error("ENOENT");
     });
 
@@ -344,9 +345,9 @@ describe("saveSetupEnv", () => {
   it("preserves unrelated lines unchanged", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "UNRELATED=keep\nELEVENLABS_API_KEY=old\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return cast("ELEVENLABS_API_KEY=");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return cast("UNRELATED=keep\nELEVENLABS_API_KEY=old\n");
       throw new Error("ENOENT");
     });
 
@@ -431,9 +432,9 @@ describe("saveSetupEnv", () => {
   it("keeps commented line unchanged when clearing value on already-commented key", async () => {
     mockReadFile.mockImplementation(async (filePath: Parameters<typeof readFile>[0]) => {
       const p = filePath.toString();
-      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return "packages:" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return "ELEVENLABS_API_KEY=" as never;
-      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return "# ELEVENLABS_API_KEY=old-val\n" as never;
+      if (p === `${FAKE_ROOT}/pnpm-workspace.yaml`) return cast("packages:");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.example`) return cast("ELEVENLABS_API_KEY=");
+      if (p === `${FAKE_ROOT}/apps/b4u/.env.local`) return cast("# ELEVENLABS_API_KEY=old-val\n");
       throw new Error("ENOENT");
     });
 

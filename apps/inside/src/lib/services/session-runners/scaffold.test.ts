@@ -33,6 +33,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
+import { cast } from "@claudekit/test-utils";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import type { GeneratorProject } from "@/lib/types";
 import { createScaffoldRunner } from "./scaffold";
@@ -75,7 +76,7 @@ function makeContext() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetProject.mockResolvedValue(fakeProject());
-  mockRunClaude.mockResolvedValue({ exitCode: 0, stdout: "done", stderr: "" } as never);
+  mockRunClaude.mockResolvedValue(cast({ exitCode: 0, stdout: "done", stderr: "" }));
 });
 
 describe("createScaffoldRunner", () => {
@@ -107,7 +108,7 @@ describe("createScaffoldRunner", () => {
   });
 
   it("updates status to error when Claude exits non-zero", async () => {
-    mockRunClaude.mockResolvedValue({ exitCode: 1, stdout: "", stderr: "fail" } as never);
+    mockRunClaude.mockResolvedValue(cast({ exitCode: 1, stdout: "", stderr: "fail" }));
     const runner = createScaffoldRunner({}, "proj-1");
     await expect(runner(makeContext())).rejects.toThrow("Claude exited with code 1");
     expect(mockUpdateProject).toHaveBeenCalledWith("proj-1", expect.objectContaining({ status: "error" }));

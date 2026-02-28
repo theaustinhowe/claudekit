@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/actions/sessions", () => ({
@@ -29,7 +30,7 @@ beforeEach(() => {
 
 describe("GET /api/sessions", () => {
   it("returns sessions list", async () => {
-    mockListSessions.mockResolvedValue([{ id: "s1", session_type: "scan", status: "done" }] as never);
+    mockListSessions.mockResolvedValue(cast([{ id: "s1", session_type: "scan", status: "done" }]));
 
     const req = new NextRequest("http://localhost/api/sessions");
     const response = await GET(req);
@@ -40,7 +41,7 @@ describe("GET /api/sessions", () => {
   });
 
   it("passes filter params", async () => {
-    mockListSessions.mockResolvedValue([] as never);
+    mockListSessions.mockResolvedValue(cast([]));
 
     const req = new NextRequest("http://localhost/api/sessions?status=running,pending&contextId=r1&limit=5");
     await GET(req);
@@ -57,8 +58,8 @@ describe("GET /api/sessions", () => {
 
 describe("POST /api/sessions", () => {
   it("creates and starts a session", async () => {
-    mockCreateSession.mockResolvedValue("sess-1" as never);
-    mockStartSession.mockResolvedValue(undefined as never);
+    mockCreateSession.mockResolvedValue(cast("sess-1"));
+    mockStartSession.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/sessions", {
       method: "POST",

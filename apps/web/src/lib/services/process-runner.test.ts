@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:child_process", () => ({
@@ -56,7 +57,7 @@ function parseSSE(raw: string): Array<{ type: string; data?: string; exitCode?: 
 describe("runCommand", () => {
   it("returns a ReadableStream", () => {
     const child = createMockChild();
-    mockSpawn.mockReturnValue(child as never);
+    mockSpawn.mockReturnValue(cast(child));
 
     const stream = runCommand("echo hello");
 
@@ -67,7 +68,7 @@ describe("runCommand", () => {
 
   it("forwards stdout as SSE output events", async () => {
     const child = createMockChild();
-    mockSpawn.mockReturnValue(child as never);
+    mockSpawn.mockReturnValue(cast(child));
 
     const stream = runCommand("echo hello");
 
@@ -86,7 +87,7 @@ describe("runCommand", () => {
 
   it("forwards stderr as SSE output events", async () => {
     const child = createMockChild();
-    mockSpawn.mockReturnValue(child as never);
+    mockSpawn.mockReturnValue(cast(child));
 
     const stream = runCommand("failing-cmd");
 
@@ -104,7 +105,7 @@ describe("runCommand", () => {
 
   it("sends error event on spawn error", async () => {
     const child = createMockChild();
-    mockSpawn.mockReturnValue(child as never);
+    mockSpawn.mockReturnValue(cast(child));
 
     const stream = runCommand("bad-cmd");
 
@@ -120,7 +121,7 @@ describe("runCommand", () => {
 
   it("spawns bash with correct arguments", () => {
     const child = createMockChild();
-    mockSpawn.mockReturnValue(child as never);
+    mockSpawn.mockReturnValue(cast(child));
 
     runCommand("npm install -g something");
 

@@ -11,6 +11,7 @@ vi.mock("@/lib/validations", () => ({
   userFlowsArraySchema: {},
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PUT } from "@/app/api/user-flows/route";
 import { execute, queryOne } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
@@ -30,7 +31,7 @@ beforeEach(() => {
 describe("GET /api/user-flows", () => {
   it("returns user flows", async () => {
     const flows = [{ id: "flow-1", name: "Login Flow", steps: ["Go to login", "Enter credentials"] }];
-    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(flows) } as never);
+    mockQueryOne.mockResolvedValue(cast({ data_json: JSON.stringify(flows) }));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -48,7 +49,7 @@ describe("GET /api/user-flows", () => {
   });
 
   it("returns empty array when no items exist", async () => {
-    mockQueryOne.mockResolvedValue(null as never);
+    mockQueryOne.mockResolvedValue(cast(null));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -71,8 +72,8 @@ describe("GET /api/user-flows", () => {
 describe("PUT /api/user-flows", () => {
   it("replaces all user flows", async () => {
     const flows = [{ id: "f1", name: "Flow 1", steps: ["Step 1"] }];
-    mockParseBody.mockResolvedValue({ ok: true, data: flows } as never);
-    mockExecute.mockResolvedValue(undefined as never);
+    mockParseBody.mockResolvedValue(cast({ ok: true, data: flows }));
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/user-flows?runId=run-1", {
       method: "PUT",
@@ -98,7 +99,7 @@ describe("PUT /api/user-flows", () => {
   });
 
   it("returns validation error", async () => {
-    mockParseBody.mockResolvedValue({ ok: false, error: "Invalid", status: 422 } as never);
+    mockParseBody.mockResolvedValue(cast({ ok: false, error: "Invalid", status: 422 }));
 
     const req = new NextRequest("http://localhost/api/user-flows?runId=run-1", { method: "PUT", body: "{}" });
     const response = await PUT(req);

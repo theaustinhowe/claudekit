@@ -6,6 +6,7 @@ vi.mock("@/lib/db", () => ({
   queryAll: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/video/info/route";
 import { queryAll } from "@/lib/db";
 
@@ -21,7 +22,7 @@ beforeEach(() => {
 
 describe("GET /api/video/info", () => {
   it("returns latest video info", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "vid-001", file_path: "/tmp/final.mp4", duration_seconds: 120 }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "vid-001", file_path: "/tmp/final.mp4", duration_seconds: 120 }]));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -42,7 +43,7 @@ describe("GET /api/video/info", () => {
   });
 
   it("returns 404 when no videos exist", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -52,7 +53,7 @@ describe("GET /api/video/info", () => {
   });
 
   it("converts duration string to number", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "vid-002", file_path: "/tmp/out.mp4", duration_seconds: "45.5" }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "vid-002", file_path: "/tmp/out.mp4", duration_seconds: "45.5" }]));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();

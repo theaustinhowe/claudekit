@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -36,19 +37,19 @@ describe("ReadyToPrPanel", () => {
   afterEach(() => cleanup());
 
   it("renders running tests label for first attempt", () => {
-    render(<ReadyToPrPanel job={makeJob() as never} onCreatePr={vi.fn()} isPending={false} />);
+    render(<ReadyToPrPanel job={cast(makeJob())} onCreatePr={vi.fn()} isPending={false} />);
     expect(screen.getByText("Running Tests")).toBeInTheDocument();
   });
 
   it("shows progress indicator", () => {
-    render(<ReadyToPrPanel job={makeJob() as never} onCreatePr={vi.fn()} isPending={false} />);
+    render(<ReadyToPrPanel job={cast(makeJob())} onCreatePr={vi.fn()} isPending={false} />);
     expect(screen.getByTestId("progress")).toBeInTheDocument();
   });
 
   it("shows fixing label when retrying with test output", () => {
     render(
       <ReadyToPrPanel
-        job={makeJob({ testRetryCount: 1, lastTestOutput: "FAIL: test.ts" }) as never}
+        job={cast(makeJob({ testRetryCount: 1, lastTestOutput: "FAIL: test.ts" }))}
         onCreatePr={vi.fn()}
         isPending={false}
       />,
@@ -59,7 +60,7 @@ describe("ReadyToPrPanel", () => {
   it("shows attempt badge when retrying", () => {
     render(
       <ReadyToPrPanel
-        job={makeJob({ testRetryCount: 2, lastTestOutput: "FAIL" }) as never}
+        job={cast(makeJob({ testRetryCount: 2, lastTestOutput: "FAIL" }))}
         onCreatePr={vi.fn()}
         isPending={false}
       />,
@@ -70,7 +71,7 @@ describe("ReadyToPrPanel", () => {
   it("shows change summary when available", () => {
     render(
       <ReadyToPrPanel
-        job={makeJob({ changeSummary: "Fixed login bug" }) as never}
+        job={cast(makeJob({ changeSummary: "Fixed login bug" }))}
         onCreatePr={vi.fn()}
         isPending={false}
       />,
@@ -79,12 +80,12 @@ describe("ReadyToPrPanel", () => {
   });
 
   it("shows trigger PR button when not pending", () => {
-    render(<ReadyToPrPanel job={makeJob() as never} onCreatePr={vi.fn()} isPending={false} />);
+    render(<ReadyToPrPanel job={cast(makeJob())} onCreatePr={vi.fn()} isPending={false} />);
     expect(screen.getByText("Trigger PR Creation")).toBeInTheDocument();
   });
 
   it("hides trigger PR button when pending", () => {
-    render(<ReadyToPrPanel job={makeJob() as never} onCreatePr={vi.fn()} isPending={true} />);
+    render(<ReadyToPrPanel job={cast(makeJob())} onCreatePr={vi.fn()} isPending={true} />);
     expect(screen.queryByText("Trigger PR Creation")).not.toBeInTheDocument();
   });
 });

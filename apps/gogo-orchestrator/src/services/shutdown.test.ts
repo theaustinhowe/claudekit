@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type SignalHandler = (...args: unknown[]) => Promise<void> | void;
@@ -67,7 +68,7 @@ describe("shutdown", () => {
     }));
 
     exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-      return undefined as never;
+      return cast(undefined);
     });
   });
 

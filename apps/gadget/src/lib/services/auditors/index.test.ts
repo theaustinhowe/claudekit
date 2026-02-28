@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -82,8 +83,8 @@ describe("runAudit", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Re-establish default mock behavior after resetAllMocks
-    vi.mocked(getDb).mockResolvedValue({} as never);
-    vi.mocked(execute).mockResolvedValue(undefined as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
+    vi.mocked(execute).mockResolvedValue(cast(undefined));
     vi.mocked(generateId).mockReturnValue("finding-id-1");
     mockAuditDependencies.mockReturnValue([]);
     mockAuditAIFiles.mockReturnValue([]);
@@ -92,7 +93,7 @@ describe("runAudit", () => {
     mockResolveWorkspacePackages.mockReturnValue([]);
     mockGetEnabledRulesForPolicy.mockResolvedValue([]);
     mockDiscoverConcepts.mockReturnValue([]);
-    mockStoreConcepts.mockResolvedValue(undefined as never);
+    mockStoreConcepts.mockResolvedValue(cast(undefined));
   });
 
   it("runs all auditors and returns combined findings", async () => {

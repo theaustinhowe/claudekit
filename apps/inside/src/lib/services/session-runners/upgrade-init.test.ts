@@ -39,6 +39,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
+import { cast } from "@claudekit/test-utils";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { createUpgradeTasks, deleteUpgradeTasks } from "@/lib/actions/upgrade-tasks";
 import { safeGitCommit } from "@/lib/services/git-utils";
@@ -91,13 +92,15 @@ function makeContext() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetProject.mockResolvedValue(fakeProject());
-  mockRunClaude.mockResolvedValue({
-    exitCode: 0,
-    stdout: '[{ "title": "Task 1", "description": "Desc" }]',
-    stderr: "",
-  } as never);
-  mockSafeGitCommit.mockReturnValue({ committed: true } as never);
-  mockCreateUpgradeTasks.mockResolvedValue([{ id: "t1", title: "Task 1" }] as never);
+  mockRunClaude.mockResolvedValue(
+    cast({
+      exitCode: 0,
+      stdout: '[{ "title": "Task 1", "description": "Desc" }]',
+      stderr: "",
+    }),
+  );
+  mockSafeGitCommit.mockReturnValue(cast({ committed: true }));
+  mockCreateUpgradeTasks.mockResolvedValue(cast([{ id: "t1", title: "Task 1" }]));
 });
 
 describe("createUpgradeInitRunner", () => {
@@ -181,14 +184,14 @@ describe("createUpgradeInitRunner", () => {
   });
 
   it("throws when Claude output has no JSON array", async () => {
-    mockRunClaude.mockResolvedValue({ exitCode: 0, stdout: "No tasks here", stderr: "" } as never);
+    mockRunClaude.mockResolvedValue(cast({ exitCode: 0, stdout: "No tasks here", stderr: "" }));
     const runner = createUpgradeInitRunner({}, "proj-1");
 
     await expect(runner(makeContext())).rejects.toThrow("Failed to parse task breakdown");
   });
 
   it("resets status to designing on parse failure", async () => {
-    mockRunClaude.mockResolvedValue({ exitCode: 0, stdout: "no json", stderr: "" } as never);
+    mockRunClaude.mockResolvedValue(cast({ exitCode: 0, stdout: "no json", stderr: "" }));
     const runner = createUpgradeInitRunner({}, "proj-1");
 
     await expect(runner(makeContext())).rejects.toThrow();

@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -71,10 +72,12 @@ describe("LogViewer", () => {
   });
 
   it("shows loading state", () => {
-    vi.mocked(useJobLogs).mockReturnValue({
-      data: [],
-      isLoading: true,
-    } as never);
+    vi.mocked(useJobLogs).mockReturnValue(
+      cast({
+        data: [],
+        isLoading: true,
+      }),
+    );
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -82,10 +85,12 @@ describe("LogViewer", () => {
   });
 
   it("shows empty state when no logs", () => {
-    vi.mocked(useJobLogs).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as never);
+    vi.mocked(useJobLogs).mockReturnValue(
+      cast({
+        data: [],
+        isLoading: false,
+      }),
+    );
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -95,13 +100,15 @@ describe("LogViewer", () => {
   });
 
   it("renders log entries", () => {
-    vi.mocked(useJobLogs).mockReturnValue({
-      data: [
-        { id: "log-1", stream: "stdout", content: "Hello from agent", createdAt: "2024-01-01T00:00:00Z" },
-        { id: "log-2", stream: "stderr", content: "Error occurred", createdAt: "2024-01-01T00:00:01Z" },
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useJobLogs).mockReturnValue(
+      cast({
+        data: [
+          { id: "log-1", stream: "stdout", content: "Hello from agent", createdAt: "2024-01-01T00:00:00Z" },
+          { id: "log-2", stream: "stderr", content: "Error occurred", createdAt: "2024-01-01T00:00:01Z" },
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -110,14 +117,16 @@ describe("LogViewer", () => {
   });
 
   it("renders filter tabs with counts", () => {
-    vi.mocked(useJobLogs).mockReturnValue({
-      data: [
-        { id: "log-1", stream: "stdout", content: "line1", createdAt: "2024-01-01T00:00:00Z" },
-        { id: "log-2", stream: "stderr", content: "err1", createdAt: "2024-01-01T00:00:01Z" },
-        { id: "log-3", stream: "system", content: "sys1", createdAt: "2024-01-01T00:00:02Z" },
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useJobLogs).mockReturnValue(
+      cast({
+        data: [
+          { id: "log-1", stream: "stdout", content: "line1", createdAt: "2024-01-01T00:00:00Z" },
+          { id: "log-2", stream: "stderr", content: "err1", createdAt: "2024-01-01T00:00:01Z" },
+          { id: "log-3", stream: "system", content: "sys1", createdAt: "2024-01-01T00:00:02Z" },
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 
@@ -128,10 +137,12 @@ describe("LogViewer", () => {
   });
 
   it("subscribes and unsubscribes from WebSocket", () => {
-    vi.mocked(useJobLogs).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as never);
+    vi.mocked(useJobLogs).mockReturnValue(
+      cast({
+        data: [],
+        isLoading: false,
+      }),
+    );
 
     const { unmount } = render(<LogViewer jobId="job-42" />, { wrapper: createWrapper() });
 
@@ -142,13 +153,15 @@ describe("LogViewer", () => {
   });
 
   it("shows error count when stderr logs exist", () => {
-    vi.mocked(useJobLogs).mockReturnValue({
-      data: [
-        { id: "log-1", stream: "stderr", content: "err1", createdAt: "2024-01-01T00:00:00Z" },
-        { id: "log-2", stream: "stderr", content: "err2", createdAt: "2024-01-01T00:00:01Z" },
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useJobLogs).mockReturnValue(
+      cast({
+        data: [
+          { id: "log-1", stream: "stderr", content: "err1", createdAt: "2024-01-01T00:00:00Z" },
+          { id: "log-2", stream: "stderr", content: "err2", createdAt: "2024-01-01T00:00:01Z" },
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<LogViewer jobId="job-1" />, { wrapper: createWrapper() });
 

@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -201,7 +202,7 @@ describe("JobDetailDrawer", () => {
   });
 
   it("returns null when no jobId", () => {
-    vi.mocked(useJob).mockReturnValue({ data: null, isLoading: false } as never);
+    vi.mocked(useJob).mockReturnValue(cast({ data: null, isLoading: false }));
 
     const { container } = render(<JobDetailDrawer jobId={null} open={true} onOpenChange={vi.fn()} />, {
       wrapper: createWrapper(),
@@ -211,7 +212,7 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows loading skeleton when loading", () => {
-    vi.mocked(useJob).mockReturnValue({ data: undefined, isLoading: true } as never);
+    vi.mocked(useJob).mockReturnValue(cast({ data: undefined, isLoading: true }));
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -219,7 +220,7 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows 'Job not found' when job is undefined", () => {
-    vi.mocked(useJob).mockReturnValue({ data: undefined, isLoading: false } as never);
+    vi.mocked(useJob).mockReturnValue(cast({ data: undefined, isLoading: false }));
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -227,10 +228,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("renders job title and status for running job", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob(),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob(),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -240,10 +243,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows branch name and copy button", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob(),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob(),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -251,10 +256,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows PR link when available", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ prUrl: "https://github.com/org/repo/pull/10" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ prUrl: "https://github.com/org/repo/pull/10" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -262,10 +269,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows failure reason for failed jobs", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "failed", failureReason: "Test suite failed with 3 errors" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "failed", failureReason: "Test suite failed with 3 errors" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -274,10 +283,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows pause/resume and abort buttons for running jobs", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "running" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "running" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -289,10 +300,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows retry button for failed jobs", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "failed" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "failed" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -300,10 +313,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows resume button for paused jobs", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "paused" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "paused" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -313,10 +328,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("renders tabs: Overview, Issue, Logs, History", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob(),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob(),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -327,10 +344,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows Manual Job badge for manual jobs (negative issue number)", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ issueNumber: -1 }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ issueNumber: -1 }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -338,10 +357,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows agent type badge", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ agentType: "mock" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ agentType: "mock" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -349,10 +370,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows VS Code button when worktreePath exists", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob(),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob(),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -360,10 +383,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows change summary when available", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ changeSummary: "src/index.ts\nsrc/utils.ts" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ changeSummary: "src/index.ts\nsrc/utils.ts" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -372,10 +397,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows needs info panel when status is needs_info", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "needs_info", needsInfoQuestion: "What auth method should I use?" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "needs_info", needsInfoQuestion: "What auth method should I use?" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -383,10 +410,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows plan approval panel when awaiting approval", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "awaiting_plan_approval", planContent: "## Plan\n- Step 1\n- Step 2" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "awaiting_plan_approval", planContent: "## Plan\n- Step 1\n- Step 2" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -394,10 +423,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows ready to PR panel", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "ready_to_pr" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "ready_to_pr" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -405,10 +436,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows PR opened panel", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "pr_opened", prUrl: "https://github.com/org/repo/pull/10" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "pr_opened", prUrl: "https://github.com/org/repo/pull/10" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -416,10 +449,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows PR reviewing panel", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "pr_reviewing" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "pr_reviewing" }),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={true} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -427,10 +462,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("renders nothing when not open", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob(),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob(),
+        isLoading: false,
+      }),
+    );
 
     render(<JobDetailDrawer jobId="job-1" open={false} onOpenChange={vi.fn()} />, { wrapper: createWrapper() });
 
@@ -438,10 +475,12 @@ describe("JobDetailDrawer", () => {
   });
 
   it("shows queue info when queued", () => {
-    vi.mocked(useJob).mockReturnValue({
-      data: makeJob({ status: "queued" }),
-      isLoading: false,
-    } as never);
+    vi.mocked(useJob).mockReturnValue(
+      cast({
+        data: makeJob({ status: "queued" }),
+        isLoading: false,
+      }),
+    );
 
     render(
       <JobDetailDrawer

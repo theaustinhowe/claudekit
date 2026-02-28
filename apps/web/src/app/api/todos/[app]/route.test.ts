@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/todos", () => ({
@@ -33,7 +34,7 @@ describe("GET /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue(todos);
 
     const { req, params } = buildRequest("gadget", "GET");
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -45,7 +46,7 @@ describe("GET /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue([]);
 
     const { req, params } = buildRequest("gadget", "GET");
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data).toEqual([]);
@@ -57,7 +58,7 @@ describe("POST /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue([]);
 
     const { req, params } = buildRequest("gadget", "POST", { text: "Write tests" });
-    const response = await POST(req as never, { params });
+    const response = await POST(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(201);
@@ -72,7 +73,7 @@ describe("POST /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue([]);
 
     const { req, params } = buildRequest("gadget", "POST", { text: "  spaced text  " });
-    const response = await POST(req as never, { params });
+    const response = await POST(cast(req), { params });
     const data = await response.json();
 
     expect(data.text).toBe("spaced text");
@@ -80,7 +81,7 @@ describe("POST /api/todos/[app]", () => {
 
   it("returns 400 when text is missing", async () => {
     const { req, params } = buildRequest("gadget", "POST", {});
-    const response = await POST(req as never, { params });
+    const response = await POST(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -89,7 +90,7 @@ describe("POST /api/todos/[app]", () => {
 
   it("returns 400 when text is empty string", async () => {
     const { req, params } = buildRequest("gadget", "POST", { text: "" });
-    const response = await POST(req as never, { params });
+    const response = await POST(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -98,7 +99,7 @@ describe("POST /api/todos/[app]", () => {
 
   it("returns 400 when text is whitespace only", async () => {
     const { req, params } = buildRequest("gadget", "POST", { text: "   " });
-    const response = await POST(req as never, { params });
+    const response = await POST(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -107,7 +108,7 @@ describe("POST /api/todos/[app]", () => {
 
   it("returns 400 when text is not a string", async () => {
     const { req, params } = buildRequest("gadget", "POST", { text: 123 });
-    const response = await POST(req as never, { params });
+    const response = await POST(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -121,7 +122,7 @@ describe("PATCH /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue(todos);
 
     const { req, params } = buildRequest("gadget", "PATCH", { id: "abc", resolved: true });
-    const response = await PATCH(req as never, { params });
+    const response = await PATCH(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -134,7 +135,7 @@ describe("PATCH /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue(todos);
 
     const { req, params } = buildRequest("gadget", "PATCH", { id: "abc", text: "New text" });
-    const response = await PATCH(req as never, { params });
+    const response = await PATCH(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -144,7 +145,7 @@ describe("PATCH /api/todos/[app]", () => {
 
   it("returns 400 when id is missing", async () => {
     const { req, params } = buildRequest("gadget", "PATCH", { resolved: true });
-    const response = await PATCH(req as never, { params });
+    const response = await PATCH(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -153,7 +154,7 @@ describe("PATCH /api/todos/[app]", () => {
 
   it("returns 400 when neither resolved nor text is provided", async () => {
     const { req, params } = buildRequest("gadget", "PATCH", { id: "abc" });
-    const response = await PATCH(req as never, { params });
+    const response = await PATCH(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -164,7 +165,7 @@ describe("PATCH /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue([]);
 
     const { req, params } = buildRequest("gadget", "PATCH", { id: "nonexistent", resolved: true });
-    const response = await PATCH(req as never, { params });
+    const response = await PATCH(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -181,7 +182,7 @@ describe("DELETE /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue(todos);
 
     const { req, params } = buildRequest("gadget", "DELETE", { id: "a" });
-    const response = await DELETE(req as never, { params });
+    const response = await DELETE(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -198,7 +199,7 @@ describe("DELETE /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue(todos);
 
     const { req, params } = buildRequest("gadget", "DELETE", { clearCompleted: true });
-    const response = await DELETE(req as never, { params });
+    const response = await DELETE(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -211,7 +212,7 @@ describe("DELETE /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue([]);
 
     const { req, params } = buildRequest("gadget", "DELETE", {});
-    const response = await DELETE(req as never, { params });
+    const response = await DELETE(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -222,7 +223,7 @@ describe("DELETE /api/todos/[app]", () => {
     mockReadTodos.mockReturnValue([]);
 
     const { req, params } = buildRequest("gadget", "DELETE", { id: "nonexistent" });
-    const response = await DELETE(req as never, { params });
+    const response = await DELETE(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(404);

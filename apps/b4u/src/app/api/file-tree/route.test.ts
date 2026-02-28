@@ -7,6 +7,7 @@ vi.mock("@/lib/db", () => ({
   execute: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PUT } from "@/app/api/file-tree/route";
 import { execute, queryOne } from "@/lib/db";
 
@@ -24,7 +25,7 @@ beforeEach(() => {
 describe("GET /api/file-tree", () => {
   it("returns the parsed file tree from run_content", async () => {
     const tree = { name: "root", type: "directory", children: [{ name: "src", type: "directory" }] };
-    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(tree) } as never);
+    mockQueryOne.mockResolvedValue(cast({ data_json: JSON.stringify(tree) }));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -42,7 +43,7 @@ describe("GET /api/file-tree", () => {
   });
 
   it("returns 404 when no file tree exists", async () => {
-    mockQueryOne.mockResolvedValue(null as never);
+    mockQueryOne.mockResolvedValue(cast(null));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -64,7 +65,7 @@ describe("GET /api/file-tree", () => {
 
 describe("PUT /api/file-tree", () => {
   it("saves file tree to run_content", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/file-tree?runId=run-1", {
       method: "PUT",
@@ -121,7 +122,7 @@ describe("PUT /api/file-tree", () => {
   });
 
   it("uses 'root' as default name", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/file-tree?runId=run-1", {
       method: "PUT",

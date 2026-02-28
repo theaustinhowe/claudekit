@@ -20,6 +20,7 @@
     "@duckdb/node-api": "1.4.4-r.1"
   },
   "devDependencies": {
+    "@claudekit/test-utils": "workspace:*",
     "@types/node": "^22.10.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"

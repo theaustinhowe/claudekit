@@ -24,6 +24,7 @@ vi.mock("../db/schema.js", async (importOriginal) => {
 });
 
 import { execute, queryAll } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { mapSetting } from "../db/schema.js";
 import { createMockFastify, type RouteHandler } from "../test-utils.js";
 import { settingsRouter } from "./settings.js";
@@ -46,7 +47,7 @@ describe("settings API", () => {
 
     const mock = createMockFastify();
     routes = mock.routes;
-    await settingsRouter(mock.instance as never, {} as never);
+    await settingsRouter(cast(mock.instance), cast({}));
   });
 
   describe("GET / (get all settings)", () => {

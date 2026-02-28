@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockConn } = vi.hoisted(() => {
@@ -72,7 +73,7 @@ describe("listDatabases", () => {
     const { getConnection } = await import("@/lib/db/connection-manager");
     vi.mocked(getConnection)
       .mockRejectedValueOnce(new Error("Could not set lock on file"))
-      .mockResolvedValueOnce(mockConn as never);
+      .mockResolvedValueOnce(cast(mockConn));
 
     const { databases } = await listDatabases();
 
@@ -83,9 +84,7 @@ describe("listDatabases", () => {
   it("returns error status for other connection failures", async () => {
     vi.mocked(databaseFileExists).mockReturnValue(true);
     const { getConnection } = await import("@/lib/db/connection-manager");
-    vi.mocked(getConnection)
-      .mockRejectedValueOnce(new Error("Corrupt database"))
-      .mockResolvedValueOnce(mockConn as never);
+    vi.mocked(getConnection).mockRejectedValueOnce(new Error("Corrupt database")).mockResolvedValueOnce(cast(mockConn));
 
     const { databases } = await listDatabases();
 
@@ -97,9 +96,7 @@ describe("listDatabases", () => {
     vi.mocked(databaseFileExists).mockReturnValue(true);
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const { getConnection } = await import("@/lib/db/connection-manager");
-    vi.mocked(getConnection)
-      .mockRejectedValueOnce(new Error("Some error"))
-      .mockResolvedValueOnce(mockConn as never);
+    vi.mocked(getConnection).mockRejectedValueOnce(new Error("Some error")).mockResolvedValueOnce(cast(mockConn));
 
     const { databases } = await listDatabases();
 
@@ -110,9 +107,7 @@ describe("listDatabases", () => {
     vi.mocked(databaseFileExists).mockReturnValue(true);
     vi.mocked(fs.existsSync).mockReturnValue(false);
     const { getConnection } = await import("@/lib/db/connection-manager");
-    vi.mocked(getConnection)
-      .mockRejectedValueOnce(new Error("File gone"))
-      .mockResolvedValueOnce(mockConn as never);
+    vi.mocked(getConnection).mockRejectedValueOnce(new Error("File gone")).mockResolvedValueOnce(cast(mockConn));
 
     const { databases } = await listDatabases();
 
@@ -123,9 +118,7 @@ describe("listDatabases", () => {
     vi.mocked(databaseFileExists).mockReturnValue(true);
     vi.mocked(fs.existsSync).mockReturnValue(false);
     const { getConnection } = await import("@/lib/db/connection-manager");
-    vi.mocked(getConnection)
-      .mockRejectedValueOnce("string error")
-      .mockResolvedValueOnce(mockConn as never);
+    vi.mocked(getConnection).mockRejectedValueOnce("string error").mockResolvedValueOnce(cast(mockConn));
 
     const { databases } = await listDatabases();
 

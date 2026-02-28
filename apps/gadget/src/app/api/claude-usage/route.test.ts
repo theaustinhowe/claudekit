@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@claudekit/claude-usage/server", () => ({
@@ -15,9 +16,11 @@ beforeEach(() => {
 
 describe("GET /api/claude-usage", () => {
   it("returns rate limits", async () => {
-    mockGetClaudeRateLimits.mockResolvedValue({
-      daily: { used: 100, limit: 1000 },
-    } as never);
+    mockGetClaudeRateLimits.mockResolvedValue(
+      cast({
+        daily: { used: 100, limit: 1000 },
+      }),
+    );
 
     const response = await GET();
     const data = await response.json();

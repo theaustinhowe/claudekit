@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs/promises", () => ({
@@ -25,11 +26,13 @@ beforeEach(() => {
 
 describe("GET /api/fs/browse", () => {
   it("returns directory entries for home path", async () => {
-    mockRealpath.mockResolvedValue("/Users/testuser" as never);
-    mockReaddir.mockResolvedValue([
-      { name: "Documents", isDirectory: () => true },
-      { name: "file.txt", isDirectory: () => false },
-    ] as never);
+    mockRealpath.mockResolvedValue(cast("/Users/testuser"));
+    mockReaddir.mockResolvedValue(
+      cast([
+        { name: "Documents", isDirectory: () => true },
+        { name: "file.txt", isDirectory: () => false },
+      ]),
+    );
 
     const req = new NextRequest("http://localhost/api/fs/browse?path=~");
     const response = await GET(req);

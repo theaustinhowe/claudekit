@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -94,18 +95,20 @@ describe("scan runner", () => {
   });
 
   it("discovers and stores repos", async () => {
-    vi.mocked(discoverRepos).mockReturnValue([
-      {
-        name: "repo-a",
-        localPath: "/repos/a",
-        gitRemote: "https://github.com/user/a",
-        defaultBranch: "main",
-        packageManager: "pnpm",
-        repoType: "library",
-        isMonorepo: false,
-        lastModifiedAt: "2025-01-01",
-      },
-    ] as never);
+    vi.mocked(discoverRepos).mockReturnValue(
+      cast([
+        {
+          name: "repo-a",
+          localPath: "/repos/a",
+          gitRemote: "https://github.com/user/a",
+          defaultBranch: "main",
+          packageManager: "pnpm",
+          repoType: "library",
+          isMonorepo: false,
+          lastModifiedAt: "2025-01-01",
+        },
+      ]),
+    );
     vi.mocked(queryAll)
       .mockResolvedValueOnce([defaultPolicy]) // policies
       .mockResolvedValueOnce([]); // repos
@@ -127,7 +130,7 @@ describe("scan runner", () => {
       .mockResolvedValueOnce([defaultPolicy]) // policies
       .mockResolvedValueOnce([{ id: "r1", name: "repo-a", local_path: "/repos/a" }]); // repos
     vi.mocked(planFixes).mockResolvedValue([]);
-    vi.mocked(matchPolicy).mockReturnValue(defaultPolicy as never);
+    vi.mocked(matchPolicy).mockReturnValue(cast(defaultPolicy));
 
     const onProgress = vi.fn();
     const runner = createScanRunner({ autoMatch: true });
@@ -181,7 +184,7 @@ describe("scan runner", () => {
     vi.mocked(queryAll)
       .mockResolvedValueOnce([defaultPolicy]) // policies
       .mockResolvedValueOnce([{ id: "r1", name: "repo-a", local_path: "/repos/a" }]); // repos
-    vi.mocked(planFixes).mockResolvedValue([{ fixId: "fix1" }] as never);
+    vi.mocked(planFixes).mockResolvedValue(cast([{ fixId: "fix1" }]));
 
     const runner = createScanRunner({});
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });

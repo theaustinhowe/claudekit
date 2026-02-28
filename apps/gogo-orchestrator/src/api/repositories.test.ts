@@ -39,6 +39,7 @@ vi.mock("../utils/timeout.js", () => ({
 }));
 
 import { buildUpdate, execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getOctokitForRepo } from "../services/github/index.js";
 import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
@@ -78,7 +79,7 @@ describe("repositories API", () => {
 
     const mock = createMockFastify();
     routes = mock.routes;
-    await repositoriesRouter(mock.instance as never, {} as never);
+    await repositoriesRouter(cast(mock.instance), cast({}));
 
     getRoute = (method: string, path: string) => {
       const route = routes.find((r) => r.method === method && r.path === path);
@@ -246,7 +247,7 @@ describe("repositories API", () => {
 
     it("should return 400 when no valid fields", async () => {
       vi.mocked(queryOne).mockResolvedValueOnce(mockRepo);
-      vi.mocked(buildUpdate).mockReturnValueOnce(null as never);
+      vi.mocked(buildUpdate).mockReturnValueOnce(cast(null));
 
       const handler = getRoute("PATCH", "/:id");
       const reply = createMockReply();
@@ -260,10 +261,12 @@ describe("repositories API", () => {
         .mockResolvedValueOnce(mockRepo) // exists check
         .mockResolvedValueOnce({ ...mockRepo, displayName: "Updated" }); // update result
 
-      vi.mocked(buildUpdate).mockReturnValueOnce({
-        sql: "UPDATE repositories SET display_name = ? WHERE id = ?",
-        params: ["Updated", "repo-1"],
-      } as never);
+      vi.mocked(buildUpdate).mockReturnValueOnce(
+        cast({
+          sql: "UPDATE repositories SET display_name = ? WHERE id = ?",
+          params: ["Updated", "repo-1"],
+        }),
+      );
 
       const handler = getRoute("PATCH", "/:id");
       const result = (await handler(
@@ -448,10 +451,12 @@ describe("repositories API", () => {
         .mockResolvedValueOnce(mockRepo) // exists check
         .mockResolvedValueOnce({ ...mockRepo, pollIntervalMs: 60000 }); // update result
 
-      vi.mocked(buildUpdate).mockReturnValueOnce({
-        sql: "UPDATE repositories SET poll_interval_ms = ? WHERE id = ?",
-        params: [60000, "repo-1"],
-      } as never);
+      vi.mocked(buildUpdate).mockReturnValueOnce(
+        cast({
+          sql: "UPDATE repositories SET poll_interval_ms = ? WHERE id = ?",
+          params: [60000, "repo-1"],
+        }),
+      );
 
       const handler = getRoute("PATCH", "/:id/settings");
       const result = (await handler(
@@ -464,7 +469,7 @@ describe("repositories API", () => {
 
     it("should return 400 when no valid fields to update", async () => {
       vi.mocked(queryOne).mockResolvedValueOnce(mockRepo);
-      vi.mocked(buildUpdate).mockReturnValueOnce(null as never);
+      vi.mocked(buildUpdate).mockReturnValueOnce(cast(null));
 
       const handler = getRoute("PATCH", "/:id/settings");
       const reply = createMockReply();
@@ -487,21 +492,23 @@ describe("repositories API", () => {
 
     it("should return branches sorted with default first", async () => {
       vi.mocked(queryOne).mockResolvedValueOnce(mockRepo);
-      vi.mocked(getOctokitForRepo).mockResolvedValueOnce({
-        rest: {
-          repos: {
-            listBranches: vi.fn().mockResolvedValueOnce({
-              data: [
-                { name: "develop", protected: false },
-                { name: "main", protected: true },
-              ],
-            }),
-            get: vi.fn().mockResolvedValueOnce({
-              data: { default_branch: "main" },
-            }),
+      vi.mocked(getOctokitForRepo).mockResolvedValueOnce(
+        cast({
+          rest: {
+            repos: {
+              listBranches: vi.fn().mockResolvedValueOnce({
+                data: [
+                  { name: "develop", protected: false },
+                  { name: "main", protected: true },
+                ],
+              }),
+              get: vi.fn().mockResolvedValueOnce({
+                data: { default_branch: "main" },
+              }),
+            },
           },
-        },
-      } as never);
+        }),
+      );
 
       const handler = getRoute("GET", "/:id/branches");
       const result = (await handler({ params: { id: "repo-1" } }, createMockReply())) as {

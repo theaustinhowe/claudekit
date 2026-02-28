@@ -26,11 +26,13 @@ vi.mock("@playwright/test", () => ({
   }),
 }));
 
+import { cast } from "@claudekit/test-utils";
+import type { Page } from "@playwright/test";
 import { expectPageTitle, expectUrl, expectVisible } from "./assertions";
 
 describe("expectPageTitle", () => {
   it("asserts h1 contains the given text string", async () => {
-    const page = { locator: mockLocator } as never;
+    const page = cast<Page>({ locator: mockLocator });
 
     await expectPageTitle(page, "Dashboard");
 
@@ -40,7 +42,7 @@ describe("expectPageTitle", () => {
   });
 
   it("asserts h1 contains text matching a RegExp", async () => {
-    const page = { locator: mockLocator } as never;
+    const page = cast<Page>({ locator: mockLocator });
     const pattern = /Welcome/i;
 
     await expectPageTitle(page, pattern);
@@ -51,7 +53,7 @@ describe("expectPageTitle", () => {
 
 describe("expectVisible", () => {
   it("asserts the first matching element is visible", async () => {
-    const page = { locator: mockLocator } as never;
+    const page = cast<Page>({ locator: mockLocator });
 
     await expectVisible(page, "[data-testid='submit']");
 
@@ -61,7 +63,7 @@ describe("expectVisible", () => {
   });
 
   it("works with simple CSS selectors", async () => {
-    const page = { locator: mockLocator } as never;
+    const page = cast<Page>({ locator: mockLocator });
 
     await expectVisible(page, ".my-class");
 
@@ -71,7 +73,7 @@ describe("expectVisible", () => {
 
 describe("expectUrl", () => {
   it("converts string pattern to RegExp for URL matching", async () => {
-    const page = {} as never;
+    const page = cast<Page>({});
 
     await expectUrl(page, "/dashboard");
 
@@ -79,7 +81,7 @@ describe("expectUrl", () => {
   });
 
   it("passes RegExp pattern directly for URL matching", async () => {
-    const page = {} as never;
+    const page = cast<Page>({});
     const pattern = /\/settings\/\d+/;
 
     await expectUrl(page, pattern);
@@ -88,7 +90,7 @@ describe("expectUrl", () => {
   });
 
   it("handles root path string pattern", async () => {
-    const page = {} as never;
+    const page = cast<Page>({});
 
     await expectUrl(page, "/");
 

@@ -6,6 +6,7 @@ vi.mock("@/lib/db", () => ({
   queryOne: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/mock-data-entities/route";
 import { queryOne } from "@/lib/db";
 
@@ -25,7 +26,7 @@ describe("GET /api/mock-data-entities", () => {
       { name: "User", count: 10, note: "Admin + regular" },
       { name: "Product", count: 50, note: "Various categories" },
     ];
-    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(entities) } as never);
+    mockQueryOne.mockResolvedValue(cast({ data_json: JSON.stringify(entities) }));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -43,7 +44,7 @@ describe("GET /api/mock-data-entities", () => {
   });
 
   it("returns empty array when no items exist", async () => {
-    mockQueryOne.mockResolvedValue(null as never);
+    mockQueryOne.mockResolvedValue(cast(null));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();

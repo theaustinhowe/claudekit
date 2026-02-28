@@ -15,6 +15,7 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 import { readdir, readFile, stat } from "node:fs/promises";
+import { cast } from "@claudekit/test-utils";
 
 const mockReaddir = vi.mocked(readdir);
 const mockReadFile = vi.mocked(readFile);
@@ -41,12 +42,10 @@ beforeEach(() => {
 
 describe("readDirectory", () => {
   it("returns sorted file entries with directories first", async () => {
-    mockReaddir.mockResolvedValue([
-      makeDirent("file.ts", false),
-      makeDirent("src", true),
-      makeDirent("README.md", false),
-    ] as never);
-    mockStat.mockResolvedValue({ size: 1024, isDirectory: () => false, isFile: () => true } as never);
+    mockReaddir.mockResolvedValue(
+      cast([makeDirent("file.ts", false), makeDirent("src", true), makeDirent("README.md", false)]),
+    );
+    mockStat.mockResolvedValue(cast({ size: 1024, isDirectory: () => false, isFile: () => true }));
 
     const result = await readDirectory("/project");
     expect(result).toHaveLength(3);
@@ -57,11 +56,9 @@ describe("readDirectory", () => {
   });
 
   it("skips node_modules and .git directories", async () => {
-    mockReaddir.mockResolvedValue([
-      makeDirent("node_modules", true),
-      makeDirent(".git", true),
-      makeDirent("src", true),
-    ] as never);
+    mockReaddir.mockResolvedValue(
+      cast([makeDirent("node_modules", true), makeDirent(".git", true), makeDirent("src", true)]),
+    );
 
     const result = await readDirectory("/project");
     expect(result).toHaveLength(1);
@@ -69,12 +66,10 @@ describe("readDirectory", () => {
   });
 
   it("skips .DS_Store and .env files", async () => {
-    mockReaddir.mockResolvedValue([
-      makeDirent(".DS_Store", false),
-      makeDirent(".env", false),
-      makeDirent("index.ts", false),
-    ] as never);
-    mockStat.mockResolvedValue({ size: 100, isDirectory: () => false, isFile: () => true } as never);
+    mockReaddir.mockResolvedValue(
+      cast([makeDirent(".DS_Store", false), makeDirent(".env", false), makeDirent("index.ts", false)]),
+    );
+    mockStat.mockResolvedValue(cast({ size: 100, isDirectory: () => false, isFile: () => true }));
 
     const result = await readDirectory("/project");
     expect(result).toHaveLength(1);
@@ -88,7 +83,7 @@ describe("readDirectory", () => {
   });
 
   it("handles stat errors gracefully, defaulting size to 0", async () => {
-    mockReaddir.mockResolvedValue([makeDirent("broken.ts", false)] as never);
+    mockReaddir.mockResolvedValue(cast([makeDirent("broken.ts", false)]));
     mockStat.mockRejectedValue(new Error("EACCES"));
 
     const result = await readDirectory("/project");
@@ -100,8 +95,8 @@ describe("readDirectory", () => {
 describe("buildFileTree", () => {
   it("builds a tree structure with nested directories", async () => {
     mockReaddir
-      .mockResolvedValueOnce([makeDirent("src", true), makeDirent("package.json", false)] as never)
-      .mockResolvedValueOnce([makeDirent("index.ts", false)] as never);
+      .mockResolvedValueOnce(cast([makeDirent("src", true), makeDirent("package.json", false)]))
+      .mockResolvedValueOnce(cast([makeDirent("index.ts", false)]));
 
     const tree = await buildFileTree("/project");
     expect(tree).toHaveLength(2);
@@ -114,8 +109,8 @@ describe("buildFileTree", () => {
 
   it("respects maxDepth", async () => {
     mockReaddir
-      .mockResolvedValueOnce([makeDirent("level1", true)] as never)
-      .mockResolvedValueOnce([makeDirent("level2", true)] as never);
+      .mockResolvedValueOnce(cast([makeDirent("level1", true)]))
+      .mockResolvedValueOnce(cast([makeDirent("level2", true)]));
 
     const tree = await buildFileTree("/project", 1);
     expect(tree[0].name).toBe("level1");
@@ -123,17 +118,13 @@ describe("buildFileTree", () => {
   });
 
   it("skips ignored directories", async () => {
-    mockReaddir.mockResolvedValue([
-      makeDirent("node_modules", true),
-      makeDirent(".next", true),
-      makeDirent("app", true),
-    ] as never);
-    mockReaddir.mockResolvedValueOnce([
-      makeDirent("node_modules", true),
-      makeDirent(".next", true),
-      makeDirent("app", true),
-    ] as never);
-    mockReaddir.mockResolvedValueOnce([] as never);
+    mockReaddir.mockResolvedValue(
+      cast([makeDirent("node_modules", true), makeDirent(".next", true), makeDirent("app", true)]),
+    );
+    mockReaddir.mockResolvedValueOnce(
+      cast([makeDirent("node_modules", true), makeDirent(".next", true), makeDirent("app", true)]),
+    );
+    mockReaddir.mockResolvedValueOnce(cast([]));
 
     const tree = await buildFileTree("/project");
     expect(tree).toHaveLength(1);
@@ -149,9 +140,9 @@ describe("buildFileTree", () => {
 
 describe("detectFramework", () => {
   it("detects Next.js with App Router", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { next: "^14.2.0", react: "^18.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { next: "^14.2.0", react: "^18.0.0" } })));
     mockStat.mockImplementation(async (path) => {
-      if (String(path).endsWith("/app")) return { isDirectory: () => true } as never;
+      if (String(path).endsWith("/app")) return cast({ isDirectory: () => true });
       throw new Error("ENOENT");
     });
 
@@ -160,7 +151,7 @@ describe("detectFramework", () => {
   });
 
   it("detects Next.js with Pages Router", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { next: "~13.4.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { next: "~13.4.0" } })));
     mockStat.mockRejectedValue(new Error("ENOENT"));
 
     const result = await detectFramework("/project");
@@ -168,14 +159,14 @@ describe("detectFramework", () => {
   });
 
   it("detects Nuxt", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { nuxt: "^3.8.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { nuxt: "^3.8.0" } })));
 
     const result = await detectFramework("/project");
     expect(result).toBe("Nuxt 3.8.0");
   });
 
   it("detects SvelteKit", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ devDependencies: { "@sveltejs/kit": "^2.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ devDependencies: { "@sveltejs/kit": "^2.0.0" } })));
 
     const result = await detectFramework("/project");
     expect(result).toBe("SvelteKit 2.0.0");
@@ -183,7 +174,7 @@ describe("detectFramework", () => {
 
   it("detects Vite with React", async () => {
     mockReadFile.mockResolvedValue(
-      JSON.stringify({ devDependencies: { vite: "^5.0.0" }, dependencies: { react: "^18.0.0" } }) as never,
+      cast(JSON.stringify({ devDependencies: { vite: "^5.0.0" }, dependencies: { react: "^18.0.0" } })),
     );
 
     const result = await detectFramework("/project");
@@ -192,7 +183,7 @@ describe("detectFramework", () => {
 
   it("detects Vite with Vue", async () => {
     mockReadFile.mockResolvedValue(
-      JSON.stringify({ devDependencies: { vite: "^5.0.0" }, dependencies: { vue: "^3.0.0" } }) as never,
+      cast(JSON.stringify({ devDependencies: { vite: "^5.0.0" }, dependencies: { vue: "^3.0.0" } })),
     );
 
     const result = await detectFramework("/project");
@@ -200,21 +191,21 @@ describe("detectFramework", () => {
   });
 
   it("detects plain Vite without framework qualifier", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ devDependencies: { vite: "^5.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ devDependencies: { vite: "^5.0.0" } })));
 
     const result = await detectFramework("/project");
     expect(result).toBe("Vite 5.0.0");
   });
 
   it("detects Express", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { express: "^4.18.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { express: "^4.18.0" } })));
 
     const result = await detectFramework("/project");
     expect(result).toBe("Express 4.18.0");
   });
 
   it("detects Fastify", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { fastify: "^4.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { fastify: "^4.0.0" } })));
 
     const result = await detectFramework("/project");
     expect(result).toBe("Fastify 4.0.0");
@@ -223,7 +214,7 @@ describe("detectFramework", () => {
   it("falls back to Python when requirements.txt exists", async () => {
     mockReadFile.mockRejectedValue(new Error("ENOENT"));
     mockStat.mockImplementation(async (path) => {
-      if (String(path).endsWith("requirements.txt")) return { isFile: () => true } as never;
+      if (String(path).endsWith("requirements.txt")) return cast({ isFile: () => true });
       throw new Error("ENOENT");
     });
 
@@ -234,7 +225,7 @@ describe("detectFramework", () => {
   it("falls back to Rust when Cargo.toml exists", async () => {
     mockReadFile.mockRejectedValue(new Error("ENOENT"));
     mockStat.mockImplementation(async (path) => {
-      if (String(path).endsWith("Cargo.toml")) return { isFile: () => true } as never;
+      if (String(path).endsWith("Cargo.toml")) return cast({ isFile: () => true });
       throw new Error("ENOENT");
     });
 
@@ -251,7 +242,7 @@ describe("detectFramework", () => {
   });
 
   it("cleans version prefixes", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { next: ">=14.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { next: ">=14.0.0" } })));
     mockStat.mockRejectedValue(new Error("ENOENT"));
 
     const result = await detectFramework("/project");
@@ -262,27 +253,27 @@ describe("detectFramework", () => {
 
 describe("detectAuth", () => {
   it("detects NextAuth", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { "next-auth": "^4.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { "next-auth": "^4.0.0" } })));
     const result = await detectAuth("/project");
     expect(result).toBe("NextAuth");
   });
 
   it("detects Clerk", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { "@clerk/nextjs": "^5.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { "@clerk/nextjs": "^5.0.0" } })));
     const result = await detectAuth("/project");
     expect(result).toBe("Clerk");
   });
 
   it("detects Passport.js", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { passport: "^0.7.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { passport: "^0.7.0" } })));
     const result = await detectAuth("/project");
     expect(result).toBe("Passport.js");
   });
 
   it("detects custom auth from directory structure", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: {} }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: {} })));
     mockStat.mockImplementation(async (path) => {
-      if (String(path).endsWith("src/auth")) return { isDirectory: () => true } as never;
+      if (String(path).endsWith("src/auth")) return cast({ isDirectory: () => true });
       throw new Error("ENOENT");
     });
     const result = await detectAuth("/project");
@@ -290,7 +281,7 @@ describe("detectAuth", () => {
   });
 
   it("returns None detected when no auth found", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: {} }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: {} })));
     mockStat.mockRejectedValue(new Error("ENOENT"));
     const result = await detectAuth("/project");
     expect(result).toBe("None detected");
@@ -301,10 +292,10 @@ describe("detectDatabase", () => {
   it("detects Prisma with PostgreSQL", async () => {
     mockReadFile.mockImplementation(async (path) => {
       if (String(path).endsWith("package.json")) {
-        return JSON.stringify({ dependencies: { "@prisma/client": "^5.0.0" } }) as never;
+        return cast(JSON.stringify({ dependencies: { "@prisma/client": "^5.0.0" } }));
       }
       if (String(path).endsWith("schema.prisma")) {
-        return 'provider = "postgresql"' as never;
+        return cast('provider = "postgresql"');
       }
       throw new Error("ENOENT");
     });
@@ -316,7 +307,7 @@ describe("detectDatabase", () => {
   it("detects Prisma without provider", async () => {
     mockReadFile.mockImplementation(async (path) => {
       if (String(path).endsWith("package.json")) {
-        return JSON.stringify({ devDependencies: { prisma: "^5.0.0" } }) as never;
+        return cast(JSON.stringify({ devDependencies: { prisma: "^5.0.0" } }));
       }
       throw new Error("ENOENT");
     });
@@ -326,19 +317,19 @@ describe("detectDatabase", () => {
   });
 
   it("detects Drizzle ORM", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { "drizzle-orm": "^0.29.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { "drizzle-orm": "^0.29.0" } })));
     const result = await detectDatabase("/project");
     expect(result).toBe("Drizzle ORM");
   });
 
   it("detects MongoDB via Mongoose", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { mongoose: "^8.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { mongoose: "^8.0.0" } })));
     const result = await detectDatabase("/project");
     expect(result).toBe("MongoDB (Mongoose)");
   });
 
   it("detects DuckDB", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: { "@duckdb/node-api": "^1.0.0" } }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: { "@duckdb/node-api": "^1.0.0" } })));
     const result = await detectDatabase("/project");
     expect(result).toBe("DuckDB");
   });
@@ -346,10 +337,10 @@ describe("detectDatabase", () => {
   it("detects PostgreSQL from docker-compose", async () => {
     mockReadFile.mockImplementation(async (path) => {
       if (String(path).endsWith("package.json")) {
-        return JSON.stringify({ dependencies: {} }) as never;
+        return cast(JSON.stringify({ dependencies: {} }));
       }
       if (String(path).endsWith("docker-compose.yml")) {
-        return "services:\n  db:\n    image: postgres:16" as never;
+        return cast("services:\n  db:\n    image: postgres:16");
       }
       throw new Error("ENOENT");
     });
@@ -359,7 +350,7 @@ describe("detectDatabase", () => {
   });
 
   it("returns None detected when no database found", async () => {
-    mockReadFile.mockResolvedValue(JSON.stringify({ dependencies: {} }) as never);
+    mockReadFile.mockResolvedValue(cast(JSON.stringify({ dependencies: {} })));
     const result = await detectDatabase("/project");
     expect(result).toBe("None detected");
   });
@@ -370,7 +361,7 @@ describe("detectKeyDirectories", () => {
     mockStat.mockImplementation(async (path) => {
       const p = String(path);
       if (p.endsWith("/src") || p.endsWith("/app") || p.endsWith("/components")) {
-        return { isDirectory: () => true } as never;
+        return cast({ isDirectory: () => true });
       }
       throw new Error("ENOENT");
     });

@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:os", () => ({
@@ -35,7 +36,7 @@ describe("system API", () => {
     const { systemRouter } = await import("./system.js");
     const mock = createMockFastify();
     routes = mock.routes;
-    await systemRouter(mock.instance as never, {} as never);
+    await systemRouter(cast(mock.instance), cast({}));
 
     getHandler = (path: string) => {
       const route = routes.find((r) => r.path === path);
@@ -48,10 +49,10 @@ describe("system API", () => {
     it("should return local network IPs and ports", async () => {
       vi.mocked(os.networkInterfaces).mockReturnValue({
         en0: [
-          { address: "192.168.1.100", family: "IPv4", internal: false } as never,
-          { address: "fe80::1", family: "IPv6", internal: false } as never,
+          cast({ address: "192.168.1.100", family: "IPv4", internal: false }),
+          cast({ address: "fe80::1", family: "IPv6", internal: false }),
         ],
-        lo0: [{ address: "127.0.0.1", family: "IPv4", internal: true } as never],
+        lo0: [cast({ address: "127.0.0.1", family: "IPv4", internal: true })],
       });
 
       const handler = getHandler("/network-info");

@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -17,13 +18,15 @@ beforeEach(() => {
 
 describe("GET /api/fixes/preview", () => {
   it("returns fix preview data", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "fix-1",
-      title: "Fix import",
-      diff_file: "src/index.ts",
-      diff_before: "old code",
-      diff_after: "new code",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "fix-1",
+        title: "Fix import",
+        diff_file: "src/index.ts",
+        diff_before: "old code",
+        diff_after: "new code",
+      }),
+    );
 
     const req = new NextRequest("http://localhost/api/fixes/preview?id=fix-1");
     const response = await GET(req);
@@ -44,7 +47,7 @@ describe("GET /api/fixes/preview", () => {
   });
 
   it("returns 404 when fix not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/fixes/preview?id=nonexistent");
     const response = await GET(req);

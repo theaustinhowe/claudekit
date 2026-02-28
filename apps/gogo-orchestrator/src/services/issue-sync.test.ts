@@ -25,6 +25,7 @@ vi.mock("../utils/logger.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { broadcast } from "../ws/handler.js";
 import { getIssueCommentsForRepo, getIssuesForRepo } from "./github/index.js";
 import { syncAllIssues, syncCommentsForIssue, syncIssuesForRepo } from "./issue-sync.js";
@@ -64,10 +65,10 @@ describe("issue-sync", () => {
         .mockResolvedValueOnce({ id: "repo-1", last_issue_sync_at: null }) // repo lookup
         .mockResolvedValueOnce(undefined); // upsertIssue - not existing (insert)
 
-      vi.mocked(queryAll).mockResolvedValue([] as never); // detectIssueEditForJob
-      vi.mocked(getIssuesForRepo).mockResolvedValue([makeGhIssue()] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([] as never);
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(queryAll).mockResolvedValue(cast([])); // detectIssueEditForJob
+      vi.mocked(getIssuesForRepo).mockResolvedValue(cast([makeGhIssue()]));
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([]));
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const result = await syncIssuesForRepo("repo-1");
 
@@ -83,10 +84,10 @@ describe("issue-sync", () => {
         .mockResolvedValueOnce({ id: "repo-1", last_issue_sync_at: "2024-01-01T00:00:00Z" })
         .mockResolvedValueOnce(undefined);
 
-      vi.mocked(queryAll).mockResolvedValue([] as never);
-      vi.mocked(getIssuesForRepo).mockResolvedValue([makeGhIssue()] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([] as never);
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(queryAll).mockResolvedValue(cast([]));
+      vi.mocked(getIssuesForRepo).mockResolvedValue(cast([makeGhIssue()]));
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([]));
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       await syncIssuesForRepo("repo-1");
 
@@ -102,10 +103,10 @@ describe("issue-sync", () => {
         .mockResolvedValueOnce({ id: "repo-1", last_issue_sync_at: null })
         .mockResolvedValueOnce({ id: "existing-issue-id" }); // upsertIssue - existing
 
-      vi.mocked(queryAll).mockResolvedValue([] as never);
-      vi.mocked(getIssuesForRepo).mockResolvedValue([makeGhIssue()] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([] as never);
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(queryAll).mockResolvedValue(cast([]));
+      vi.mocked(getIssuesForRepo).mockResolvedValue(cast([makeGhIssue()]));
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([]));
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const result = await syncIssuesForRepo("repo-1");
 
@@ -124,10 +125,10 @@ describe("issue-sync", () => {
         .mockResolvedValueOnce(undefined) // issue doesn't exist
         .mockResolvedValueOnce(undefined); // comment doesn't exist
 
-      vi.mocked(queryAll).mockResolvedValue([] as never);
-      vi.mocked(getIssuesForRepo).mockResolvedValue([makeGhIssue()] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([makeGhComment()] as never);
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(queryAll).mockResolvedValue(cast([]));
+      vi.mocked(getIssuesForRepo).mockResolvedValue(cast([makeGhIssue()]));
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([makeGhComment()]));
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const result = await syncIssuesForRepo("repo-1");
 
@@ -159,14 +160,16 @@ describe("issue-sync", () => {
 
       vi.mocked(queryAll).mockResolvedValueOnce([activeJob]); // detectIssueEditForJob
 
-      vi.mocked(getIssuesForRepo).mockResolvedValue([
-        makeGhIssue({
-          body: "New edited body",
-          updated_at: "2024-01-02T00:00:00Z", // after job created
-        }),
-      ] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([] as never);
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(getIssuesForRepo).mockResolvedValue(
+        cast([
+          makeGhIssue({
+            body: "New edited body",
+            updated_at: "2024-01-02T00:00:00Z", // after job created
+          }),
+        ]),
+      );
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([]));
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       await syncIssuesForRepo("repo-1");
 
@@ -190,11 +193,11 @@ describe("issue-sync", () => {
         { id: "job-1", created_at: "2024-01-01T00:00:00Z", issue_body: "Old body" },
       ]);
 
-      vi.mocked(getIssuesForRepo).mockResolvedValue([
-        makeGhIssue({ body: "New body", updated_at: "2024-01-02T00:00:00Z" }),
-      ] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([] as never);
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(getIssuesForRepo).mockResolvedValue(
+        cast([makeGhIssue({ body: "New body", updated_at: "2024-01-02T00:00:00Z" })]),
+      );
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([]));
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       await syncIssuesForRepo("repo-1");
 
@@ -207,9 +210,9 @@ describe("issue-sync", () => {
 
   describe("syncCommentsForIssue", () => {
     it("syncs comments and returns count", async () => {
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([makeGhComment(), makeGhComment({ id: 101 })] as never);
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([makeGhComment(), makeGhComment({ id: 101 })]));
       vi.mocked(queryOne).mockResolvedValue(undefined); // comments don't exist
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const count = await syncCommentsForIssue("repo-1", 42);
 
@@ -218,7 +221,7 @@ describe("issue-sync", () => {
     });
 
     it("returns 0 when no comments", async () => {
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([] as never);
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([]));
 
       const count = await syncCommentsForIssue("repo-1", 42);
 
@@ -226,9 +229,9 @@ describe("issue-sync", () => {
     });
 
     it("updates existing comments", async () => {
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([makeGhComment()] as never);
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([makeGhComment()]));
       vi.mocked(queryOne).mockResolvedValueOnce({ id: "existing-comment-id" }); // exists
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const count = await syncCommentsForIssue("repo-1", 42);
 
@@ -249,11 +252,11 @@ describe("issue-sync", () => {
       vi.mocked(queryOne)
         .mockResolvedValueOnce({ id: "repo-1", last_issue_sync_at: null })
         .mockResolvedValueOnce(undefined);
-      vi.mocked(queryAll).mockResolvedValue([] as never);
-      vi.mocked(getIssuesForRepo).mockResolvedValue([makeGhIssue()] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([makeGhComment()] as never);
+      vi.mocked(queryAll).mockResolvedValue(cast([]));
+      vi.mocked(getIssuesForRepo).mockResolvedValue(cast([makeGhIssue()]));
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([makeGhComment()]));
       vi.mocked(queryOne).mockResolvedValueOnce(undefined); // comment upsert
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       await syncAllIssues();
 
@@ -286,10 +289,10 @@ describe("issue-sync", () => {
       vi.mocked(queryOne)
         .mockResolvedValueOnce({ id: "repo-2", last_issue_sync_at: null })
         .mockResolvedValueOnce(undefined);
-      vi.mocked(queryAll).mockResolvedValue([] as never);
-      vi.mocked(getIssuesForRepo).mockResolvedValue([makeGhIssue()] as never);
-      vi.mocked(getIssueCommentsForRepo).mockResolvedValue([] as never);
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(queryAll).mockResolvedValue(cast([]));
+      vi.mocked(getIssuesForRepo).mockResolvedValue(cast([makeGhIssue()]));
+      vi.mocked(getIssueCommentsForRepo).mockResolvedValue(cast([]));
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       await syncAllIssues();
 

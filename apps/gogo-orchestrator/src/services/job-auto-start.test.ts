@@ -54,6 +54,7 @@ vi.mock("../utils/job-logging.js", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { startAgent } from "./agent-executor.js";
 import { startJobRun } from "./agent-runner.js";
 import { pollQueuedJobs } from "./job-auto-start.js";
@@ -94,9 +95,11 @@ describe("job-auto-start", () => {
     vi.mocked(sa).mockResolvedValue({ success: true });
 
     const { agentRegistry } = await import("./agents/index.js");
-    vi.mocked(agentRegistry.get).mockReturnValue({
-      type: "claude-code",
-    } as never);
+    vi.mocked(agentRegistry.get).mockReturnValue(
+      cast({
+        type: "claude-code",
+      }),
+    );
     vi.mocked(agentRegistry.getTypes).mockReturnValue(["claude-code"]);
 
     // Default execute mock
@@ -242,7 +245,7 @@ describe("job-auto-start", () => {
 
       // Agent registry doesn't have this type
       const { agentRegistry } = await import("./agents/index.js");
-      vi.mocked(agentRegistry.get).mockReturnValue(undefined as never);
+      vi.mocked(agentRegistry.get).mockReturnValue(cast(undefined));
 
       const result = await pollQueuedJobs();
 

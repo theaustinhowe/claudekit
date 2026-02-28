@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -63,9 +64,11 @@ import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
 
 describe("GeneralSettings", () => {
   beforeEach(() => {
-    vi.mocked(useSettings).mockReturnValue({
-      data: { workDirectory: "/tmp/agent-worktrees", maxParallelJobs: 3 },
-    } as never);
+    vi.mocked(useSettings).mockReturnValue(
+      cast({
+        data: { workDirectory: "/tmp/agent-worktrees", maxParallelJobs: 3 },
+      }),
+    );
     vi.mocked(useUpdateSettings).mockReturnValue({
       mutate: mockMutate,
       mutateAsync: vi.fn(),
@@ -121,9 +124,11 @@ describe("GeneralSettings", () => {
   });
 
   it("shows singular 'job' for maxParallelJobs = 1", () => {
-    vi.mocked(useSettings).mockReturnValue({
-      data: { workDirectory: "/tmp/agent-worktrees", maxParallelJobs: 1 },
-    } as never);
+    vi.mocked(useSettings).mockReturnValue(
+      cast({
+        data: { workDirectory: "/tmp/agent-worktrees", maxParallelJobs: 1 },
+      }),
+    );
     render(<GeneralSettings />);
     expect(screen.getByText("1 job")).toBeInTheDocument();
   });

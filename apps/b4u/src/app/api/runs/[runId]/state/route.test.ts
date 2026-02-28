@@ -5,6 +5,7 @@ vi.mock("@/lib/db", () => ({
   execute: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { POST, PUT } from "@/app/api/runs/[runId]/state/route";
 import { execute } from "@/lib/db";
 
@@ -26,7 +27,7 @@ function makeRequest(body: unknown) {
 
 describe("PUT /api/runs/[runId]/state", () => {
   it("saves run state", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const response = await PUT(
       makeRequest({
@@ -60,7 +61,7 @@ describe("PUT /api/runs/[runId]/state", () => {
 
 describe("POST /api/runs/[runId]/state", () => {
   it("saves run state (same as PUT)", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const response = await POST(
       makeRequest({

@@ -11,6 +11,7 @@ vi.mock("node:fs/promises", () => ({
 
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
+import { cast } from "@claudekit/test-utils";
 import { concatenateAudioFiles, concatenateVideos, generateSilence, mergeVideoAudio } from "@/lib/video/ffmpeg-merger";
 
 const mockSpawn = vi.mocked(spawn);
@@ -77,7 +78,7 @@ beforeEach(() => {
 describe("mergeVideoAudio", () => {
   it("spawns ffmpeg with correct arguments for merging", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await mergeVideoAudio({
       videoPath: "/tmp/video.mp4",
@@ -106,7 +107,7 @@ describe("mergeVideoAudio", () => {
 
   it("rejects when ffmpeg exits with non-zero code", async () => {
     const proc = createMockProcess(1);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await expect(
       mergeVideoAudio({
@@ -133,7 +134,7 @@ describe("mergeVideoAudio", () => {
       stdin: { write: vi.fn(), end: vi.fn() },
       stdout: { on: vi.fn() },
     };
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await expect(
       mergeVideoAudio({
@@ -148,7 +149,7 @@ describe("mergeVideoAudio", () => {
 describe("concatenateVideos", () => {
   it("creates concat file and spawns ffmpeg", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await concatenateVideos(["/tmp/a.mp4", "/tmp/b.mp4"], "/tmp/combined.mp4");
 
@@ -164,7 +165,7 @@ describe("concatenateVideos", () => {
 
   it("passes the output path to ffmpeg", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await concatenateVideos(["/tmp/a.mp4"], "/tmp/final.mp4");
 
@@ -176,7 +177,7 @@ describe("concatenateVideos", () => {
 describe("concatenateAudioFiles", () => {
   it("creates audio-concat.txt and calls ffmpeg with -c copy", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await concatenateAudioFiles(["/tmp/a.mp3", "/tmp/b.mp3"], "/tmp/combined.mp3");
 
@@ -193,7 +194,7 @@ describe("concatenateAudioFiles", () => {
 
   it("writes correct file content for multiple paths", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await concatenateAudioFiles(["/tmp/x.mp3", "/tmp/y.mp3", "/tmp/z.mp3"], "/tmp/out.mp3");
 
@@ -205,7 +206,7 @@ describe("concatenateAudioFiles", () => {
 
   it("creates the tmp directory with recursive option", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await concatenateAudioFiles(["/tmp/a.mp3"], "/tmp/out.mp3");
 
@@ -214,7 +215,7 @@ describe("concatenateAudioFiles", () => {
 
   it("rejects on ffmpeg error (exit code 1)", async () => {
     const proc = createMockProcess(1);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await expect(concatenateAudioFiles(["/tmp/a.mp3"], "/tmp/out.mp3")).rejects.toThrow("ffmpeg exited with code 1");
   });
@@ -223,7 +224,7 @@ describe("concatenateAudioFiles", () => {
 describe("generateSilence", () => {
   it("calls ffmpeg with anullsrc filter and correct duration", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await generateSilence("/tmp/silence.mp3", 5);
 
@@ -236,7 +237,7 @@ describe("generateSilence", () => {
 
   it("passes output path as last argument", async () => {
     const proc = createMockProcess(0);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await generateSilence("/tmp/out.mp3", 10);
 
@@ -246,7 +247,7 @@ describe("generateSilence", () => {
 
   it("rejects on ffmpeg error", async () => {
     const proc = createMockProcess(1);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     await expect(generateSilence("/tmp/silence.mp3", 3)).rejects.toThrow("ffmpeg exited with code 1");
   });
@@ -256,7 +257,7 @@ describe("stderr truncation", () => {
   it("truncates stderr to last 500 characters on error", async () => {
     const longStderr = "x".repeat(1000);
     const proc = createMockProcessWithStderr(1, longStderr);
-    mockSpawn.mockReturnValue(proc as never);
+    mockSpawn.mockReturnValue(cast(proc));
 
     let caughtError: Error | undefined;
     try {

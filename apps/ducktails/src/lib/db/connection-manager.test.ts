@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockConn, mockInstance } = vi.hoisted(() => {
@@ -39,7 +40,7 @@ describe("connection-manager", () => {
     // Re-setup mock implementations after clearAllMocks
     vi.mocked(fs.existsSync).mockReturnValue(true);
     mockInstance.connect.mockResolvedValue(mockConn);
-    vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+    vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
   });
 
   afterEach(() => {
@@ -95,7 +96,7 @@ describe("connection-manager", () => {
 
       const newMockConn = { closeSync: vi.fn() };
       const newMockInstance = { connect: vi.fn().mockResolvedValue(newMockConn) };
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(newMockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(newMockInstance));
 
       const conn2 = await getConnection("/test/db.duckdb");
       expect(DuckDBInstance.create).toHaveBeenCalled();

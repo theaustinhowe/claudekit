@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -80,11 +81,13 @@ describe("quick-improve runner", () => {
       .mockResolvedValueOnce({ exitCode: 0, stdout: "3 files changed, 45 insertions(+), 12 deletions(-)", stderr: "" })
       // git worktree remove (final cleanup)
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" });
-    vi.mocked(runClaude).mockResolvedValue({
-      exitCode: 0,
-      stdout: "Made improvements",
-      stderr: "",
-    } as never);
+    vi.mocked(runClaude).mockResolvedValue(
+      cast({
+        exitCode: 0,
+        stdout: "Made improvements",
+        stderr: "",
+      }),
+    );
     vi.mocked(pushBranchAndCreatePR).mockResolvedValue({
       prUrl: "https://github.com/user/repo/pull/1",
     });
@@ -163,7 +166,7 @@ describe("quick-improve runner", () => {
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" }) // ls-files (empty)
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" }) // worktree remove
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" }); // branch -D
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const onProgress = vi.fn();
     const runner = createQuickImproveRunner({ persona: "uiux", repoId: "r1" });
@@ -242,7 +245,7 @@ describe("quick-improve runner", () => {
       .mockResolvedValueOnce({ exitCode: 0, stdout: "1 file changed", stderr: "" }) // diff --stat
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" }) // ls-files
       .mockResolvedValueOnce({ exitCode: 1, stdout: "", stderr: "commit error" }); // commit fails
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const runner = createQuickImproveRunner({ persona: "uiux", repoId: "r1" });
 

@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -40,13 +41,15 @@ describe("fix-apply runner", () => {
 
   it("calls applyFixes and returns result on success", async () => {
     vi.mocked(queryOne).mockResolvedValue({ id: "r1", local_path: "/repo" });
-    vi.mocked(applyFixes).mockResolvedValue({
-      success: true,
-      runId: "run-1",
-      snapshotId: "snap-1",
-      appliedCount: 3,
-      totalCount: 5,
-    } as never);
+    vi.mocked(applyFixes).mockResolvedValue(
+      cast({
+        success: true,
+        runId: "run-1",
+        snapshotId: "snap-1",
+        appliedCount: 3,
+        totalCount: 5,
+      }),
+    );
 
     const onProgress = vi.fn();
     const runner = createFixApplyRunner({ fixActionIds: ["f1", "f2"], repoId: "r1" });
@@ -66,10 +69,12 @@ describe("fix-apply runner", () => {
 
   it("throws on apply failure", async () => {
     vi.mocked(queryOne).mockResolvedValue({ id: "r1", local_path: "/repo" });
-    vi.mocked(applyFixes).mockResolvedValue({
-      success: false,
-      error: "File conflict",
-    } as never);
+    vi.mocked(applyFixes).mockResolvedValue(
+      cast({
+        success: false,
+        error: "File conflict",
+      }),
+    );
 
     const runner = createFixApplyRunner({ fixActionIds: ["f1"], repoId: "r1" });
 

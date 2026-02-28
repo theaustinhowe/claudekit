@@ -7,6 +7,7 @@ vi.mock("@/lib/db", () => ({
   execute: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PUT } from "@/app/api/timeline-markers/route";
 import { execute, queryAll } from "@/lib/db";
 
@@ -31,19 +32,21 @@ beforeEach(() => {
 
 describe("GET /api/timeline-markers", () => {
   it("returns markers grouped by flow_id from flow_voiceover", async () => {
-    mockQueryAll.mockResolvedValue([
-      {
-        flow_id: "flow-1",
-        markers_json: JSON.stringify([
-          { timestamp: "00:00:05", label: "Login", paragraphIndex: 0 },
-          { timestamp: "00:00:15", label: "Dashboard", paragraphIndex: 1 },
-        ]),
-      },
-      {
-        flow_id: "flow-2",
-        markers_json: JSON.stringify([{ timestamp: "00:01:00", label: "Settings", paragraphIndex: 0 }]),
-      },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([
+        {
+          flow_id: "flow-1",
+          markers_json: JSON.stringify([
+            { timestamp: "00:00:05", label: "Login", paragraphIndex: 0 },
+            { timestamp: "00:00:15", label: "Dashboard", paragraphIndex: 1 },
+          ]),
+        },
+        {
+          flow_id: "flow-2",
+          markers_json: JSON.stringify([{ timestamp: "00:01:00", label: "Settings", paragraphIndex: 0 }]),
+        },
+      ]),
+    );
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -73,7 +76,7 @@ describe("GET /api/timeline-markers", () => {
   });
 
   it("returns empty object when no markers exist", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -86,8 +89,8 @@ describe("GET /api/timeline-markers", () => {
 describe("PUT /api/timeline-markers", () => {
   it("saves markers for a single flow via flow_voiceover", async () => {
     // No existing row found
-    mockQueryAll.mockResolvedValue([] as never);
-    mockExecute.mockResolvedValue(undefined as never);
+    mockQueryAll.mockResolvedValue(cast([]));
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const body = {
       "flow-1": [
@@ -104,8 +107,8 @@ describe("PUT /api/timeline-markers", () => {
   });
 
   it("updates existing flow_voiceover row markers", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "existing-id", paragraphs_json: '["Hello"]' }] as never);
-    mockExecute.mockResolvedValue(undefined as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "existing-id", paragraphs_json: '["Hello"]' }]));
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const body = {
       "flow-1": [{ timestamp: "00:00:05", label: "Login", paragraphIndex: 0 }],

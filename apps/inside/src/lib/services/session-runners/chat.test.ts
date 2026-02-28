@@ -27,6 +27,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
+import { cast } from "@claudekit/test-utils";
 import { createDesignMessage, getGeneratorProject } from "@/lib/actions/generator-projects";
 import { getUpgradeTasks } from "@/lib/actions/upgrade-tasks";
 import { applyTaskMutations, parseTaskMutations } from "@/lib/services/task-mutation-parser";
@@ -74,7 +75,7 @@ function makeContext() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetProject.mockResolvedValue(fakeProject());
-  mockRunClaude.mockResolvedValue({ exitCode: 0, stdout: "response text", stderr: "" } as never);
+  mockRunClaude.mockResolvedValue(cast({ exitCode: 0, stdout: "response text", stderr: "" }));
   mockParseTaskMutations.mockReturnValue({ cleanContent: "", mutations: null });
 });
 
@@ -150,9 +151,9 @@ describe("createChatRunner", () => {
 
   describe("upgrade mode", () => {
     it("fetches upgrade tasks when upgradeMode is true", async () => {
-      mockGetUpgradeTasks.mockResolvedValue([
-        { id: "t1", title: "Task 1", description: "Desc", status: "pending" },
-      ] as never);
+      mockGetUpgradeTasks.mockResolvedValue(
+        cast([{ id: "t1", title: "Task 1", description: "Desc", status: "pending" }]),
+      );
       const runner = createChatRunner({ message: "Hello", upgradeMode: true }, "proj-1");
       await runner(makeContext());
 
@@ -163,10 +164,12 @@ describe("createChatRunner", () => {
     });
 
     it("applies task mutations when present", async () => {
-      mockParseTaskMutations.mockReturnValue({
-        cleanContent: "cleaned",
-        mutations: { updates: [], additions: [], removals: [] },
-      } as never);
+      mockParseTaskMutations.mockReturnValue(
+        cast({
+          cleanContent: "cleaned",
+          mutations: { updates: [], additions: [], removals: [] },
+        }),
+      );
       const runner = createChatRunner({ message: "Hello", upgradeMode: true }, "proj-1");
       const result = await runner(makeContext());
 

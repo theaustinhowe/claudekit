@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -76,7 +77,7 @@ describe("IssueDetailDrawer", () => {
   it("renders issue title and number", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue() as never}
+        issue={cast(makeIssue())}
         repositoryId="repo-1"
         open={true}
         onOpenChange={vi.fn()}
@@ -91,7 +92,7 @@ describe("IssueDetailDrawer", () => {
   it("shows open state badge", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue() as never}
+        issue={cast(makeIssue())}
         repositoryId="repo-1"
         open={true}
         onOpenChange={vi.fn()}
@@ -105,7 +106,7 @@ describe("IssueDetailDrawer", () => {
   it("shows author info", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue() as never}
+        issue={cast(makeIssue())}
         repositoryId="repo-1"
         open={true}
         onOpenChange={vi.fn()}
@@ -119,7 +120,7 @@ describe("IssueDetailDrawer", () => {
   it("shows issue description", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue() as never}
+        issue={cast(makeIssue())}
         repositoryId="repo-1"
         open={true}
         onOpenChange={vi.fn()}
@@ -133,7 +134,7 @@ describe("IssueDetailDrawer", () => {
   it("shows labels", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue() as never}
+        issue={cast(makeIssue())}
         repositoryId="repo-1"
         open={true}
         onOpenChange={vi.fn()}
@@ -147,7 +148,7 @@ describe("IssueDetailDrawer", () => {
   it("shows create job button when no job exists", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue() as never}
+        issue={cast(makeIssue())}
         repositoryId="repo-1"
         open={true}
         onOpenChange={vi.fn()}
@@ -161,7 +162,7 @@ describe("IssueDetailDrawer", () => {
   it("shows view job link when job exists", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue({ hasJob: true, jobId: "job-1" }) as never}
+        issue={cast(makeIssue({ hasJob: true, jobId: "job-1" }))}
         repositoryId="repo-1"
         open={true}
         onOpenChange={vi.fn()}
@@ -175,7 +176,7 @@ describe("IssueDetailDrawer", () => {
   it("renders nothing when closed", () => {
     render(
       <IssueDetailDrawer
-        issue={makeIssue() as never}
+        issue={cast(makeIssue())}
         repositoryId="repo-1"
         open={false}
         onOpenChange={vi.fn()}

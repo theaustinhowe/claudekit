@@ -11,6 +11,7 @@ vi.mock("@/lib/validations", () => ({
   togglePatchSchema: {},
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PATCH } from "@/app/api/env-config/route";
 import { execute, queryOne } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
@@ -33,7 +34,7 @@ describe("GET /api/env-config", () => {
       { id: "seed-db", label: "Seed database on start", enabled: true },
       { id: "disable-rate", label: "Disable rate limiting", enabled: true },
     ];
-    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(items) } as never);
+    mockQueryOne.mockResolvedValue(cast({ data_json: JSON.stringify(items) }));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -51,7 +52,7 @@ describe("GET /api/env-config", () => {
   });
 
   it("returns empty array when no items exist", async () => {
-    mockQueryOne.mockResolvedValue(null as never);
+    mockQueryOne.mockResolvedValue(cast(null));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -73,18 +74,22 @@ describe("GET /api/env-config", () => {
 
 describe("PATCH /api/env-config", () => {
   it("updates an env item toggle in run_content", async () => {
-    mockParseBody.mockResolvedValue({
-      ok: true,
-      data: { id: "seed-db", enabled: false, runId: "run-1" },
-    } as never);
-    mockQueryOne.mockResolvedValue({
-      id: "rc-1",
-      data_json: JSON.stringify([
-        { id: "seed-db", label: "Seed database on start", enabled: true },
-        { id: "disable-rate", label: "Disable rate limiting", enabled: true },
-      ]),
-    } as never);
-    mockExecute.mockResolvedValue(undefined as never);
+    mockParseBody.mockResolvedValue(
+      cast({
+        ok: true,
+        data: { id: "seed-db", enabled: false, runId: "run-1" },
+      }),
+    );
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "rc-1",
+        data_json: JSON.stringify([
+          { id: "seed-db", label: "Seed database on start", enabled: true },
+          { id: "disable-rate", label: "Disable rate limiting", enabled: true },
+        ]),
+      }),
+    );
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/env-config", {
       method: "PATCH",
@@ -105,7 +110,7 @@ describe("PATCH /api/env-config", () => {
   });
 
   it("returns 422 for invalid body (missing id)", async () => {
-    mockParseBody.mockResolvedValue({ ok: false, error: "Invalid", status: 422 } as never);
+    mockParseBody.mockResolvedValue(cast({ ok: false, error: "Invalid", status: 422 }));
 
     const req = new NextRequest("http://localhost/api/env-config", {
       method: "PATCH",
@@ -121,10 +126,12 @@ describe("PATCH /api/env-config", () => {
   });
 
   it("returns 500 on database error during update", async () => {
-    mockParseBody.mockResolvedValue({
-      ok: true,
-      data: { id: "seed-db", enabled: true, runId: "run-1" },
-    } as never);
+    mockParseBody.mockResolvedValue(
+      cast({
+        ok: true,
+        data: { id: "seed-db", enabled: true, runId: "run-1" },
+      }),
+    );
     mockQueryOne.mockRejectedValue(new Error("DB write failed"));
 
     const req = new NextRequest("http://localhost/api/env-config", {

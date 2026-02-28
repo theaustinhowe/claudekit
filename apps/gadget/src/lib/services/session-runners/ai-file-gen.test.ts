@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -34,7 +35,7 @@ import { createAIFileGenRunner } from "./ai-file-gen";
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(fs.existsSync).mockReturnValue(true);
-  vi.mocked(fs.statSync).mockReturnValue({ mtimeMs: 0 } as never);
+  vi.mocked(fs.statSync).mockReturnValue(cast({ mtimeMs: 0 }));
 });
 
 describe("ai-file-gen runner", () => {
@@ -64,7 +65,7 @@ describe("ai-file-gen runner", () => {
   it("skips when file was recently modified", async () => {
     vi.mocked(queryOne).mockResolvedValue(defaultRepo);
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(fs.statSync).mockReturnValue({ mtimeMs: Date.now() - 1000 } as never); // 1 second ago
+    vi.mocked(fs.statSync).mockReturnValue(cast({ mtimeMs: Date.now() - 1000 })); // 1 second ago
 
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md" });
     const result = await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
@@ -88,7 +89,7 @@ describe("ai-file-gen runner", () => {
       if (existsCallCount === 2 || existsCallCount === 3) return false;
       return true;
     });
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const onProgress = vi.fn();
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md" });
@@ -115,11 +116,13 @@ describe("ai-file-gen runner", () => {
       if (existsCallCount === 2 || existsCallCount === 3 || existsCallCount === 4) return false;
       return true;
     });
-    vi.mocked(runClaude).mockResolvedValue({
-      exitCode: 0,
-      stdout: "# CLAUDE.md content\nSome instructions",
-      stderr: "",
-    } as never);
+    vi.mocked(runClaude).mockResolvedValue(
+      cast({
+        exitCode: 0,
+        stdout: "# CLAUDE.md content\nSome instructions",
+        stderr: "",
+      }),
+    );
 
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md" });
     const result = await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
@@ -136,11 +139,13 @@ describe("ai-file-gen runner", () => {
       if (existsCallCount === 2 || existsCallCount === 3 || existsCallCount === 4) return false;
       return true;
     });
-    vi.mocked(runClaude).mockResolvedValue({
-      exitCode: 0,
-      stdout: "```markdown\n# Content\n```",
-      stderr: "",
-    } as never);
+    vi.mocked(runClaude).mockResolvedValue(
+      cast({
+        exitCode: 0,
+        stdout: "```markdown\n# Content\n```",
+        stderr: "",
+      }),
+    );
 
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md" });
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
@@ -156,11 +161,13 @@ describe("ai-file-gen runner", () => {
       if (existsCallCount === 2 || existsCallCount === 3) return false;
       return true;
     });
-    vi.mocked(runClaude).mockResolvedValue({
-      exitCode: 1,
-      stdout: "",
-      stderr: "Claude error",
-    } as never);
+    vi.mocked(runClaude).mockResolvedValue(
+      cast({
+        exitCode: 1,
+        stdout: "",
+        stderr: "Claude error",
+      }),
+    );
 
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md" });
 
@@ -177,11 +184,13 @@ describe("ai-file-gen runner", () => {
       if (existsCallCount === 2 || existsCallCount === 3 || existsCallCount === 4) return false;
       return true;
     });
-    vi.mocked(runClaude).mockResolvedValue({
-      exitCode: 0,
-      stdout: "",
-      stderr: "",
-    } as never);
+    vi.mocked(runClaude).mockResolvedValue(
+      cast({
+        exitCode: 0,
+        stdout: "",
+        stderr: "",
+      }),
+    );
 
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md" });
 
@@ -198,7 +207,7 @@ describe("ai-file-gen runner", () => {
       if (existsCallCount === 2 || existsCallCount === 3) return false;
       return true;
     });
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md" });
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
@@ -214,7 +223,7 @@ describe("ai-file-gen runner", () => {
       if (existsCallCount === 2 || existsCallCount === 3) return false;
       return true;
     });
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const runner = createAIFileGenRunner({ repoId: "r1", fileName: "CLAUDE.md", action: "update" });
     const result = await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });

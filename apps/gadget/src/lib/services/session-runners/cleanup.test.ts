@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -44,7 +45,7 @@ describe("cleanup runner", () => {
       .mockResolvedValueOnce({ exitCode: 0 })
       // git commit
       .mockResolvedValueOnce({ exitCode: 0 });
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
   }
 
   it("throws when repo not found", async () => {
@@ -101,7 +102,7 @@ describe("cleanup runner", () => {
       throw new Error("permission denied");
     });
     vi.mocked(runProcess).mockResolvedValueOnce({ exitCode: 0 }).mockResolvedValueOnce({ exitCode: 0 });
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const onProgress = vi.fn();
     const runner = createCleanupRunner({ repoId: "r1" });
@@ -134,7 +135,7 @@ describe("cleanup runner", () => {
     vi.mocked(runProcess)
       .mockRejectedValueOnce(new Error("npx not found")) // knip fails
       .mockResolvedValueOnce({ exitCode: 0 }); // git commit
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const onProgress = vi.fn();
     const runner = createCleanupRunner({ repoId: "r1" });
@@ -208,7 +209,7 @@ describe("cleanup runner", () => {
     vi.mocked(runProcess)
       .mockResolvedValueOnce({ exitCode: 0 }) // knip
       .mockRejectedValueOnce(new Error("git error")); // git commit fails
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const onProgress = vi.fn();
     const runner = createCleanupRunner({ repoId: "r1" });

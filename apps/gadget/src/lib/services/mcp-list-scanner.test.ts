@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fetchMcpServerList, getCuratedMcpServers, mcpListEntriesToConcepts } from "./mcp-list-scanner";
@@ -98,7 +99,7 @@ describe("mcp-list-scanner", () => {
     it("uses default description when none provided", () => {
       const entries = [{ name: "no-desc", command: "npx", args: [], tags: [] }];
 
-      const concepts = mcpListEntriesToConcepts(entries as never);
+      const concepts = mcpListEntriesToConcepts(cast(entries));
 
       expect(concepts[0].description).toBe("MCP Server: no-desc");
     });

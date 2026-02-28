@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -22,8 +23,8 @@ beforeEach(() => {
 
 describe("POST /api/fixes/apply", () => {
   it("applies fixes to a repo", async () => {
-    mockQueryOne.mockResolvedValue({ id: "r1", local_path: "/projects/repo" } as never);
-    mockApplyFixes.mockResolvedValue({ applied: 2, failed: 0 } as never);
+    mockQueryOne.mockResolvedValue(cast({ id: "r1", local_path: "/projects/repo" }));
+    mockApplyFixes.mockResolvedValue(cast({ applied: 2, failed: 0 }));
 
     const req = new NextRequest("http://localhost/api/fixes/apply", {
       method: "POST",
@@ -52,7 +53,7 @@ describe("POST /api/fixes/apply", () => {
   });
 
   it("returns 404 when repo not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/fixes/apply", {
       method: "POST",

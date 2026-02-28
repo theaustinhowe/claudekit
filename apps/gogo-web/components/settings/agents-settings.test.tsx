@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -63,30 +64,36 @@ describe("AgentsSettings", () => {
   });
 
   it("shows loading skeletons when loading", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [],
-      isLoading: true,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [],
+        isLoading: true,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getAllByTestId("skeleton")).toHaveLength(2);
   });
 
   it("shows no agents message when none configured", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText(/No agents are configured yet/)).toBeInTheDocument();
   });
 
   it("renders configured agent with Ready badge", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [makeAgent()],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [makeAgent()],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Claude Code")).toBeInTheDocument();
@@ -94,10 +101,12 @@ describe("AgentsSettings", () => {
   });
 
   it("shows capabilities badges for configured agents", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [makeAgent()],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [makeAgent()],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Pause/Resume")).toBeInTheDocument();
@@ -106,16 +115,18 @@ describe("AgentsSettings", () => {
   });
 
   it("renders unconfigured agent with Needs Config badge", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [
-        makeAgent({
-          type: "other-agent",
-          displayName: "Other Agent",
-          status: { available: false, configured: false, message: "Not configured", details: { cliInstalled: true } },
-        }),
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [
+          makeAgent({
+            type: "other-agent",
+            displayName: "Other Agent",
+            status: { available: false, configured: false, message: "Not configured", details: { cliInstalled: true } },
+          }),
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Other Agent")).toBeInTheDocument();
@@ -123,38 +134,42 @@ describe("AgentsSettings", () => {
   });
 
   it("renders unconfigured agent with Not Configured badge when no details are true", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [
-        makeAgent({
-          type: "other-agent",
-          displayName: "Other Agent",
-          status: {
-            available: false,
-            configured: false,
-            message: "Not configured",
-            details: { cliInstalled: false, apiKeySet: false },
-          },
-        }),
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [
+          makeAgent({
+            type: "other-agent",
+            displayName: "Other Agent",
+            status: {
+              available: false,
+              configured: false,
+              message: "Not configured",
+              details: { cliInstalled: false, apiKeySet: false },
+            },
+          }),
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Not Configured")).toBeInTheDocument();
   });
 
   it("separates configured and available agents", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [
-        makeAgent({ displayName: "Configured Agent" }),
-        makeAgent({
-          type: "unconfigured",
-          displayName: "Available Agent",
-          status: { available: false, configured: false, message: "Not ready" },
-        }),
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [
+          makeAgent({ displayName: "Configured Agent" }),
+          makeAgent({
+            type: "unconfigured",
+            displayName: "Available Agent",
+            status: { available: false, configured: false, message: "Not ready" },
+          }),
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Configured Agent")).toBeInTheDocument();
@@ -162,17 +177,19 @@ describe("AgentsSettings", () => {
   });
 
   it("shows environment variables section for unconfigured agents", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [
-        makeAgent({
-          type: "other",
-          displayName: "Other",
-          status: { available: false, configured: false, message: "Not ready" },
-          envVars: [{ name: "API_KEY", description: "Your API key", required: true }],
-        }),
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [
+          makeAgent({
+            type: "other",
+            displayName: "Other",
+            status: { available: false, configured: false, message: "Not ready" },
+            envVars: [{ name: "API_KEY", description: "Your API key", required: true }],
+          }),
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Environment Variables")).toBeInTheDocument();
@@ -180,27 +197,31 @@ describe("AgentsSettings", () => {
   });
 
   it("shows install instructions for unconfigured agents", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [
-        makeAgent({
-          type: "other",
-          displayName: "Other",
-          status: { available: false, configured: false, message: "Not ready" },
-          installInstructions: "Run npm install other-agent",
-        }),
-      ],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [
+          makeAgent({
+            type: "other",
+            displayName: "Other",
+            status: { available: false, configured: false, message: "Not ready" },
+            installInstructions: "Run npm install other-agent",
+          }),
+        ],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Run npm install other-agent")).toBeInTheDocument();
   });
 
   it("renders Agent Providers heading", () => {
-    vi.mocked(useAllAgents).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as never);
+    vi.mocked(useAllAgents).mockReturnValue(
+      cast({
+        data: [],
+        isLoading: false,
+      }),
+    );
 
     render(<AgentsSettings />);
     expect(screen.getByText("Agent Providers")).toBeInTheDocument();

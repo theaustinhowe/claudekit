@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -63,7 +64,7 @@ describe("writeTodos", () => {
     const todos = [{ id: "1", text: "Test", resolved: false, createdAt: "2026-01-01T00:00:00.000Z" }];
     mockExistsSync.mockReturnValue(true);
 
-    writeTodos("gadget", todos as never);
+    writeTodos("gadget", cast(todos));
 
     expect(mockWriteFileSync).toHaveBeenCalledWith(
       expect.stringContaining("gadget.json"),

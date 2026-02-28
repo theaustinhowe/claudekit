@@ -10,6 +10,7 @@ vi.mock("@/lib/video/ffmpeg-merger", () => ({
 }));
 
 import { readdir, readFile, stat } from "node:fs/promises";
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/audio/serve/route";
 import { concatenateAudioFiles } from "@/lib/video/ffmpeg-merger";
 
@@ -21,7 +22,7 @@ const mockConcatenate = vi.mocked(concatenateAudioFiles);
 // vi.mocked resolves readdir to the Dirent-returning overload;
 // our source uses the string-returning overload (with "utf-8" encoding)
 function mockReaddir(files: string[]) {
-  mockReaddirRaw.mockResolvedValue(files as never);
+  mockReaddirRaw.mockResolvedValue(cast(files));
 }
 
 const audioDir = `${process.cwd()}/data/audio`;

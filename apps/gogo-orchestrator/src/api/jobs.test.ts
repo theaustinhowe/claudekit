@@ -67,6 +67,7 @@ vi.mock("../services/state-machine.js", () => ({
 }));
 
 import { buildInClause, execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { mapJob } from "../db/schema.js";
 import { startAgent } from "../services/agent-executor.js";
 import { startJobRun } from "../services/agent-runner.js";
@@ -90,7 +91,7 @@ describe("jobs API", () => {
     const { jobsRouter } = await import("./jobs.js");
     const mock = createMockFastify();
     routes = mock.routes;
-    await jobsRouter(mock.instance as never, {} as never);
+    await jobsRouter(cast(mock.instance), cast({}));
 
     getHandler = (path: string) => {
       const route = routes.find((r) => r.path === path);
@@ -197,10 +198,12 @@ describe("jobs API", () => {
 
       vi.mocked(queryOne).mockResolvedValue(job);
 
-      vi.mocked(applyActionAtomic).mockResolvedValue({
-        success: true,
-        job: pausedJob,
-      } as never);
+      vi.mocked(applyActionAtomic).mockResolvedValue(
+        cast({
+          success: true,
+          job: pausedJob,
+        }),
+      );
 
       const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/actions")?.handler;
       const result = await handler?.({ params: { id: "job-1" }, body: { type: "pause" } }, createMockReply());
@@ -304,7 +307,7 @@ describe("jobs API", () => {
 
   describe("POST /:id/start-claude", () => {
     it("should start a Claude run", async () => {
-      vi.mocked(startClaudeRun).mockResolvedValue({ success: true } as never);
+      vi.mocked(startClaudeRun).mockResolvedValue(cast({ success: true }));
 
       const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/start-claude")?.handler;
       const result = await handler?.({ params: { id: "job-1" } }, createMockReply());
@@ -318,7 +321,7 @@ describe("jobs API", () => {
 
   describe("POST /:id/start-agent", () => {
     it("should start an agent with optional type", async () => {
-      vi.mocked(startAgent).mockResolvedValue({ success: true } as never);
+      vi.mocked(startAgent).mockResolvedValue(cast({ success: true }));
 
       const handler = routes.find((r) => r.method === "POST" && r.path === "/:id/start-agent")?.handler;
       const result = await handler?.(

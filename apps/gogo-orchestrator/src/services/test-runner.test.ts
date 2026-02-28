@@ -20,6 +20,7 @@ vi.mock("../ws/handler.js", () => ({
 }));
 
 import { execute, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { getMaxTestRetries, getTestCommands, runTests } from "./test-runner.js";
 
 beforeEach(() => {
@@ -126,7 +127,7 @@ describe("test-runner", () => {
 
   describe("runTests", () => {
     it("skips tests when customTestCommand is null", async () => {
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const result = await runTests("job-1", "/tmp/work", { sequence: 0 }, null);
 
@@ -136,7 +137,7 @@ describe("test-runner", () => {
     });
 
     it("skips tests when customTestCommand is empty string", async () => {
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const result = await runTests("job-1", "/tmp/work", { sequence: 0 }, "");
 
@@ -145,7 +146,7 @@ describe("test-runner", () => {
     });
 
     it("skips tests when customTestCommand is whitespace", async () => {
-      vi.mocked(execute).mockResolvedValue(undefined as never);
+      vi.mocked(execute).mockResolvedValue(cast(undefined));
 
       const result = await runTests("job-1", "/tmp/work", { sequence: 0 }, "   ");
 

@@ -14,6 +14,7 @@ vi.mock("node:fs", () => {
 });
 
 import fs from "node:fs";
+import { cast } from "@claudekit/test-utils";
 import type { DuckDBConnection } from "@duckdb/node-api";
 import { runMigrations } from "./migrate.js";
 
@@ -67,8 +68,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql", "002_add_index.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_initial.sql", "002_add_index.sql"]));
     // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readFile overloads
     vi.mocked(fs.promises.readFile).mockImplementation(async (filePath: any) => {
       if (String(filePath).includes("001_initial.sql")) {
@@ -109,8 +109,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql", "002_add_index.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_initial.sql", "002_add_index.sql"]));
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE something (id VARCHAR)");
 
     const count = await runMigrations(conn, {
@@ -137,8 +136,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_multi.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_multi.sql"]));
     vi.mocked(fs.promises.readFile).mockResolvedValue(
       "CREATE TABLE a (id VARCHAR);\nCREATE TABLE b (id VARCHAR);\nCREATE INDEX idx ON a (id)",
     );
@@ -171,8 +169,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_initial.sql"]));
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE jobs (id VARCHAR PRIMARY KEY)");
 
     // Should not throw despite the "already exists" error
@@ -197,8 +194,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_idx.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_idx.sql"]));
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE INDEX idx ON jobs (id)");
 
     // Should not throw
@@ -223,8 +219,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_broken.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_broken.sql"]));
     vi.mocked(fs.promises.readFile).mockResolvedValue("INSERT INTO broken VALUES");
 
     await expect(
@@ -258,8 +253,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_initial.sql"]));
 
     const count = await runMigrations(conn, {
       migrationsDir: "/app/migrations",
@@ -281,8 +275,7 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_comments.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_comments.sql"]));
     vi.mocked(fs.promises.readFile).mockResolvedValue(
       "-- This is a comment\nCREATE TABLE jobs (id VARCHAR);\n-- Another comment\nCREATE INDEX idx ON jobs (id)",
     );
@@ -306,8 +299,7 @@ describe("runMigrations", () => {
     const logger = (msg: string) => logMessages.push(msg);
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    vi.mocked(fs.promises.readdir).mockResolvedValue(["001_initial.sql"] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(cast(["001_initial.sql"]));
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE jobs (id VARCHAR)");
 
     (conn.run as ReturnType<typeof vi.fn>).mockImplementation(() => {
@@ -350,13 +342,9 @@ describe("runMigrations", () => {
     });
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(fs.promises.readdir).mockResolvedValue([
-      "001_initial.sql",
-      "README.md",
-      ".DS_Store",
-      "002_update.sql",
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdir overloads
-    ] as any);
+    vi.mocked(fs.promises.readdir).mockResolvedValue(
+      cast(["001_initial.sql", "README.md", ".DS_Store", "002_update.sql"]),
+    );
     vi.mocked(fs.promises.readFile).mockResolvedValue("CREATE TABLE t (id VARCHAR)");
 
     const count = await runMigrations(conn, {

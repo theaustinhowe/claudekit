@@ -8,6 +8,7 @@ vi.mock("@/lib/fs/scanner", () => ({
   detectKeyDirectories: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { POST } from "@/app/api/fs/tree/route";
 import { buildFileTree, detectAuth, detectDatabase, detectFramework, detectKeyDirectories } from "@/lib/fs/scanner";
 
@@ -23,11 +24,11 @@ beforeEach(() => {
 
 describe("POST /api/fs/tree", () => {
   it("returns project analysis", async () => {
-    mockBuildFileTree.mockResolvedValue([{ name: "src", children: [] }] as never);
-    mockDetectFramework.mockResolvedValue("next" as never);
-    mockDetectAuth.mockResolvedValue("next-auth" as never);
-    mockDetectDatabase.mockResolvedValue("postgres" as never);
-    mockDetectKeyDirectories.mockResolvedValue(["src", "public"] as never);
+    mockBuildFileTree.mockResolvedValue(cast([{ name: "src", children: [] }]));
+    mockDetectFramework.mockResolvedValue(cast("next"));
+    mockDetectAuth.mockResolvedValue(cast("next-auth"));
+    mockDetectDatabase.mockResolvedValue(cast("postgres"));
+    mockDetectKeyDirectories.mockResolvedValue(cast(["src", "public"]));
 
     const req = new Request("http://localhost/api/fs/tree", {
       method: "POST",
@@ -61,10 +62,10 @@ describe("POST /api/fs/tree", () => {
 
   it("returns 500 on scan failure", async () => {
     mockBuildFileTree.mockRejectedValue(new Error("Permission denied"));
-    mockDetectFramework.mockResolvedValue(null as never);
-    mockDetectAuth.mockResolvedValue(null as never);
-    mockDetectDatabase.mockResolvedValue(null as never);
-    mockDetectKeyDirectories.mockResolvedValue([] as never);
+    mockDetectFramework.mockResolvedValue(cast(null));
+    mockDetectAuth.mockResolvedValue(cast(null));
+    mockDetectDatabase.mockResolvedValue(cast(null));
+    mockDetectKeyDirectories.mockResolvedValue(cast([]));
 
     const req = new Request("http://localhost/api/fs/tree", {
       method: "POST",

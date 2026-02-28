@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:child_process", () => ({
@@ -28,7 +29,7 @@ describe("process-runner", () => {
   describe("runProcess", () => {
     it("resolves with exit code on success", async () => {
       const child = createMockChild();
-      vi.mocked(spawn).mockReturnValue(child as never);
+      vi.mocked(spawn).mockReturnValue(cast(child));
 
       const controller = new AbortController();
       const promise = runProcess({ command: "echo hello", signal: controller.signal });
@@ -41,7 +42,7 @@ describe("process-runner", () => {
 
     it("streams stdout and stderr to callbacks", async () => {
       const child = createMockChild();
-      vi.mocked(spawn).mockReturnValue(child as never);
+      vi.mocked(spawn).mockReturnValue(cast(child));
 
       const stdout: string[] = [];
       const stderr: string[] = [];
@@ -72,7 +73,7 @@ describe("process-runner", () => {
 
     it("rejects on spawn error", async () => {
       const child = createMockChild();
-      vi.mocked(spawn).mockReturnValue(child as never);
+      vi.mocked(spawn).mockReturnValue(cast(child));
 
       const controller = new AbortController();
       const promise = runProcess({ command: "test", signal: controller.signal });
@@ -84,7 +85,7 @@ describe("process-runner", () => {
 
     it("kills child process on abort", async () => {
       const child = createMockChild();
-      vi.mocked(spawn).mockReturnValue(child as never);
+      vi.mocked(spawn).mockReturnValue(cast(child));
 
       const controller = new AbortController();
       const promise = runProcess({ command: "test", signal: controller.signal });

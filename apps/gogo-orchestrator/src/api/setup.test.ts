@@ -33,6 +33,7 @@ vi.mock("octokit", () => ({
 }));
 
 import { queryAll } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { createMockFastify, createMockReply, type RouteHandler } from "../test-utils.js";
 
 describe("setup API", () => {
@@ -45,7 +46,7 @@ describe("setup API", () => {
     const { setupRouter } = await import("./setup.js");
     const mock = createMockFastify();
     routes = mock.routes;
-    await setupRouter(mock.instance as never, {} as never);
+    await setupRouter(cast(mock.instance), cast({}));
 
     getHandler = (path: string) => {
       const route = routes.find((r) => r.path === path);

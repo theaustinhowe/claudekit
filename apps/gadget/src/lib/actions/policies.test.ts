@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -184,7 +185,7 @@ describe("updatePolicy", () => {
         repo_types: "[]",
       });
 
-    mockBuildUpdate.mockReturnValue(null as never);
+    mockBuildUpdate.mockReturnValue(cast(null));
 
     const result = await updatePolicy("p1", {});
     expect(result).toBeDefined();

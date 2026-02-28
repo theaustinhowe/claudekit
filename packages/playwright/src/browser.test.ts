@@ -6,6 +6,7 @@ vi.mock("playwright", () => ({
   },
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { chromium } from "playwright";
 import { createBrowserSession, createVideoSession } from "./browser";
 
@@ -14,7 +15,7 @@ const mockedLaunch = vi.mocked(chromium.launch);
 // Playwright's Browser type has many EventEmitter methods that can't be
 // realistically mocked; centralize the type bypass in this helper
 function mockLaunchReturn(browser: { newContext: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> }) {
-  mockedLaunch.mockResolvedValue(browser as never);
+  mockedLaunch.mockResolvedValue(cast(browser));
 }
 
 /** Build a mock chain: launch → browser → newContext → context → newPage → page. */

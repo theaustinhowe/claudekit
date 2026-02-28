@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@claudekit/logger", () => ({
@@ -58,8 +59,8 @@ function setupFileMocks(logLines: string[]) {
     createReadStream: vi.fn(() => ({})),
     close: vi.fn(),
   };
-  mockOpen.mockResolvedValue(mockFileHandle as never);
-  mockCreateInterface.mockReturnValue(asyncIter(logLines) as never);
+  mockOpen.mockResolvedValue(cast(mockFileHandle));
+  mockCreateInterface.mockReturnValue(cast(asyncIter(logLines)));
   return mockFileHandle;
 }
 
@@ -187,19 +188,19 @@ describe("GET /api/logs/[app]/stream", () => {
     const mockWatcherClose = vi.fn();
     mockWatch.mockImplementation((_path: unknown, cb: unknown) => {
       watchCallback = cb as () => void;
-      return { close: mockWatcherClose } as never;
+      return cast({ close: mockWatcherClose });
     });
 
     // Initial stat: file has 100 bytes
-    mockStatSync.mockReturnValue({ size: 100 } as never);
+    mockStatSync.mockReturnValue(cast({ size: 100 }));
 
     // Initial file handle for readline (no initial lines)
     const initialFh = {
       createReadStream: vi.fn(() => ({})),
       close: vi.fn(),
     };
-    mockOpen.mockResolvedValueOnce(initialFh as never);
-    mockCreateInterface.mockReturnValue(asyncIter([]) as never);
+    mockOpen.mockResolvedValueOnce(cast(initialFh));
+    mockCreateInterface.mockReturnValue(cast(asyncIter([])));
 
     const { req, params } = buildRequest("gadget");
     const response = await GET(req, { params });
@@ -214,7 +215,7 @@ describe("GET /api/logs/[app]/stream", () => {
 
     // Now simulate file growth — new data appended
     const newContent = '{"level":30,"msg":"new-line"}\n';
-    mockStatSync.mockReturnValue({ size: 100 + newContent.length } as never);
+    mockStatSync.mockReturnValue(cast({ size: 100 + newContent.length }));
 
     const watcherFh = {
       read: vi.fn(async (buf: Buffer) => {
@@ -223,7 +224,7 @@ describe("GET /api/logs/[app]/stream", () => {
       }),
       close: vi.fn(),
     };
-    mockOpen.mockResolvedValue(watcherFh as never);
+    mockOpen.mockResolvedValue(cast(watcherFh));
 
     // Trigger the watcher callback
     watchCallback?.();
@@ -253,18 +254,18 @@ describe("GET /api/logs/[app]/stream", () => {
     let watchCallback: (() => void) | undefined;
     mockWatch.mockImplementation((_path: unknown, cb: unknown) => {
       watchCallback = cb as () => void;
-      return { close: vi.fn() } as never;
+      return cast({ close: vi.fn() });
     });
 
     // File size stays at 100
-    mockStatSync.mockReturnValue({ size: 100 } as never);
+    mockStatSync.mockReturnValue(cast({ size: 100 }));
 
     const initialFh = {
       createReadStream: vi.fn(() => ({})),
       close: vi.fn(),
     };
-    mockOpen.mockResolvedValueOnce(initialFh as never);
-    mockCreateInterface.mockReturnValue(asyncIter([]) as never);
+    mockOpen.mockResolvedValueOnce(cast(initialFh));
+    mockCreateInterface.mockReturnValue(cast(asyncIter([])));
 
     const { req, params } = buildRequest("gadget");
     const response = await GET(req, { params });
@@ -290,12 +291,12 @@ describe("GET /api/logs/[app]/stream", () => {
     let watchCallback: (() => void) | undefined;
     mockWatch.mockImplementation((_path: unknown, cb: unknown) => {
       watchCallback = cb as () => void;
-      return { close: vi.fn() } as never;
+      return cast({ close: vi.fn() });
     });
 
     // Initial stat succeeds
     mockStatSync
-      .mockReturnValueOnce({ size: 0 } as never)
+      .mockReturnValueOnce(cast({ size: 0 }))
       // Second call (in watcher) throws — file rotating
       .mockImplementation(() => {
         throw new Error("ENOENT: file deleted during rotation");
@@ -315,8 +316,8 @@ describe("GET /api/logs/[app]/stream", () => {
   it("heartbeat is sent every 15 seconds", async () => {
     mockExistsSync.mockReturnValue(true);
 
-    mockWatch.mockImplementation(() => ({ close: vi.fn() }) as never);
-    mockStatSync.mockReturnValue({ size: 0 } as never);
+    mockWatch.mockImplementation(() => cast({ close: vi.fn() }));
+    mockStatSync.mockReturnValue(cast({ size: 0 }));
 
     setupFileMocks([]);
 
@@ -344,8 +345,8 @@ describe("GET /api/logs/[app]/stream", () => {
     mockExistsSync.mockReturnValue(true);
 
     const mockWatcherClose = vi.fn();
-    mockWatch.mockImplementation(() => ({ close: mockWatcherClose }) as never);
-    mockStatSync.mockReturnValue({ size: 0 } as never);
+    mockWatch.mockImplementation(() => cast({ close: mockWatcherClose }));
+    mockStatSync.mockReturnValue(cast({ size: 0 }));
 
     setupFileMocks([]);
 
@@ -371,8 +372,8 @@ describe("GET /api/logs/[app]/stream", () => {
     mockExistsSync.mockReturnValue(true);
 
     const mockWatcherClose = vi.fn();
-    mockWatch.mockImplementation(() => ({ close: mockWatcherClose }) as never);
-    mockStatSync.mockReturnValue({ size: 0 } as never);
+    mockWatch.mockImplementation(() => cast({ close: mockWatcherClose }));
+    mockStatSync.mockReturnValue(cast({ size: 0 }));
 
     setupFileMocks([]);
 

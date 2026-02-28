@@ -12,6 +12,7 @@ vi.mock("@/lib/utils", () => ({
   nowTimestamp: vi.fn().mockReturnValue("2024-01-01T00:00:00.000Z"),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import {
   createSessionRecord,
@@ -30,8 +31,8 @@ const mockQueryAll = vi.mocked(queryAll);
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetDb.mockResolvedValue({} as Awaited<ReturnType<typeof getDb>>);
-  mockExecute.mockResolvedValue(undefined as never);
-  mockQueryAll.mockResolvedValue([] as never);
+  mockExecute.mockResolvedValue(cast(undefined));
+  mockQueryAll.mockResolvedValue(cast([]));
 });
 
 describe("createSessionRecord", () => {
@@ -90,7 +91,7 @@ describe("updateSessionRecord", () => {
 
 describe("listSessions", () => {
   it("returns all sessions when no filter", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
     const result = await listSessions();
     expect(result).toEqual([]);
     expect(mockQueryAll).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("SELECT * FROM sessions"), []);
@@ -150,13 +151,13 @@ describe("listSessions", () => {
 describe("getSessionRecord", () => {
   it("returns session when found", async () => {
     const row = { id: "session-1", status: "running" };
-    mockQueryOne.mockResolvedValue(row as never);
+    mockQueryOne.mockResolvedValue(cast(row));
     const result = await getSessionRecord("session-1");
     expect(result).toEqual(row);
   });
 
   it("returns undefined when not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     const result = await getSessionRecord("nonexistent");
     expect(result).toBeUndefined();
   });
@@ -165,7 +166,7 @@ describe("getSessionRecord", () => {
 describe("getSessionLogsFromDb", () => {
   it("returns logs for a session", async () => {
     const logs = [{ id: 1, session_id: "s1", log: "test", log_type: "info" }];
-    mockQueryAll.mockResolvedValue(logs as never);
+    mockQueryAll.mockResolvedValue(cast(logs));
     const result = await getSessionLogsFromDb("s1");
     expect(result).toEqual(logs);
   });

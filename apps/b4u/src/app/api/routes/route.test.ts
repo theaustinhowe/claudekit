@@ -11,6 +11,7 @@ vi.mock("@/lib/validations", () => ({
   routesArraySchema: {},
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PUT } from "@/app/api/routes/route";
 import { execute, queryOne } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
@@ -33,7 +34,7 @@ describe("GET /api/routes", () => {
       { path: "/login", title: "Login", authRequired: false, description: "Login page" },
       { path: "/dashboard", title: "Dashboard", authRequired: true, description: "Main dashboard" },
     ];
-    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(routes) } as never);
+    mockQueryOne.mockResolvedValue(cast({ data_json: JSON.stringify(routes) }));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -64,8 +65,8 @@ describe("GET /api/routes", () => {
 describe("PUT /api/routes", () => {
   it("replaces all routes in run_content", async () => {
     const routes = [{ path: "/home", title: "Home", authRequired: false, description: "Home page" }];
-    mockParseBody.mockResolvedValue({ ok: true, data: routes } as never);
-    mockExecute.mockResolvedValue(undefined as never);
+    mockParseBody.mockResolvedValue(cast({ ok: true, data: routes }));
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/routes?runId=run-1", {
       method: "PUT",
@@ -96,7 +97,7 @@ describe("PUT /api/routes", () => {
   });
 
   it("returns validation error", async () => {
-    mockParseBody.mockResolvedValue({ ok: false, error: "Invalid data", status: 422 } as never);
+    mockParseBody.mockResolvedValue(cast({ ok: false, error: "Invalid data", status: 422 }));
 
     const req = new NextRequest("http://localhost/api/routes?runId=run-1", {
       method: "PUT",

@@ -5,6 +5,7 @@ vi.mock("@/lib/db", () => ({
   queryAll: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/runs/[runId]/validate-phase/route";
 import { queryAll } from "@/lib/db";
 
@@ -36,7 +37,7 @@ describe("GET /api/runs/[runId]/validate-phase", () => {
   });
 
   it("returns invalid for phase 2 when project_summary missing", async () => {
-    mockQueryAll.mockResolvedValueOnce([{ cnt: 0 }] as never);
+    mockQueryAll.mockResolvedValueOnce(cast([{ cnt: 0 }]));
 
     const response = await makeRequest("run-1", 2);
     const data = await response.json();
@@ -46,7 +47,7 @@ describe("GET /api/runs/[runId]/validate-phase", () => {
   });
 
   it("returns valid for phase 2 when project_summary exists", async () => {
-    mockQueryAll.mockResolvedValueOnce([{ cnt: 1 }] as never);
+    mockQueryAll.mockResolvedValueOnce(cast([{ cnt: 1 }]));
 
     const response = await makeRequest("run-1", 2);
     const data = await response.json();
@@ -55,7 +56,7 @@ describe("GET /api/runs/[runId]/validate-phase", () => {
   });
 
   it("returns invalid for phase 3 when routes/flows missing", async () => {
-    mockQueryAll.mockResolvedValueOnce([{ cnt: 1 }] as never); // only 1 of 2 needed
+    mockQueryAll.mockResolvedValueOnce(cast([{ cnt: 1 }])); // only 1 of 2 needed
 
     const response = await makeRequest("run-1", 3);
     const data = await response.json();
@@ -65,7 +66,7 @@ describe("GET /api/runs/[runId]/validate-phase", () => {
   });
 
   it("returns valid for phase 3 when routes and flows exist", async () => {
-    mockQueryAll.mockResolvedValueOnce([{ cnt: 2 }] as never);
+    mockQueryAll.mockResolvedValueOnce(cast([{ cnt: 2 }]));
 
     const response = await makeRequest("run-1", 3);
     const data = await response.json();
@@ -74,7 +75,7 @@ describe("GET /api/runs/[runId]/validate-phase", () => {
   });
 
   it("returns invalid for phase 5 when flow_scripts missing", async () => {
-    mockQueryAll.mockResolvedValueOnce([{ cnt: 0 }] as never);
+    mockQueryAll.mockResolvedValueOnce(cast([{ cnt: 0 }]));
 
     const response = await makeRequest("run-1", 5);
     const data = await response.json();
@@ -84,7 +85,7 @@ describe("GET /api/runs/[runId]/validate-phase", () => {
   });
 
   it("returns invalid for phase 6 when no completed recordings", async () => {
-    mockQueryAll.mockResolvedValueOnce([{ cnt: 0 }] as never);
+    mockQueryAll.mockResolvedValueOnce(cast([{ cnt: 0 }]));
 
     const response = await makeRequest("run-1", 6);
     const data = await response.json();
@@ -94,7 +95,7 @@ describe("GET /api/runs/[runId]/validate-phase", () => {
   });
 
   it("returns invalid for phase 7 when flow_voiceover missing", async () => {
-    mockQueryAll.mockResolvedValueOnce([{ cnt: 0 }] as never);
+    mockQueryAll.mockResolvedValueOnce(cast([{ cnt: 0 }]));
 
     const response = await makeRequest("run-1", 7);
     const data = await response.json();

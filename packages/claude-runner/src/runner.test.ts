@@ -8,6 +8,7 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { execSync, spawn } from "node:child_process";
+import { cast } from "@claudekit/test-utils";
 import { isClaudeCliAvailable, runClaude } from "./runner";
 import type { ProgressInfo } from "./types";
 
@@ -40,7 +41,7 @@ function createFakeChild(): FakeChild {
   child.stdin = { write: vi.fn(), end: vi.fn() };
   child.pid = 12345;
   child.kill = vi.fn();
-  return child as unknown as FakeChild;
+  return cast<FakeChild>(child);
 }
 
 beforeEach(() => {

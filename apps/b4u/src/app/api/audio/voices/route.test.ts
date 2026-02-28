@@ -8,6 +8,7 @@ vi.mock("@/lib/db", () => ({
   queryAll: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/audio/voices/route";
 import { listVoices } from "@/lib/audio/elevenlabs-client";
 import { queryAll } from "@/lib/db";
@@ -21,10 +22,12 @@ beforeEach(() => {
 
 describe("GET /api/audio/voices", () => {
   it("returns voices from ElevenLabs API", async () => {
-    mockListVoices.mockResolvedValue([
-      { voice_id: "v1", name: "Rachel", labels: { accent: "American" }, category: "premade" },
-      { voice_id: "v2", name: "Drew", labels: { description: "Warm" }, category: "premade" },
-    ] as never);
+    mockListVoices.mockResolvedValue(
+      cast([
+        { voice_id: "v1", name: "Rachel", labels: { accent: "American" }, category: "premade" },
+        { voice_id: "v2", name: "Drew", labels: { description: "Warm" }, category: "premade" },
+      ]),
+    );
 
     const response = await GET();
     const data = await response.json();
@@ -37,7 +40,7 @@ describe("GET /api/audio/voices", () => {
 
   it("falls back to DB when API fails", async () => {
     mockListVoices.mockRejectedValue(new Error("API unavailable"));
-    mockQueryAll.mockResolvedValue([{ id: "db-v1", name: "Fallback Voice" }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "db-v1", name: "Fallback Voice" }]));
 
     const response = await GET();
     const data = await response.json();

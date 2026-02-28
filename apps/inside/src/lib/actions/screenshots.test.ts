@@ -12,6 +12,7 @@ vi.mock("@/lib/utils", () => ({
   nowTimestamp: vi.fn().mockReturnValue("2024-01-01T00:00:00.000Z"),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { getLatestScreenshot, getProjectScreenshots, saveScreenshot } from "./screenshots";
 
@@ -23,7 +24,7 @@ const mockQueryAll = vi.mocked(queryAll);
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetDb.mockResolvedValue({} as Awaited<ReturnType<typeof getDb>>);
-  mockExecute.mockResolvedValue(undefined as never);
+  mockExecute.mockResolvedValue(cast(undefined));
 });
 
 describe("saveScreenshot", () => {
@@ -60,7 +61,7 @@ describe("saveScreenshot", () => {
 
 describe("getProjectScreenshots", () => {
   it("returns screenshots for a project", async () => {
-    mockQueryAll.mockResolvedValue([{ id: "s1" }] as never);
+    mockQueryAll.mockResolvedValue(cast([{ id: "s1" }]));
     const result = await getProjectScreenshots("proj-1");
     expect(result).toHaveLength(1);
   });
@@ -68,14 +69,14 @@ describe("getProjectScreenshots", () => {
 
 describe("getLatestScreenshot", () => {
   it("returns latest screenshot when exists", async () => {
-    mockQueryOne.mockResolvedValue({ id: "s1", file_path: "/test.png" } as never);
+    mockQueryOne.mockResolvedValue(cast({ id: "s1", file_path: "/test.png" }));
     const result = await getLatestScreenshot("proj-1");
     expect(result).not.toBeNull();
     expect(result?.id).toBe("s1");
   });
 
   it("returns null when no screenshots exist", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     const result = await getLatestScreenshot("proj-1");
     expect(result).toBeNull();
   });

@@ -74,6 +74,7 @@ vi.mock("./settings-helper.js", () => ({
 
 import { execSync } from "node:child_process";
 import { execute, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { getDb } from "../db/index.js";
 import type { DbJob } from "../db/schema.js";
 import {
@@ -132,13 +133,13 @@ describe("getClaudeAvailabilityError", () => {
   });
 
   it("returns DISABLED when settings.enabled is false", async () => {
-    vi.mocked(getClaudeSettings).mockResolvedValue({ enabled: false } as never);
+    vi.mocked(getClaudeSettings).mockResolvedValue(cast({ enabled: false }));
     const result = await getClaudeAvailabilityError();
     expect(result).toBe(CLAUDE_ERRORS.DISABLED);
   });
 
   it("returns CLI_NOT_FOUND when CLI is not available", async () => {
-    vi.mocked(getClaudeSettings).mockResolvedValue({ enabled: true } as never);
+    vi.mocked(getClaudeSettings).mockResolvedValue(cast({ enabled: true }));
     vi.mocked(execSync).mockImplementation(() => {
       throw new Error("not found");
     });
@@ -147,7 +148,7 @@ describe("getClaudeAvailabilityError", () => {
   });
 
   it("returns null when everything is available", async () => {
-    vi.mocked(getClaudeSettings).mockResolvedValue({ enabled: true } as never);
+    vi.mocked(getClaudeSettings).mockResolvedValue(cast({ enabled: true }));
     vi.mocked(execSync).mockReturnValue(Buffer.from("/usr/local/bin/claude"));
     const result = await getClaudeAvailabilityError();
     expect(result).toBeNull();
@@ -172,7 +173,7 @@ describe("isRunning / getActiveRunCount", () => {
 describe("startClaudeRun", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
     vi.mocked(getLiveSession).mockReturnValue(undefined);
     vi.mocked(getActiveSessionCount).mockReturnValue(0);
     vi.mocked(cancelSession).mockResolvedValue(false);
@@ -228,7 +229,7 @@ describe("startClaudeRun", () => {
       worktree_path: "/tmp/work",
       repository_id: "repo-1",
     } as DbJob);
-    vi.mocked(getRepoConfigById).mockResolvedValue(null as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast(null));
     const result = await startClaudeRun("job-1");
     expect(result.success).toBe(false);
     expect(result.error).toContain("configuration not found");
@@ -241,8 +242,8 @@ describe("startClaudeRun", () => {
       worktree_path: "/tmp/work",
       repository_id: "repo-1",
     } as DbJob);
-    vi.mocked(getRepoConfigById).mockResolvedValue({ owner: "test", name: "repo" } as never);
-    vi.mocked(getClaudeSettings).mockResolvedValue({ enabled: false } as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast({ owner: "test", name: "repo" }));
+    vi.mocked(getClaudeSettings).mockResolvedValue(cast({ enabled: false }));
     const result = await startClaudeRun("job-1");
     expect(result.success).toBe(false);
     expect(result.error).toContain("disabled");
@@ -255,13 +256,15 @@ describe("startClaudeRun", () => {
       worktree_path: "/tmp/work",
       repository_id: "repo-1",
     } as DbJob);
-    vi.mocked(getRepoConfigById).mockResolvedValue({ owner: "test", name: "repo" } as never);
-    vi.mocked(getClaudeSettings).mockResolvedValue({
-      enabled: true,
-      max_parallel_jobs: 0,
-      max_runtime_ms: 600000,
-      test_command: "npm test",
-    } as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast({ owner: "test", name: "repo" }));
+    vi.mocked(getClaudeSettings).mockResolvedValue(
+      cast({
+        enabled: true,
+        max_parallel_jobs: 0,
+        max_runtime_ms: 600000,
+        test_command: "npm test",
+      }),
+    );
     const result = await startClaudeRun("job-1");
     expect(result.success).toBe(false);
     expect(result.error).toContain("Max parallel jobs");
@@ -271,7 +274,7 @@ describe("startClaudeRun", () => {
 describe("stopClaudeRun", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
     vi.mocked(cancelSession).mockResolvedValue(false);
     vi.mocked(getLiveSession).mockReturnValue(undefined);
   });
@@ -790,7 +793,7 @@ describe("buildPrompt edge cases", () => {
 describe("stopClaudeRun", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
     vi.mocked(cancelSession).mockResolvedValue(false);
     vi.mocked(getLiveSession).mockReturnValue(undefined);
   });
@@ -828,7 +831,7 @@ describe("stopClaudeRun", () => {
 describe("pauseClaudeRun", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
     vi.mocked(cancelSession).mockResolvedValue(false);
     vi.mocked(getLiveSession).mockReturnValue(undefined);
   });
@@ -840,9 +843,11 @@ describe("pauseClaudeRun", () => {
   });
 
   it("returns true and stops run when session exists", async () => {
-    vi.mocked(getLiveSession).mockReturnValue({
-      status: "running",
-    } as never);
+    vi.mocked(getLiveSession).mockReturnValue(
+      cast({
+        status: "running",
+      }),
+    );
     vi.mocked(queryOne).mockResolvedValue(undefined);
     vi.mocked(execute).mockResolvedValue(undefined);
 
@@ -854,7 +859,7 @@ describe("pauseClaudeRun", () => {
 describe("resumeClaudeRun", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
     vi.mocked(cancelSession).mockResolvedValue(false);
     vi.mocked(getLiveSession).mockReturnValue(undefined);
   });
@@ -887,7 +892,7 @@ describe("resumeClaudeRun", () => {
       repository_id: "repo-1",
     } as DbJob);
     vi.mocked(execute).mockResolvedValue(undefined);
-    vi.mocked(getRepoConfigById).mockResolvedValue(null as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast(null));
 
     await resumeClaudeRun("job-1");
     // It will fail at repo config check, but we can verify pending_injection was cleared
@@ -908,7 +913,7 @@ describe("resumeClaudeRun", () => {
       repository_id: "repo-1",
     } as DbJob);
     vi.mocked(execute).mockResolvedValue(undefined);
-    vi.mocked(getRepoConfigById).mockResolvedValue(null as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast(null));
 
     const result = await resumeClaudeRun("job-1");
     // Will fail at repo config, but the default message is used internally
@@ -925,7 +930,7 @@ describe("resumeClaudeRun", () => {
       repository_id: "repo-1",
     } as DbJob);
     vi.mocked(execute).mockResolvedValue(undefined);
-    vi.mocked(getRepoConfigById).mockResolvedValue(null as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast(null));
 
     const result = await resumeClaudeRun("job-1", "custom message");
     // Will fail at repo config
@@ -936,7 +941,7 @@ describe("resumeClaudeRun", () => {
 describe("injectMessage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
     vi.mocked(cancelSession).mockResolvedValue(false);
     vi.mocked(getLiveSession).mockReturnValue(undefined);
   });
@@ -992,11 +997,13 @@ describe("injectMessage", () => {
       worktree_path: "/tmp/work",
       repository_id: "repo-1",
     } as DbJob);
-    vi.mocked(getLiveSession).mockReturnValue({
-      status: "running",
-    } as never);
+    vi.mocked(getLiveSession).mockReturnValue(
+      cast({
+        status: "running",
+      }),
+    );
     vi.mocked(execute).mockResolvedValue(undefined);
-    vi.mocked(getRepoConfigById).mockResolvedValue(null as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast(null));
 
     const result = await injectMessage("job-1", "inject now", "immediate");
     // Should attempt to pause and resume, but resumeClaudeRun will fail at repo config
@@ -1015,7 +1022,7 @@ describe("injectMessage", () => {
     } as DbJob);
     vi.mocked(getLiveSession).mockReturnValue(undefined);
     vi.mocked(execute).mockResolvedValue(undefined);
-    vi.mocked(getRepoConfigById).mockResolvedValue(null as never);
+    vi.mocked(getRepoConfigById).mockResolvedValue(cast(null));
 
     const result = await injectMessage("job-1", "resume msg", "immediate");
     // Will try to resume the paused job, but fail because repo config is null

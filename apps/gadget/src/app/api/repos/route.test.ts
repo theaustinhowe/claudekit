@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -27,9 +28,9 @@ beforeEach(() => {
 
 describe("GET /api/repos", () => {
   it("returns repos with finding counts", async () => {
-    mockQueryAll.mockResolvedValue([
-      { id: "r1", name: "my-repo", critical_count: 2, warning_count: 5, info_count: 1 },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([{ id: "r1", name: "my-repo", critical_count: 2, warning_count: 5, info_count: 1 }]),
+    );
 
     const response = await GET();
     const data = await response.json();
@@ -42,7 +43,7 @@ describe("GET /api/repos", () => {
 
 describe("POST /api/repos", () => {
   it("creates a repo and returns id", async () => {
-    mockExecute.mockResolvedValue(undefined as never);
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/repos", {
       method: "POST",
@@ -60,7 +61,7 @@ describe("POST /api/repos", () => {
 
 describe("DELETE /api/repos", () => {
   it("deletes a repo by id", async () => {
-    mockDeleteRepos.mockResolvedValue(undefined as never);
+    mockDeleteRepos.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/repos?id=r1", { method: "DELETE" });
     const response = await DELETE(req);

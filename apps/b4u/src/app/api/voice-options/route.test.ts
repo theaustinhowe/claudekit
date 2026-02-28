@@ -5,6 +5,7 @@ vi.mock("@/lib/db", () => ({
   queryAll: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/voice-options/route";
 import { queryAll } from "@/lib/db";
 
@@ -20,7 +21,7 @@ describe("GET /api/voice-options", () => {
       { id: "v1", name: "Alice", style: "conversational" },
       { id: "v2", name: "Bob", style: "professional" },
     ];
-    mockQueryAll.mockResolvedValue(voices as never);
+    mockQueryAll.mockResolvedValue(cast(voices));
 
     const response = await GET();
     const data = await response.json();

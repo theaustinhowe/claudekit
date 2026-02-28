@@ -67,8 +67,8 @@ export function createCancelHandler(opts: {
  * - **GET** returns currently active sessions and their count.
  * - **POST** cancels every active session and returns a summary.
  */
-export function createCleanupHandler(opts: {
-  listSessions: (filter?: ListSessionsFilter) => Promise<SessionRowBase[]>;
+export function createCleanupHandler<TRow extends SessionRowBase = SessionRowBase>(opts: {
+  listSessions(filter?: ListSessionsFilter): Promise<TRow[]>;
   manager: Pick<SessionManager, "cancelSession">;
 }): {
   GET: (request: Request) => Promise<Response>;
@@ -122,14 +122,14 @@ export function createCleanupHandler(opts: {
  * Apps inject their own `createSession`, `startSession`, and `sessionRunners`.
  */
 export function createSessionPOSTHandler(opts: {
-  createSession: (params: {
+  createSession(params: {
     sessionType: string;
     label: string;
     contextType?: string | null;
     contextId?: string | null;
     contextName?: string | null;
     metadata?: Record<string, unknown>;
-  }) => Promise<string>;
+  }): Promise<string>;
   startSession: (sessionId: string, runner: SessionRunner) => Promise<LiveSession>;
   sessionRunners: Record<string, (metadata: Record<string, unknown>, contextId?: string) => SessionRunner>;
 }): (request: Request) => Promise<Response> {
@@ -190,7 +190,7 @@ export function createSessionPOSTHandler(opts: {
 // ---------------------------------------------------------------------------
 
 export interface ListSessionsFilter {
-  status?: string[];
+  status?: string | string[];
   contextId?: string;
   contextType?: string;
   sessionType?: string;
@@ -201,8 +201,8 @@ export interface ListSessionsFilter {
  * Create a GET handler for listing sessions.
  * Apps inject their own `listSessions` DB query function.
  */
-export function createSessionsListHandler(opts: {
-  listSessions: (filter?: ListSessionsFilter) => Promise<SessionRowBase[]>;
+export function createSessionsListHandler<TRow extends SessionRowBase = SessionRowBase>(opts: {
+  listSessions(filter?: ListSessionsFilter): Promise<TRow[]>;
 }): (request: Request) => Promise<Response> {
   const { listSessions } = opts;
 

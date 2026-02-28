@@ -1,3 +1,5 @@
+import type { JobEvent } from "@claudekit/gogo-shared";
+import { cast } from "@claudekit/test-utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -19,7 +21,7 @@ vi.mock("lucide-react", () => ({
 import { JobTimeline } from "@/components/dashboard/job-timeline";
 
 function makeEvent(toStatus: string, createdAt: string) {
-  return {
+  return cast<JobEvent>({
     id: `evt-${toStatus}`,
     jobId: "job-1",
     eventType: "state_change",
@@ -28,7 +30,7 @@ function makeEvent(toStatus: string, createdAt: string) {
     message: `Transitioned to ${toStatus}`,
     metadata: null,
     createdAt,
-  } as never;
+  });
 }
 
 describe("JobTimeline", () => {
@@ -89,7 +91,7 @@ describe("JobTimeline", () => {
 
   it("ignores non-state_change events", () => {
     const events = [
-      {
+      cast<JobEvent>({
         id: "evt-1",
         jobId: "job-1",
         eventType: "log",
@@ -98,7 +100,7 @@ describe("JobTimeline", () => {
         message: "Log event",
         metadata: null,
         createdAt: "2024-01-01T00:10:00Z",
-      } as never,
+      }),
     ];
     render(<JobTimeline events={events} createdAt="2024-01-01T00:00:00Z" />);
     // Without state_change events, no duration markers should show

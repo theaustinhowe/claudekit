@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@claudekit/logger", async () => {
@@ -50,7 +51,7 @@ describe("GET /api/logs/[app]", () => {
     mockExistsSync.mockReturnValue(false);
     const { req, params } = buildRequest("gadget");
 
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -59,10 +60,10 @@ describe("GET /api/logs/[app]", () => {
 
   it("returns parsed log entries", async () => {
     mockExistsSync.mockReturnValue(true);
-    mockReadLogEntries.mockReturnValue([makeEntry({ msg: "first" }), makeEntry({ msg: "second" })] as never);
+    mockReadLogEntries.mockReturnValue(cast([makeEntry({ msg: "first" }), makeEntry({ msg: "second" })]));
 
     const { req, params } = buildRequest("gadget");
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -74,24 +75,26 @@ describe("GET /api/logs/[app]", () => {
 
   it("passes date param to getLogFilePath", async () => {
     mockExistsSync.mockReturnValue(true);
-    mockReadLogEntries.mockReturnValue([makeEntry()] as never);
+    mockReadLogEntries.mockReturnValue(cast([makeEntry()]));
 
     const { req, params } = buildRequest("gadget", { date: "2026-02-10" });
-    await GET(req as never, { params });
+    await GET(cast(req), { params });
 
     expect(mockGetLogFilePath).toHaveBeenCalledWith("gadget", undefined, "2026-02-10");
   });
 
   it("filters by level", async () => {
     mockExistsSync.mockReturnValue(true);
-    mockReadLogEntries.mockReturnValue([
-      makeEntry({ level: 30, msg: "info" }),
-      makeEntry({ level: 50, msg: "error" }),
-      makeEntry({ level: 40, msg: "warn" }),
-    ] as never);
+    mockReadLogEntries.mockReturnValue(
+      cast([
+        makeEntry({ level: 30, msg: "info" }),
+        makeEntry({ level: 50, msg: "error" }),
+        makeEntry({ level: 40, msg: "warn" }),
+      ]),
+    );
 
     const { req, params } = buildRequest("gadget", { level: "error" });
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data.total).toBe(1);
@@ -100,14 +103,16 @@ describe("GET /api/logs/[app]", () => {
 
   it("filters by multiple levels", async () => {
     mockExistsSync.mockReturnValue(true);
-    mockReadLogEntries.mockReturnValue([
-      makeEntry({ level: 30, msg: "info" }),
-      makeEntry({ level: 50, msg: "error" }),
-      makeEntry({ level: 40, msg: "warn" }),
-    ] as never);
+    mockReadLogEntries.mockReturnValue(
+      cast([
+        makeEntry({ level: 30, msg: "info" }),
+        makeEntry({ level: 50, msg: "error" }),
+        makeEntry({ level: 40, msg: "warn" }),
+      ]),
+    );
 
     const { req, params } = buildRequest("gadget", { level: "error,warn" });
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data.total).toBe(2);
@@ -118,14 +123,16 @@ describe("GET /api/logs/[app]", () => {
 
   it("filters by text query", async () => {
     mockExistsSync.mockReturnValue(true);
-    mockReadLogEntries.mockReturnValue([
-      makeEntry({ msg: "database connected" }),
-      makeEntry({ msg: "user logged in" }),
-      makeEntry({ msg: "database error" }),
-    ] as never);
+    mockReadLogEntries.mockReturnValue(
+      cast([
+        makeEntry({ msg: "database connected" }),
+        makeEntry({ msg: "user logged in" }),
+        makeEntry({ msg: "database error" }),
+      ]),
+    );
 
     const { req, params } = buildRequest("gadget", { q: "database" });
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data.total).toBe(2);
@@ -137,13 +144,12 @@ describe("GET /api/logs/[app]", () => {
   it("filters by since with minutes unit", async () => {
     mockExistsSync.mockReturnValue(true);
     const now = Date.now();
-    mockReadLogEntries.mockReturnValue([
-      makeEntry({ time: now - 120_000, msg: "old" }),
-      makeEntry({ time: now - 30_000, msg: "recent" }),
-    ] as never);
+    mockReadLogEntries.mockReturnValue(
+      cast([makeEntry({ time: now - 120_000, msg: "old" }), makeEntry({ time: now - 30_000, msg: "recent" })]),
+    );
 
     const { req, params } = buildRequest("gadget", { since: "1m" });
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data.total).toBe(1);
@@ -153,13 +159,12 @@ describe("GET /api/logs/[app]", () => {
   it("filters by since with hours unit", async () => {
     mockExistsSync.mockReturnValue(true);
     const now = Date.now();
-    mockReadLogEntries.mockReturnValue([
-      makeEntry({ time: now - 7_200_000, msg: "old" }),
-      makeEntry({ time: now - 1_800_000, msg: "recent" }),
-    ] as never);
+    mockReadLogEntries.mockReturnValue(
+      cast([makeEntry({ time: now - 7_200_000, msg: "old" }), makeEntry({ time: now - 1_800_000, msg: "recent" })]),
+    );
 
     const { req, params } = buildRequest("gadget", { since: "1h" });
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data.total).toBe(1);
@@ -168,10 +173,10 @@ describe("GET /api/logs/[app]", () => {
 
   it("respects limit param and returns last N entries", async () => {
     mockExistsSync.mockReturnValue(true);
-    mockReadLogEntries.mockReturnValue(Array.from({ length: 10 }, (_, i) => makeEntry({ msg: `entry-${i}` })) as never);
+    mockReadLogEntries.mockReturnValue(cast(Array.from({ length: 10 }, (_, i) => makeEntry({ msg: `entry-${i}` }))));
 
     const { req, params } = buildRequest("gadget", { limit: "3" });
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data.total).toBe(3);
@@ -181,10 +186,10 @@ describe("GET /api/logs/[app]", () => {
 
   it("defaults limit to 1000", async () => {
     mockExistsSync.mockReturnValue(true);
-    mockReadLogEntries.mockReturnValue(Array.from({ length: 5 }, (_, i) => makeEntry({ msg: `entry-${i}` })) as never);
+    mockReadLogEntries.mockReturnValue(cast(Array.from({ length: 5 }, (_, i) => makeEntry({ msg: `entry-${i}` }))));
 
     const { req, params } = buildRequest("gadget");
-    const response = await GET(req as never, { params });
+    const response = await GET(cast(req), { params });
     const data = await response.json();
 
     expect(data.total).toBe(5);
@@ -201,7 +206,7 @@ describe("GET /api/logs/[app]", () => {
       makeEntry({ level: 50, msg: "error" }),
       makeEntry({ level: 60, msg: "fatal" }),
     ];
-    mockReadLogEntries.mockReturnValue(entries as never);
+    mockReadLogEntries.mockReturnValue(cast(entries));
 
     const testCases = [
       { level: "trace", expected: "trace" },
@@ -214,7 +219,7 @@ describe("GET /api/logs/[app]", () => {
 
     for (const { level, expected } of testCases) {
       const { req, params } = buildRequest("gadget", { level });
-      const response = await GET(req as never, { params });
+      const response = await GET(cast(req), { params });
       const data = await response.json();
       expect(data.entries[0].msg).toBe(expected);
     }

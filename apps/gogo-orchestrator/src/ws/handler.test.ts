@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { describe, expect, it, vi } from "vitest";
 
 // Mock the schema module
@@ -43,7 +44,7 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const socket = createMockSocket();
 
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
       expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: "connection:established", payload: {} }));
     });
@@ -52,7 +53,7 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const socket = createMockSocket();
 
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
       expect(socket.on).toHaveBeenCalledWith("message", expect.any(Function));
       expect(socket.on).toHaveBeenCalledWith("close", expect.any(Function));
@@ -62,15 +63,17 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: {
-          type: "subscribe",
-          payload: { jobId: "job-123" },
-        },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: {
+            type: "subscribe",
+            payload: { jobId: "job-123" },
+          },
+        }),
+      );
 
       // Trigger message handler
       socket._trigger(
@@ -91,20 +94,24 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
       // Subscribe first
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: { type: "subscribe", payload: { jobId: "job-123" } },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: { type: "subscribe", payload: { jobId: "job-123" } },
+        }),
+      );
       socket._trigger("message", Buffer.from("{}"));
 
       // Then unsubscribe
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: { type: "unsubscribe", payload: { jobId: "job-123" } },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: { type: "unsubscribe", payload: { jobId: "job-123" } },
+        }),
+      );
       socket._trigger("message", Buffer.from("{}"));
 
       expect(socket.send).toHaveBeenCalledWith(
@@ -119,12 +126,14 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: { type: "ping" },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: { type: "ping" },
+        }),
+      );
 
       socket._trigger("message", Buffer.from("{}"));
 
@@ -135,12 +144,14 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: { type: "subscribe_repo", payload: { repositoryId: "repo-1" } },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: { type: "subscribe_repo", payload: { repositoryId: "repo-1" } },
+        }),
+      );
 
       socket._trigger("message", Buffer.from("{}"));
 
@@ -156,15 +167,17 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: {
-          type: "unsubscribe_repo",
-          payload: { repositoryId: "repo-1" },
-        },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: {
+            type: "unsubscribe_repo",
+            payload: { repositoryId: "repo-1" },
+          },
+        }),
+      );
 
       socket._trigger("message", Buffer.from("{}"));
 
@@ -180,13 +193,13 @@ describe("ws/handler", () => {
       const mod = await freshImport();
       const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
       // Let the real schema validate — `{ invalid: true }` will fail validation
       // producing a real ZodError that z.treeifyError() can handle
       const { WsClientMessageSchema: realSchema } =
         await vi.importActual<typeof import("../schemas/index.js")>("../schemas/index.js");
-      vi.mocked(schema.safeParse).mockImplementation((data) => realSchema.safeParse(data) as never);
+      vi.mocked(schema.safeParse).mockImplementation((data) => cast(realSchema.safeParse(data)));
 
       socket._trigger("message", Buffer.from(JSON.stringify({ invalid: true })));
 
@@ -196,7 +209,7 @@ describe("ws/handler", () => {
     it("should send error for unparseable message", async () => {
       const mod = await freshImport();
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
       // Send invalid JSON
       socket._trigger("message", Buffer.from("not json{{{"));
@@ -212,7 +225,7 @@ describe("ws/handler", () => {
     it("should remove client on close", async () => {
       const mod = await freshImport();
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
       expect(mod.getClientCount()).toBe(1);
 
@@ -228,8 +241,8 @@ describe("ws/handler", () => {
       const socket1 = createMockSocket();
       const socket2 = createMockSocket();
 
-      mod.setupWebSocket(socket1 as never);
-      mod.setupWebSocket(socket2 as never);
+      mod.setupWebSocket(cast(socket1));
+      mod.setupWebSocket(cast(socket2));
 
       // Clear setup messages
       socket1.send.mockClear();
@@ -247,8 +260,8 @@ describe("ws/handler", () => {
       const socket2 = createMockSocket();
       socket2.readyState = 3; // CLOSED
 
-      mod.setupWebSocket(socket1 as never);
-      mod.setupWebSocket(socket2 as never);
+      mod.setupWebSocket(cast(socket1));
+      mod.setupWebSocket(cast(socket2));
 
       socket1.send.mockClear();
       socket2.send.mockClear();
@@ -268,14 +281,16 @@ describe("ws/handler", () => {
       const socket1 = createMockSocket();
       const socket2 = createMockSocket();
 
-      mod.setupWebSocket(socket1 as never);
-      mod.setupWebSocket(socket2 as never);
+      mod.setupWebSocket(cast(socket1));
+      mod.setupWebSocket(cast(socket2));
 
       // Subscribe socket1 to job-1
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: { type: "subscribe", payload: { jobId: "job-1" } },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: { type: "subscribe", payload: { jobId: "job-1" } },
+        }),
+      );
       socket1._trigger("message", Buffer.from("{}"));
 
       socket1.send.mockClear();
@@ -297,12 +312,14 @@ describe("ws/handler", () => {
       const { WsClientMessageSchema: schema } = await import("../schemas/index.js");
 
       const socket = createMockSocket();
-      mod.setupWebSocket(socket as never);
+      mod.setupWebSocket(cast(socket));
 
-      vi.mocked(schema.safeParse).mockReturnValue({
-        success: true,
-        data: { type: "subscribe", payload: { jobId: "job-1" } },
-      } as never);
+      vi.mocked(schema.safeParse).mockReturnValue(
+        cast({
+          success: true,
+          data: { type: "subscribe", payload: { jobId: "job-1" } },
+        }),
+      );
       socket._trigger("message", Buffer.from("{}"));
       socket.send.mockClear();
 
@@ -333,11 +350,11 @@ describe("ws/handler", () => {
       expect(mod.getClientCount()).toBe(0);
 
       const socket1 = createMockSocket();
-      mod.setupWebSocket(socket1 as never);
+      mod.setupWebSocket(cast(socket1));
       expect(mod.getClientCount()).toBe(1);
 
       const socket2 = createMockSocket();
-      mod.setupWebSocket(socket2 as never);
+      mod.setupWebSocket(cast(socket2));
       expect(mod.getClientCount()).toBe(2);
 
       // Disconnect one

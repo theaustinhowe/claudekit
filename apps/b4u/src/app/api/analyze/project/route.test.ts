@@ -8,6 +8,7 @@ vi.mock("@/lib/claude/session-manager", () => ({
   startSession: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { POST } from "@/app/api/analyze/project/route";
 import { createSession, startSession } from "@/lib/claude/session-manager";
 
@@ -21,7 +22,7 @@ beforeEach(() => {
 describe("POST /api/analyze/project", () => {
   it("creates and starts an analyze-project session", async () => {
     mockCreateSession.mockResolvedValue("session-123");
-    mockStartSession.mockResolvedValue(undefined as never);
+    mockStartSession.mockResolvedValue(cast(undefined));
 
     const req = new Request("http://localhost/api/analyze/project", {
       method: "POST",

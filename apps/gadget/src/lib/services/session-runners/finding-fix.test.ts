@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -90,7 +91,7 @@ describe("finding-fix runner", () => {
     vi.mocked(queryAll).mockResolvedValue([
       { id: "f1", repo_id: "r1", title: "Test finding", suggested_actions: "[]" },
     ]);
-    vi.mocked(classifyFinding).mockReturnValue({ autoFixable: false, batchKey: "misc" } as never);
+    vi.mocked(classifyFinding).mockReturnValue(cast({ autoFixable: false, batchKey: "misc" }));
 
     const runner = createFindingFixRunner({ findingIds: ["f1"], repoId: "r1" });
 
@@ -109,12 +110,12 @@ describe("finding-fix runner", () => {
       { id: "f2", repo_id: "r1", title: "Wrong version", suggested_actions: "[]" },
     ]);
     vi.mocked(classifyFinding)
-      .mockReturnValueOnce({ autoFixable: true, batchKey: "config" } as never)
-      .mockReturnValueOnce({ autoFixable: true, batchKey: "config" } as never)
+      .mockReturnValueOnce(cast({ autoFixable: true, batchKey: "config" }))
+      .mockReturnValueOnce(cast({ autoFixable: true, batchKey: "config" }))
       // Called again during grouping
-      .mockReturnValueOnce({ autoFixable: true, batchKey: "config" } as never)
-      .mockReturnValueOnce({ autoFixable: true, batchKey: "config" } as never);
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+      .mockReturnValueOnce(cast({ autoFixable: true, batchKey: "config" }))
+      .mockReturnValueOnce(cast({ autoFixable: true, batchKey: "config" }));
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const onProgress = vi.fn();
     const runner = createFindingFixRunner({ findingIds: ["f1", "f2"], repoId: "r1" });
@@ -133,8 +134,8 @@ describe("finding-fix runner", () => {
       suggested_actions: "[]",
     }));
     vi.mocked(queryAll).mockResolvedValue(findings);
-    vi.mocked(classifyFinding).mockReturnValue({ autoFixable: true, batchKey: "config" } as never);
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(classifyFinding).mockReturnValue(cast({ autoFixable: true, batchKey: "config" }));
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const runner = createFindingFixRunner({ findingIds: findings.map((f) => f.id), repoId: "r1" });
     const result = await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });
@@ -147,8 +148,8 @@ describe("finding-fix runner", () => {
   it("emits progress for each batch", async () => {
     vi.mocked(queryOne).mockResolvedValueOnce(defaultRepo).mockResolvedValueOnce(null);
     vi.mocked(queryAll).mockResolvedValue([{ id: "f1", repo_id: "r1", title: "Test", suggested_actions: "[]" }]);
-    vi.mocked(classifyFinding).mockReturnValue({ autoFixable: true, batchKey: "deps" } as never);
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(classifyFinding).mockReturnValue(cast({ autoFixable: true, batchKey: "deps" }));
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const onProgress = vi.fn();
     const runner = createFindingFixRunner({ findingIds: ["f1"], repoId: "r1" });
@@ -163,8 +164,8 @@ describe("finding-fix runner", () => {
   it("logs error when batch fails", async () => {
     vi.mocked(queryOne).mockResolvedValueOnce(defaultRepo).mockResolvedValueOnce(null);
     vi.mocked(queryAll).mockResolvedValue([{ id: "f1", repo_id: "r1", title: "Test", suggested_actions: "[]" }]);
-    vi.mocked(classifyFinding).mockReturnValue({ autoFixable: true, batchKey: "deps" } as never);
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 1, stdout: "", stderr: "Claude failed" } as never);
+    vi.mocked(classifyFinding).mockReturnValue(cast({ autoFixable: true, batchKey: "deps" }));
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 1, stdout: "", stderr: "Claude failed" }));
 
     const onProgress = vi.fn();
     const runner = createFindingFixRunner({ findingIds: ["f1"], repoId: "r1" });
@@ -177,7 +178,7 @@ describe("finding-fix runner", () => {
   it("throws on abort signal", async () => {
     vi.mocked(queryOne).mockResolvedValue(defaultRepo);
     vi.mocked(queryAll).mockResolvedValue([{ id: "f1", repo_id: "r1", title: "Test", suggested_actions: "[]" }]);
-    vi.mocked(classifyFinding).mockReturnValue({ autoFixable: true, batchKey: "deps" } as never);
+    vi.mocked(classifyFinding).mockReturnValue(cast({ autoFixable: true, batchKey: "deps" }));
 
     const controller = new AbortController();
     controller.abort();
@@ -192,8 +193,8 @@ describe("finding-fix runner", () => {
   it("calls runClaude with correct tools", async () => {
     vi.mocked(queryOne).mockResolvedValueOnce(defaultRepo).mockResolvedValueOnce(null);
     vi.mocked(queryAll).mockResolvedValue([{ id: "f1", repo_id: "r1", title: "Test", suggested_actions: "[]" }]);
-    vi.mocked(classifyFinding).mockReturnValue({ autoFixable: true, batchKey: "deps" } as never);
-    vi.mocked(runClaude).mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" } as never);
+    vi.mocked(classifyFinding).mockReturnValue(cast({ autoFixable: true, batchKey: "deps" }));
+    vi.mocked(runClaude).mockResolvedValue(cast({ exitCode: 0, stdout: "", stderr: "" }));
 
     const runner = createFindingFixRunner({ findingIds: ["f1"], repoId: "r1" });
     await runner({ onProgress: vi.fn(), signal: new AbortController().signal, sessionId: "s1" });

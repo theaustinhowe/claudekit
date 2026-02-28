@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -50,33 +51,33 @@ describe("IssueCard", () => {
   afterEach(() => cleanup());
 
   it("renders issue number and title", () => {
-    render(<IssueCard issue={makeIssue() as never} onCreateJob={vi.fn()} />);
+    render(<IssueCard issue={cast(makeIssue())} onCreateJob={vi.fn()} />);
     expect(screen.getByText("#42")).toBeInTheDocument();
     expect(screen.getByText("Fix the login bug")).toBeInTheDocument();
   });
 
   it("shows open state badge", () => {
-    render(<IssueCard issue={makeIssue() as never} onCreateJob={vi.fn()} />);
+    render(<IssueCard issue={cast(makeIssue())} onCreateJob={vi.fn()} />);
     expect(screen.getByText("open")).toBeInTheDocument();
   });
 
   it("shows labels", () => {
-    render(<IssueCard issue={makeIssue() as never} onCreateJob={vi.fn()} />);
+    render(<IssueCard issue={cast(makeIssue())} onCreateJob={vi.fn()} />);
     expect(screen.getByText("bug")).toBeInTheDocument();
   });
 
   it("shows create job button when no job exists", () => {
-    render(<IssueCard issue={makeIssue() as never} onCreateJob={vi.fn()} />);
+    render(<IssueCard issue={cast(makeIssue())} onCreateJob={vi.fn()} />);
     expect(screen.getByText("Create Job")).toBeInTheDocument();
   });
 
   it("shows view job link when job exists", () => {
-    render(<IssueCard issue={makeIssue({ hasJob: true, jobId: "job-1" }) as never} onCreateJob={vi.fn()} />);
+    render(<IssueCard issue={cast(makeIssue({ hasJob: true, jobId: "job-1" }))} onCreateJob={vi.fn()} />);
     expect(screen.getByText("View Job")).toBeInTheDocument();
   });
 
   it("shows author avatar", () => {
-    render(<IssueCard issue={makeIssue() as never} onCreateJob={vi.fn()} />);
+    render(<IssueCard issue={cast(makeIssue())} onCreateJob={vi.fn()} />);
     expect(screen.getByAltText("testuser")).toBeInTheDocument();
   });
 });

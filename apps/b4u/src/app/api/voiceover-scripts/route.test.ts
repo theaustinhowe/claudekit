@@ -11,6 +11,7 @@ vi.mock("@/lib/validations", () => ({
   voiceoverScriptsSchema: {},
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PUT } from "@/app/api/voiceover-scripts/route";
 import { execute, queryAll } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
@@ -29,10 +30,12 @@ beforeEach(() => {
 
 describe("GET /api/voiceover-scripts", () => {
   it("returns scripts grouped by flow_id from flow_voiceover", async () => {
-    mockQueryAll.mockResolvedValue([
-      { flow_id: "flow-1", paragraphs_json: JSON.stringify(["Welcome to the app", "Click the login button"]) },
-      { flow_id: "flow-2", paragraphs_json: JSON.stringify(["Now view your dashboard"]) },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([
+        { flow_id: "flow-1", paragraphs_json: JSON.stringify(["Welcome to the app", "Click the login button"]) },
+        { flow_id: "flow-2", paragraphs_json: JSON.stringify(["Now view your dashboard"]) },
+      ]),
+    );
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -64,9 +67,9 @@ describe("GET /api/voiceover-scripts", () => {
 describe("PUT /api/voiceover-scripts", () => {
   it("updates voiceover scripts in flow_voiceover", async () => {
     const scripts = { "flow-1": ["Script 1", "Script 2"] };
-    mockParseBody.mockResolvedValue({ ok: true, data: scripts } as never);
-    mockQueryAll.mockResolvedValue([] as never); // no existing rows
-    mockExecute.mockResolvedValue(undefined as never);
+    mockParseBody.mockResolvedValue(cast({ ok: true, data: scripts }));
+    mockQueryAll.mockResolvedValue(cast([])); // no existing rows
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/voiceover-scripts?runId=run-1", {
       method: "PUT",
@@ -92,7 +95,7 @@ describe("PUT /api/voiceover-scripts", () => {
   });
 
   it("returns validation error", async () => {
-    mockParseBody.mockResolvedValue({ ok: false, error: "Invalid", status: 422 } as never);
+    mockParseBody.mockResolvedValue(cast({ ok: false, error: "Invalid", status: 422 }));
 
     const req = new NextRequest("http://localhost/api/voiceover-scripts?runId=run-1", { method: "PUT", body: "{}" });
     const response = await PUT(req);

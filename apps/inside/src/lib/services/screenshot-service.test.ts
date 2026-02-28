@@ -23,6 +23,7 @@ vi.mock("@/lib/utils", () => ({
 
 import fs from "node:fs";
 import { captureScreenshot as playwrightScreenshot } from "@claudekit/playwright";
+import { cast } from "@claudekit/test-utils";
 import { captureScreenshot, deleteScreenshotFiles } from "./screenshot-service";
 
 const mockFs = vi.mocked(fs);
@@ -31,7 +32,7 @@ const mockPlaywright = vi.mocked(playwrightScreenshot);
 beforeEach(() => {
   vi.resetAllMocks();
   mockFs.statSync.mockReturnValue({ size: 12345 } as ReturnType<typeof fs.statSync>);
-  mockPlaywright.mockResolvedValue(undefined as never);
+  mockPlaywright.mockResolvedValue(cast(undefined));
 });
 
 describe("captureScreenshot", () => {

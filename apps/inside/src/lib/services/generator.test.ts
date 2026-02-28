@@ -33,6 +33,7 @@ vi.mock("@/lib/utils", () => ({
 
 import { execSync } from "node:child_process";
 import fs from "node:fs";
+import { cast } from "@claudekit/test-utils";
 import { execute, getDb, queryOne } from "@/lib/db";
 import { generateProject } from "./generator";
 
@@ -45,7 +46,7 @@ const mockQueryOne = vi.mocked(queryOne);
 beforeEach(() => {
   vi.resetAllMocks();
   mockGetDb.mockResolvedValue({} as Awaited<ReturnType<typeof getDb>>);
-  mockExecute.mockResolvedValue(undefined as never);
+  mockExecute.mockResolvedValue(cast(undefined));
   mockFs.existsSync.mockReturnValue(false);
   process.env.HOME = "/Users/testuser";
 });
@@ -69,11 +70,13 @@ describe("generateProject", () => {
   });
 
   it("generates a nextjs project successfully", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-1",
-      name: "Next.js",
-      type: "nextjs",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-1",
+        name: "Next.js",
+        type: "nextjs",
+      }),
+    );
     mockFs.existsSync.mockReturnValue(false);
 
     const progress: string[] = [];
@@ -97,11 +100,13 @@ describe("generateProject", () => {
   });
 
   it("generates a node project successfully", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-2",
-      name: "Node.js",
-      type: "node",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-2",
+        name: "Node.js",
+        type: "node",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-2",
@@ -118,11 +123,13 @@ describe("generateProject", () => {
   });
 
   it("generates a library project successfully", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-3",
-      name: "Library",
-      type: "library",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-3",
+        name: "Library",
+        type: "library",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-3",
@@ -138,11 +145,13 @@ describe("generateProject", () => {
   });
 
   it("generates a monorepo project successfully", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-4",
-      name: "Monorepo",
-      type: "monorepo",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-4",
+        name: "Monorepo",
+        type: "monorepo",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-4",
@@ -159,11 +168,13 @@ describe("generateProject", () => {
   });
 
   it("adds tailwind dependency when feature is included", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-1",
-      name: "Next.js",
-      type: "nextjs",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-1",
+        name: "Next.js",
+        type: "nextjs",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-1",
@@ -179,11 +190,13 @@ describe("generateProject", () => {
   });
 
   it("adds supabase dependency when feature is included", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-1",
-      name: "Next.js",
-      type: "nextjs",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-1",
+        name: "Next.js",
+        type: "nextjs",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-1",
@@ -200,11 +213,13 @@ describe("generateProject", () => {
   });
 
   it("initializes git when gitInit is true", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-3",
-      name: "Library",
-      type: "library",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-3",
+        name: "Library",
+        type: "library",
+      }),
+    );
     mockExecSync.mockReturnValue(Buffer.from(""));
 
     const progress: string[] = [];
@@ -225,11 +240,13 @@ describe("generateProject", () => {
   });
 
   it("handles git init failure gracefully", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-3",
-      name: "Library",
-      type: "library",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-3",
+        name: "Library",
+        type: "library",
+      }),
+    );
     mockExecSync.mockImplementation(() => {
       throw new Error("git not found");
     });
@@ -251,11 +268,13 @@ describe("generateProject", () => {
   });
 
   it("handles file write errors", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-1",
-      name: "Next.js",
-      type: "nextjs",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-1",
+        name: "Next.js",
+        type: "nextjs",
+      }),
+    );
     mockFs.mkdirSync.mockImplementation(() => {
       throw new Error("Permission denied");
     });
@@ -275,11 +294,13 @@ describe("generateProject", () => {
   });
 
   it("expands tilde in project path", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-3",
-      name: "Library",
-      type: "library",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-3",
+        name: "Library",
+        type: "library",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-3",
@@ -295,11 +316,13 @@ describe("generateProject", () => {
   });
 
   it("includes handoff brief with correct content", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-1",
-      name: "Next.js",
-      type: "nextjs",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-1",
+        name: "Next.js",
+        type: "nextjs",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-1",
@@ -319,11 +342,13 @@ describe("generateProject", () => {
   });
 
   it("creates DB records for generator runs", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-3",
-      name: "Library",
-      type: "library",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-3",
+        name: "Library",
+        type: "library",
+      }),
+    );
 
     await generateProject({
       templateId: "tmpl-3",
@@ -340,11 +365,13 @@ describe("generateProject", () => {
   });
 
   it("handles policyId when provided", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "tmpl-3",
-      name: "Library",
-      type: "library",
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "tmpl-3",
+        name: "Library",
+        type: "library",
+      }),
+    );
 
     const result = await generateProject({
       templateId: "tmpl-3",

@@ -72,6 +72,7 @@ vi.mock("./settings-helper.js", () => ({
 
 import { existsSync } from "node:fs";
 import { execute, queryOne, withTransaction } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { getDb } from "../db/index.js";
 import { emitLog } from "../utils/job-logging.js";
 import { broadcast } from "../ws/handler.js";
@@ -90,15 +91,17 @@ describe("agent-executor", () => {
     // Re-setup mocks after reset
     vi.mocked(execute).mockResolvedValue(undefined);
     vi.mocked(existsSync).mockReturnValue(true);
-    vi.mocked(getDb).mockResolvedValue({} as never);
-    vi.mocked(getClaudeSettings).mockResolvedValue({ max_runtime_ms: 600000 } as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
+    vi.mocked(getClaudeSettings).mockResolvedValue(cast({ max_runtime_ms: 600000 }));
     vi.mocked(emitLog).mockResolvedValue(undefined);
-    vi.mocked(createIssueCommentForRepo).mockResolvedValue({ id: 12345 } as never);
-    vi.mocked(getRepoConfigById).mockResolvedValue({
-      id: "repo-1",
-      owner: "test-owner",
-      name: "test-repo",
-    } as never);
+    vi.mocked(createIssueCommentForRepo).mockResolvedValue(cast({ id: 12345 }));
+    vi.mocked(getRepoConfigById).mockResolvedValue(
+      cast({
+        id: "repo-1",
+        owner: "test-owner",
+        name: "test-repo",
+      }),
+    );
   });
 
   describe("resumeAgent idempotency", () => {
@@ -161,7 +164,7 @@ describe("agent-executor", () => {
 
       // Mock withTransaction for atomic state change
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       const result = await resumeAgent("job-1", "Test message", "claude-code");
@@ -223,7 +226,7 @@ describe("agent-executor", () => {
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
         // Override queryOne inside transaction to return changed state
         vi.mocked(queryOne).mockResolvedValueOnce(jobInTransaction);
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       const result = await resumeAgent("job-1", "Test message", "claude-code");
@@ -645,9 +648,11 @@ describe("agent-executor", () => {
 
       vi.mocked(agentRegistry.get).mockReturnValue(mockRunner as AgentRunner);
       vi.mocked(queryOne).mockResolvedValue(mockJob);
-      vi.mocked(applyAction).mockReturnValue({
-        error: "Invalid transition: cannot resume from paused",
-      } as never);
+      vi.mocked(applyAction).mockReturnValue(
+        cast({
+          error: "Invalid transition: cannot resume from paused",
+        }),
+      );
 
       const result = await resumeAgent("job-1", "Test", "claude-code");
 
@@ -693,7 +698,7 @@ describe("agent-executor", () => {
       // Inside withTransaction, queryOne returns undefined (job was deleted)
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
         vi.mocked(queryOne).mockResolvedValueOnce(undefined);
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       const result = await resumeAgent("job-1", "Test", "claude-code");
@@ -738,7 +743,7 @@ describe("agent-executor", () => {
       });
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       const result = await resumeAgent("job-1", "Test", "claude-code");
@@ -780,7 +785,7 @@ describe("agent-executor", () => {
       });
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       const result = await resumeAgent("job-1", "Test", "claude-code");
@@ -822,7 +827,7 @@ describe("agent-executor", () => {
       });
 
       vi.mocked(withTransaction).mockImplementation(async (_conn, fn) => {
-        return fn({} as never);
+        return fn(cast({}));
       });
 
       const result = await resumeAgent("job-1", "Test", "claude-code");
@@ -1011,7 +1016,7 @@ describe("agent-executor", () => {
     });
 
     it("onSignal needs_info should transition with question for normal issues", async () => {
-      vi.mocked(createIssueCommentForRepo).mockResolvedValue({ id: 99999 } as never);
+      vi.mocked(createIssueCommentForRepo).mockResolvedValue(cast({ id: 99999 }));
       await capturedCallbacks.onSignal({ type: "needs_info", question: "What version?" });
       expect(createIssueCommentForRepo).toHaveBeenCalledWith("repo-1", 42, expect.stringContaining("What version?"));
       expect(applyTransitionAtomic).toHaveBeenCalledWith(
@@ -1097,7 +1102,7 @@ describe("agent-executor", () => {
     });
 
     it("onSignal completed with no summary should use default message", async () => {
-      await capturedCallbacks.onSignal({ type: "completed" } as never);
+      await capturedCallbacks.onSignal(cast({ type: "completed" }));
       expect(emitLog).toHaveBeenCalledWith("job-cb", "system", "Agent completed", expect.any(Object));
     });
 

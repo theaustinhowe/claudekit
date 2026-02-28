@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -93,7 +94,7 @@ function mockLocalRepo(repoPath = "/projects/my-app") {
 function mockGitExec(output: string) {
   vi.mocked(execFile).mockImplementation((_cmd, _args, _opts, callback) => {
     if (typeof callback === "function") {
-      (callback as never as (err: Error | null, result: { stdout: string }) => void)(null, { stdout: output });
+      cast<(err: Error | null, result: { stdout: string }) => void>(callback)(null, { stdout: output });
     }
     return {} as ReturnType<typeof execFile>;
   });
@@ -105,7 +106,7 @@ function mockGitExecSequence(...outputs: string[]) {
   for (const output of outputs) {
     mock.mockImplementationOnce((_cmd, _args, _opts, callback) => {
       if (typeof callback === "function") {
-        (callback as never as (err: Error | null, result: { stdout: string }) => void)(null, { stdout: output });
+        cast<(err: Error | null, result: { stdout: string }) => void>(callback)(null, { stdout: output });
       }
       return {} as ReturnType<typeof execFile>;
     });
@@ -129,12 +130,14 @@ describe("getDirectoryContents", () => {
 
   it("returns sorted directory entries for local repo", async () => {
     mockLocalRepo();
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: "package.json", isFile: () => true, isDirectory: () => false },
-      { name: "src", isFile: () => false, isDirectory: () => true },
-      { name: "README.md", isFile: () => true, isDirectory: () => false },
-    ] as never);
-    vi.mocked(fs.stat).mockResolvedValue({ size: 1234 } as never);
+    vi.mocked(fs.readdir).mockResolvedValue(
+      cast([
+        { name: "package.json", isFile: () => true, isDirectory: () => false },
+        { name: "src", isFile: () => false, isDirectory: () => true },
+        { name: "README.md", isFile: () => true, isDirectory: () => false },
+      ]),
+    );
+    vi.mocked(fs.stat).mockResolvedValue(cast({ size: 1234 }));
 
     const result = await getDirectoryContents("repo-1", "");
 
@@ -146,11 +149,13 @@ describe("getDirectoryContents", () => {
 
   it("skips node_modules and .git", async () => {
     mockLocalRepo();
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: "node_modules", isFile: () => false, isDirectory: () => true },
-      { name: ".git", isFile: () => false, isDirectory: () => true },
-      { name: "src", isFile: () => false, isDirectory: () => true },
-    ] as never);
+    vi.mocked(fs.readdir).mockResolvedValue(
+      cast([
+        { name: "node_modules", isFile: () => false, isDirectory: () => true },
+        { name: ".git", isFile: () => false, isDirectory: () => true },
+        { name: "src", isFile: () => false, isDirectory: () => true },
+      ]),
+    );
 
     const result = await getDirectoryContents("repo-1", "");
     expect(result).toHaveLength(1);
@@ -159,12 +164,14 @@ describe("getDirectoryContents", () => {
 
   it("includes important dotfiles like .gitignore", async () => {
     mockLocalRepo();
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: ".gitignore", isFile: () => true, isDirectory: () => false },
-      { name: ".random", isFile: () => true, isDirectory: () => false },
-      { name: ".env.example", isFile: () => true, isDirectory: () => false },
-    ] as never);
-    vi.mocked(fs.stat).mockResolvedValue({ size: 100 } as never);
+    vi.mocked(fs.readdir).mockResolvedValue(
+      cast([
+        { name: ".gitignore", isFile: () => true, isDirectory: () => false },
+        { name: ".random", isFile: () => true, isDirectory: () => false },
+        { name: ".env.example", isFile: () => true, isDirectory: () => false },
+      ]),
+    );
+    vi.mocked(fs.stat).mockResolvedValue(cast({ size: 100 }));
 
     const result = await getDirectoryContents("repo-1", "");
     const names = result.map((e) => e.name);
@@ -175,10 +182,8 @@ describe("getDirectoryContents", () => {
 
   it("builds subdirectory paths correctly", async () => {
     mockLocalRepo();
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: "index.ts", isFile: () => true, isDirectory: () => false },
-    ] as never);
-    vi.mocked(fs.stat).mockResolvedValue({ size: 500 } as never);
+    vi.mocked(fs.readdir).mockResolvedValue(cast([{ name: "index.ts", isFile: () => true, isDirectory: () => false }]));
+    vi.mocked(fs.stat).mockResolvedValue(cast({ size: 500 }));
 
     const result = await getDirectoryContents("repo-1", "src/lib");
     expect(result[0].path).toBe("src/lib/index.ts");
@@ -202,7 +207,7 @@ describe("getCodeFileContent", () => {
 
   it("returns file content for local file", async () => {
     mockLocalRepo();
-    vi.mocked(fs.stat).mockResolvedValue({ size: 256 } as never);
+    vi.mocked(fs.stat).mockResolvedValue(cast({ size: 256 }));
     vi.mocked(fs.readFile).mockResolvedValue("const x = 1;\n");
 
     const result = await getCodeFileContent("repo-1", "src/index.ts");
@@ -221,7 +226,7 @@ describe("getCodeFileContent", () => {
     mockLocalRepo();
     const { isBinaryFile } = await import("@/lib/services/language-detector");
     vi.mocked(isBinaryFile).mockReturnValue(true);
-    vi.mocked(fs.stat).mockResolvedValue({ size: 4096 } as never);
+    vi.mocked(fs.stat).mockResolvedValue(cast({ size: 4096 }));
 
     const result = await getCodeFileContent("repo-1", "image.png");
 

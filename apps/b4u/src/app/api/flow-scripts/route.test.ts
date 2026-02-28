@@ -11,6 +11,7 @@ vi.mock("@/lib/validations", () => ({
   flowScriptsArraySchema: {},
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PUT } from "@/app/api/flow-scripts/route";
 import { execute, queryAll } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
@@ -39,9 +40,9 @@ describe("GET /api/flow-scripts", () => {
         duration: "5s",
       },
     ];
-    mockQueryAll.mockResolvedValue([
-      { flow_id: "flow-1", flow_name: "Login", steps_json: JSON.stringify(steps) },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([{ flow_id: "flow-1", flow_name: "Login", steps_json: JSON.stringify(steps) }]),
+    );
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -82,8 +83,8 @@ describe("PUT /api/flow-scripts", () => {
         steps: [{ id: "s1", stepNumber: 1, url: "/", action: "Visit", expectedOutcome: "Page loads", duration: "3s" }],
       },
     ];
-    mockParseBody.mockResolvedValue({ ok: true, data: scripts } as never);
-    mockExecute.mockResolvedValue(undefined as never);
+    mockParseBody.mockResolvedValue(cast({ ok: true, data: scripts }));
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/flow-scripts?runId=run-1", {
       method: "PUT",
@@ -110,7 +111,7 @@ describe("PUT /api/flow-scripts", () => {
   });
 
   it("returns validation error", async () => {
-    mockParseBody.mockResolvedValue({ ok: false, error: "Invalid", status: 422 } as never);
+    mockParseBody.mockResolvedValue(cast({ ok: false, error: "Invalid", status: 422 }));
 
     const req = new NextRequest("http://localhost/api/flow-scripts?runId=run-1", { method: "PUT", body: "{}" });
     const response = await PUT(req);

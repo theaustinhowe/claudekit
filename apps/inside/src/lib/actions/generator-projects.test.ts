@@ -32,6 +32,7 @@ vi.mock("@/lib/services/screenshot-service", () => ({
   deleteScreenshotFiles: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { buildUpdate, execute, getDb, queryAll, queryOne } from "@/lib/db";
 import { deleteScreenshotFiles } from "@/lib/services/screenshot-service";
 import {
@@ -56,23 +57,25 @@ const mockDeleteScreenshotFiles = vi.mocked(deleteScreenshotFiles);
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetDb.mockResolvedValue({} as Awaited<ReturnType<typeof getDb>>);
-  mockExecute.mockResolvedValue(undefined as never);
+  mockExecute.mockResolvedValue(cast(undefined));
 });
 
 describe("createGeneratorProject", () => {
   it("inserts a project and returns it", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "test-id",
-      title: "My App",
-      platform: "nextjs",
-      services: "[]",
-      constraints: "[]",
-      design_vibes: "[]",
-      inspiration_urls: "[]",
-      color_scheme: "{}",
-      custom_features: "[]",
-      scaffold_logs: null,
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "test-id",
+        title: "My App",
+        platform: "nextjs",
+        services: "[]",
+        constraints: "[]",
+        design_vibes: "[]",
+        inspiration_urls: "[]",
+        color_scheme: "{}",
+        custom_features: "[]",
+        scaffold_logs: null,
+      }),
+    );
 
     const result = await createGeneratorProject({
       title: "My App",
@@ -95,7 +98,7 @@ describe("createGeneratorProject", () => {
   });
 
   it("throws when query returns null", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     await expect(
       createGeneratorProject({
         title: "App",
@@ -111,18 +114,20 @@ describe("createGeneratorProject", () => {
   });
 
   it("passes optional fields", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "test-id",
-      title: "App",
-      platform: "nextjs",
-      services: "[]",
-      constraints: "[]",
-      design_vibes: '["minimal"]',
-      inspiration_urls: '["https://ex.com"]',
-      color_scheme: '{"primary":"#000"}',
-      custom_features: '["dark-mode"]',
-      scaffold_logs: null,
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "test-id",
+        title: "App",
+        platform: "nextjs",
+        services: "[]",
+        constraints: "[]",
+        design_vibes: '["minimal"]',
+        inspiration_urls: '["https://ex.com"]',
+        color_scheme: '{"primary":"#000"}',
+        custom_features: '["dark-mode"]',
+        scaffold_logs: null,
+      }),
+    );
 
     await createGeneratorProject({
       title: "App",
@@ -151,16 +156,18 @@ describe("createGeneratorProject", () => {
 
 describe("getGeneratorProject", () => {
   it("returns parsed project when found", async () => {
-    mockQueryOne.mockResolvedValue({
-      id: "proj-1",
-      services: "[]",
-      constraints: "[]",
-      design_vibes: "[]",
-      inspiration_urls: "[]",
-      color_scheme: "{}",
-      custom_features: "[]",
-      scaffold_logs: null,
-    } as never);
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "proj-1",
+        services: "[]",
+        constraints: "[]",
+        design_vibes: "[]",
+        inspiration_urls: "[]",
+        color_scheme: "{}",
+        custom_features: "[]",
+        scaffold_logs: null,
+      }),
+    );
 
     const result = await getGeneratorProject("proj-1");
     expect(result).not.toBeNull();
@@ -168,7 +175,7 @@ describe("getGeneratorProject", () => {
   });
 
   it("returns null when not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     const result = await getGeneratorProject("nonexistent");
     expect(result).toBeNull();
   });
@@ -176,35 +183,37 @@ describe("getGeneratorProject", () => {
 
 describe("getGeneratorProjects", () => {
   it("returns parsed projects", async () => {
-    mockQueryAll.mockResolvedValue([
-      {
-        id: "p1",
-        services: "[]",
-        constraints: "[]",
-        design_vibes: "[]",
-        inspiration_urls: "[]",
-        color_scheme: "{}",
-        custom_features: "[]",
-        scaffold_logs: null,
-      },
-      {
-        id: "p2",
-        services: "[]",
-        constraints: "[]",
-        design_vibes: "[]",
-        inspiration_urls: "[]",
-        color_scheme: "{}",
-        custom_features: "[]",
-        scaffold_logs: null,
-      },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([
+        {
+          id: "p1",
+          services: "[]",
+          constraints: "[]",
+          design_vibes: "[]",
+          inspiration_urls: "[]",
+          color_scheme: "{}",
+          custom_features: "[]",
+          scaffold_logs: null,
+        },
+        {
+          id: "p2",
+          services: "[]",
+          constraints: "[]",
+          design_vibes: "[]",
+          inspiration_urls: "[]",
+          color_scheme: "{}",
+          custom_features: "[]",
+          scaffold_logs: null,
+        },
+      ]),
+    );
 
     const result = await getGeneratorProjects();
     expect(result).toHaveLength(2);
   });
 
   it("returns empty array when no projects", async () => {
-    mockQueryAll.mockResolvedValue([] as never);
+    mockQueryAll.mockResolvedValue(cast([]));
     const result = await getGeneratorProjects();
     expect(result).toEqual([]);
   });
@@ -212,10 +221,12 @@ describe("getGeneratorProjects", () => {
 
 describe("updateGeneratorProject", () => {
   it("calls buildUpdate and executes when there are updates", async () => {
-    mockBuildUpdate.mockReturnValue({
-      sql: "UPDATE generator_projects SET status = ? WHERE id = ?",
-      params: ["designing", "proj-1"],
-    } as never);
+    mockBuildUpdate.mockReturnValue(
+      cast({
+        sql: "UPDATE generator_projects SET status = ? WHERE id = ?",
+        params: ["designing", "proj-1"],
+      }),
+    );
 
     await updateGeneratorProject("proj-1", { status: "designing" });
     expect(mockBuildUpdate).toHaveBeenCalled();
@@ -223,7 +234,7 @@ describe("updateGeneratorProject", () => {
   });
 
   it("does nothing when buildUpdate returns null", async () => {
-    mockBuildUpdate.mockReturnValue(null as never);
+    mockBuildUpdate.mockReturnValue(cast(null));
     await updateGeneratorProject("proj-1", {});
     expect(mockExecute).not.toHaveBeenCalled();
   });
@@ -251,20 +262,20 @@ describe("deleteGeneratorProject", () => {
 
 describe("getUiSpec", () => {
   it("returns spec when found (latest version)", async () => {
-    mockQueryOne.mockResolvedValue({ spec_json: '{"pages":[]}' } as never);
+    mockQueryOne.mockResolvedValue(cast({ spec_json: '{"pages":[]}' }));
     const result = await getUiSpec("proj-1");
     expect(result).not.toBeNull();
   });
 
   it("returns spec for specific version", async () => {
-    mockQueryOne.mockResolvedValue({ spec_json: '{"pages":[]}' } as never);
+    mockQueryOne.mockResolvedValue(cast({ spec_json: '{"pages":[]}' }));
     const result = await getUiSpec("proj-1", 2);
     expect(result).not.toBeNull();
     expect(mockQueryOne).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("version = ?"), ["proj-1", 2]);
   });
 
   it("returns null when not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     const result = await getUiSpec("proj-1");
     expect(result).toBeNull();
   });
@@ -272,13 +283,13 @@ describe("getUiSpec", () => {
 
 describe("getMockData", () => {
   it("returns mock data when found", async () => {
-    mockQueryOne.mockResolvedValue({ mock_data_json: '[{"entity":"User"}]' } as never);
+    mockQueryOne.mockResolvedValue(cast({ mock_data_json: '[{"entity":"User"}]' }));
     const result = await getMockData("proj-1", 1);
     expect(result).toHaveLength(1);
   });
 
   it("returns empty array when not found", async () => {
-    mockQueryOne.mockResolvedValue(undefined as never);
+    mockQueryOne.mockResolvedValue(cast(undefined));
     const result = await getMockData("proj-1", 1);
     expect(result).toEqual([]);
   });
@@ -286,16 +297,18 @@ describe("getMockData", () => {
 
 describe("getDesignMessages", () => {
   it("returns parsed messages", async () => {
-    mockQueryAll.mockResolvedValue([
-      {
-        id: "m1",
-        role: "user",
-        content: "Hello",
-        spec_diff_json: null,
-        progress_logs_json: null,
-        suggestions_json: null,
-      },
-    ] as never);
+    mockQueryAll.mockResolvedValue(
+      cast([
+        {
+          id: "m1",
+          role: "user",
+          content: "Hello",
+          spec_diff_json: null,
+          progress_logs_json: null,
+          suggestions_json: null,
+        },
+      ]),
+    );
 
     const result = await getDesignMessages("proj-1");
     expect(result).toHaveLength(1);
@@ -323,7 +336,7 @@ describe("createDesignMessage", () => {
       project_id: "proj-1",
       role: "assistant",
       content: "Response",
-      spec_diff: { added: [], removed: [], modified: [] } as never,
+      spec_diff: cast({ added: [], removed: [], modified: [] }),
       model_used: "claude-3",
       progress_logs: [{ log: "working", logType: "status" }],
       suggestions: ["Try X", "Try Y"],

@@ -5,6 +5,7 @@ vi.mock("@/lib/db", () => ({
   queryAll: vi.fn(),
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET } from "@/app/api/sessions/[id]/logs/route";
 import { queryAll } from "@/lib/db";
 
@@ -20,7 +21,7 @@ describe("GET /api/sessions/[id]/logs", () => {
       { id: 1, session_id: "sess-1", log: "Starting", log_type: "info", created_at: "2024-01-01" },
       { id: 2, session_id: "sess-1", log: "Done", log_type: "info", created_at: "2024-01-01" },
     ];
-    mockQueryAll.mockResolvedValue(logs as never);
+    mockQueryAll.mockResolvedValue(cast(logs));
 
     const response = await GET(new Request("http://localhost"), {
       params: Promise.resolve({ id: "sess-1" }),

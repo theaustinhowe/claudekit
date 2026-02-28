@@ -31,6 +31,7 @@ vi.mock("./client.js", () => ({
 }));
 
 import { queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { withTimeout } from "../../utils/timeout.js";
 import { getOctokitForRepo } from "./client.js";
 import { RepositoryNotFoundError } from "./errors.js";
@@ -106,7 +107,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       const issues = await getIssuesWithLabel("repo-1", "agent:run");
@@ -125,7 +126,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       const issues = await getIssuesWithLabel("repo-1", "agent:run");
@@ -149,7 +150,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       const result = await createIssueCommentForRepo("repo-1", 1, "Test comment");
@@ -194,7 +195,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       const comments = await getIssueCommentsForRepo("repo-1", 1);
@@ -238,7 +239,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       const comments = await getIssueCommentsForRepo("repo-1", 1, 100);
@@ -259,7 +260,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       await removeLabelFromIssue("repo-1", 1, "agent:run");
@@ -282,7 +283,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       // Should not throw
@@ -307,7 +308,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       const result = await findExistingPrForRepo("repo-1", "feature-branch");
@@ -327,7 +328,7 @@ describe("Repo Service", () => {
         },
       };
 
-      vi.mocked(getOctokitForRepo).mockResolvedValue(mockOctokit as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValue(cast(mockOctokit));
       mockDbForRepo(mockRepoData);
 
       const result = await findExistingPrForRepo("repo-1", "feature-branch");

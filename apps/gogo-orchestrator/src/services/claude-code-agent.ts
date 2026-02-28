@@ -519,7 +519,7 @@ export async function startClaudeRun(
 
       // Set up timeout
       const timeoutId = setTimeout(async () => {
-        proc.child.kill("SIGTERM");
+        proc.child?.kill("SIGTERM");
         await emitLog(jobId, "stderr", `Claude run timed out after ${claudeSettings.max_runtime_ms / 1000}s`, logState);
         await updateJobStatus(jobId, "paused", "running", "Timed out - session saved", {
           pause_reason: "Execution timeout",
@@ -541,11 +541,11 @@ export async function startClaudeRun(
       // Handle abort signal (cancellation)
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
-        proc.child.kill("SIGTERM");
+        proc.child?.kill("SIGTERM");
         // Force kill after 5s if still running
         setTimeout(() => {
           try {
-            proc.child.kill("SIGKILL");
+            proc.child?.kill("SIGKILL");
           } catch {
             // Already dead
           }
@@ -629,7 +629,7 @@ export async function startClaudeRun(
             } else if (parsed.signal === "READY_TO_PR") {
               await emitLog(jobId, "system", "Agent signaled READY_TO_PR", logState);
               // Stop the process gracefully
-              proc.child.kill("SIGTERM");
+              proc.child?.kill("SIGTERM");
               // Transition to ready_to_pr
               await updateJobStatus(jobId, "ready_to_pr", "running", "Agent completed work", {
                 claude_session_id: currentClaudeSessionId,
@@ -637,7 +637,7 @@ export async function startClaudeRun(
               resolveOnce({ signal: "ready_to_pr" });
             } else if (parsed.signal === "NEEDS_INFO" && parsed.question) {
               await emitLog(jobId, "system", `Agent needs info: ${parsed.question}`, logState);
-              proc.child.kill("SIGTERM");
+              proc.child?.kill("SIGTERM");
 
               if (job.issue_number < 0) {
                 await updateJobStatus(jobId, "needs_info", "running", parsed.question, {

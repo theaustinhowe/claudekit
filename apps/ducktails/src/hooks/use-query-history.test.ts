@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // In-memory localStorage mock
@@ -17,17 +18,17 @@ vi.stubGlobal("localStorage", localStorageMock);
 vi.stubGlobal("window", {});
 
 // Mutable state container -- shared across useState and setState calls
-const stateBox = { value: [] as unknown[] };
+const stateBox = { value: cast<unknown[]>([]) };
 
 vi.mock("react", () => ({
   useState: (init: unknown) => {
     const initialValue = typeof init === "function" ? (init as () => unknown)() : init;
-    stateBox.value = initialValue as unknown[];
+    stateBox.value = cast<unknown[]>(initialValue);
     const setState = (fn: unknown) => {
       if (typeof fn === "function") {
         stateBox.value = (fn as (prev: unknown[]) => unknown[])(stateBox.value);
       } else {
-        stateBox.value = fn as unknown[];
+        stateBox.value = cast<unknown[]>(fn);
       }
     };
     return [stateBox.value, setState];

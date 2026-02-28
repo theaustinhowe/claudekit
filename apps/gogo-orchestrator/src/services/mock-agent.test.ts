@@ -13,6 +13,7 @@ vi.mock("../ws/handler.js", () => ({
 }));
 
 import { queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { isRunning, startMockRun, stopMockRun } from "./mock-agent.js";
 
 beforeEach(() => {
@@ -25,7 +26,7 @@ describe("mock-agent", () => {
   });
 
   it("startMockRun makes job running when job is queued", async () => {
-    vi.mocked(queryOne).mockResolvedValue({ id: "job-1", status: "queued" } as never);
+    vi.mocked(queryOne).mockResolvedValue(cast({ id: "job-1", status: "queued" }));
 
     const result = await startMockRun("job-1");
 
@@ -37,7 +38,7 @@ describe("mock-agent", () => {
   });
 
   it("startMockRun returns error when job not found", async () => {
-    vi.mocked(queryOne).mockResolvedValue(undefined as never);
+    vi.mocked(queryOne).mockResolvedValue(cast(undefined));
 
     const result = await startMockRun("nonexistent");
 
@@ -46,7 +47,7 @@ describe("mock-agent", () => {
   });
 
   it("startMockRun returns error when job not queued", async () => {
-    vi.mocked(queryOne).mockResolvedValue({ id: "job-1", status: "running" } as never);
+    vi.mocked(queryOne).mockResolvedValue(cast({ id: "job-1", status: "running" }));
 
     const result = await startMockRun("job-1");
 
@@ -55,7 +56,7 @@ describe("mock-agent", () => {
   });
 
   it("stopMockRun clears the job", async () => {
-    vi.mocked(queryOne).mockResolvedValue({ id: "job-1", status: "queued" } as never);
+    vi.mocked(queryOne).mockResolvedValue(cast({ id: "job-1", status: "queued" }));
 
     await startMockRun("job-1");
     expect(isRunning("job-1")).toBe(true);

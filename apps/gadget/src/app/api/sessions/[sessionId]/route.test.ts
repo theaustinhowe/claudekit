@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/actions/sessions", () => ({
@@ -22,16 +23,18 @@ beforeEach(() => {
 
 describe("GET /api/sessions/[sessionId]", () => {
   it("returns live session when available", async () => {
-    mockGetLiveSession.mockReturnValue({
-      id: "s1",
-      sessionType: "scan",
-      status: "running",
-      label: "Scanning",
-      events: [
-        { log: "Starting scan", logType: "status" },
-        { log: "Found 3 repos", logType: "status" },
-      ],
-    } as never);
+    mockGetLiveSession.mockReturnValue(
+      cast({
+        id: "s1",
+        sessionType: "scan",
+        status: "running",
+        label: "Scanning",
+        events: [
+          { log: "Starting scan", logType: "status" },
+          { log: "Found 3 repos", logType: "status" },
+        ],
+      }),
+    );
 
     const response = await GET(new Request("http://localhost"), {
       params: Promise.resolve({ sessionId: "s1" }),
@@ -44,13 +47,15 @@ describe("GET /api/sessions/[sessionId]", () => {
   });
 
   it("falls back to DB when no live session", async () => {
-    mockGetLiveSession.mockReturnValue(null as never);
-    mockGetSessionRecord.mockResolvedValue({
-      id: "s1",
-      session_type: "scan",
-      status: "done",
-    } as never);
-    mockGetSessionLogsFromDb.mockResolvedValue([{ log: "Complete", log_type: "status" }] as never);
+    mockGetLiveSession.mockReturnValue(cast(null));
+    mockGetSessionRecord.mockResolvedValue(
+      cast({
+        id: "s1",
+        session_type: "scan",
+        status: "done",
+      }),
+    );
+    mockGetSessionLogsFromDb.mockResolvedValue(cast([{ log: "Complete", log_type: "status" }]));
 
     const response = await GET(new Request("http://localhost"), {
       params: Promise.resolve({ sessionId: "s1" }),
@@ -63,8 +68,8 @@ describe("GET /api/sessions/[sessionId]", () => {
   });
 
   it("returns 404 when session not found", async () => {
-    mockGetLiveSession.mockReturnValue(null as never);
-    mockGetSessionRecord.mockResolvedValue(undefined as never);
+    mockGetLiveSession.mockReturnValue(cast(null));
+    mockGetSessionRecord.mockResolvedValue(cast(undefined));
 
     const response = await GET(new Request("http://localhost"), {
       params: Promise.resolve({ sessionId: "nonexistent" }),

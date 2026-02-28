@@ -16,6 +16,7 @@ vi.mock("node:fs/promises", () => ({
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { cast } from "@claudekit/test-utils";
 import { detectSeedMechanism, injectEnvOverrides, restoreProject, runSeedScript } from "./data-seeder";
 
 beforeEach(() => {
@@ -150,10 +151,12 @@ describe("detectSeedMechanism", () => {
 
 describe("runSeedScript", () => {
   beforeEach(() => {
-    vi.mocked(execFile).mockImplementation(((_cmd: string, _args: unknown, _opts: unknown, callback: unknown) => {
-      if (typeof callback === "function") callback(null, { stdout: "", stderr: "" });
-      return undefined as never;
-    }) as never);
+    vi.mocked(execFile).mockImplementation(
+      cast((_cmd: string, _args: unknown, _opts: unknown, callback: unknown) => {
+        if (typeof callback === "function") callback(null, { stdout: "", stderr: "" });
+        return undefined;
+      }),
+    );
   });
 
   it("runs npx prisma db seed for prisma mechanism", async () => {
@@ -206,10 +209,12 @@ describe("runSeedScript", () => {
   it("handles exec error gracefully for none mechanism with package.json", async () => {
     vi.mocked(existsSync).mockImplementation((p) => String(p).endsWith("package.json"));
     vi.mocked(readFile).mockResolvedValue(JSON.stringify({ scripts: { seed: "node seed.js" } }));
-    vi.mocked(execFile).mockImplementation(((_cmd: string, _args: unknown, _opts: unknown, callback: unknown) => {
-      if (typeof callback === "function") callback(new Error("Command failed"), { stdout: "", stderr: "" });
-      return undefined as never;
-    }) as never);
+    vi.mocked(execFile).mockImplementation(
+      cast((_cmd: string, _args: unknown, _opts: unknown, callback: unknown) => {
+        if (typeof callback === "function") callback(new Error("Command failed"), { stdout: "", stderr: "" });
+        return undefined;
+      }),
+    );
 
     await expect(runSeedScript("/project")).resolves.toBeUndefined();
   });
@@ -239,10 +244,12 @@ describe("injectEnvOverrides - B4U_MOCK_DATA", () => {
 
 describe("detectPackageManager via runSeedScript", () => {
   beforeEach(() => {
-    vi.mocked(execFile).mockImplementation(((_cmd: string, _args: unknown, _opts: unknown, callback: unknown) => {
-      if (typeof callback === "function") callback(null, { stdout: "", stderr: "" });
-      return undefined as never;
-    }) as never);
+    vi.mocked(execFile).mockImplementation(
+      cast((_cmd: string, _args: unknown, _opts: unknown, callback: unknown) => {
+        if (typeof callback === "function") callback(null, { stdout: "", stderr: "" });
+        return undefined;
+      }),
+    );
   });
 
   it("detects pnpm when pnpm-lock.yaml exists", async () => {

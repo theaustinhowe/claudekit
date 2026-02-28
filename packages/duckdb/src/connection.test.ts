@@ -28,6 +28,7 @@ vi.mock("./helpers", () => ({
 }));
 
 import fs from "node:fs";
+import { cast } from "@claudekit/test-utils";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { createDatabase } from "./connection";
 import { checkpoint, execute } from "./helpers";
@@ -73,7 +74,7 @@ describe("createDatabase", () => {
     it("creates directory, instance, and connection", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
       const db = createDatabase({ dbPath: "/tmp/test/data.duckdb" });
       const conn = await db.getDb();
@@ -88,7 +89,7 @@ describe("createDatabase", () => {
     it("returns cached connection on subsequent calls", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb" });
       const conn1 = await db.getDb();
@@ -101,7 +102,7 @@ describe("createDatabase", () => {
     it("deduplicates concurrent init calls via pending promise", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb" });
       const [conn1, conn2] = await Promise.all([db.getDb(), db.getDb()]);
@@ -113,7 +114,7 @@ describe("createDatabase", () => {
     it("uses custom walAutocheckpoint", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb", walAutocheckpoint: "512KB" });
       await db.getDb();
@@ -124,7 +125,7 @@ describe("createDatabase", () => {
     it("calls onInit callback after connection", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
       const onInit = vi.fn();
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb", onInit });
@@ -139,7 +140,7 @@ describe("createDatabase", () => {
         const mockInstance = createMockInstance(mockConn);
         vi.mocked(DuckDBInstance.create)
           .mockRejectedValueOnce(new Error("WAL corruption"))
-          .mockResolvedValueOnce(mockInstance as never);
+          .mockResolvedValueOnce(cast(mockInstance));
         vi.mocked(fs.existsSync).mockReturnValue(true);
 
         const db = createDatabase({ dbPath: "/tmp/test.duckdb" });
@@ -164,7 +165,7 @@ describe("createDatabase", () => {
       it("stores connection on globalThis when useGlobalCache is true", async () => {
         const mockConn = createMockConnection();
         const mockInstance = createMockInstance(mockConn);
-        vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+        vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
         const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: true });
         await db.getDb();
@@ -177,7 +178,7 @@ describe("createDatabase", () => {
       it("does not store on globalThis when useGlobalCache is false", async () => {
         const mockConn = createMockConnection();
         const mockInstance = createMockInstance(mockConn);
-        vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+        vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
         const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: false });
         await db.getDb();
@@ -192,7 +193,7 @@ describe("createDatabase", () => {
         const processOnSpy = vi.spyOn(process, "on").mockImplementation(() => process);
         const mockConn = createMockConnection();
         const mockInstance = createMockInstance(mockConn);
-        vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+        vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
         const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: true });
         await db.getDb();
@@ -208,7 +209,7 @@ describe("createDatabase", () => {
         const processOnSpy = vi.spyOn(process, "on").mockImplementation(() => process);
         const mockConn = createMockConnection();
         const mockInstance = createMockInstance(mockConn);
-        vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+        vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
         const db1 = createDatabase({ dbPath: "/tmp/test1.duckdb", useGlobalCache: true });
         await db1.getDb();
@@ -220,7 +221,7 @@ describe("createDatabase", () => {
         (globalThis as GlobalDbCache).__duckdb_shutdownRegistered = true;
 
         const db2 = createDatabase({ dbPath: "/tmp/test2.duckdb", useGlobalCache: true });
-        vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+        vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
         await db2.getDb();
 
         // Should not register more handlers since shutdownRegistered is already true
@@ -233,7 +234,7 @@ describe("createDatabase", () => {
         const processOnSpy = vi.spyOn(process, "on").mockImplementation(() => process);
         const mockConn = createMockConnection();
         const mockInstance = createMockInstance(mockConn);
-        vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+        vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
         const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: false });
         await db.getDb();
@@ -250,7 +251,7 @@ describe("createDatabase", () => {
     it("checkpoints and closes connection", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: false });
       await db.getDb();
@@ -270,7 +271,7 @@ describe("createDatabase", () => {
     it("clears globalThis cache on close", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: true });
       await db.getDb();
@@ -288,14 +289,14 @@ describe("createDatabase", () => {
     it("clears local cache on close", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: false });
       await db.getDb();
       await db.close();
 
       // After close, getDb should create a new connection
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(createMockInstance() as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(createMockInstance()));
       await db.getDb();
       expect(DuckDBInstance.create).toHaveBeenCalledTimes(2);
     });
@@ -303,7 +304,7 @@ describe("createDatabase", () => {
     it("swallows checkpoint errors gracefully", async () => {
       const mockConn = createMockConnection();
       const mockInstance = createMockInstance(mockConn);
-      vi.mocked(DuckDBInstance.create).mockResolvedValue(mockInstance as never);
+      vi.mocked(DuckDBInstance.create).mockResolvedValue(cast(mockInstance));
       vi.mocked(checkpoint).mockRejectedValue(new Error("checkpoint failed"));
 
       const db = createDatabase({ dbPath: "/tmp/test.duckdb", useGlobalCache: false });

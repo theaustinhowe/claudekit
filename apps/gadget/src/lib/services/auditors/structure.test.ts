@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -222,10 +223,7 @@ describe("auditStructure", () => {
       return false;
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
-    mockReaddirSync.mockReturnValue([
-      createMockDirent("utils", true),
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    ] as any);
+    mockReaddirSync.mockReturnValue(cast([createMockDirent("utils", true)]));
 
     const findings = auditStructure("/repo", stubPolicy);
     const wsPkgFinding = findings.find((f) => f.title === "Missing package.json in workspace: utils");
@@ -249,10 +247,7 @@ describe("resolveWorkspacePackages", () => {
       return "";
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
-    mockReaddirSync.mockReturnValue([
-      createMockDirent("ui", true),
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    ] as any);
+    mockReaddirSync.mockReturnValue(cast([createMockDirent("ui", true)]));
 
     const packages = resolveWorkspacePackages("/repo");
     expect(packages).toHaveLength(1);
@@ -275,10 +270,7 @@ describe("resolveWorkspacePackages", () => {
       return "";
     });
     mockStatSync.mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
-    mockReaddirSync.mockReturnValue([
-      createMockDirent("web", true),
-      // biome-ignore lint/suspicious/noExplicitAny: test mock for fs.readdirSync overloads
-    ] as any);
+    mockReaddirSync.mockReturnValue(cast([createMockDirent("web", true)]));
 
     const packages = resolveWorkspacePackages("/repo");
     expect(packages).toHaveLength(1);

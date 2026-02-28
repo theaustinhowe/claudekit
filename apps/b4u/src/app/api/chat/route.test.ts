@@ -13,6 +13,7 @@ vi.mock("@/lib/claude/prompts/chat-response", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
+import { cast } from "@claudekit/test-utils";
 import { POST } from "@/app/api/chat/route";
 import { buildChatResponsePrompt } from "@/lib/claude/prompts/chat-response";
 import { queryAll, queryOne } from "@/lib/db";
@@ -33,10 +34,8 @@ function makeRequest(body: Record<string, unknown>): Request {
 function setupHappyPath(stdout = '{"response":"Hello!","suggestedAction":null}') {
   // First queryOne call: loadPhaseContext phase 1 -> project_summary
   // Second queryOne call: project_path lookup
-  mockQueryOne
-    .mockResolvedValueOnce({ name: "Test" } as never)
-    .mockResolvedValueOnce({ project_path: "/project" } as never);
-  mockRunClaude.mockResolvedValue({ stdout, stderr: "", exitCode: 0 } as never);
+  mockQueryOne.mockResolvedValueOnce(cast({ name: "Test" })).mockResolvedValueOnce(cast({ project_path: "/project" }));
+  mockRunClaude.mockResolvedValue(cast({ stdout, stderr: "", exitCode: 0 }));
 }
 
 beforeEach(() => {
@@ -80,13 +79,15 @@ describe("POST /api/chat", () => {
 
   it("phase 1 with runId: filters by run_id", async () => {
     mockQueryOne
-      .mockResolvedValueOnce({ name: "Test" } as never)
-      .mockResolvedValueOnce({ project_path: "/project" } as never);
-    mockRunClaude.mockResolvedValue({
-      stdout: '{"response":"Hello!","suggestedAction":null}',
-      stderr: "",
-      exitCode: 0,
-    } as never);
+      .mockResolvedValueOnce(cast({ name: "Test" }))
+      .mockResolvedValueOnce(cast({ project_path: "/project" }));
+    mockRunClaude.mockResolvedValue(
+      cast({
+        stdout: '{"response":"Hello!","suggestedAction":null}',
+        stderr: "",
+        exitCode: 0,
+      }),
+    );
 
     await POST(makeRequest({ message: "hello", phase: 1, runId: "run-123" }));
 
@@ -97,14 +98,16 @@ describe("POST /api/chat", () => {
     const mockRoutes = [{ path: "/home", title: "Home" }];
     const mockFlows = [{ name: "Login" }];
     mockQueryOne
-      .mockResolvedValueOnce({ data_json: JSON.stringify(mockRoutes) } as never) // routes
-      .mockResolvedValueOnce({ data_json: JSON.stringify(mockFlows) } as never) // flows
-      .mockResolvedValueOnce({ project_path: "/project" } as never); // project_path
-    mockRunClaude.mockResolvedValue({
-      stdout: '{"response":"OK","suggestedAction":null}',
-      stderr: "",
-      exitCode: 0,
-    } as never);
+      .mockResolvedValueOnce(cast({ data_json: JSON.stringify(mockRoutes) })) // routes
+      .mockResolvedValueOnce(cast({ data_json: JSON.stringify(mockFlows) })) // flows
+      .mockResolvedValueOnce(cast({ project_path: "/project" })); // project_path
+    mockRunClaude.mockResolvedValue(
+      cast({
+        stdout: '{"response":"OK","suggestedAction":null}',
+        stderr: "",
+        exitCode: 0,
+      }),
+    );
 
     await POST(makeRequest({ message: "show routes", phase: 2, runId: "run-abc" }));
 
@@ -118,14 +121,16 @@ describe("POST /api/chat", () => {
     const mockEntities = [{ name: "User", count: 5 }];
     const mockAuth = [{ label: "Admin", enabled: true }];
     mockQueryOne
-      .mockResolvedValueOnce({ data_json: JSON.stringify(mockEntities) } as never) // entities
-      .mockResolvedValueOnce({ data_json: JSON.stringify(mockAuth) } as never) // auth overrides
-      .mockResolvedValueOnce({ project_path: "/project" } as never); // project_path
-    mockRunClaude.mockResolvedValue({
-      stdout: '{"response":"OK","suggestedAction":null}',
-      stderr: "",
-      exitCode: 0,
-    } as never);
+      .mockResolvedValueOnce(cast({ data_json: JSON.stringify(mockEntities) })) // entities
+      .mockResolvedValueOnce(cast({ data_json: JSON.stringify(mockAuth) })) // auth overrides
+      .mockResolvedValueOnce(cast({ project_path: "/project" })); // project_path
+    mockRunClaude.mockResolvedValue(
+      cast({
+        stdout: '{"response":"OK","suggestedAction":null}',
+        stderr: "",
+        exitCode: 0,
+      }),
+    );
 
     await POST(makeRequest({ message: "data plan", phase: 3, runId: "run-abc" }));
 
@@ -138,13 +143,15 @@ describe("POST /api/chat", () => {
   it("phase 4: calls queryAll for scripts and step count from flow_scripts", async () => {
     const mockScripts = [{ flow_name: "Login Flow" }];
     const mockStepsRows = [{ steps_json: JSON.stringify([{ id: "s1" }, { id: "s2" }]) }];
-    mockQueryAll.mockResolvedValueOnce(mockScripts as never).mockResolvedValueOnce(mockStepsRows as never);
-    mockQueryOne.mockResolvedValueOnce({ project_path: "/project" } as never);
-    mockRunClaude.mockResolvedValue({
-      stdout: '{"response":"OK","suggestedAction":null}',
-      stderr: "",
-      exitCode: 0,
-    } as never);
+    mockQueryAll.mockResolvedValueOnce(cast(mockScripts)).mockResolvedValueOnce(cast(mockStepsRows));
+    mockQueryOne.mockResolvedValueOnce(cast({ project_path: "/project" }));
+    mockRunClaude.mockResolvedValue(
+      cast({
+        stdout: '{"response":"OK","suggestedAction":null}',
+        stderr: "",
+        exitCode: 0,
+      }),
+    );
 
     await POST(makeRequest({ message: "scripts", phase: 4, runId: "run-abc" }));
 

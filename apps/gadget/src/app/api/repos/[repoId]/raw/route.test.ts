@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs/promises", () => ({
@@ -49,13 +50,13 @@ function createParams(repoId = "repo-1") {
 describe("GET /api/repos/[repoId]/raw", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getDb).mockResolvedValue({} as never);
+    vi.mocked(getDb).mockResolvedValue(cast({}));
     mockQueryOne.mockResolvedValue({ local_path: "/home/testuser/repos/my-repo" });
     mockExpandTilde.mockImplementation((p: string) => p.replace("~", "/home/testuser"));
   });
 
   it("returns 400 when path parameter is missing", async () => {
-    const res = await GET(createRequest() as never, createParams());
+    const res = await GET(cast(createRequest()), createParams());
     const body = await res.json();
 
     expect(res.status).toBe(400);
@@ -63,7 +64,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   });
 
   it("returns 400 for unsupported file type", async () => {
-    const res = await GET(createRequest("file.ts") as never, createParams());
+    const res = await GET(cast(createRequest("file.ts")), createParams());
     const body = await res.json();
 
     expect(res.status).toBe(400);
@@ -73,7 +74,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   it("returns 404 when repository is not found", async () => {
     mockQueryOne.mockResolvedValue(undefined);
 
-    const res = await GET(createRequest("image.png") as never, createParams());
+    const res = await GET(cast(createRequest("image.png")), createParams());
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -81,7 +82,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   });
 
   it("returns 403 for absolute file paths", async () => {
-    const res = await GET(createRequest("/etc/shadow.png") as never, createParams());
+    const res = await GET(cast(createRequest("/etc/shadow.png")), createParams());
     const body = await res.json();
 
     expect(res.status).toBe(403);
@@ -89,7 +90,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   });
 
   it("returns 403 for path traversal attempts with ..", async () => {
-    const res = await GET(createRequest("../../../etc/passwd.png") as never, createParams());
+    const res = await GET(cast(createRequest("../../../etc/passwd.png")), createParams());
     const body = await res.json();
 
     expect(res.status).toBe(403);
@@ -100,7 +101,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
     const imageData = Buffer.from("fake-png-data");
     mockReadFile.mockResolvedValue(imageData);
 
-    const res = await GET(createRequest("assets/logo.png") as never, createParams());
+    const res = await GET(cast(createRequest("assets/logo.png")), createParams());
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/png");
@@ -110,7 +111,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   it("returns correct mime type for jpg files", async () => {
     mockReadFile.mockResolvedValue(Buffer.from("fake-jpg"));
 
-    const res = await GET(createRequest("docs/screenshot.jpg") as never, createParams());
+    const res = await GET(cast(createRequest("docs/screenshot.jpg")), createParams());
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/jpeg");
@@ -119,7 +120,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   it("returns correct mime type for svg files", async () => {
     mockReadFile.mockResolvedValue(Buffer.from("<svg></svg>"));
 
-    const res = await GET(createRequest("public/icon.svg") as never, createParams());
+    const res = await GET(cast(createRequest("public/icon.svg")), createParams());
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/svg+xml");
@@ -128,7 +129,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   it("returns 404 when file does not exist on disk", async () => {
     mockReadFile.mockRejectedValue(new Error("ENOENT: no such file or directory"));
 
-    const res = await GET(createRequest("nonexistent.png") as never, createParams());
+    const res = await GET(cast(createRequest("nonexistent.png")), createParams());
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -138,7 +139,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
   it("queries the database for repository local_path", async () => {
     mockReadFile.mockResolvedValue(Buffer.from("data"));
 
-    await GET(createRequest("test.png") as never, createParams("repo-42"));
+    await GET(cast(createRequest("test.png")), createParams("repo-42"));
 
     expect(mockQueryOne).toHaveBeenCalledWith(expect.anything(), "SELECT local_path FROM repos WHERE id = ?", [
       "repo-42",
@@ -149,7 +150,7 @@ describe("GET /api/repos/[repoId]/raw", () => {
     mockQueryOne.mockResolvedValue({ local_path: "~/repos/my-repo" });
     mockReadFile.mockResolvedValue(Buffer.from("data"));
 
-    const res = await GET(createRequest("test.png") as never, createParams());
+    const res = await GET(cast(createRequest("test.png")), createParams());
 
     // Should succeed since expandTilde is mocked to replace ~
     expect(res.status).toBe(200);

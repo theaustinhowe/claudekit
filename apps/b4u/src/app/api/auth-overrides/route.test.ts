@@ -11,6 +11,7 @@ vi.mock("@/lib/validations", () => ({
   togglePatchSchema: {},
 }));
 
+import { cast } from "@claudekit/test-utils";
 import { GET, PATCH } from "@/app/api/auth-overrides/route";
 import { execute, queryOne } from "@/lib/db";
 import { parseBody } from "@/lib/validations";
@@ -33,7 +34,7 @@ describe("GET /api/auth-overrides", () => {
       { id: "bypass-login", label: "Bypass login", enabled: true },
       { id: "skip-mfa", label: "Skip MFA", enabled: false },
     ];
-    mockQueryOne.mockResolvedValue({ data_json: JSON.stringify(overrides) } as never);
+    mockQueryOne.mockResolvedValue(cast({ data_json: JSON.stringify(overrides) }));
 
     const response = await GET(makeGetRequest("run-1"));
     const data = await response.json();
@@ -63,18 +64,22 @@ describe("GET /api/auth-overrides", () => {
 
 describe("PATCH /api/auth-overrides", () => {
   it("updates an auth override toggle in run_content", async () => {
-    mockParseBody.mockResolvedValue({
-      ok: true,
-      data: { id: "bypass-login", enabled: false, runId: "run-1" },
-    } as never);
-    mockQueryOne.mockResolvedValue({
-      id: "rc-1",
-      data_json: JSON.stringify([
-        { id: "bypass-login", label: "Bypass login", enabled: true },
-        { id: "skip-mfa", label: "Skip MFA", enabled: false },
-      ]),
-    } as never);
-    mockExecute.mockResolvedValue(undefined as never);
+    mockParseBody.mockResolvedValue(
+      cast({
+        ok: true,
+        data: { id: "bypass-login", enabled: false, runId: "run-1" },
+      }),
+    );
+    mockQueryOne.mockResolvedValue(
+      cast({
+        id: "rc-1",
+        data_json: JSON.stringify([
+          { id: "bypass-login", label: "Bypass login", enabled: true },
+          { id: "skip-mfa", label: "Skip MFA", enabled: false },
+        ]),
+      }),
+    );
+    mockExecute.mockResolvedValue(cast(undefined));
 
     const req = new NextRequest("http://localhost/api/auth-overrides", {
       method: "PATCH",
@@ -93,7 +98,7 @@ describe("PATCH /api/auth-overrides", () => {
   });
 
   it("returns validation error", async () => {
-    mockParseBody.mockResolvedValue({ ok: false, error: "Invalid", status: 422 } as never);
+    mockParseBody.mockResolvedValue(cast({ ok: false, error: "Invalid", status: 422 }));
 
     const req = new NextRequest("http://localhost/api/auth-overrides", {
       method: "PATCH",

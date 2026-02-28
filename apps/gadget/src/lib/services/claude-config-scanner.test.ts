@@ -1,3 +1,4 @@
+import { cast } from "@claudekit/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", () => ({
@@ -89,7 +90,7 @@ describe("claude-config-scanner", () => {
       });
       vi.mocked(fs.readdirSync).mockImplementation((p) => {
         if (String(p).endsWith("commands")) {
-          return [{ name: "test-cmd.md", isFile: () => true, isDirectory: () => false }] as never;
+          return cast([{ name: "test-cmd.md", isFile: () => true, isDirectory: () => false }]);
         }
         return [];
       });

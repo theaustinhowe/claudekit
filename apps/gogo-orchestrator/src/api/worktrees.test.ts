@@ -56,6 +56,7 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 import { execute, queryAll, queryOne } from "@claudekit/duckdb";
+import { cast } from "@claudekit/test-utils";
 import { mapJob, mapRepositoryFull } from "../db/schema.js";
 import { getChangedFiles, getFileDiff, getRepoDir, listWorktrees, removeWorktree } from "../services/git.js";
 import { getOctokitForRepo, getRepoConfigById } from "../services/github/index.js";
@@ -99,7 +100,7 @@ describe("worktrees API", () => {
     const mock = createMockFastify();
     mock.instance.log = { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() };
     routes = mock.routes;
-    await worktreesRouter(mock.instance as never, {} as never);
+    await worktreesRouter(cast(mock.instance), cast({}));
 
     getRoute = (method: string, path: string) => {
       const route = routes.find((r) => r.method === method && r.path === path);
@@ -196,10 +197,12 @@ describe("worktrees API", () => {
 
     it("should check GitHub API when job has PR and repositoryId", async () => {
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob);
-      vi.mocked(getOctokitForRepo).mockResolvedValueOnce({
-        rest: { pulls: { get: vi.fn().mockResolvedValueOnce({ data: { merged: true } }) } },
-      } as never);
-      vi.mocked(getRepoConfigById).mockResolvedValueOnce({ owner: "org", name: "repo" } as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValueOnce(
+        cast({
+          rest: { pulls: { get: vi.fn().mockResolvedValueOnce({ data: { merged: true } }) } },
+        }),
+      );
+      vi.mocked(getRepoConfigById).mockResolvedValueOnce(cast({ owner: "org", name: "repo" }));
 
       const handler = getRoute("GET", "/:jobId/pr-status");
       const result = (await handler({ params: { jobId: "job-1" } }, createMockReply())) as {
@@ -214,7 +217,7 @@ describe("worktrees API", () => {
     it("should return 500 when GitHub API fails", async () => {
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob);
       vi.mocked(getOctokitForRepo).mockRejectedValueOnce(new Error("Rate limited"));
-      vi.mocked(getRepoConfigById).mockResolvedValueOnce({ owner: "org", name: "repo" } as never);
+      vi.mocked(getRepoConfigById).mockResolvedValueOnce(cast({ owner: "org", name: "repo" }));
 
       const handler = getRoute("GET", "/:jobId/pr-status");
       const reply = createMockReply();
@@ -274,7 +277,7 @@ describe("worktrees API", () => {
         .mockResolvedValueOnce(mockJob) // job lookup
         .mockResolvedValueOnce(mockRepo); // repo lookup
 
-      vi.mocked(getChangedFiles).mockResolvedValueOnce(changedFiles as never);
+      vi.mocked(getChangedFiles).mockResolvedValueOnce(cast(changedFiles));
 
       const handler = getRoute("GET", "/:jobId/changes");
       const result = (await handler({ params: { jobId: "job-1" } }, createMockReply())) as {
@@ -400,7 +403,7 @@ describe("worktrees API", () => {
     it("should return changed files when repo matches path", async () => {
       vi.mocked(queryAll).mockResolvedValueOnce([mockRepo]);
       vi.mocked(getRepoDir).mockReturnValue("/tmp/workdir");
-      vi.mocked(getChangedFiles).mockResolvedValueOnce([{ path: "file.ts", status: "modified" }] as never);
+      vi.mocked(getChangedFiles).mockResolvedValueOnce(cast([{ path: "file.ts", status: "modified" }]));
 
       const handler = getRoute("GET", "/by-path/changes");
       const result = (await handler(
@@ -492,10 +495,12 @@ describe("worktrees API", () => {
 
     it("should return 400 when PR is not merged", async () => {
       vi.mocked(queryOne).mockResolvedValueOnce(mockJob);
-      vi.mocked(getOctokitForRepo).mockResolvedValueOnce({
-        rest: { pulls: { get: vi.fn().mockResolvedValueOnce({ data: { merged: false } }) } },
-      } as never);
-      vi.mocked(getRepoConfigById).mockResolvedValueOnce({ owner: "org", name: "repo" } as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValueOnce(
+        cast({
+          rest: { pulls: { get: vi.fn().mockResolvedValueOnce({ data: { merged: false } }) } },
+        }),
+      );
+      vi.mocked(getRepoConfigById).mockResolvedValueOnce(cast({ owner: "org", name: "repo" }));
 
       const handler = getRoute("POST", "/:jobId/cleanup");
       const reply = createMockReply();
@@ -513,10 +518,12 @@ describe("worktrees API", () => {
         .mockResolvedValueOnce(mockRepo) // repo lookup
         .mockResolvedValueOnce({ ...mockJob, worktreePath: null }); // update result
 
-      vi.mocked(getOctokitForRepo).mockResolvedValueOnce({
-        rest: { pulls: { get: vi.fn().mockResolvedValueOnce({ data: { merged: true } }) } },
-      } as never);
-      vi.mocked(getRepoConfigById).mockResolvedValueOnce({ owner: "org", name: "repo" } as never);
+      vi.mocked(getOctokitForRepo).mockResolvedValueOnce(
+        cast({
+          rest: { pulls: { get: vi.fn().mockResolvedValueOnce({ data: { merged: true } }) } },
+        }),
+      );
+      vi.mocked(getRepoConfigById).mockResolvedValueOnce(cast({ owner: "org", name: "repo" }));
       vi.mocked(getRepoDir).mockReturnValue("/tmp/workdir");
       vi.mocked(removeWorktree).mockResolvedValueOnce(undefined);
 

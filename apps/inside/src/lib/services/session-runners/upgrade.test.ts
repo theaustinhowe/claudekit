@@ -34,6 +34,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { runClaude } from "@claudekit/claude-runner";
+import { cast } from "@claudekit/test-utils";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
 import { getUpgradeTasks, updateUpgradeTask } from "@/lib/actions/upgrade-tasks";
 import { safeGitCommit } from "@/lib/services/git-utils";
@@ -102,9 +103,9 @@ const failedTask = {
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetProject.mockResolvedValue(fakeProject());
-  mockRunClaude.mockResolvedValue({ exitCode: 0, stdout: "done", stderr: "" } as never);
-  mockGetUpgradeTasks.mockResolvedValue([pendingTask] as never);
-  mockSafeGitCommit.mockReturnValue({ committed: true } as never);
+  mockRunClaude.mockResolvedValue(cast({ exitCode: 0, stdout: "done", stderr: "" }));
+  mockGetUpgradeTasks.mockResolvedValue(cast([pendingTask]));
+  mockSafeGitCommit.mockReturnValue(cast({ committed: true }));
 });
 
 describe("createUpgradeRunner", () => {
@@ -126,7 +127,7 @@ describe("createUpgradeRunner", () => {
   });
 
   it("throws when no pending tasks", async () => {
-    mockGetUpgradeTasks.mockResolvedValue([{ ...pendingTask, status: "completed" }] as never);
+    mockGetUpgradeTasks.mockResolvedValue(cast([{ ...pendingTask, status: "completed" }]));
     const runner = createUpgradeRunner({}, "proj-1");
     await expect(runner(makeContext())).rejects.toThrow("No pending tasks to execute");
   });
@@ -150,7 +151,7 @@ describe("createUpgradeRunner", () => {
   });
 
   it("does not archive on failure", async () => {
-    mockRunClaude.mockResolvedValue({ exitCode: 1, stdout: "", stderr: "err" } as never);
+    mockRunClaude.mockResolvedValue(cast({ exitCode: 1, stdout: "", stderr: "err" }));
     const runner = createUpgradeRunner({}, "proj-1");
     await runner(makeContext());
 
@@ -158,7 +159,7 @@ describe("createUpgradeRunner", () => {
   });
 
   it("marks task as failed on non-zero exit code", async () => {
-    mockRunClaude.mockResolvedValue({ exitCode: 1, stdout: "", stderr: "error output" } as never);
+    mockRunClaude.mockResolvedValue(cast({ exitCode: 1, stdout: "", stderr: "error output" }));
     const runner = createUpgradeRunner({}, "proj-1");
     const result = await runner(makeContext());
 
@@ -167,8 +168,8 @@ describe("createUpgradeRunner", () => {
   });
 
   it("stops processing on failure", async () => {
-    mockGetUpgradeTasks.mockResolvedValue([pendingTask, failedTask] as never);
-    mockRunClaude.mockResolvedValue({ exitCode: 1, stdout: "", stderr: "" } as never);
+    mockGetUpgradeTasks.mockResolvedValue(cast([pendingTask, failedTask]));
+    mockRunClaude.mockResolvedValue(cast({ exitCode: 1, stdout: "", stderr: "" }));
     const runner = createUpgradeRunner({}, "proj-1");
     await runner(makeContext());
 
@@ -193,7 +194,7 @@ describe("createUpgradeRunner", () => {
 
   describe("single task mode", () => {
     it("runs only the specified task", async () => {
-      mockGetUpgradeTasks.mockResolvedValue([pendingTask, failedTask] as never);
+      mockGetUpgradeTasks.mockResolvedValue(cast([pendingTask, failedTask]));
       const runner = createUpgradeRunner({ taskId: "task-1" }, "proj-1");
       const result = await runner(makeContext());
 
@@ -208,7 +209,7 @@ describe("createUpgradeRunner", () => {
     });
 
     it("throws when specified task is already completed", async () => {
-      mockGetUpgradeTasks.mockResolvedValue([{ ...pendingTask, status: "completed" }] as never);
+      mockGetUpgradeTasks.mockResolvedValue(cast([{ ...pendingTask, status: "completed" }]));
       const runner = createUpgradeRunner({ taskId: "task-1" }, "proj-1");
       await expect(runner(makeContext())).rejects.toThrow("Task is already completed");
     });
@@ -223,7 +224,7 @@ describe("createUpgradeRunner", () => {
 
   describe("task step types", () => {
     it("uses read-only tools for env_setup step type", async () => {
-      mockGetUpgradeTasks.mockResolvedValue([{ ...pendingTask, step_type: "env_setup" }] as never);
+      mockGetUpgradeTasks.mockResolvedValue(cast([{ ...pendingTask, step_type: "env_setup" }]));
       const runner = createUpgradeRunner({}, "proj-1");
       await runner(makeContext());
 
@@ -236,7 +237,7 @@ describe("createUpgradeRunner", () => {
     });
 
     it("uses read-only tools for validate step type", async () => {
-      mockGetUpgradeTasks.mockResolvedValue([{ ...pendingTask, step_type: "validate" }] as never);
+      mockGetUpgradeTasks.mockResolvedValue(cast([{ ...pendingTask, step_type: "validate" }]));
       const runner = createUpgradeRunner({}, "proj-1");
       await runner(makeContext());
 
@@ -291,7 +292,7 @@ describe("createUpgradeRunner", () => {
   });
 
   it("also runs failed tasks", async () => {
-    mockGetUpgradeTasks.mockResolvedValue([failedTask] as never);
+    mockGetUpgradeTasks.mockResolvedValue(cast([failedTask]));
     const runner = createUpgradeRunner({}, "proj-1");
     const result = await runner(makeContext());
 
