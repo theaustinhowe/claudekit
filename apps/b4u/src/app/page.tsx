@@ -2,7 +2,7 @@
 
 import { ErrorBoundary } from "@claudekit/ui/components/error-boundary";
 import { SplitPanel } from "@claudekit/ui/components/split-panel";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { Suspense, useCallback, useEffect, useReducer, useRef } from "react";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { LayoutShell } from "@/components/layout/layout-shell";
 import { RightPanel } from "@/components/phases/right-panel";
@@ -109,7 +109,9 @@ export default function Home() {
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       <SyncStatusContext.Provider value={syncStatus}>
-        <AppShell />
+        <Suspense fallback={null}>
+          <AppShell />
+        </Suspense>
       </SyncStatusContext.Provider>
     </AppContext.Provider>
   );

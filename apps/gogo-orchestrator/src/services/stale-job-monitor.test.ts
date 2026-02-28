@@ -181,6 +181,31 @@ describe("stale-job-monitor", () => {
     expect(result.paused).toBe(1);
   });
 
+  it("should not increment paused count when updated job is null after pause update", async () => {
+    const oldTime = new Date(Date.now() - STALE_THRESHOLD_MS - 1000).toISOString();
+
+    vi.mocked(queryAll).mockResolvedValue([
+      { id: "vanished-1", status: "running", updated_at: oldTime, process_pid: null },
+    ]);
+    vi.mocked(queryOne)
+      .mockResolvedValueOnce({ created_at: oldTime }) // last log
+      .mockResolvedValueOnce(null); // queryOne returns null after pause update (job disappeared)
+
+    const result = await checkStaleJobs();
+
+    // The job was updated in DB (execute called for UPDATE), but queryOne returned null
+    // so we should NOT increment paused, NOT broadcast, NOT emit health event
+    expect(result).toEqual({ checked: 1, paused: 0, warned: 0 });
+    expect(execute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining("UPDATE jobs SET status = ?"),
+      expect.arrayContaining(["paused"]),
+    );
+    // No event insertion, broadcast, or health event since updated is null
+    expect(broadcast).not.toHaveBeenCalled();
+    expect(emitHealthEvent).not.toHaveBeenCalled();
+  });
+
   it("should check multiple running jobs", async () => {
     vi.spyOn(console, "log").mockImplementation(() => {});
 

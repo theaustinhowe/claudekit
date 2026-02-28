@@ -182,6 +182,49 @@ describe("shutdown", () => {
       expect(exitSpy).toHaveBeenCalledWith(0);
     });
 
+    it("should continue shutdown even if job transition execute throws", async () => {
+      // First queryAll call (for agent runs): no running jobs via agents
+      // Second queryAll call (for job transition): returns running jobs
+      // Then execute throws during the UPDATE
+      let queryAllCallCount = 0;
+      mockQueryAll.mockImplementation(async () => {
+        queryAllCallCount++;
+        if (queryAllCallCount === 2) {
+          return [{ id: "job-transition-fail" }];
+        }
+        return [];
+      });
+      mockExecute.mockRejectedValue(new Error("DB connection lost"));
+
+      const { registerShutdownHandlers } = await import("./shutdown.js");
+      registerShutdownHandlers();
+
+      const handler = (process.listeners("SIGTERM") as SignalHandler[]).pop();
+      if (handler) await handler();
+
+      // Should still close DB and exit despite the transition error
+      expect(mockCloseDatabase).toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(0);
+    });
+
+    it("should continue shutdown even if log buffer flush throws", async () => {
+      const mockShutdownLogBuffers = vi.fn().mockRejectedValue(new Error("Flush failed"));
+      vi.doMock("../utils/job-logging.js", () => ({
+        shutdownLogBuffers: mockShutdownLogBuffers,
+      }));
+
+      const { registerShutdownHandlers } = await import("./shutdown.js");
+      registerShutdownHandlers();
+
+      const handler = (process.listeners("SIGTERM") as SignalHandler[]).pop();
+      if (handler) await handler();
+
+      // Should still close DB and exit despite flush failure
+      expect(mockShutdownLogBuffers).toHaveBeenCalled();
+      expect(mockCloseDatabase).toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(0);
+    });
+
     it("should be idempotent - second call is a no-op", async () => {
       const { registerShutdownHandlers, isShutdownInProgress } = await import("./shutdown.js");
       registerShutdownHandlers();

@@ -1,8 +1,16 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DiscoveredRepo, VerifyRepositoryResponse } from "@/lib/api";
 import { RepositoryStep } from "./repository-step";
 import type { SelectedRepo } from "./setup-wizard";
+
+// Mock popover to render inline (no Portal)
+vi.mock("@claudekit/ui/components/popover", () => ({
+  Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
 
 // Mock the browse directory hook
 const mockBrowseMutate = vi.fn();
@@ -120,7 +128,8 @@ describe("RepositoryStep", () => {
     ];
     render(<RepositoryStep {...makeDefaultProps({ discoveredRepos })} />);
 
-    expect(screen.getByText("Found Repositories (2)")).toBeInTheDocument();
+    expect(screen.getByText("Found Repositories")).toBeInTheDocument();
+    expect(screen.getByText("2 repositories found")).toBeInTheDocument();
     expect(screen.getByText("acme/project-a")).toBeInTheDocument();
     expect(screen.getByText("acme/project-b")).toBeInTheDocument();
   });
@@ -135,7 +144,7 @@ describe("RepositoryStep", () => {
     expect(screen.getByText(/none have GitHub remotes configured/)).toBeInTheDocument();
   });
 
-  it("marks existing repos as disabled with 'Already added' text", () => {
+  it("marks existing repos as disabled", () => {
     const discoveredRepos: DiscoveredRepo[] = [
       {
         path: "/home/user/project-a",
@@ -148,7 +157,9 @@ describe("RepositoryStep", () => {
     const existingRepoKeys = new Set(["acme/project-a"]);
     render(<RepositoryStep {...makeDefaultProps({ discoveredRepos, existingRepoKeys })} />);
 
-    expect(screen.getByText("Already added")).toBeInTheDocument();
+    // Existing repos have their button disabled
+    const repoButton = screen.getByText("acme/project-a").closest("button");
+    expect(repoButton).toBeDisabled();
   });
 
   it("calls onToggleRepo when a non-existing repo is clicked", () => {
@@ -186,13 +197,22 @@ describe("RepositoryStep", () => {
     expect(onToggleRepo).not.toHaveBeenCalled();
   });
 
-  it("renders selected repos section when repos are selected", () => {
+  it("renders selected repos with selection count in trigger", () => {
+    const discoveredRepos: DiscoveredRepo[] = [
+      {
+        path: "/home/user/project-a",
+        owner: "acme",
+        name: "project-a",
+        remoteUrl: "git@github.com:acme/project-a.git",
+        currentBranch: "main",
+      },
+    ];
     const selectedRepos: SelectedRepo[] = [
       { owner: "acme", name: "project-a", triggerLabel: "agent", baseBranch: "main" },
     ];
-    render(<RepositoryStep {...makeDefaultProps({ selectedRepos })} />);
+    render(<RepositoryStep {...makeDefaultProps({ selectedRepos, discoveredRepos })} />);
 
-    expect(screen.getByText("Selected Repositories (1)")).toBeInTheDocument();
+    expect(screen.getByText("1 of 1 repositories selected")).toBeInTheDocument();
     expect(screen.getByText("acme/project-a")).toBeInTheDocument();
   });
 
@@ -247,16 +267,24 @@ describe("RepositoryStep", () => {
   });
 
   it("shows verification failure indicator for a specific repo", () => {
+    const discoveredRepos: DiscoveredRepo[] = [
+      {
+        path: "/home/user/project-a",
+        owner: "acme",
+        name: "project-a",
+        remoteUrl: "git@github.com:acme/project-a.git",
+        currentBranch: "main",
+      },
+    ];
     const selectedRepos: SelectedRepo[] = [
       { owner: "acme", name: "project-a", triggerLabel: "agent", baseBranch: "main" },
     ];
     const verificationResults = new Map<string, VerifyRepositoryResponse>([
       ["acme/project-a", { success: false, error: "Repo not found" }],
     ]);
-    render(<RepositoryStep {...makeDefaultProps({ selectedRepos, verificationResults })} />);
+    render(<RepositoryStep {...makeDefaultProps({ selectedRepos, discoveredRepos, verificationResults })} />);
 
-    // The failed repo card has a destructive border style applied
-    const repoCard = screen.getByText("acme/project-a").closest("div.rounded-lg");
-    expect(repoCard?.className).toContain("border-destructive");
+    // The failed repo shows the error text
+    expect(screen.getByText("Repo not found")).toBeInTheDocument();
   });
 });

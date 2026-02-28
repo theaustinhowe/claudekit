@@ -43,7 +43,7 @@ const manager = createSessionManager({
   logFlushIntervalMs: SESSION_LOG_FLUSH_INTERVAL_MS,
 });
 
-export const { startSession, getLiveSession, setCleanupFn, setSessionPid } = manager;
+export const { startSession, setSessionPid } = manager;
 
 export { manager as sessionManager };
 

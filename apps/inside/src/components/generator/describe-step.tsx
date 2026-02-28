@@ -369,6 +369,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   );
 
   // --- CLI constraint auto-disable ---
+  // biome-ignore lint/correctness/useExhaustiveDependencies: constraints is read as snapshot on platform/language change
   useEffect(() => {
     if (platform !== "cli") {
       if (prevConstraintsRef.current) {
@@ -396,7 +397,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
       }
       setConstraintNote(null);
     }
-  }, [platform, toolVersions["cli-language"]]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [platform, toolVersions["cli-language"]]);
 
   const toggleService = (id: string) => {
     setServices((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));

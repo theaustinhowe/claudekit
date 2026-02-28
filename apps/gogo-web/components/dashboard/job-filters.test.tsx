@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@claudekit/ui", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
+  formatNumber: (n: number) => String(n),
 }));
 
 vi.mock("@claudekit/ui/components/badge", () => ({

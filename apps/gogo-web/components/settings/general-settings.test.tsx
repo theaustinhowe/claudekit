@@ -44,6 +44,7 @@ vi.mock("lucide-react", () => ({
   FolderOpen: () => <span />,
   Loader2: () => <span />,
   Settings: () => <span />,
+  Info: () => <span />,
 }));
 
 vi.mock("sonner", () => ({
