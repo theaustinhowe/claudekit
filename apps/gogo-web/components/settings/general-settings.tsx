@@ -43,16 +43,19 @@ export function GeneralSettings() {
   }, [serverSettings, settings]);
 
   const handleSave = () => {
-    saveSettings(settings as unknown as Record<string, unknown>, {
-      onSuccess: () => {
-        toast.success("Settings Saved", {
-          description: "General settings have been updated.",
-        });
+    saveSettings(
+      { ...settings },
+      {
+        onSuccess: () => {
+          toast.success("Settings Saved", {
+            description: "General settings have been updated.",
+          });
+        },
+        onError: (error) => {
+          toast.error("Failed to save settings", { description: error.message });
+        },
       },
-      onError: (error) => {
-        toast.error("Failed to save settings", { description: error.message });
-      },
-    });
+    );
   };
 
   return (

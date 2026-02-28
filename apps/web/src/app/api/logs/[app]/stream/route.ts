@@ -15,6 +15,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
   }
 
   const encoder = new TextEncoder();
+  let cleanupFn: (() => void) | undefined;
+
   const stream = new ReadableStream({
     async start(controller) {
       // Read last 50 lines first
@@ -74,21 +76,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
         }
       }, 15000);
 
-      // Clean up on close
-      const cleanup = () => {
+      // Store cleanup in closure variable for cancel() access
+      cleanupFn = () => {
         clearInterval(heartbeat);
         watcher.close();
       };
 
       // The controller will be closed when the client disconnects
       controller.enqueue(encoder.encode(": connected\n\n"));
-
-      // Store cleanup for when stream is cancelled
-      (stream as unknown as Record<string, unknown>).__cleanup = cleanup;
     },
     cancel() {
-      const cleanup = (stream as unknown as Record<string, unknown>).__cleanup as (() => void) | undefined;
-      cleanup?.();
+      cleanupFn?.();
     },
   });
 

@@ -238,7 +238,7 @@ export async function fetchPRDiff(owner: string, repo: string, prNumber: number)
     pull_number: prNumber,
     mediaType: { format: "diff" },
   });
-  return data as unknown as string;
+  return String(data);
 }
 
 export async function fetchFileContent(owner: string, repo: string, path: string, ref: string): Promise<string | null> {

@@ -4,16 +4,16 @@ import { buildUpdate, execute, getDb, parseJsonField, queryAll, queryOne } from 
 import type { ManualFinding } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 
-function parseManualFinding(row: Record<string, unknown>): ManualFinding {
+function parseManualFinding(row: ManualFinding): ManualFinding {
   return {
     ...row,
     suggested_actions: parseJsonField(row.suggested_actions, []),
-  } as unknown as ManualFinding;
+  };
 }
 
 export async function getManualFindingsForRepo(repoId: string): Promise<ManualFinding[]> {
   const db = await getDb();
-  const rows = await queryAll<Record<string, unknown>>(
+  const rows = await queryAll<ManualFinding>(
     db,
     `SELECT * FROM manual_findings WHERE repo_id = ?
      ORDER BY
@@ -57,7 +57,7 @@ export async function createManualFinding(data: {
     ],
   );
 
-  const row = await queryOne<Record<string, unknown>>(db, "SELECT * FROM manual_findings WHERE id = ?", [id]);
+  const row = await queryOne<ManualFinding>(db, "SELECT * FROM manual_findings WHERE id = ?", [id]);
   if (!row) throw new Error("Failed to create manual finding");
   return parseManualFinding(row);
 }
@@ -80,7 +80,7 @@ export async function updateManualFinding(
     await execute(db, update.sql, update.params);
   }
 
-  const row = await queryOne<Record<string, unknown>>(db, "SELECT * FROM manual_findings WHERE id = ?", [id]);
+  const row = await queryOne<ManualFinding>(db, "SELECT * FROM manual_findings WHERE id = ?", [id]);
   if (!row) return null;
   return parseManualFinding(row);
 }

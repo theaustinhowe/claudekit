@@ -1,13 +1,12 @@
 "use server";
 
-import fs from "node:fs";
 import { buildUpdate, execute, getDb, parseJsonField, queryAll, queryOne } from "@/lib/db";
 import { buildImplementationPrompt } from "@/lib/services/scaffold-prompt";
 import { deleteScreenshotFiles } from "@/lib/services/screenshot-service";
 import type { DesignMessage, GeneratorProject, MockEntity, SpecDiff, UiSpec } from "@/lib/types";
-import { expandTilde, generateId, nowTimestamp } from "@/lib/utils";
+import { generateId, nowTimestamp } from "@/lib/utils";
 
-function parseProject(row: Record<string, unknown>): GeneratorProject {
+function parseProject(row: GeneratorProject): GeneratorProject {
   return {
     ...row,
     services: parseJsonField(row.services, []),
@@ -16,9 +15,8 @@ function parseProject(row: Record<string, unknown>): GeneratorProject {
     inspiration_urls: parseJsonField(row.inspiration_urls, []),
     color_scheme: parseJsonField(row.color_scheme, {}),
     custom_features: parseJsonField(row.custom_features, []),
-    tool_versions: parseJsonField(row.tool_versions, {}),
     scaffold_logs: parseJsonField(row.scaffold_logs, null),
-  } as unknown as GeneratorProject;
+  };
 }
 
 function parseMessage(row: Record<string, unknown>): DesignMessage {
@@ -46,7 +44,6 @@ export async function createGeneratorProject(data: {
   inspiration_urls?: string[];
   color_scheme?: { primary?: string; accent?: string };
   custom_features?: string[];
-  tool_versions?: Record<string, string>;
 }): Promise<GeneratorProject> {
   const db = await getDb();
   const id = generateId();
@@ -67,8 +64,8 @@ export async function createGeneratorProject(data: {
 
   await execute(
     db,
-    `INSERT INTO generator_projects (id, title, idea_description, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, tool_versions, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO generator_projects (id, title, idea_description, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       data.title,
@@ -87,26 +84,25 @@ export async function createGeneratorProject(data: {
       JSON.stringify(data.inspiration_urls || []),
       JSON.stringify(data.color_scheme || {}),
       JSON.stringify(data.custom_features || []),
-      JSON.stringify(data.tool_versions || {}),
       now,
       now,
     ],
   );
 
-  const row = await queryOne<Record<string, unknown>>(db, "SELECT * FROM generator_projects WHERE id = ?", [id]);
+  const row = await queryOne<GeneratorProject>(db, "SELECT * FROM generator_projects WHERE id = ?", [id]);
   if (!row) throw new Error(`Failed to create generator project: ${id}`);
   return parseProject(row);
 }
 
 export async function getGeneratorProject(id: string): Promise<GeneratorProject | null> {
   const db = await getDb();
-  const row = await queryOne<Record<string, unknown>>(db, "SELECT * FROM generator_projects WHERE id = ?", [id]);
+  const row = await queryOne<GeneratorProject>(db, "SELECT * FROM generator_projects WHERE id = ?", [id]);
   return row ? parseProject(row) : null;
 }
 
 export async function getGeneratorProjects(): Promise<GeneratorProject[]> {
   const db = await getDb();
-  const rows = await queryAll<Record<string, unknown>>(db, "SELECT * FROM generator_projects ORDER BY updated_at DESC");
+  const rows = await queryAll<GeneratorProject>(db, "SELECT * FROM generator_projects ORDER BY updated_at DESC");
   return rows.map(parseProject);
 }
 
@@ -225,8 +221,4 @@ export async function createDesignMessage(data: {
     suggestions: data.suggestions || null,
     created_at: nowTimestamp(),
   };
-}
-
-export async function checkPathExists(fullPath: string): Promise<boolean> {
-  return fs.existsSync(expandTilde(fullPath));
 }

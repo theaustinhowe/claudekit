@@ -7,9 +7,11 @@ import { spawn } from "node:child_process";
 export function runCommand(command: string): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
 
+  let childProcess: ReturnType<typeof spawn> | undefined;
+
   return new ReadableStream({
     start(controller) {
-      const child = spawn("bash", ["-l", "-c", command], {
+      childProcess = spawn("bash", ["-l", "-c", command], {
         env: { ...process.env, FORCE_COLOR: "0" },
         stdio: ["ignore", "pipe", "pipe"],
       });
@@ -22,15 +24,15 @@ export function runCommand(command: string): ReadableStream<Uint8Array> {
         }
       }
 
-      child.stdout?.on("data", (chunk: Buffer) => {
+      childProcess.stdout?.on("data", (chunk: Buffer) => {
         send({ type: "output", data: chunk.toString() });
       });
 
-      child.stderr?.on("data", (chunk: Buffer) => {
+      childProcess.stderr?.on("data", (chunk: Buffer) => {
         send({ type: "output", data: chunk.toString() });
       });
 
-      child.on("close", (code) => {
+      childProcess.on("close", (code) => {
         send({ type: "done", exitCode: code ?? 1 });
         try {
           controller.close();
@@ -39,7 +41,7 @@ export function runCommand(command: string): ReadableStream<Uint8Array> {
         }
       });
 
-      child.on("error", (err) => {
+      childProcess.on("error", (err) => {
         send({ type: "error", data: err.message });
         try {
           controller.close();
@@ -47,14 +49,10 @@ export function runCommand(command: string): ReadableStream<Uint8Array> {
           // already closed
         }
       });
-
-      // Store child for cleanup
-      (controller as unknown as Record<string, unknown>).__child = child;
     },
     cancel() {
       // Kill child process on client disconnect
-      const child = (this as unknown as Record<string, unknown>).__child as { kill: (s: string) => void } | undefined;
-      child?.kill("SIGTERM");
+      childProcess?.kill("SIGTERM");
     },
   });
 }

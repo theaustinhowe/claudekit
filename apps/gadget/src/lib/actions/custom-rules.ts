@@ -4,34 +4,31 @@ import { buildUpdate, execute, getDb, parseJsonField, queryAll, queryOne } from 
 import type { CustomRule } from "@/lib/types";
 import { generateId, nowTimestamp } from "@/lib/utils";
 
-function parseRule(row: Record<string, unknown>): CustomRule {
+function parseRule(row: CustomRule): CustomRule {
   return {
     ...row,
     config: parseJsonField(row.config, {}) as Record<string, unknown>,
     suggested_actions: parseJsonField(row.suggested_actions, []) as string[],
-  } as unknown as CustomRule;
+  };
 }
 
 export async function getCustomRules(policyId?: string): Promise<CustomRule[]> {
   const db = await getDb();
   if (policyId) {
-    const rows = await queryAll<Record<string, unknown>>(
+    const rows = await queryAll<CustomRule>(
       db,
       "SELECT * FROM custom_rules WHERE policy_id = ? OR policy_id IS NULL ORDER BY is_builtin DESC, name ASC",
       [policyId],
     );
     return rows.map((r) => parseRule(r));
   }
-  const rows = await queryAll<Record<string, unknown>>(
-    db,
-    "SELECT * FROM custom_rules ORDER BY is_builtin DESC, name ASC",
-  );
+  const rows = await queryAll<CustomRule>(db, "SELECT * FROM custom_rules ORDER BY is_builtin DESC, name ASC");
   return rows.map((r) => parseRule(r));
 }
 
 export async function getEnabledRulesForPolicy(policyId: string): Promise<CustomRule[]> {
   const db = await getDb();
-  const rows = await queryAll<Record<string, unknown>>(
+  const rows = await queryAll<CustomRule>(
     db,
     "SELECT * FROM custom_rules WHERE is_enabled = true AND (policy_id = ? OR policy_id IS NULL) ORDER BY name ASC",
     [policyId],
@@ -72,7 +69,7 @@ export async function createCustomRule(data: {
     ],
   );
 
-  const row = await queryOne<Record<string, unknown>>(db, "SELECT * FROM custom_rules WHERE id = ?", [id]);
+  const row = await queryOne<CustomRule>(db, "SELECT * FROM custom_rules WHERE id = ?", [id]);
   if (!row) throw new Error("Failed to create custom rule");
   return parseRule(row);
 }
@@ -98,7 +95,7 @@ export async function updateCustomRule(
     await execute(db, update.sql, update.params);
   }
 
-  const row = await queryOne<Record<string, unknown>>(db, "SELECT * FROM custom_rules WHERE id = ?", [id]);
+  const row = await queryOne<CustomRule>(db, "SELECT * FROM custom_rules WHERE id = ?", [id]);
   if (!row) return null;
   return parseRule(row);
 }

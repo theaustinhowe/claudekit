@@ -14,6 +14,6 @@ export function createRecordingRunner(
       onProgress,
       signal,
     });
-    return { result: result as unknown as Record<string, unknown> };
+    return { result: { ...result } };
   };
 }

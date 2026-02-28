@@ -5,16 +5,16 @@ import { scanAIFiles } from "@/lib/services/auditors/ai-files";
 import type { AIFile, Finding } from "@/lib/types";
 import { expandTilde, generateId } from "@/lib/utils";
 
-function parseFinding(row: Record<string, unknown>): Finding {
+function parseFinding(row: Finding): Finding {
   return {
     ...row,
     suggested_actions: parseJsonField(row.suggested_actions, []),
-  } as unknown as Finding;
+  };
 }
 
 export async function getFindingsForRepo(repoId: string): Promise<Finding[]> {
   const db = await getDb();
-  const rows = await queryAll<Record<string, unknown>>(
+  const rows = await queryAll<Finding>(
     db,
     "SELECT * FROM findings WHERE repo_id = ? ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END, created_at DESC",
     [repoId],
