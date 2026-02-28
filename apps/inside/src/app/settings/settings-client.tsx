@@ -6,6 +6,7 @@ import { AboutCard } from "@claudekit/ui/components/about-card";
 import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { Label } from "@claudekit/ui/components/label";
+import { ProcessCleanup } from "@claudekit/ui/components/process-cleanup";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { FolderOpen, Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -134,7 +135,9 @@ export function SettingsClient({ defaultProjectPath: initialPath }: SettingsClie
         </CardContent>
       </Card>
 
-      <AboutCard appName="Inside" version="0.1.0" port={2150} />
+      <AboutCard appName="Inside" version="0.1.0" port={2150}>
+        <ProcessCleanup />
+      </AboutCard>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { AboutCard } from "./about-card";
+import { ProcessCleanup } from "./process-cleanup";
 
 const meta: Meta<typeof AboutCard> = {
   title: "Components/AboutCard",
@@ -26,15 +27,7 @@ export const WithChildren: Story = {
   },
   render: (args) => (
     <AboutCard {...args}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium">Dev Server Cleanup</p>
-          <p className="text-sm text-muted-foreground">No dev servers running</p>
-        </div>
-        <button type="button" className="px-3 py-1.5 text-sm border rounded-md">
-          Stop All
-        </button>
-      </div>
+      <ProcessCleanup />
     </AboutCard>
   ),
 };

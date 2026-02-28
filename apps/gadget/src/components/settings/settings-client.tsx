@@ -8,20 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@clau
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@claudekit/ui/components/collapsible";
 import { Input } from "@claudekit/ui/components/input";
 import { Label } from "@claudekit/ui/components/label";
+import { ProcessCleanup } from "@claudekit/ui/components/process-cleanup";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
-import {
-  ChevronDown,
-  FolderOpen,
-  Loader2,
-  Monitor,
-  Moon,
-  Plus,
-  RotateCcw,
-  Sparkles,
-  Square,
-  Sun,
-  X,
-} from "lucide-react";
+import { ChevronDown, FolderOpen, Monitor, Moon, Plus, RotateCcw, Sparkles, Sun, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
@@ -41,62 +30,6 @@ interface SettingsClientProps {
   serverKeys: ServerKeyGroup[];
   cleanupFiles: string[];
   initialTab?: string;
-}
-
-function DevServerCleanup() {
-  const [running, setRunning] = useState<number | null>(null);
-  const [killing, setKilling] = useState(false);
-
-  const checkServers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/dev-servers/cleanup");
-      if (res.ok) {
-        const data = await res.json();
-        setRunning(data.servers.length);
-      }
-    } catch {
-      setRunning(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkServers();
-  }, [checkServers]);
-
-  const handleCleanup = useCallback(async () => {
-    setKilling(true);
-    try {
-      const res = await fetch("/api/dev-servers/cleanup", { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
-        toast.success(`Stopped ${data.stopped} dev server${data.stopped !== 1 ? "s" : ""}`);
-        setRunning(0);
-      }
-    } catch {
-      toast.error("Failed to stop dev servers");
-    } finally {
-      setKilling(false);
-    }
-  }, []);
-
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div>
-        <Label>Dev Server Cleanup</Label>
-        <p className="text-sm text-muted-foreground">
-          {running === null
-            ? "Check for background dev servers"
-            : running === 0
-              ? "No dev servers running"
-              : `${running} dev server${running !== 1 ? "s" : ""} running`}
-        </p>
-      </div>
-      <Button variant="outline" size="sm" onClick={handleCleanup} disabled={killing || running === 0}>
-        {killing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Square className="w-4 h-4 mr-1.5" />}
-        Stop All
-      </Button>
-    </div>
-  );
 }
 
 export function SettingsClient({
@@ -416,7 +349,7 @@ export function SettingsClient({
               {/* About */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                 <AboutCard appName="Gadget" version="1.0.0-beta" port={2100}>
-                  <DevServerCleanup />
+                  <ProcessCleanup />
                 </AboutCard>
               </motion.div>
             </div>

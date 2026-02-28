@@ -11,9 +11,9 @@ import { Button } from "@claudekit/ui/components/button";
 import { cn } from "@claudekit/ui";
 ```
 
-## Components (37)
+## Components (38)
 
-about-card, alert-dialog, badge, button, calendar, card, checkbox, collapsible, collapsible-sidebar, dialog, diff-viewer, directory-picker, dropdown-menu, error-boundary, file-tree, file-viewer, input, label, markdown-renderer, nav-link, popover, progress, scroll-area, select, separator, sheet, skeleton, slider, sonner, split-panel, switch, syntax-highlighter, table, tabs, textarea, theme-toggle, tooltip
+about-card, alert-dialog, badge, button, calendar, card, checkbox, collapsible, collapsible-sidebar, dialog, diff-viewer, directory-picker, dropdown-menu, error-boundary, file-tree, file-viewer, input, label, markdown-renderer, nav-link, popover, process-cleanup, progress, scroll-area, select, separator, sheet, skeleton, slider, sonner, split-panel, switch, syntax-highlighter, table, tabs, textarea, theme-toggle, tooltip
 
 ## Utilities
 

@@ -59,6 +59,61 @@ export function createCancelHandler(opts: {
 }
 
 // ---------------------------------------------------------------------------
+// Cleanup handler — stop all running/pending sessions
+// ---------------------------------------------------------------------------
+
+/**
+ * Create GET + POST handlers for bulk session cleanup.
+ * - **GET** returns currently active sessions and their count.
+ * - **POST** cancels every active session and returns a summary.
+ */
+export function createCleanupHandler(opts: {
+  listSessions: (filter?: ListSessionsFilter) => Promise<SessionRowBase[]>;
+  manager: Pick<SessionManager, "cancelSession">;
+}): {
+  GET: (request: Request) => Promise<Response>;
+  POST: (request: Request) => Promise<Response>;
+} {
+  const { listSessions, manager } = opts;
+
+  const getActiveSessions = () => listSessions({ status: ["running", "pending"] });
+
+  return {
+    async GET() {
+      try {
+        const sessions = await getActiveSessions();
+        return NextResponse.json({ sessions, count: sessions.length });
+      } catch (err) {
+        console.error("[cleanup] Error listing active sessions:", err);
+        return NextResponse.json({ error: "Failed to list sessions" }, { status: 500 });
+      }
+    },
+
+    async POST() {
+      try {
+        const sessions = await getActiveSessions();
+        let stopped = 0;
+        let failed = 0;
+
+        for (const session of sessions) {
+          try {
+            await manager.cancelSession(session.id);
+            stopped++;
+          } catch {
+            failed++;
+          }
+        }
+
+        return NextResponse.json({ stopped, failed, total: sessions.length });
+      } catch (err) {
+        console.error("[cleanup] Error during bulk cleanup:", err);
+        return NextResponse.json({ error: "Failed to clean up sessions" }, { status: 500 });
+      }
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Session list handler
 // ---------------------------------------------------------------------------
 

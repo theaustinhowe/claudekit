@@ -19,6 +19,7 @@ import { Button } from "@claudekit/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@claudekit/ui/components/card";
 import { Checkbox } from "@claudekit/ui/components/checkbox";
 import { Input } from "@claudekit/ui/components/input";
+import { ProcessCleanup } from "@claudekit/ui/components/process-cleanup";
 import { Progress } from "@claudekit/ui/components/progress";
 import { Slider } from "@claudekit/ui/components/slider";
 import { Switch } from "@claudekit/ui/components/switch";
@@ -467,7 +468,9 @@ export function SettingsClient({ repos: initialRepos, settings, hasPAT, user, sk
         </CardContent>
       </Card>
 
-      <AboutCard appName="Inspector" version="0.1.0" port={2400} />
+      <AboutCard appName="Inspector" version="0.1.0" port={2400}>
+        <ProcessCleanup />
+      </AboutCard>
     </>
   );
 }
