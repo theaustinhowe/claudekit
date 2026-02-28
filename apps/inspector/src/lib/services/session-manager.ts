@@ -1,6 +1,5 @@
 import type { SessionRunner } from "@claudekit/session";
-import { createSessionManager } from "@claudekit/session";
-import { SESSION_EVENT_BUFFER_SIZE, SESSION_LOG_FLUSH_INTERVAL_MS } from "@/lib/constants";
+import { createSessionManager, SESSION_EVENT_BUFFER_SIZE, SESSION_LOG_FLUSH_INTERVAL_MS } from "@claudekit/session";
 import type { SessionType } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
@@ -44,7 +43,7 @@ const manager = createSessionManager({
   logFlushIntervalMs: SESSION_LOG_FLUSH_INTERVAL_MS,
 });
 
-export const { startSession, setSessionPid } = manager;
+export const { startSession, getLiveSession, setCleanupFn, setSessionPid } = manager;
 
 export { manager as sessionManager };
 

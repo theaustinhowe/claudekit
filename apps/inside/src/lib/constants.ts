@@ -388,11 +388,13 @@ export const IMAGE_MIME_TYPES: Record<string, string> = {
 
 export const IMAGE_EXTENSIONS = new Set(Object.keys(IMAGE_MIME_TYPES));
 
-// --- Session Constants ---
+// --- Session Constants (re-exported from shared package) ---
 
-export const SESSION_EVENT_BUFFER_SIZE = 500;
-export const SESSION_LOG_FLUSH_INTERVAL_MS = 2_000;
-export const SESSION_HEARTBEAT_INTERVAL_MS = 15_000;
+export {
+  SESSION_EVENT_BUFFER_SIZE,
+  SESSION_HEARTBEAT_INTERVAL_MS,
+  SESSION_LOG_FLUSH_INTERVAL_MS,
+} from "@claudekit/session";
 
 export const SESSION_TYPE_LABELS: Record<string, string> = {
   scaffold: "Scaffold",

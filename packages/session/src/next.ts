@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SSEReplayCallbacks } from "./sse";
 import { createSessionSSEResponse } from "./sse";
-import type { SessionManager, SessionRowBase } from "./types";
+import type { LiveSession, SessionManager, SessionRowBase, SessionRunner } from "./types";
 
 type RouteContext = { params: Promise<Record<string, string>> };
 
@@ -110,6 +110,78 @@ export function createCleanupHandler(opts: {
         return NextResponse.json({ error: "Failed to clean up sessions" }, { status: 500 });
       }
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Session POST handler — create + start a session
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a POST handler for creating and starting a session.
+ * Apps inject their own `createSession`, `startSession`, and `sessionRunners`.
+ */
+export function createSessionPOSTHandler(opts: {
+  createSession: (params: {
+    sessionType: string;
+    label: string;
+    contextType?: string | null;
+    contextId?: string | null;
+    contextName?: string | null;
+    metadata?: Record<string, unknown>;
+  }) => Promise<string>;
+  startSession: (sessionId: string, runner: SessionRunner) => Promise<LiveSession>;
+  sessionRunners: Record<string, (metadata: Record<string, unknown>, contextId?: string) => SessionRunner>;
+}): (request: Request) => Promise<Response> {
+  const { createSession, startSession, sessionRunners } = opts;
+
+  return async (request: Request) => {
+    const body = await request.json();
+    const {
+      type: sessionType,
+      label,
+      contextType,
+      contextId,
+      contextName,
+      metadata = {},
+    } = body as {
+      type: string;
+      label: string;
+      contextType?: string;
+      contextId?: string;
+      contextName?: string;
+      metadata?: Record<string, unknown>;
+    };
+
+    if (!sessionType || !label) {
+      return NextResponse.json({ error: "type and label are required" }, { status: 400 });
+    }
+
+    const runnerFactory = sessionRunners[sessionType];
+    if (!runnerFactory) {
+      return NextResponse.json({ error: `Unknown session type: ${sessionType}` }, { status: 400 });
+    }
+
+    try {
+      const sessionId = await createSession({
+        sessionType,
+        label,
+        contextType: contextType ?? null,
+        contextId: contextId ?? null,
+        contextName: contextName ?? null,
+        metadata,
+      });
+
+      const runner = runnerFactory(metadata, contextId);
+      await startSession(sessionId, runner);
+
+      return NextResponse.json({ sessionId }, { status: 201 });
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Failed to create session" },
+        { status: 500 },
+      );
+    }
   };
 }
 

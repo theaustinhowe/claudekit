@@ -1,6 +1,5 @@
 import type { SessionRunner } from "@claudekit/session";
-import { createSessionManager } from "@claudekit/session";
-import { SESSION_EVENT_BUFFER_SIZE, SESSION_LOG_FLUSH_INTERVAL_MS } from "@/lib/constants";
+import { createSessionManager, SESSION_EVENT_BUFFER_SIZE, SESSION_LOG_FLUSH_INTERVAL_MS } from "@claudekit/session";
 import type { SessionType } from "@/lib/types";
 
 // ---------------------------------------------------------------------------

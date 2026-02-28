@@ -11,9 +11,6 @@ const mockCreateSessionManager = vi.fn().mockReturnValue({
 
 vi.mock("@claudekit/session", () => ({
   createSessionManager: mockCreateSessionManager,
-}));
-
-vi.mock("@/lib/constants", () => ({
   SESSION_EVENT_BUFFER_SIZE: 100,
   SESSION_LOG_FLUSH_INTERVAL_MS: 5000,
 }));
