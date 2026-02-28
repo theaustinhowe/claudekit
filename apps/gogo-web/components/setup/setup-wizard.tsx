@@ -56,7 +56,7 @@ const defaultState: SetupState = {
   reuseTokenFromRepoId: null,
   useEnvToken: false,
   selectedRepos: [],
-  workspacePath: process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "/tmp/agent-worktrees",
+  workspacePath: `/tmp/gogo-${crypto.randomUUID().slice(0, 8)}`,
   discoveryPath: process.env.NEXT_PUBLIC_DEFAULT_DIRECTORY ?? "~",
 };
 
