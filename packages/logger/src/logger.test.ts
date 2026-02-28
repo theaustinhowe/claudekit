@@ -84,9 +84,7 @@ describe("parseLogFileName", () => {
 describe("listLogFiles", () => {
   it("discovers .ndjson files and returns metadata", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["gadget.2026-02-15.ndjson", "web.ndjson", "ignore.txt"] as unknown as ReturnType<
-      typeof readdirSync
-    >);
+    mockedReaddirSync.mockReturnValue(["gadget.2026-02-15.ndjson", "web.ndjson", "ignore.txt"] as string[]);
 
     const { listLogFiles } = await import("./index.js");
     const result = listLogFiles("/tmp/logs");
@@ -99,9 +97,7 @@ describe("listLogFiles", () => {
 
   it("filters out non-ndjson files", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["notes.txt", "data.json", "app.ndjson"] as unknown as ReturnType<
-      typeof readdirSync
-    >);
+    mockedReaddirSync.mockReturnValue(["notes.txt", "data.json", "app.ndjson"] as string[]);
 
     const { listLogFiles } = await import("./index.js");
     const result = listLogFiles("/tmp/logs");
@@ -112,7 +108,7 @@ describe("listLogFiles", () => {
 
   it("returns empty array when no ndjson files exist", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue([] as string[]);
 
     const { listLogFiles } = await import("./index.js");
     const result = listLogFiles("/tmp/logs");
@@ -122,7 +118,7 @@ describe("listLogFiles", () => {
 
   it("ensures log directory exists before listing", async () => {
     mockedExistsSync.mockReturnValue(false);
-    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue([] as string[]);
 
     const { listLogFiles } = await import("./index.js");
     listLogFiles("/tmp/logs");
@@ -134,7 +130,7 @@ describe("listLogFiles", () => {
 describe("pruneOldLogs", () => {
   it("removes files older than 14 days", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["old.ndjson", "new.ndjson"] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue(["old.ndjson", "new.ndjson"] as string[]);
 
     const now = Date.now();
     const fifteenDaysAgo = now - 15 * 24 * 60 * 60 * 1000;
@@ -157,7 +153,7 @@ describe("pruneOldLogs", () => {
 
   it("does not remove files within 14 days", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["recent.ndjson"] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue(["recent.ndjson"] as string[]);
 
     mockedStatSync.mockReturnValue({ mtimeMs: Date.now() - 5 * 24 * 60 * 60 * 1000 } as ReturnType<typeof statSync>);
 
@@ -169,7 +165,7 @@ describe("pruneOldLogs", () => {
 
   it("skips non-ndjson files", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["readme.txt"] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue(["readme.txt"] as string[]);
 
     const { pruneOldLogs } = await import("./index.js");
     pruneOldLogs("/tmp/logs");
@@ -180,7 +176,7 @@ describe("pruneOldLogs", () => {
 
   it("handles stat errors gracefully", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["broken.ndjson"] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue(["broken.ndjson"] as string[]);
     mockedStatSync.mockImplementation(() => {
       throw new Error("ENOENT");
     });
@@ -224,9 +220,7 @@ describe("ensureLogDir", () => {
 describe("pruneOldLogs edge cases", () => {
   it("removes multiple old files in a single call", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["old1.ndjson", "old2.ndjson", "new.ndjson"] as unknown as ReturnType<
-      typeof readdirSync
-    >);
+    mockedReaddirSync.mockReturnValue(["old1.ndjson", "old2.ndjson", "new.ndjson"] as string[]);
 
     const now = Date.now();
     const twentyDaysAgo = now - 20 * 24 * 60 * 60 * 1000;
@@ -250,7 +244,7 @@ describe("pruneOldLogs edge cases", () => {
 
   it("handles empty directory", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue([] as string[]);
 
     const { pruneOldLogs } = await import("./index.js");
     pruneOldLogs("/tmp/logs");
@@ -261,9 +255,7 @@ describe("pruneOldLogs edge cases", () => {
 
   it("handles mixed file types and only processes .ndjson files", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue(["readme.md", "data.json", "old.ndjson", "config.yaml"] as unknown as ReturnType<
-      typeof readdirSync
-    >);
+    mockedReaddirSync.mockReturnValue(["readme.md", "data.json", "old.ndjson", "config.yaml"] as string[]);
 
     const twentyDaysAgo = Date.now() - 20 * 24 * 60 * 60 * 1000;
     mockedStatSync.mockReturnValue({ mtimeMs: twentyDaysAgo } as ReturnType<typeof statSync>);
@@ -278,7 +270,7 @@ describe("pruneOldLogs edge cases", () => {
 
   it("uses default log directory when no argument is provided", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue([] as string[]);
 
     const { pruneOldLogs } = await import("./index.js");
     pruneOldLogs();
@@ -291,7 +283,7 @@ describe("pruneOldLogs edge cases", () => {
 describe("listLogFiles edge cases", () => {
   it("uses default log directory when no argument is provided", async () => {
     mockedExistsSync.mockReturnValue(true);
-    mockedReaddirSync.mockReturnValue([] as unknown as ReturnType<typeof readdirSync>);
+    mockedReaddirSync.mockReturnValue([] as string[]);
 
     const { listLogFiles } = await import("./index.js");
     listLogFiles();
