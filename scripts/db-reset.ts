@@ -6,7 +6,7 @@ const CYAN = "\x1b[36m";
 const RED = "\x1b[31m";
 const RESET = "\x1b[0m";
 
-const appsWithDbReset = ["gadget", "gogo-orchestrator", "b4u", "inside"];
+const appsWithDbReset = ["gadget", "gogo-orchestrator", "b4u", "inside", "inspector"];
 
 console.log(`\n${BOLD}Resetting databases...${RESET}\n`);
 

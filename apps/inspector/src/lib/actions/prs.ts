@@ -111,16 +111,21 @@ export async function getDashboardStats(repoId?: string): Promise<DashboardStats
   };
 }
 
-export async function getPRsWithComments(repoId: string): Promise<PRWithComments[]> {
+export async function getPRsWithComments(repoId?: string): Promise<PRWithComments[]> {
   const db = await getDb();
+  const whereClause = repoId
+    ? "WHERE p.repo_id = ? AND (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) > 0"
+    : "WHERE (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) > 0";
+  const params = repoId ? [repoId] : [];
+
   const prs = await queryAll<Record<string, unknown>>(
     db,
     `SELECT p.*,
        (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) as comment_count
      FROM prs p
-     WHERE p.repo_id = ? AND (SELECT COUNT(*) FROM pr_comments c WHERE c.pr_id = p.id) > 0
+     ${whereClause}
      ORDER BY comment_count DESC`,
-    [repoId],
+    params,
   );
 
   const results: PRWithComments[] = [];

@@ -5,6 +5,7 @@ import { ThemeFOUCScript } from "@claudekit/hooks";
 import { Toaster } from "@claudekit/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
 import { LayoutShell } from "@/components/layout/layout-shell";
+import { getConnectedRepos } from "@/lib/actions/github";
 import { APP_NAME } from "@/lib/constants";
 
 const inter = Inter({
@@ -35,17 +36,24 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let repos: { id: string; owner: string; name: string; full_name: string }[] = [];
+  try {
+    repos = await getConnectedRepos();
+  } catch {
+    // DB may not be initialized yet
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <ThemeFOUCScript />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <LayoutShell>{children}</LayoutShell>
+          <LayoutShell repos={repos}>{children}</LayoutShell>
           <Toaster />
         </ThemeProvider>
       </body>

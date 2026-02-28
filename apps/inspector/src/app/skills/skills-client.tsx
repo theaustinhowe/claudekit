@@ -25,10 +25,13 @@ import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PRFilterBar } from "@/components/pr-filter-bar";
 import { AnalysisComparison } from "@/components/skills/analysis-comparison";
 import { AnalysisHistory } from "@/components/skills/analysis-history";
 import { SkillCard } from "@/components/skills/skill-card";
 import { SkillDetailDrawer } from "@/components/skills/skill-detail-drawer";
+import { useRepoContext } from "@/contexts/repo-context";
+import { usePRFilters } from "@/hooks/use-pr-filters";
 import { exportSkillGroupAsFiles, getSkillGroupPreview, getSkillGroups } from "@/lib/actions/skill-groups";
 import type { ComparisonSkill, SkillTrendPoint } from "@/lib/actions/skills";
 import { getSkillsForAnalysis, startSkillAnalysis, startSkillRuleAnalysis } from "@/lib/actions/skills";
@@ -193,8 +196,11 @@ interface SkillsClientProps {
 }
 
 export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGroups }: SkillsClientProps) {
+  const { selectedRepoId } = useRepoContext();
   const searchParams = useSearchParams();
   const preselected = searchParams.get("pr");
+
+  const effectiveRepoId = selectedRepoId === "all" ? repoId : selectedRepoId;
 
   const [selected, setSelected] = useState<Set<number>>(() => {
     const s = new Set<number>();
@@ -284,7 +290,18 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
 
   const isStreaming = stream.status === "streaming";
 
-  const filtered = prsWithComments.filter((p) => p.commentCount >= minComments);
+  const repoPRs =
+    selectedRepoId === "all" ? prsWithComments : prsWithComments.filter((p) => p.repoId === selectedRepoId);
+  const {
+    filters: prFilters,
+    filtered: sortedPRs,
+    setSearch,
+    setState: setStateFilter,
+    setSize,
+    setSortField,
+    toggleDirection,
+  } = usePRFilters(repoPRs, { defaultSortField: "created", defaultSortDirection: "desc" });
+  const filtered = sortedPRs.filter((p) => p.commentCount >= minComments);
 
   const togglePR = (num: number) => {
     setSelected((prev) => {
@@ -300,7 +317,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
   };
 
   const handleAnalyze = () => {
-    if (!repoId) {
+    if (!effectiveRepoId) {
       toast.error("No repository selected");
       return;
     }
@@ -308,7 +325,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
     setPhase("analyzing");
     startTransition(async () => {
       try {
-        const id = await startSkillAnalysis(repoId, [...selected]);
+        const id = await startSkillAnalysis(effectiveRepoId, [...selected]);
         setSessionId(id);
       } catch (err) {
         toast.error("Failed to start analysis", {
@@ -320,7 +337,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
   };
 
   const handleGenerateRules = () => {
-    if (!repoId) {
+    if (!effectiveRepoId) {
       toast.error("No repository selected");
       return;
     }
@@ -341,7 +358,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
     setPhase("generating_rules");
     startTransition(async () => {
       try {
-        const id = await startSkillRuleAnalysis(repoId, prNumbers);
+        const id = await startSkillRuleAnalysis(effectiveRepoId, prNumbers);
         setSessionId(id);
       } catch (err) {
         toast.error("Failed to start rule generation", {
@@ -370,13 +387,17 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
         <div className="w-full max-w-md space-y-4">
           <Progress value={stream.progress ?? 0} className="h-2" />
           {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
-          {streamEntries.length > 0 && <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />}
+          {streamEntries.length > 0 && (
+            <div className="max-h-[50vh] overflow-y-auto">
+              <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />
+            </div>
+          )}
           {stream.elapsed > 0 && <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>}
-          <Button variant="outline" className="w-full" onClick={stream.cancel}>
-            <Square className="h-3 w-3 mr-2" />
-            Cancel
-          </Button>
         </div>
+        <Button variant="outline" className="w-full max-w-md" onClick={stream.cancel}>
+          <Square className="h-3 w-3 mr-2" />
+          Cancel
+        </Button>
       </div>
     );
   }
@@ -397,10 +418,10 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
               variant="outline"
               onClick={() => {
                 setShowHistory(!showHistory);
-                if (!showHistory && history.length === 0 && repoId) {
+                if (!showHistory && history.length === 0 && effectiveRepoId) {
                   startTransition(async () => {
                     const fn = await loadHistory();
-                    const data = await fn(repoId);
+                    const data = await fn(effectiveRepoId);
                     setHistory(data);
                   });
                 }
@@ -413,10 +434,10 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
               variant="outline"
               onClick={() => {
                 setShowTrends(!showTrends);
-                if (!showTrends && trendData.length === 0 && repoId) {
+                if (!showTrends && trendData.length === 0 && effectiveRepoId) {
                   startTransition(async () => {
                     const fn = await loadTrends();
-                    const data = await fn(repoId);
+                    const data = await fn(effectiveRepoId);
                     setTrendData(data);
                   });
                 }
@@ -687,6 +708,17 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
         </div>
       </div>
 
+      <PRFilterBar
+        filters={prFilters}
+        resultCount={filtered.length}
+        totalCount={repoPRs.length}
+        onSearchChange={setSearch}
+        onStateChange={setStateFilter}
+        onSizeChange={setSize}
+        onSortFieldChange={setSortField}
+        onToggleDirection={toggleDirection}
+      />
+
       <Card>
         <CardContent className="p-2 space-y-1">
           {filtered.length === 0 ? (
@@ -695,7 +727,7 @@ export function SkillsClient({ repoId, prsWithComments, previousSkills, skillGro
             filtered.map((pr) => (
               // biome-ignore lint/a11y/noLabelWithoutControl: label wraps Checkbox component
               <label
-                key={pr.number}
+                key={pr.id}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
               >
                 <Checkbox checked={selected.has(pr.number)} onCheckedChange={() => togglePR(pr.number)} />

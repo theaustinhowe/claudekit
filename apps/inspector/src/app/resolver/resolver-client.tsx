@@ -25,6 +25,9 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PRFilterBar } from "@/components/pr-filter-bar";
+import { useRepoContext } from "@/contexts/repo-context";
+import { usePRFilters } from "@/hooks/use-pr-filters";
 import { getPRComments } from "@/lib/actions/prs";
 import {
   getCommentFixes,
@@ -72,6 +75,19 @@ interface ResolverClientProps {
 }
 
 export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverClientProps) {
+  const { selectedRepoId } = useRepoContext();
+  const repoPRs =
+    selectedRepoId === "all" ? prsWithComments : prsWithComments.filter((p) => p.repoId === selectedRepoId);
+  const {
+    filters: prFilters,
+    filtered: filteredPRs,
+    setSearch,
+    setState: setStateFilter,
+    setSize,
+    setSortField,
+    toggleDirection,
+  } = usePRFilters(repoPRs, { defaultSortField: "comments", defaultSortDirection: "desc" });
+
   const [selectedPR, setSelectedPR] = useState<PRWithComments | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedComments, setSelectedComments] = useState<Set<string>>(new Set());
@@ -271,13 +287,17 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
         <div className="w-full max-w-md space-y-4">
           <Progress value={stream.progress ?? 0} className="h-2" />
           {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
-          {streamEntries.length > 0 && <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />}
+          {streamEntries.length > 0 && (
+            <div className="max-h-[50vh] overflow-y-auto">
+              <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />
+            </div>
+          )}
           {stream.elapsed > 0 && <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>}
-          <Button variant="outline" className="w-full" onClick={stream.cancel}>
-            <Square className="h-3 w-3 mr-2" />
-            Cancel
-          </Button>
         </div>
+        <Button variant="outline" className="w-full max-w-md" onClick={stream.cancel}>
+          <Square className="h-3 w-3 mr-2" />
+          Cancel
+        </Button>
       </div>
     );
   }
@@ -569,14 +589,25 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
         <p className="text-sm text-muted-foreground">Select a PR to auto-fix review comments with AI</p>
       </div>
 
+      <PRFilterBar
+        filters={prFilters}
+        resultCount={filteredPRs.length}
+        totalCount={repoPRs.length}
+        onSearchChange={setSearch}
+        onStateChange={setStateFilter}
+        onSizeChange={setSize}
+        onSortFieldChange={setSortField}
+        onToggleDirection={toggleDirection}
+      />
+
       <Card>
         <CardContent className="p-2 space-y-1">
-          {prsWithComments.length === 0 ? (
+          {filteredPRs.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
               No PRs with review comments found. Sync your repository first.
             </div>
           ) : (
-            prsWithComments.map((pr) => (
+            filteredPRs.map((pr) => (
               <button
                 type="button"
                 key={pr.id}

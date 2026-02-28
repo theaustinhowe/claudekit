@@ -184,6 +184,18 @@ export interface SplitExecution {
   completedAt: string | null;
 }
 
+/** PR filtering and sorting types */
+export type PRSortField = "created" | "updated" | "size" | "comments" | "title";
+export type PRSortDirection = "asc" | "desc";
+
+export interface PRFilters {
+  search: string;
+  state: "all" | "open" | "closed";
+  size: "all" | PRSize;
+  sortField: PRSortField;
+  sortDirection: PRSortDirection;
+}
+
 /** Account-wide stats */
 export interface AccountStats {
   totalPRs: number;

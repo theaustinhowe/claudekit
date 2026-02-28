@@ -21,8 +21,11 @@ import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PRFilterBar } from "@/components/pr-filter-bar";
 import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
 import { SubPRCard } from "@/components/splitter/sub-pr-card";
+import { useRepoContext } from "@/contexts/repo-context";
+import { usePRFilters } from "@/hooks/use-pr-filters";
 import { getSplitPlan, startSplitAnalysis, updateSubPRDescription } from "@/lib/actions/splitter";
 import { SIZE_CLASSES, SUB_PR_COLORS } from "@/lib/constants";
 import { exportSplitPlanToMarkdown } from "@/lib/export";
@@ -36,8 +39,20 @@ interface SplitterClientProps {
 }
 
 export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
+  const { selectedRepoId } = useRepoContext();
   const searchParams = useSearchParams();
   const preselected = searchParams.get("pr");
+
+  const repoPRs = selectedRepoId === "all" ? largePRs : largePRs.filter((p) => p.repoId === selectedRepoId);
+  const {
+    filters: prFilters,
+    filtered: filteredPRs,
+    setSearch,
+    setState: setStateFilter,
+    setSize,
+    setSortField,
+    toggleDirection,
+  } = usePRFilters(repoPRs, { defaultSortField: "size", defaultSortDirection: "desc" });
 
   const [selectedPR, setSelectedPR] = useState<string | null>(
     preselected && repoId ? `${repoId}#${preselected}` : null,
@@ -155,13 +170,17 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
         <div className="w-full max-w-md space-y-4">
           <Progress value={stream.progress ?? 0} className="h-2" />
           {stream.phase && <p className="text-center text-sm font-medium">{stream.phase}</p>}
-          {streamEntries.length > 0 && <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />}
+          {streamEntries.length > 0 && (
+            <div className="max-h-[50vh] overflow-y-auto">
+              <StreamingDisplay entries={streamEntries} variant="chat" live={isStreaming} />
+            </div>
+          )}
           {stream.elapsed > 0 && <p className="text-center text-xs text-muted-foreground">{stream.elapsed}s elapsed</p>}
-          <Button variant="outline" className="w-full" onClick={stream.cancel}>
-            <Square className="h-3 w-3 mr-2" />
-            Cancel
-          </Button>
         </div>
+        <Button variant="outline" className="w-full max-w-md" onClick={stream.cancel}>
+          <Square className="h-3 w-3 mr-2" />
+          Cancel
+        </Button>
       </div>
     );
   }
@@ -321,14 +340,25 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
         <p className="text-sm text-muted-foreground">Select a large PR to analyze for intelligent splitting</p>
       </div>
 
+      <PRFilterBar
+        filters={prFilters}
+        resultCount={filteredPRs.length}
+        totalCount={repoPRs.length}
+        onSearchChange={setSearch}
+        onStateChange={setStateFilter}
+        onSizeChange={setSize}
+        onSortFieldChange={setSortField}
+        onToggleDirection={toggleDirection}
+      />
+
       <Card>
         <CardContent className="p-2 space-y-1">
-          {largePRs.length === 0 ? (
+          {filteredPRs.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
               No large PRs found. PRs sized L or XL will appear here.
             </div>
           ) : (
-            largePRs.map((pr) => {
+            filteredPRs.map((pr) => {
               const linesChanged = pr.linesAdded + pr.linesDeleted;
               return (
                 <button

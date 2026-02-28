@@ -223,6 +223,9 @@ export async function syncAllCommentsForRepo(repoId: string) {
     await syncPRReviews(repoId, pr.number);
     totalComments += commentCount;
   }
+  // Update last_synced_at after comment sync
+  await execute(db, "UPDATE repos SET last_synced_at = now() WHERE id = ?", [repoId]);
+
   log.info({ repoId, totalComments }, "All comments synced");
   return totalComments;
 }

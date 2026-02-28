@@ -1,4 +1,4 @@
-import { getAccountPRs, hasValidPAT } from "@/lib/actions/account";
+import { hasValidPAT } from "@/lib/actions/account";
 import { getConnectedRepos } from "@/lib/actions/github";
 import { getPRsWithComments } from "@/lib/actions/prs";
 import { getSkillGroups } from "@/lib/actions/skill-groups";
@@ -16,14 +16,12 @@ export default async function SkillsPage() {
   }
 
   const repos = await getConnectedRepos();
+
+  // Fetch all PRs with comments across repos
+  const prsWithComments = await getPRsWithComments();
+
+  // Load skill groups and latest analysis (try first repo for analyses)
   const activeRepo = repos[0] ?? null;
-
-  // Get PRs with comments — either from account or from repo
-  const prsWithComments = activeRepo
-    ? await getPRsWithComments(activeRepo.id)
-    : (await getAccountPRs({ limit: 50 })).filter((p) => p.commentCount > 0);
-
-  // Load skill groups and latest analysis
   const [skillGroups, analyses] = await Promise.all([
     getSkillGroups(),
     activeRepo ? getSkillAnalyses(activeRepo.id) : Promise.resolve([]),

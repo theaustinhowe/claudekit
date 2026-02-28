@@ -29,6 +29,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useRepoContext } from "@/contexts/repo-context";
 import { startAccountSync } from "@/lib/actions/account";
 import { getReviewerComments, getReviewerFileStats } from "@/lib/actions/reviewers";
 import { SEVERITY_COLORS, SEVERITY_LABELS } from "@/lib/constants";
@@ -332,6 +333,8 @@ export function DashboardClient({
   reviewerStats,
   userStats,
 }: DashboardClientProps) {
+  const { selectedRepoId } = useRepoContext();
+  const effectiveRepoId = selectedRepoId === "all" ? repoId : selectedRepoId;
   const [syncSessionId, setSyncSessionId] = useState<string | null>(null);
   const [selectedReviewer, setSelectedReviewer] = useState<ReviewerStats | null>(null);
   const [reviewerComments, setReviewerComments] = useState<ReviewerComment[]>([]);
@@ -380,12 +383,12 @@ export function DashboardClient({
   };
 
   const handleReviewerClick = (rs: ReviewerStats) => {
-    if (!repoId) return;
+    if (!effectiveRepoId) return;
     setSelectedReviewer(rs);
     startCommentLoad(async () => {
       const [comments, files] = await Promise.all([
-        getReviewerComments(repoId, rs.reviewer),
-        getReviewerFileStats(repoId, rs.reviewer),
+        getReviewerComments(effectiveRepoId, rs.reviewer),
+        getReviewerFileStats(effectiveRepoId, rs.reviewer),
       ]);
       setReviewerComments(comments);
       setFileStats(files);
@@ -727,7 +730,9 @@ export function DashboardClient({
                 <Progress value={syncStream.progress ?? 0} className="h-2" />
                 {syncStream.phase && <p className="text-center text-sm font-medium">{syncStream.phase}</p>}
                 {syncEntries.length > 0 && (
-                  <StreamingDisplay entries={syncEntries} variant="chat" live={isSyncStreaming} />
+                  <div className="max-h-[50vh] overflow-y-auto">
+                    <StreamingDisplay entries={syncEntries} variant="chat" live={isSyncStreaming} />
+                  </div>
                 )}
                 {syncStream.elapsed > 0 && (
                   <p className="text-center text-xs text-muted-foreground">{syncStream.elapsed}s elapsed</p>

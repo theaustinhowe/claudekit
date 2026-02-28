@@ -36,6 +36,7 @@ export function createAccountSyncRunner(_metadata: Record<string, unknown>): Ses
     // --- Phase 2: Paginated search (5–50%) ---
     type UserRelationship = "authored" | "reviewed" | "assigned";
     const seen = new Map<string, UserRelationship>();
+    const touchedRepoIds = new Set<string>();
     let reposDiscovered = 0;
 
     const queries: { q: string; relationship: UserRelationship }[] = [
@@ -101,12 +102,14 @@ export function createAccountSyncRunner(_metadata: Record<string, unknown>): Ses
             if (!existingRepo) {
               await execute(
                 db,
-                `INSERT INTO repos (id, owner, name, full_name, default_branch, created_at)
-                 VALUES (?, ?, ?, ?, 'main', now())`,
+                `INSERT INTO repos (id, owner, name, full_name, default_branch, last_synced_at, created_at)
+                 VALUES (?, ?, ?, ?, 'main', now(), now())`,
                 [repoId, owner, repoName, repoFullName],
               );
               reposDiscovered++;
             }
+
+            touchedRepoIds.add(repoId);
 
             const prId = `${repoId}#${prNumber}`;
             const size = classifyPRSize(0);
@@ -270,6 +273,11 @@ export function createAccountSyncRunner(_metadata: Record<string, unknown>): Ses
           logType: "status",
         });
       }
+    }
+
+    // Update last_synced_at for all touched repos
+    for (const rid of touchedRepoIds) {
+      await execute(db, "UPDATE repos SET last_synced_at = now() WHERE id = ?", [rid]);
     }
 
     // --- Phase 4: Done ---
