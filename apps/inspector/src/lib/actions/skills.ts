@@ -65,11 +65,28 @@ export async function getSkillAnalyses(repoId: string) {
 
 export async function getSkillsForAnalysis(analysisId: string): Promise<SkillWithComments[]> {
   const db = await getDb();
-  const skills = await queryAll<Skill & { comment_ids: string | string[] }>(
-    db,
-    "SELECT * FROM skills WHERE analysis_id = ? ORDER BY frequency DESC",
-    [analysisId],
-  );
+
+  interface SkillRow {
+    id: string;
+    analysis_id: string;
+    name: string;
+    frequency: number;
+    total_prs: number;
+    trend: string | null;
+    severity: string;
+    top_example: string | null;
+    description: string | null;
+    resources: string | null;
+    action_item: string | null;
+    addressed: boolean;
+    rule_content: string | null;
+    group_id: string | null;
+    comment_ids: string | string[];
+  }
+
+  const skills = await queryAll<SkillRow>(db, "SELECT * FROM skills WHERE analysis_id = ? ORDER BY frequency DESC", [
+    analysisId,
+  ]);
 
   const result: SkillWithComments[] = [];
   for (const skill of skills) {
@@ -99,9 +116,21 @@ export async function getSkillsForAnalysis(analysisId: string): Promise<SkillWit
       );
     }
 
-    const { comment_ids: _commentIds, ...skillWithoutCommentIds } = skill;
     result.push({
-      ...skillWithoutCommentIds,
+      id: skill.id,
+      analysisId: skill.analysis_id,
+      name: skill.name,
+      frequency: skill.frequency ?? 0,
+      totalPRs: skill.total_prs ?? 0,
+      trend: skill.trend as Skill["trend"],
+      severity: skill.severity as Skill["severity"],
+      topExample: skill.top_example,
+      description: skill.description,
+      resources: skill.resources,
+      actionItem: skill.action_item,
+      addressed: skill.addressed,
+      ruleContent: skill.rule_content ?? null,
+      groupId: skill.group_id ?? null,
       comments: comments.map((c) => ({
         id: c.id,
         prNumber: c.pr_number,

@@ -33,7 +33,7 @@ import {
   Square,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useSearchParams } from "next/navigation";
+import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { DiffPreviewDrawer } from "@/components/splitter/diff-preview-drawer";
@@ -74,10 +74,9 @@ interface SplitterClientProps {
   largePRs: PRWithComments[];
 }
 
-export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
+export function SplitterClient({ repoId: _repoId, largePRs }: SplitterClientProps) {
   const { selectedRepoId } = useRepoContext();
-  const searchParams = useSearchParams();
-  const preselected = searchParams.get("pr");
+  const [selectedPR, setSelectedPR] = useQueryState("pr", parseAsString);
 
   const repoPRs = selectedRepoId === "all" ? largePRs : largePRs.filter((p) => p.repoId === selectedRepoId);
   const {
@@ -100,9 +99,6 @@ export function SplitterClient({ repoId, largePRs }: SplitterClientProps) {
 
   const hasActiveFilters = prFilters.state !== "all" || prFilters.size !== "all" || minComments > 1;
 
-  const [selectedPR, setSelectedPR] = useState<string | null>(
-    preselected && repoId ? `${repoId}#${preselected}` : null,
-  );
   const [phase, setPhase] = useState<Phase>("select");
   const [planId, setPlanId] = useState<string | null>(null);
   const [plan, setPlan] = useState<{ prNumber: number; prTitle: string; totalLines: number; subPRs: SubPR[] } | null>(

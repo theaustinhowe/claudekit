@@ -5,6 +5,7 @@ import { ThemeFOUCScript } from "@claudekit/hooks";
 import { Toaster } from "@claudekit/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
 import { LayoutShell } from "@/components/layout/layout-shell";
+import { Providers } from "@/components/providers";
 import { getConnectedRepos } from "@/lib/actions/github";
 import { APP_NAME } from "@/lib/constants";
 
@@ -52,10 +53,12 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <ThemeFOUCScript />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <LayoutShell repos={repos}>{children}</LayoutShell>
-          <Toaster />
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <LayoutShell repos={repos}>{children}</LayoutShell>
+            <Toaster />
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

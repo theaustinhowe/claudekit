@@ -12,9 +12,10 @@ import type { SkillGroup } from "@/lib/types";
 
 interface SkillGroupsPanelProps {
   groups: SkillGroup[];
+  colorMap?: Map<string, string>;
 }
 
-export function SkillGroupsPanel({ groups }: SkillGroupsPanelProps) {
+export function SkillGroupsPanel({ groups, colorMap }: SkillGroupsPanelProps) {
   const [isPending, startTransition] = useTransition();
   const [previewGroup, setPreviewGroup] = useState<SkillGroup | null>(null);
   const [previewContent, setPreviewContent] = useState<string[]>([]);
@@ -35,13 +36,13 @@ export function SkillGroupsPanel({ groups }: SkillGroupsPanelProps) {
             {groups.map((group) => (
               <div
                 key={group.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg border border-border/50 border-l-[3px] hover:bg-muted/30 transition-colors"
+                style={colorMap?.get(group.id) ? { borderLeftColor: colorMap.get(group.id) } : undefined}
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{group.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {group.skillCount.toLocaleString()} skill{group.skillCount !== 1 ? "s" : ""} &middot;{" "}
-                    {group.category.replace(/-/g, " ")}
+                    {group.skillCount.toLocaleString()} skill{group.skillCount !== 1 ? "s" : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">

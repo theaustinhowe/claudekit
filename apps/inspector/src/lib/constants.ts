@@ -53,6 +53,18 @@ export const RISK_CLASSES: Record<string, string> = {
 
 export const SUB_PR_COLORS = ["hsl(252, 80%, 60%)", "hsl(217, 91%, 60%)", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)"];
 
+/** Palette for skill groups — cycled by index. Each entry is an HSL string usable in style props. */
+export const GROUP_COLORS = [
+  "hsl(252, 80%, 60%)", // violet
+  "hsl(199, 89%, 48%)", // sky blue
+  "hsl(142, 71%, 45%)", // emerald
+  "hsl(25, 95%, 53%)", // orange
+  "hsl(330, 81%, 60%)", // pink
+  "hsl(45, 93%, 47%)", // amber
+  "hsl(173, 80%, 40%)", // teal
+  "hsl(280, 68%, 55%)", // purple
+];
+
 export const FEEDBACK_CATEGORIES = [
   "Error Handling",
   "Test Coverage",

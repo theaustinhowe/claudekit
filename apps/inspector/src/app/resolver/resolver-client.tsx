@@ -31,7 +31,8 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { parseAsString, useQueryState } from "nuqs";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useRepoContext } from "@/contexts/repo-context";
 import { usePRFilters } from "@/hooks/use-pr-filters";
@@ -126,7 +127,11 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
 
   const hasActiveFilters = prFilters.state !== "all" || prFilters.size !== "all" || minComments > 1;
 
-  const [selectedPR, setSelectedPR] = useState<PRWithComments | null>(null);
+  const [selectedPRId, setSelectedPRId] = useQueryState("pr", parseAsString);
+  const selectedPR = useMemo(
+    () => (selectedPRId ? (repoPRs.find((p) => p.id === selectedPRId) ?? null) : null),
+    [selectedPRId, repoPRs],
+  );
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedComments, setSelectedComments] = useState<Set<string>>(new Set());
   const [phase, setPhase] = useState<Phase>("select-pr");
@@ -138,8 +143,20 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
   const [executingFixes, setExecutingFixes] = useState<Set<string>>(new Set());
   const [fixCommits, setFixCommits] = useState<Record<string, string>>({});
 
+  // Auto-load comments when selectedPRId is set from URL on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect to restore URL state
+  useEffect(() => {
+    if (selectedPRId && selectedPR && phase === "select-pr" && comments.length === 0) {
+      startTransition(async () => {
+        const result = await getPRComments(selectedPRId);
+        setComments(result);
+        setPhase("select-comments");
+      });
+    }
+  }, []);
+
   const handleSelectPR = (pr: PRWithComments) => {
-    setSelectedPR(pr);
+    setSelectedPRId(pr.id);
     startTransition(async () => {
       const result = await getPRComments(pr.id);
       setComments(result);
@@ -382,7 +399,7 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
               size="sm"
               onClick={() => {
                 setPhase("select-pr");
-                setSelectedPR(null);
+                setSelectedPRId(null);
                 setSelectedComments(new Set());
                 setCommentStatuses({});
                 setFixes([]);
@@ -526,7 +543,7 @@ export function ResolverClient({ repoId: _repoId, prsWithComments }: ResolverCli
             className="text-xs text-primary hover:underline mb-2"
             onClick={() => {
               setPhase("select-pr");
-              setSelectedPR(null);
+              setSelectedPRId(null);
               setSelectedComments(new Set());
             }}
           >

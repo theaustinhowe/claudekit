@@ -27,7 +27,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { parseAsString, useQueryState } from "nuqs";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useRepoContext } from "@/contexts/repo-context";
 import { startAccountSync } from "@/lib/actions/account";
@@ -336,7 +337,11 @@ export function DashboardClient({
   const { selectedRepoId } = useRepoContext();
   const effectiveRepoId = selectedRepoId === "all" ? repoId : selectedRepoId;
   const [syncSessionId, setSyncSessionId] = useState<string | null>(null);
-  const [selectedReviewer, setSelectedReviewer] = useState<ReviewerStats | null>(null);
+  const [selectedReviewerName, setSelectedReviewerName] = useQueryState("reviewer", parseAsString);
+  const selectedReviewer = useMemo(
+    () => (selectedReviewerName ? (reviewerStats.find((r) => r.reviewer === selectedReviewerName) ?? null) : null),
+    [selectedReviewerName, reviewerStats],
+  );
   const [reviewerComments, setReviewerComments] = useState<ReviewerComment[]>([]);
   const [fileStats, setFileStats] = useState<{ filePath: string; count: number }[]>([]);
   const [isLoadingComments, startCommentLoad] = useTransition();
@@ -382,9 +387,24 @@ export function DashboardClient({
     }
   };
 
+  // Auto-load reviewer data when restored from URL
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect to restore URL state
+  useEffect(() => {
+    if (selectedReviewerName && selectedReviewer && effectiveRepoId && reviewerComments.length === 0) {
+      startCommentLoad(async () => {
+        const [comments, files] = await Promise.all([
+          getReviewerComments(effectiveRepoId, selectedReviewerName),
+          getReviewerFileStats(effectiveRepoId, selectedReviewerName),
+        ]);
+        setReviewerComments(comments);
+        setFileStats(files);
+      });
+    }
+  }, []);
+
   const handleReviewerClick = (rs: ReviewerStats) => {
     if (!effectiveRepoId) return;
-    setSelectedReviewer(rs);
+    setSelectedReviewerName(rs.reviewer);
     startCommentLoad(async () => {
       const [comments, files] = await Promise.all([
         getReviewerComments(effectiveRepoId, rs.reviewer),
@@ -748,7 +768,7 @@ export function DashboardClient({
       </Sheet>
 
       {/* Reviewer Drawer */}
-      <Sheet open={!!selectedReviewer} onOpenChange={(open) => !open && setSelectedReviewer(null)}>
+      <Sheet open={!!selectedReviewer} onOpenChange={(open) => !open && setSelectedReviewerName(null)}>
         <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{selectedReviewer?.reviewer}</SheetTitle>

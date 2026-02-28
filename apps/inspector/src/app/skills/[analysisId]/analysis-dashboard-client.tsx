@@ -10,7 +10,8 @@ import { BookOpen, GitCompareArrows, History, Plus, TrendingUp } from "lucide-re
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { AnalysisComparison } from "@/components/skills/analysis-comparison";
 import { AnalysisHistory } from "@/components/skills/analysis-history";
@@ -22,6 +23,7 @@ import { SkillTrendChart } from "@/components/skills/skill-trend-chart";
 import { getSkillGroups } from "@/lib/actions/skill-groups";
 import type { ComparisonSkill, SkillTrendPoint } from "@/lib/actions/skills";
 import { getSkillsForAnalysis, startSkillRuleAnalysis } from "@/lib/actions/skills";
+import { GROUP_COLORS } from "@/lib/constants";
 import type { SkillGroup, SkillWithComments } from "@/lib/types";
 
 const loadHistory = () => import("@/lib/actions/skills").then((m) => m.getAnalysisHistory);
@@ -49,10 +51,32 @@ export function AnalysisDashboardClient({
   const [isPending, startTransition] = useTransition();
   const [skills, setSkills] = useState(initialSkills);
   const [currentSkillGroups, setCurrentSkillGroups] = useState(initialSkillGroups);
-  const [selectedSkill, setSelectedSkill] = useState<SkillWithComments | null>(null);
+  const groupNameById = useMemo(() => new Map(currentSkillGroups.map((g) => [g.id, g.name])), [currentSkillGroups]);
+  const groupColorById = useMemo(
+    () => new Map(currentSkillGroups.map((g, i) => [g.id, GROUP_COLORS[i % GROUP_COLORS.length]])),
+    [currentSkillGroups],
+  );
+  const sortedSkills = useMemo(() => {
+    const groupOrder = new Map(currentSkillGroups.map((g, i) => [g.id, i]));
+    return [...skills].sort((a, b) => {
+      const aIdx = a.groupId ? (groupOrder.get(a.groupId) ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
+      const bIdx = b.groupId ? (groupOrder.get(b.groupId) ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
+      if (aIdx !== bIdx) return aIdx - bIdx;
+      return b.frequency - a.frequency;
+    });
+  }, [skills, currentSkillGroups]);
+
+  // URL-synced state
+  const [activePanel, setActivePanel] = useQueryState("panel", parseAsStringLiteral(["history", "trends"] as const));
+  const [selectedSkillId, setSelectedSkillId] = useQueryState("skill", parseAsString);
+  const selectedSkill = useMemo(
+    () => (selectedSkillId ? (skills.find((s) => s.id === selectedSkillId) ?? null) : null),
+    [selectedSkillId, skills],
+  );
+  const showHistory = activePanel === "history";
+  const showTrends = activePanel === "trends";
 
   // History panel
-  const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<
     {
       id: string;
@@ -66,9 +90,31 @@ export function AnalysisDashboardClient({
   const [compareIds, setCompareIds] = useState<[string | null, string | null]>([null, null]);
   const [comparison, setComparison] = useState<ComparisonSkill[]>([]);
 
+  // Auto-load panel data when restored from URL
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect to restore URL state
+  useEffect(() => {
+    if (showHistory && history.length === 0) {
+      startTransition(async () => {
+        const fn = await loadHistory();
+        const data = await fn(repoId);
+        setHistory(data);
+      });
+    }
+  }, []);
+
   // Trends panel
-  const [showTrends, setShowTrends] = useState(false);
   const [trendData, setTrendData] = useState<SkillTrendPoint[]>([]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect to restore URL state
+  useEffect(() => {
+    if (showTrends && trendData.length === 0) {
+      startTransition(async () => {
+        const fn = await loadTrends();
+        const data = await fn(repoId);
+        setTrendData(data);
+      });
+    }
+  }, []);
 
   // Rule generation
   const [isGenerating, setIsGenerating] = useState(false);
@@ -177,8 +223,9 @@ export function AnalysisDashboardClient({
           <Button
             variant="outline"
             onClick={() => {
-              setShowHistory(!showHistory);
-              if (!showHistory && history.length === 0) {
+              const next = activePanel === "history" ? null : "history";
+              setActivePanel(next);
+              if (next === "history" && history.length === 0) {
                 startTransition(async () => {
                   const fn = await loadHistory();
                   const data = await fn(repoId);
@@ -193,8 +240,9 @@ export function AnalysisDashboardClient({
           <Button
             variant="outline"
             onClick={() => {
-              setShowTrends(!showTrends);
-              if (!showTrends && trendData.length === 0) {
+              const next = activePanel === "trends" ? null : "trends";
+              setActivePanel(next);
+              if (next === "trends" && trendData.length === 0) {
                 startTransition(async () => {
                   const fn = await loadTrends();
                   const data = await fn(repoId);
@@ -306,7 +354,7 @@ export function AnalysisDashboardClient({
         </Card>
       )}
 
-      <SkillGroupsPanel groups={currentSkillGroups} />
+      <SkillGroupsPanel groups={currentSkillGroups} colorMap={groupColorById} />
 
       {skills.length > 0 && (
         <div className="flex items-center gap-2">
@@ -318,14 +366,19 @@ export function AnalysisDashboardClient({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {skills.map((skill, i) => (
+        {sortedSkills.map((skill, i) => (
           <motion.div
             key={skill.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <SkillCard skill={skill} onClick={() => setSelectedSkill(skill)} />
+            <SkillCard
+              skill={skill}
+              groupName={skill.groupId ? groupNameById.get(skill.groupId) : null}
+              groupColor={skill.groupId ? groupColorById.get(skill.groupId) : undefined}
+              onClick={() => setSelectedSkillId(skill.id)}
+            />
           </motion.div>
         ))}
       </div>
@@ -336,7 +389,7 @@ export function AnalysisDashboardClient({
         </div>
       )}
 
-      <Sheet open={!!selectedSkill} onOpenChange={(open) => !open && setSelectedSkill(null)}>
+      <Sheet open={!!selectedSkill} onOpenChange={(open) => !open && setSelectedSkillId(null)}>
         <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{selectedSkill?.name}</SheetTitle>
