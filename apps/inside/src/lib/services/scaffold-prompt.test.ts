@@ -13,6 +13,7 @@ function makeProject(overrides: Partial<GeneratorProject> = {}): GeneratorProjec
     id: "proj-1",
     title: "Test App",
     idea_description: "A test application for testing",
+    app_type: "web",
     platform: "nextjs",
     services: [],
     constraints: [],
@@ -89,6 +90,72 @@ describe("buildPrototypePrompt", () => {
     const project = makeProject({ platform: "unknown-platform" });
     const prompt = buildPrototypePrompt(project);
     expect(prompt).toContain("TypeScript");
+  });
+
+  it("includes platform info for react-native", () => {
+    const project = makeProject({ platform: "react-native" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("React Native");
+    expect(prompt).toContain("React Navigation");
+  });
+
+  it("includes platform info for expo", () => {
+    const project = makeProject({ platform: "expo" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("Expo");
+    expect(prompt).toContain("Expo Router");
+  });
+
+  it("includes platform info for flutter", () => {
+    const project = makeProject({ platform: "flutter" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("Flutter");
+    expect(prompt).toContain("Riverpod");
+  });
+
+  it("includes platform info for godot", () => {
+    const project = makeProject({ platform: "godot" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("Godot");
+    expect(prompt).toContain("GDScript");
+  });
+
+  it("includes platform info for bevy", () => {
+    const project = makeProject({ platform: "bevy" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("bevy");
+    expect(prompt).toContain("cargo init");
+  });
+
+  it("includes platform info for pygame", () => {
+    const project = makeProject({ platform: "pygame" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("pygame");
+    expect(prompt).toContain("main.py");
+  });
+
+  it("uses platform-specific dev command for flutter", () => {
+    const project = makeProject({ platform: "flutter" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("flutter run");
+  });
+
+  it("uses platform-specific dev command for godot", () => {
+    const project = makeProject({ platform: "godot" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("opened in Godot");
+  });
+
+  it("uses platform-specific dev command for bevy", () => {
+    const project = makeProject({ platform: "bevy" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("cargo run");
+  });
+
+  it("uses platform-specific dev command for pygame", () => {
+    const project = makeProject({ platform: "pygame" });
+    const prompt = buildPrototypePrompt(project);
+    expect(prompt).toContain("python main.py");
   });
 
   it("includes constraints section when constraints exist", () => {
@@ -360,6 +427,38 @@ describe("buildImplementationPrompt", () => {
     const prompt = buildImplementationPrompt(project);
     expect(prompt).toContain("unknown-service");
     expect(prompt).toContain("Integrate");
+  });
+
+  it("includes react-native platform details", () => {
+    const project = makeProject({
+      platform: "react-native",
+      tool_versions: { "rn-navigation": "expo-router", "rn-targets": "ios,android" },
+    });
+    const prompt = buildImplementationPrompt(project);
+    expect(prompt).toContain("React Native");
+    expect(prompt).toContain("Expo Router");
+    expect(prompt).toContain("ios, android");
+  });
+
+  it("includes flutter platform details", () => {
+    const project = makeProject({
+      platform: "flutter",
+      tool_versions: { "flutter-state": "bloc", "flutter-targets": "ios,android,web" },
+    });
+    const prompt = buildImplementationPrompt(project);
+    expect(prompt).toContain("Flutter");
+    expect(prompt).toContain("Bloc");
+  });
+
+  it("includes godot platform details", () => {
+    const project = makeProject({
+      platform: "godot",
+      tool_versions: { "godot-language": "csharp", "godot-game-type": "3d" },
+    });
+    const prompt = buildImplementationPrompt(project);
+    expect(prompt).toContain("Godot");
+    expect(prompt).toContain("C#");
+    expect(prompt).toContain("3D");
   });
 
   it("handles multiple services", () => {

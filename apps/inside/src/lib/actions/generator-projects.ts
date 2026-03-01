@@ -32,6 +32,7 @@ function parseMessage(row: Record<string, unknown>): DesignMessage {
 export async function createGeneratorProject(data: {
   title: string;
   idea_description: string;
+  app_type?: string;
   platform: string;
   services: string[];
   constraints: string[];
@@ -55,6 +56,7 @@ export async function createGeneratorProject(data: {
   const partialProject = {
     title: data.title,
     idea_description: data.idea_description,
+    app_type: data.app_type || "web",
     platform: data.platform,
     services: data.services,
     constraints: data.constraints,
@@ -66,12 +68,13 @@ export async function createGeneratorProject(data: {
 
   await execute(
     db,
-    `INSERT INTO generator_projects (id, title, idea_description, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, tool_versions, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO generator_projects (id, title, idea_description, app_type, platform, services, constraints, project_name, project_path, package_manager, ai_provider, ai_model, template_id, status, active_spec_version, implementation_prompt, design_vibes, inspiration_urls, color_scheme, custom_features, tool_versions, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scaffolding', 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       data.title,
       data.idea_description,
+      data.app_type || "web",
       data.platform,
       JSON.stringify(data.services),
       JSON.stringify(data.constraints),

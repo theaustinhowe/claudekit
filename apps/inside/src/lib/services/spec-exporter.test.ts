@@ -35,6 +35,7 @@ function makeProject(overrides: Partial<GeneratorProject> = {}): GeneratorProjec
     id: "proj-1",
     title: "Test App",
     idea_description: "A test application",
+    app_type: "web",
     platform: "nextjs",
     services: [],
     constraints: [],

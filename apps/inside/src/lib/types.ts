@@ -5,6 +5,8 @@ export type CodeFileContent = FileContent;
 
 export type PackageManager = "npm" | "pnpm" | "bun" | "yarn";
 
+export type AppType = "web" | "mobile" | "desktop" | "game" | "tool";
+
 export interface ProjectTemplate {
   id: string;
   name: string;
@@ -33,6 +35,7 @@ export interface GeneratorProject {
   id: string;
   title: string;
   idea_description: string;
+  app_type: AppType;
   platform: string;
   services: string[];
   constraints: string[];

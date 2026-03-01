@@ -48,6 +48,7 @@ import { UpgradeChatView } from "@/components/generator/upgrade-chat-view";
 import { UpgradeCompleteView } from "@/components/generator/upgrade-complete-view";
 import { UpgradeDialog } from "@/components/generator/upgrade-dialog";
 import { createDesignMessage, updateGeneratorProject } from "@/lib/actions/generator-projects";
+import { PLATFORMS_WITH_DEV_SERVER } from "@/lib/constants";
 import type {
   DesignMessage,
   GeneratorProject,
@@ -97,8 +98,9 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [autoFixEnabled, setAutoFixEnabled] = useState(false);
+  const hasDevServer = PLATFORMS_WITH_DEV_SERVER.has(project.platform);
   const [previewTab, setPreviewTab] = useState(
-    project.status === "upgrading" || project.status === "archived" ? "tasks" : "app",
+    project.status === "upgrading" || project.status === "archived" ? "tasks" : hasDevServer ? "app" : "terminal",
   );
   const [scaffoldLogOpen, setScaffoldLogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -801,7 +803,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             activeTab={previewTab}
             onTabChange={setPreviewTab}
             showTasksTab={isUpgrading}
-            disableAppTab={(isUpgrading && !upgradeCompleted) || !devServer?.port}
+            disableAppTab={(isUpgrading && !upgradeCompleted) || !devServer?.port || !hasDevServer}
             tasksContent={
               isUpgrading ? (
                 upgradeCompleted ? (

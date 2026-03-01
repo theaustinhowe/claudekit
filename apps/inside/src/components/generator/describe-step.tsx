@@ -12,13 +12,18 @@ import { Switch } from "@claudekit/ui/components/switch";
 import { Textarea } from "@claudekit/ui/components/textarea";
 import {
   AlertTriangle,
+  ArrowLeft,
   ChevronDown,
   ChevronRight,
   Folder,
+  Gamepad2,
+  Globe,
   Layers,
   Loader2,
+  Monitor,
   Paintbrush,
   Rocket,
+  Smartphone,
   Sparkles,
   Wrench,
   X,
@@ -34,23 +39,31 @@ import { checkPathExists, createGeneratorProject } from "@/lib/actions/generator
 import type { ConditionalOption } from "@/lib/constants";
 import {
   ANALYTICS_OPTIONS,
+  APP_TYPES,
   AUTH_OPTIONS,
   BACKEND_OPTIONS,
   CONSTRAINT_OPTIONS,
   EMAIL_OPTIONS,
+  getAuthForAppType,
+  getBackendsForAppType,
+  getConstraintsForAppType,
+  getExamplesForAppType,
+  getFeatureCategoriesForAppType,
+  getPlatformsForAppType,
   PAYMENT_OPTIONS,
   PLATFORM_ADVANCED_OPTIONS,
   PLATFORMS,
   TS_ONLY_CONSTRAINTS,
 } from "@/lib/constants";
-import type { ToolCheckResult } from "@/lib/types";
+import type { AppType, ToolCheckResult } from "@/lib/types";
 
-const examplePrompts = [
-  "SaaS dashboard with auth and billing",
-  "Blog platform with markdown editor",
-  "Project management tool with kanban board",
-  "E-commerce store with cart and checkout",
-];
+const APP_TYPE_ICONS: Record<string, typeof Globe> = {
+  Globe,
+  Smartphone,
+  Monitor,
+  Gamepad2,
+  Wrench,
+};
 
 const OVERVIEW_STEPS = [
   {
@@ -262,6 +275,9 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
     return localStorage.getItem("inside:new-overview-collapsed") === "1";
   });
 
+  // App Type (first step)
+  const [appType, setAppType] = useState<AppType | null>(null);
+
   // Design
   const [idea, setIdea] = useState("");
   const [title, setTitle] = useState("");
@@ -368,10 +384,44 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
     [platform],
   );
 
-  // --- CLI constraint auto-disable ---
+  // --- App type change: reset everything to filtered defaults ---
+  const handleAppTypeChange = useCallback((newAppType: AppType) => {
+    setAppType(newAppType);
+    const typeDef = APP_TYPES.find((t) => t.id === newAppType);
+    if (!typeDef) return;
+
+    // Reset platform to first in the filtered list
+    const firstPlatform = typeDef.platforms[0];
+    setPlatform(firstPlatform);
+    setToolVersions(getDefaultsForPlatform(firstPlatform));
+
+    // Reset constraints to app type defaults
+    const validConstraintIds = new Set(typeDef.constraints);
+    setConstraints(CONSTRAINT_OPTIONS.filter((c) => c.defaultOn && validConstraintIds.has(c.id)).map((c) => c.id));
+    prevConstraintsRef.current = null;
+    setConstraintNote(null);
+
+    // Clear services that are no longer available
+    const validBackendIds = new Set(typeDef.backends);
+    const validAuthIds = new Set(typeDef.authOptions);
+    setServices((prev) => prev.filter((s) => validBackendIds.has(s) || validAuthIds.has(s)));
+    setSelectedFeatures([]);
+    setCustomFeatures([]);
+
+    // Reset service toggles based on availability
+    if (!typeDef.serviceCategories.email) setEmailEnabled(false);
+    if (!typeDef.serviceCategories.analytics) setAnalyticsEnabled(false);
+    if (!typeDef.serviceCategories.payments) setPaymentsEnabled(false);
+    if (typeDef.authOptions.length === 0) setAuthEnabled(false);
+  }, []);
+
+  // --- Constraint auto-disable for CLI (non-TS) and Desktop App (non-React UI) ---
   // biome-ignore lint/correctness/useExhaustiveDependencies: constraints is read as snapshot on platform/language change
   useEffect(() => {
-    if (platform !== "cli") {
+    const isCli = platform === "cli";
+    const isDesktop = platform === "desktop-app";
+
+    if (!isCli && !isDesktop) {
       if (prevConstraintsRef.current) {
         setConstraints(prevConstraintsRef.current);
         prevConstraintsRef.current = null;
@@ -380,24 +430,42 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
       return;
     }
 
-    const lang = toolVersions["cli-language"] ?? "typescript";
-    if (lang !== "typescript") {
-      // Save current constraints before stripping
-      if (!prevConstraintsRef.current) {
-        prevConstraintsRef.current = constraints;
+    if (isCli) {
+      const lang = toolVersions["cli-language"] ?? "typescript";
+      if (lang !== "typescript") {
+        if (!prevConstraintsRef.current) {
+          prevConstraintsRef.current = constraints;
+        }
+        setConstraints((prev) => prev.filter((c) => !TS_ONLY_CONSTRAINTS.has(c)));
+        const langLabel = lang.charAt(0).toUpperCase() + lang.slice(1);
+        setConstraintNote(`Constraints adjusted for ${langLabel}`);
+      } else {
+        if (prevConstraintsRef.current) {
+          setConstraints(prevConstraintsRef.current);
+          prevConstraintsRef.current = null;
+        }
+        setConstraintNote(null);
       }
-      setConstraints((prev) => prev.filter((c) => !TS_ONLY_CONSTRAINTS.has(c)));
-      const langLabel = lang.charAt(0).toUpperCase() + lang.slice(1);
-      setConstraintNote(`Constraints adjusted for ${langLabel}`);
-    } else {
-      // Restore if switching back to TS
-      if (prevConstraintsRef.current) {
-        setConstraints(prevConstraintsRef.current);
-        prevConstraintsRef.current = null;
-      }
-      setConstraintNote(null);
     }
-  }, [platform, toolVersions["cli-language"]]);
+
+    if (isDesktop) {
+      const uiLayer = toolVersions["desktop-ui"] ?? "react-vite";
+      if (uiLayer !== "react-vite") {
+        // shadcn/ui is React-only — strip it for Svelte/Solid
+        if (!prevConstraintsRef.current) {
+          prevConstraintsRef.current = constraints;
+        }
+        setConstraints((prev) => prev.filter((c) => c !== "shadcn"));
+        setConstraintNote(`shadcn/ui disabled — not available for ${uiLayer === "svelte" ? "Svelte" : "Solid"}`);
+      } else {
+        if (prevConstraintsRef.current) {
+          setConstraints(prevConstraintsRef.current);
+          prevConstraintsRef.current = null;
+        }
+        setConstraintNote(null);
+      }
+    }
+  }, [platform, toolVersions["cli-language"], toolVersions["desktop-ui"]]);
 
   const toggleService = (id: string) => {
     setServices((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
@@ -430,6 +498,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
       const project = await createGeneratorProject({
         title: title.trim() || effectiveProjectName,
         idea_description: idea.trim(),
+        app_type: appType ?? "web",
         platform,
         services: [...services, ...selectedFeatures],
         constraints,
@@ -453,8 +522,86 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   const platformOptions = PLATFORM_ADVANCED_OPTIONS[platform] ?? [];
   const visibleOptions = getVisibleOptions(platformOptions, toolVersions);
 
+  // --- Filtered constants based on app type ---
+  const currentAppType = appType ?? "web";
+  const filteredPlatforms = appType ? getPlatformsForAppType(currentAppType) : PLATFORMS;
+  const filteredBackends = appType ? getBackendsForAppType(currentAppType) : BACKEND_OPTIONS;
+  const filteredAuth = appType ? getAuthForAppType(currentAppType) : AUTH_OPTIONS;
+  const filteredConstraints = appType ? getConstraintsForAppType(currentAppType) : CONSTRAINT_OPTIONS;
+  const filteredFeatureCategories = appType ? getFeatureCategoriesForAppType(currentAppType) : undefined;
+  const examplePrompts = appType
+    ? getExamplesForAppType(currentAppType).map((e) => e.prompt)
+    : [
+        "SaaS dashboard with auth and billing",
+        "Blog platform with markdown editor",
+        "Project management tool with kanban board",
+        "E-commerce store with cart and checkout",
+      ];
+  const appTypeDef = appType ? APP_TYPES.find((t) => t.id === appType) : null;
+
+  // --- App Type Selector (shown when appType is null) ---
+  if (!appType) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold">What are you building?</h1>
+          <p className="text-muted-foreground">Choose a project type to get started</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {APP_TYPES.map((t) => {
+            const Icon = APP_TYPE_ICONS[t.icon] ?? Globe;
+            return (
+              <Card
+                key={t.id}
+                className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
+                onClick={() => handleAppTypeChange(t.id)}
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Icon className="w-5 h-5 text-primary" />
+                    {t.label}
+                  </CardTitle>
+                  <CardDescription>{t.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex flex-wrap gap-1">
+                    {t.platforms.map((pid) => {
+                      const p = PLATFORMS.find((pl) => pl.id === pid);
+                      return (
+                        <Badge key={pid} variant="secondary" className="text-xs">
+                          {p?.label ?? pid}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* App type indicator + back button */}
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={() => setAppType(null)} className="gap-1.5">
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
+        {appTypeDef && (
+          <Badge variant="outline" className="gap-1.5">
+            {(() => {
+              const Icon = APP_TYPE_ICONS[appTypeDef.icon] ?? Globe;
+              return <Icon className="w-3.5 h-3.5" />;
+            })()}
+            {appTypeDef.label}
+          </Badge>
+        )}
+      </div>
+
       {/* Overview */}
       {overviewCollapsed ? (
         <button
@@ -561,7 +708,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
           <div>
             <Label className="mb-3 block">Framework</Label>
             <div className="grid sm:grid-cols-3 lg:grid-cols-3 gap-3">
-              {PLATFORMS.map((p) => (
+              {filteredPlatforms.map((p) => (
                 <Card
                   key={p.id}
                   className={`cursor-pointer transition-all p-3 ${
@@ -703,7 +850,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
                   </label>
                   {backendEnabled && (
                     <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
-                      {BACKEND_OPTIONS.map((opt) => (
+                      {filteredBackends.map((opt) => (
                         <Badge
                           key={opt.id}
                           variant={services.includes(opt.id) ? "default" : "outline"}
@@ -718,148 +865,156 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
                 </div>
 
                 {/* Auth */}
-                <div
-                  className={`p-3 rounded-lg border transition-colors ${
-                    authEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
-                  }`}
-                >
-                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-sm font-medium">Auth</span>
-                    <Switch
-                      checked={authEnabled}
-                      onCheckedChange={(checked) => {
-                        setAuthEnabled(checked);
-                        if (!checked) {
-                          const authIds = AUTH_OPTIONS.map((o) => o.id);
-                          setServices((prev) => prev.filter((s) => !authIds.includes(s)));
-                        }
-                      }}
-                    />
-                  </label>
-                  {authEnabled && (
-                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
-                      {AUTH_OPTIONS.map((opt) => (
-                        <Badge
-                          key={opt.id}
-                          variant={services.includes(opt.id) ? "default" : "outline"}
-                          className="cursor-pointer transition-colors"
-                          onClick={() => toggleService(opt.id)}
-                        >
-                          {opt.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {filteredAuth.length > 0 && (
+                  <div
+                    className={`p-3 rounded-lg border transition-colors ${
+                      authEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm font-medium">Auth</span>
+                      <Switch
+                        checked={authEnabled}
+                        onCheckedChange={(checked) => {
+                          setAuthEnabled(checked);
+                          if (!checked) {
+                            const authIds = filteredAuth.map((o) => o.id);
+                            setServices((prev) => prev.filter((s) => !authIds.includes(s)));
+                          }
+                        }}
+                      />
+                    </label>
+                    {authEnabled && (
+                      <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                        {filteredAuth.map((opt) => (
+                          <Badge
+                            key={opt.id}
+                            variant={services.includes(opt.id) ? "default" : "outline"}
+                            className="cursor-pointer transition-colors"
+                            onClick={() => toggleService(opt.id)}
+                          >
+                            {opt.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Email */}
-                <div
-                  className={`p-3 rounded-lg border transition-colors ${
-                    emailEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
-                  }`}
-                >
-                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-sm font-medium">Email</span>
-                    <Switch
-                      checked={emailEnabled}
-                      onCheckedChange={(checked) => {
-                        setEmailEnabled(checked);
-                        if (!checked) {
-                          const emailIds = EMAIL_OPTIONS.map((o) => o.id);
-                          setServices((prev) => prev.filter((s) => !emailIds.includes(s)));
-                        }
-                      }}
-                    />
-                  </label>
-                  {emailEnabled && (
-                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
-                      {EMAIL_OPTIONS.map((opt) => (
-                        <Badge
-                          key={opt.id}
-                          variant={services.includes(opt.id) ? "default" : "outline"}
-                          className="cursor-pointer transition-colors"
-                          onClick={() => toggleService(opt.id)}
-                        >
-                          {opt.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {(!appTypeDef || appTypeDef.serviceCategories.email) && (
+                  <div
+                    className={`p-3 rounded-lg border transition-colors ${
+                      emailEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm font-medium">Email</span>
+                      <Switch
+                        checked={emailEnabled}
+                        onCheckedChange={(checked) => {
+                          setEmailEnabled(checked);
+                          if (!checked) {
+                            const emailIds = EMAIL_OPTIONS.map((o) => o.id);
+                            setServices((prev) => prev.filter((s) => !emailIds.includes(s)));
+                          }
+                        }}
+                      />
+                    </label>
+                    {emailEnabled && (
+                      <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                        {EMAIL_OPTIONS.map((opt) => (
+                          <Badge
+                            key={opt.id}
+                            variant={services.includes(opt.id) ? "default" : "outline"}
+                            className="cursor-pointer transition-colors"
+                            onClick={() => toggleService(opt.id)}
+                          >
+                            {opt.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Analytics */}
-                <div
-                  className={`p-3 rounded-lg border transition-colors ${
-                    analyticsEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
-                  }`}
-                >
-                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-sm font-medium">Analytics</span>
-                    <Switch
-                      checked={analyticsEnabled}
-                      onCheckedChange={(checked) => {
-                        setAnalyticsEnabled(checked);
-                        if (!checked) {
-                          const analyticsIds = ANALYTICS_OPTIONS.map((o) => o.id);
-                          setServices((prev) => prev.filter((s) => !analyticsIds.includes(s)));
-                        }
-                      }}
-                    />
-                  </label>
-                  {analyticsEnabled && (
-                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
-                      {ANALYTICS_OPTIONS.map((opt) => (
-                        <Badge
-                          key={opt.id}
-                          variant={services.includes(opt.id) ? "default" : "outline"}
-                          className="cursor-pointer transition-colors"
-                          onClick={() => toggleService(opt.id)}
-                        >
-                          {opt.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {(!appTypeDef || appTypeDef.serviceCategories.analytics) && (
+                  <div
+                    className={`p-3 rounded-lg border transition-colors ${
+                      analyticsEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm font-medium">Analytics</span>
+                      <Switch
+                        checked={analyticsEnabled}
+                        onCheckedChange={(checked) => {
+                          setAnalyticsEnabled(checked);
+                          if (!checked) {
+                            const analyticsIds = ANALYTICS_OPTIONS.map((o) => o.id);
+                            setServices((prev) => prev.filter((s) => !analyticsIds.includes(s)));
+                          }
+                        }}
+                      />
+                    </label>
+                    {analyticsEnabled && (
+                      <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                        {ANALYTICS_OPTIONS.map((opt) => (
+                          <Badge
+                            key={opt.id}
+                            variant={services.includes(opt.id) ? "default" : "outline"}
+                            className="cursor-pointer transition-colors"
+                            onClick={() => toggleService(opt.id)}
+                          >
+                            {opt.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Payments */}
-                <div
-                  className={`p-3 rounded-lg border transition-colors ${
-                    paymentsEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
-                  }`}
-                >
-                  {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-sm font-medium">Payments</span>
-                    <Switch
-                      checked={paymentsEnabled}
-                      onCheckedChange={(checked) => {
-                        setPaymentsEnabled(checked);
-                        if (!checked) {
-                          const paymentIds = PAYMENT_OPTIONS.map((o) => o.id);
-                          setServices((prev) => prev.filter((s) => !paymentIds.includes(s)));
-                        }
-                      }}
-                    />
-                  </label>
-                  {paymentsEnabled && (
-                    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
-                      {PAYMENT_OPTIONS.map((opt) => (
-                        <Badge
-                          key={opt.id}
-                          variant={services.includes(opt.id) ? "default" : "outline"}
-                          className="cursor-pointer transition-colors"
-                          onClick={() => toggleService(opt.id)}
-                        >
-                          {opt.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {(!appTypeDef || appTypeDef.serviceCategories.payments) && (
+                  <div
+                    className={`p-3 rounded-lg border transition-colors ${
+                      paymentsEnabled ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label */}
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="text-sm font-medium">Payments</span>
+                      <Switch
+                        checked={paymentsEnabled}
+                        onCheckedChange={(checked) => {
+                          setPaymentsEnabled(checked);
+                          if (!checked) {
+                            const paymentIds = PAYMENT_OPTIONS.map((o) => o.id);
+                            setServices((prev) => prev.filter((s) => !paymentIds.includes(s)));
+                          }
+                        }}
+                      />
+                    </label>
+                    {paymentsEnabled && (
+                      <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                        {PAYMENT_OPTIONS.map((opt) => (
+                          <Badge
+                            key={opt.id}
+                            variant={services.includes(opt.id) ? "default" : "outline"}
+                            className="cursor-pointer transition-colors"
+                            onClick={() => toggleService(opt.id)}
+                          >
+                            {opt.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Features */}
                 <div
@@ -888,6 +1043,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
                         customFeatures={customFeatures}
                         onFeaturesChange={setSelectedFeatures}
                         onCustomChange={setCustomFeatures}
+                        categories={filteredFeatureCategories}
                       />
                     </div>
                   )}
@@ -914,7 +1070,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3">
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {CONSTRAINT_OPTIONS.map((c) => (
+                {filteredConstraints.map((c) => (
                   // biome-ignore lint/a11y/noLabelWithoutControl: Switch renders as a button control inside this label
                   <label
                     key={c.id}

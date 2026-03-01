@@ -22,6 +22,18 @@ const ERROR_PATTERNS = [
   /is not a function/,
   /Cannot read propert/,
   /Unhandled Runtime Error/,
+  /error\[E\d+\]/,
+  /cannot find .* in this scope/,
+  /thread '.*' panicked/,
+  /cargo error/i,
+  // Dart/Flutter
+  /Error: .* line \d+/,
+  /FlutterError:/,
+  // GDScript (Godot)
+  /SCRIPT ERROR:/,
+  /Parser Error:/,
+  // Python
+  /Traceback \(most recent call last\)/,
 ];
 
 const MAX_RETRIES = 3;

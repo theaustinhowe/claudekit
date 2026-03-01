@@ -63,6 +63,51 @@ const SERVICE_LABEL_MAP: Record<string, string> = {
   "tanstack-table": "TanStack Table",
   "tanstack-form": "TanStack Form",
   "tanstack-virtual": "TanStack Virtual",
+  // Desktop backends
+  sqlite: "SQLite",
+  "embedded-store": "Embedded Store (tauri-plugin-store)",
+  // Desktop native features
+  "system-tray": "System Tray",
+  "auto-updates": "Auto-Updates",
+  "native-menus": "Native Menus",
+  "native-file-dialogs": "File Dialogs",
+  ipc: "IPC Commands",
+  "custom-titlebar": "Custom Titlebar",
+  // Desktop frameworks & UI layers
+  tauri2: "Tauri 2",
+  electron: "Electron",
+  "react-vite": "React + Vite",
+  svelte: "Svelte",
+  solid: "Solid",
+  // Mobile native features
+  "push-notifications": "Push Notifications",
+  "camera-access": "Camera",
+  geolocation: "Geolocation",
+  "biometric-auth": "Biometric Auth",
+  "offline-first": "Offline First",
+  "deep-linking": "Deep Linking",
+  // Game features
+  "physics-engine": "Physics Engine",
+  "particle-system": "Particle System",
+  tilemap: "Tilemap",
+  "save-system": "Save System",
+  "audio-manager": "Audio Manager",
+  "input-manager": "Input Manager",
+  // Mobile navigation & state management
+  "react-navigation": "React Navigation",
+  "expo-router": "Expo Router",
+  riverpod: "Riverpod",
+  bloc: "Bloc",
+  provider: "Provider",
+  // Languages & engines
+  gdscript: "GDScript",
+  csharp: "C#",
+  godot: "Godot",
+  flutter: "Flutter",
+  dart: "Dart",
+  expo: "Expo",
+  pygame: "Pygame",
+  bevy: "Bevy",
 };
 
 function resolveServiceLabels(services: string[]): string[] {
@@ -191,6 +236,106 @@ ${routerNote}
 - Structure: app/routes/ for routes, app/components/ for UI, app/lib/ for utilities${libInstructions}`;
       break;
     }
+    case "desktop-app": {
+      const framework = versions["desktop-framework"] ?? "tauri2";
+      const uiLayer = versions["desktop-ui"] ?? "react-vite";
+      const targets = versions["desktop-targets"]?.split(",").filter(Boolean) ?? ["linux", "macos"];
+      const rustEdition = versions["rust-edition"] ?? "2024";
+      const targetList = targets.map((t) => SERVICE_LABEL_MAP[t] ?? t).join(", ");
+
+      if (framework === "tauri2") {
+        const templateMap: Record<string, string> = {
+          "react-vite": "react-ts",
+          svelte: "svelte-ts",
+          solid: "solid-ts",
+        };
+        const template = templateMap[uiLayer] ?? "react-ts";
+        instructions = `
+- Initialize a Tauri 2 project using \`${pm} create tauri-app ${project.project_name} --template ${template}\` inside "${expandTilde(project.project_path)}"
+- Project structure: \`src/\` for the web frontend (${SERVICE_LABEL_MAP[uiLayer] ?? uiLayer}), \`src-tauri/\` for the Rust backend
+- Configure \`src-tauri/tauri.conf.json\`: set app identifier, default window size (1024x768), and bundle targets for ${targetList}
+- Set Rust edition to ${rustEdition} in \`src-tauri/Cargo.toml\`
+- The Vite dev server serves the frontend; Tauri wraps it in a native webview
+- Use TypeScript for the frontend layer`;
+      } else {
+        instructions = `
+- Create the project directory "${projectDir}" and set up an Electron app with ${SERVICE_LABEL_MAP[uiLayer] ?? uiLayer}
+- Use electron-forge for project scaffolding and build tooling
+- Structure: \`src/main/\` for Electron main process, \`src/renderer/\` for UI, \`src/preload/\` for preload scripts
+- Configure build targets for ${targetList}
+- Use TypeScript throughout`;
+      }
+      break;
+    }
+    case "react-native": {
+      const navigation = versions["rn-navigation"] ?? "react-navigation";
+      const targets = versions["rn-targets"]?.split(",").filter(Boolean) ?? ["ios", "android"];
+      const navLabel = SERVICE_LABEL_MAP[navigation] ?? navigation;
+      instructions = `
+- Initialize a React Native project using \`npx @react-native-community/cli init ${project.project_name} --template react-native-template-typescript\` inside "${expandTilde(project.project_path)}"
+- Set up ${navLabel} for screen navigation
+- Target platforms: ${targets.join(", ")}
+- Use TypeScript throughout
+- Structure: src/screens/ for screens, src/components/ for UI, src/navigation/ for routing, src/lib/ for utilities`;
+      break;
+    }
+    case "expo": {
+      const useRouter = versions["expo-router"] !== "false";
+      const targets = versions["expo-targets"]?.split(",").filter(Boolean) ?? ["ios", "android"];
+      instructions = `
+- Initialize an Expo project using \`npx create-expo-app ${project.project_name} --template tabs\` inside "${expandTilde(project.project_path)}"
+- ${useRouter ? "Use Expo Router for file-based routing (app/ directory)" : "Use React Navigation for screen routing"}
+- Target platforms: ${targets.join(", ")}
+- Use TypeScript throughout
+- Structure: ${useRouter ? "app/ for routes, components/ for UI, lib/ for utilities" : "src/screens/ for screens, src/components/ for UI, src/navigation/ for routing, src/lib/ for utilities"}`;
+      break;
+    }
+    case "flutter": {
+      const stateMgmt = versions["flutter-state"] ?? "riverpod";
+      const targets = versions["flutter-targets"]?.split(",").filter(Boolean) ?? ["ios", "android"];
+      const stateLabel = SERVICE_LABEL_MAP[stateMgmt] ?? stateMgmt;
+      instructions = `
+- Initialize a Flutter project using \`flutter create ${project.project_name}\` inside "${expandTilde(project.project_path)}"
+- Use ${stateLabel} for state management
+- Target platforms: ${targets.join(", ")}
+- Use Dart throughout
+- Structure: lib/screens/ for screens, lib/widgets/ for reusable widgets, lib/models/ for data models, lib/services/ for business logic`;
+      break;
+    }
+    case "godot": {
+      const version = versions["godot-version"] ?? "4.x";
+      const language = versions["godot-language"] ?? "gdscript";
+      const gameType = versions["godot-game-type"] ?? "2d";
+      const langLabel = SERVICE_LABEL_MAP[language] ?? language;
+      instructions = `
+- Create the project directory "${projectDir}" with a \`project.godot\` configuration file for Godot ${version}
+- Use ${langLabel} as the scripting language
+- Set up a ${gameType.toUpperCase()} game project
+- Structure: scenes/ for scene files (.tscn), scripts/ for ${langLabel} scripts, assets/ for sprites/textures/audio, addons/ for plugins
+- Include a main scene as the entry point`;
+      break;
+    }
+    case "bevy": {
+      const version = versions["bevy-version"] ?? "0.15";
+      instructions = `
+- Create the project directory "${projectDir}" using \`cargo init\`
+- Add bevy ${version} as a dependency in Cargo.toml
+- Use Rust throughout
+- Structure: src/systems/ for ECS systems, src/components/ for ECS components, src/resources/ for game resources, assets/ for game assets
+- Include a main.rs with basic Bevy app setup and default plugins`;
+      break;
+    }
+    case "pygame": {
+      const gameType = versions["pygame-game-type"] ?? "arcade";
+      instructions = `
+- Create the project directory "${projectDir}" and initialize with \`uv init\` or create a pyproject.toml
+- Install pygame as a dependency
+- Set up a ${gameType} game project
+- Use Python throughout
+- Structure: src/ for source code, src/entities/ for game objects, src/scenes/ for game scenes, assets/ for sprites/audio
+- Include a main.py with the game loop (init, event handling, update, draw)`;
+      break;
+    }
     default:
       instructions = `
 - Create the project directory "${projectDir}" and run \`${pm} init\`
@@ -292,11 +437,42 @@ Key requirements:
 Read \`.interface-design/system.md\` in the project directory for the project-specific design system.`);
   }
 
+  let devCommandNote: string;
+  switch (project.platform) {
+    case "desktop-app":
+      if ((project.tool_versions?.["desktop-framework"] ?? "tauri2") === "tauri2") {
+        devCommandNote = `3. Ensure \`${pm}${pm === "npm" ? " run" : ""} dev\` starts the Vite frontend without errors (use \`${pm}${pm === "npm" ? " run" : ""} tauri dev\` to launch the full native window)`;
+      } else {
+        devCommandNote = `3. Ensure \`${pm}${pm === "npm" ? " run" : ""} dev\` starts without errors`;
+      }
+      break;
+    case "flutter":
+      devCommandNote = "3. Ensure `flutter run` starts the app without errors";
+      break;
+    case "godot":
+      devCommandNote = "3. Ensure the project can be opened in Godot and the main scene runs without errors";
+      break;
+    case "bevy":
+      devCommandNote = "3. Ensure `cargo run` compiles and runs without errors";
+      break;
+    case "pygame":
+      devCommandNote = "3. Ensure `python main.py` starts the game without errors";
+      break;
+    case "expo":
+      devCommandNote = "3. Ensure `npx expo start` starts the development server without errors";
+      break;
+    case "react-native":
+      devCommandNote = "3. Ensure `npx react-native start` starts the Metro bundler without errors";
+      break;
+    default:
+      devCommandNote = `3. Ensure \`${pm}${pm === "npm" ? " run" : ""} dev\` starts without errors`;
+  }
+
   sections.push(`## Prototype Requirements
 
 1. The project MUST be created at: ${projectDir}
 2. Use ${pm} as the package manager
-3. Ensure \`${pm}${pm === "npm" ? " run" : ""} dev\` starts without errors
+${devCommandNote}
 4. Use hardcoded mock/sample data throughout — do NOT set up real database connections, auth providers, or external API integrations
 5. Focus on building a polished UI with realistic-looking sample data that is easy to swap out later
 6. Keep the architecture simple — no ORM, no auth middleware, no real API routes with DB queries
@@ -334,6 +510,46 @@ export function buildImplementationPrompt(project: GeneratorProject): string {
   }
   if (project.platform === "cli" && versions["cli-language"] && versions["cli-language"] !== "typescript") {
     platformDetails.push(`Language: ${SERVICE_LABEL_MAP[versions["cli-language"]] ?? versions["cli-language"]}`);
+  }
+  if (project.platform === "desktop-app") {
+    const framework = versions["desktop-framework"] ?? "tauri2";
+    const uiLayer = versions["desktop-ui"] ?? "react-vite";
+    const targets = versions["desktop-targets"]?.split(",").filter(Boolean) ?? ["linux", "macos"];
+    platformDetails.push(`Desktop Framework: ${SERVICE_LABEL_MAP[framework] ?? framework}`);
+    platformDetails.push(`UI Layer: ${SERVICE_LABEL_MAP[uiLayer] ?? uiLayer}`);
+    platformDetails.push(`Targets: ${targets.join(", ")}`);
+  }
+  if (project.platform === "react-native") {
+    const navigation = versions["rn-navigation"] ?? "react-navigation";
+    const targets = versions["rn-targets"]?.split(",").filter(Boolean) ?? ["ios", "android"];
+    platformDetails.push(`Navigation: ${SERVICE_LABEL_MAP[navigation] ?? navigation}`);
+    platformDetails.push(`Targets: ${targets.join(", ")}`);
+  }
+  if (project.platform === "expo") {
+    const useRouter = versions["expo-router"] !== "false";
+    const targets = versions["expo-targets"]?.split(",").filter(Boolean) ?? ["ios", "android"];
+    platformDetails.push(`Routing: ${useRouter ? "Expo Router" : "React Navigation"}`);
+    platformDetails.push(`Targets: ${targets.join(", ")}`);
+  }
+  if (project.platform === "flutter") {
+    const stateMgmt = versions["flutter-state"] ?? "riverpod";
+    const targets = versions["flutter-targets"]?.split(",").filter(Boolean) ?? ["ios", "android"];
+    platformDetails.push(`State Management: ${SERVICE_LABEL_MAP[stateMgmt] ?? stateMgmt}`);
+    platformDetails.push(`Targets: ${targets.join(", ")}`);
+  }
+  if (project.platform === "godot") {
+    const language = versions["godot-language"] ?? "gdscript";
+    const gameType = versions["godot-game-type"] ?? "2d";
+    platformDetails.push(`Language: ${SERVICE_LABEL_MAP[language] ?? language}`);
+    platformDetails.push(`Game Type: ${gameType.toUpperCase()}`);
+  }
+  if (project.platform === "bevy") {
+    const version = versions["bevy-version"] ?? "0.15";
+    platformDetails.push(`Bevy Version: ${version}`);
+  }
+  if (project.platform === "pygame") {
+    const gameType = versions["pygame-game-type"] ?? "arcade";
+    platformDetails.push(`Game Type: ${gameType}`);
   }
   if (versions.monorepo === "true") {
     platformDetails.push(`Monorepo: ${SERVICE_LABEL_MAP[versions["monorepo-tool"] ?? "pnpm"] ?? "pnpm workspaces"}`);
@@ -407,6 +623,16 @@ ${project.idea_description}`);
         case "duckdb":
           serviceDetails.push(
             `### DuckDB (Database)\n- Set up DuckDB with @duckdb/node-api for embedded analytics\n- Create schema based on mock data entities\n- Replace mock data with DuckDB queries\n- Configure file-based storage path`,
+          );
+          break;
+        case "sqlite":
+          serviceDetails.push(
+            `### SQLite (Database)\n- Set up SQLite via better-sqlite3 (Node) or sqlx (Rust/Tauri)\n- Create database schema based on mock data entities\n- Replace mock data with SQLite queries\n- Store the database file in the app's data directory`,
+          );
+          break;
+        case "embedded-store":
+          serviceDetails.push(
+            `### Embedded Store (tauri-plugin-store)\n- Set up tauri-plugin-store for key-value persistence\n- Create typed store accessors for each data entity\n- Replace mock data with store read/write operations\n- Data persists automatically in the app's config directory`,
           );
           break;
         case "stripe":
