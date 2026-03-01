@@ -107,7 +107,7 @@ src/
     ├── db/
     │   ├── index.ts                 # DuckDB connection (createDatabase + runMigrations + session reconciliation + seed)
     │   ├── seed.ts                  # Built-in data seeding
-    │   └── migrations/              # 2 numbered SQL migration files
+    │   └── migrations/              # 1 migration file (001_initial.sql)
     ├── actions/                     # 9 Server Action files ("use server")
     │   ├── generator-projects.ts    # Project CRUD, specs, design messages
     │   ├── settings.ts              # Key-value settings
@@ -145,7 +145,7 @@ src/
 
 - **DuckDB** via `@claudekit/duckdb` with `createDatabase()` + `runMigrations()`. DB file at `~/.inside/data.duckdb`.
 - `src/lib/db/index.ts` -- singleton connection cached via `globalThis`. On startup: runs migrations, reconciles orphaned sessions, recovers projects stuck in `scaffolding` status, auto-seeds built-in data.
-- 2 migration files: `001_initial.sql` (9 app tables + 2 session tables = 11 total), `002_tool_versions.sql` (adds `tool_versions` column).
+- 1 migration file: `001_initial.sql` (9 app tables + 2 session tables = 11 total).
 - 11 tables: `templates`, `generator_projects`, `project_specs`, `design_messages`, `upgrade_tasks`, `auto_fix_runs`, `project_screenshots`, `generator_runs`, `settings`, `sessions`, `session_logs`.
 
 ### Session System

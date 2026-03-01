@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS repos (
   name TEXT NOT NULL,
   full_name TEXT NOT NULL,
   default_branch TEXT DEFAULT 'main',
+  local_path TEXT,
   last_synced_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -25,6 +26,9 @@ CREATE TABLE IF NOT EXISTS prs (
   review_status TEXT,
   state TEXT DEFAULT 'open',
   complexity INTEGER,
+  user_relationship TEXT,
+  html_url TEXT,
+  repo_full_name TEXT,
   github_created_at TIMESTAMPTZ,
   github_updated_at TIMESTAMPTZ,
   fetched_at TIMESTAMPTZ DEFAULT now(),
@@ -77,10 +81,13 @@ CREATE TABLE IF NOT EXISTS skills (
   resources JSON DEFAULT '[]',
   action_item TEXT,
   addressed BOOLEAN DEFAULT false,
-  comment_ids JSON DEFAULT '[]'
+  comment_ids JSON DEFAULT '[]',
+  group_id TEXT,
+  rule_content TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_skills_analysis_id ON skills(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_skills_group_id ON skills(group_id);
 
 -- Split plan results
 CREATE TABLE IF NOT EXISTS split_plans (
@@ -144,3 +151,51 @@ CREATE TABLE IF NOT EXISTS session_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_session_logs_session ON session_logs(session_id);
+
+-- Authenticated GitHub user cache
+CREATE TABLE IF NOT EXISTS github_user (
+  id TEXT PRIMARY KEY,
+  login TEXT NOT NULL,
+  avatar_url TEXT,
+  name TEXT,
+  fetched_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Skill groups (react-components, css-styling, migrations, etc.)
+CREATE TABLE IF NOT EXISTS skill_groups (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Split execution tracking (per sub-PR)
+CREATE TABLE IF NOT EXISTS split_executions (
+  id TEXT PRIMARY KEY,
+  plan_id TEXT NOT NULL,
+  sub_pr_index INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  branch_name TEXT,
+  pr_number INTEGER,
+  pr_url TEXT,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  completed_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_split_executions_plan ON split_executions(plan_id);
+
+-- Comment fix execution tracking
+CREATE TABLE IF NOT EXISTS fix_executions (
+  id TEXT PRIMARY KEY,
+  fix_id TEXT NOT NULL,
+  comment_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  branch_name TEXT,
+  commit_sha TEXT,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  completed_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_fix_executions_fix ON fix_executions(fix_id);
