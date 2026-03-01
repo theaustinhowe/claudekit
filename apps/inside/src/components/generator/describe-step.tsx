@@ -29,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DirectoryPicker } from "@/components/directory-picker";
@@ -275,8 +276,13 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
     return localStorage.getItem("inside:new-overview-collapsed") === "1";
   });
 
-  // App Type (first step)
-  const [appType, setAppType] = useState<AppType | null>(null);
+  // App Type (first step) — persisted in URL ?type= param via nuqs
+  const [appType, setAppType] = useQueryState(
+    "type",
+    parseAsStringLiteral(["web", "mobile", "desktop", "game", "tool"] as const).withOptions({
+      history: "push",
+    }),
+  );
 
   // Design
   const [idea, setIdea] = useState("");
