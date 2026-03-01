@@ -5,15 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@clau
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { Check, Copy, FolderOpen, Terminal } from "lucide-react";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { openFolderInTerminal } from "@/lib/actions/code-browser";
 import type { PlatformRunInstruction } from "@/lib/constants";
 
 interface RunInstructionsPreviewProps {
   instruction: PlatformRunInstruction;
   projectPath: string;
+  projectName?: string;
   onViewTerminal?: () => void;
 }
 
-export function RunInstructionsPreview({ instruction, projectPath, onViewTerminal }: RunInstructionsPreviewProps) {
+export function RunInstructionsPreview({
+  instruction,
+  projectPath,
+  projectName,
+  onViewTerminal,
+}: RunInstructionsPreviewProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
@@ -22,6 +30,15 @@ export function RunInstructionsPreview({ instruction, projectPath, onViewTermina
       setTimeout(() => setCopied(false), 2000);
     });
   }, [instruction.runCommand]);
+
+  const handleOpenTerminal = useCallback(async () => {
+    try {
+      const dir = projectName ? `${projectPath}/${projectName}` : projectPath;
+      await openFolderInTerminal(dir);
+    } catch {
+      toast.error("Could not open Terminal");
+    }
+  }, [projectPath, projectName]);
 
   return (
     <div className="flex items-center justify-center h-full p-6 bg-muted/30">
@@ -62,14 +79,19 @@ export function RunInstructionsPreview({ instruction, projectPath, onViewTermina
           {/* Project path */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground border-t pt-3">
             <FolderOpen className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{projectPath}</span>
+            <span className="truncate">{projectName ? `${projectPath}/${projectName}` : projectPath}</span>
           </div>
 
-          {/* View terminal button */}
-          {onViewTerminal && (
+          {/* Action button */}
+          {onViewTerminal ? (
             <Button variant="outline" size="sm" className="w-full" onClick={onViewTerminal}>
               <Terminal className="w-3.5 h-3.5 mr-1.5" />
               View Terminal Output
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="w-full" onClick={handleOpenTerminal}>
+              <Terminal className="w-3.5 h-3.5 mr-1.5" />
+              Open in Terminal
             </Button>
           )}
         </CardContent>

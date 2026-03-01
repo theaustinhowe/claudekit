@@ -92,6 +92,7 @@ export function PreviewPanel({
               strategy={previewStrategy}
               runInstruction={runInstruction}
               projectPath={projectPath}
+              projectName={projectName}
               onViewTerminal={onViewTerminal}
             />
           </TabsContent>

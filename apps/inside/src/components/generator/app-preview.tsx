@@ -15,6 +15,7 @@ interface AppPreviewProps {
   strategy?: PreviewStrategy;
   runInstruction?: PlatformRunInstruction;
   projectPath?: string;
+  projectName?: string;
   onViewTerminal?: () => void;
 }
 
@@ -33,6 +34,7 @@ export function AppPreview({
   strategy = "iframe",
   runInstruction,
   projectPath,
+  projectName,
   onViewTerminal,
 }: AppPreviewProps) {
   const [viewport, setViewport] = useState<Viewport>("desktop");
@@ -50,6 +52,7 @@ export function AppPreview({
       <RunInstructionsPreview
         instruction={runInstruction}
         projectPath={projectPath ?? ""}
+        projectName={projectName}
         onViewTerminal={onViewTerminal}
       />
     );

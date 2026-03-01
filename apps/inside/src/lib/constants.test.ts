@@ -437,13 +437,13 @@ describe("PLATFORM_PREVIEW_STRATEGY", () => {
     expect(PLATFORM_PREVIEW_STRATEGY["desktop-app"]).toBe("iframe");
   });
 
-  it("maps expo and flutter to iframe-web-mode", () => {
+  it("maps expo, flutter, and react-native to iframe-web-mode", () => {
     expect(PLATFORM_PREVIEW_STRATEGY.expo).toBe("iframe-web-mode");
     expect(PLATFORM_PREVIEW_STRATEGY.flutter).toBe("iframe-web-mode");
+    expect(PLATFORM_PREVIEW_STRATEGY["react-native"]).toBe("iframe-web-mode");
   });
 
   it("maps non-web platforms to run-instructions", () => {
-    expect(PLATFORM_PREVIEW_STRATEGY["react-native"]).toBe("run-instructions");
     expect(PLATFORM_PREVIEW_STRATEGY.godot).toBe("run-instructions");
     expect(PLATFORM_PREVIEW_STRATEGY.bevy).toBe("run-instructions");
     expect(PLATFORM_PREVIEW_STRATEGY.pygame).toBe("run-instructions");
@@ -493,6 +493,18 @@ describe("getEffectivePreviewStrategy", () => {
 
   it("returns iframe-web-mode for flutter with web target", () => {
     expect(getEffectivePreviewStrategy("flutter", { "flutter-targets": "ios,web" })).toBe("iframe-web-mode");
+  });
+
+  it("returns iframe-web-mode for react-native by default", () => {
+    expect(getEffectivePreviewStrategy("react-native")).toBe("iframe-web-mode");
+  });
+
+  it("returns run-instructions for react-native without web target", () => {
+    expect(getEffectivePreviewStrategy("react-native", { "rn-targets": "ios,android" })).toBe("run-instructions");
+  });
+
+  it("returns iframe-web-mode for react-native with web target", () => {
+    expect(getEffectivePreviewStrategy("react-native", { "rn-targets": "ios,android,web" })).toBe("iframe-web-mode");
   });
 
   it("falls back to run-instructions for unknown platform", () => {

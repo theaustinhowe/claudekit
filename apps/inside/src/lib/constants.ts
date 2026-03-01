@@ -917,6 +917,10 @@ export function getEffectivePreviewStrategy(platform: string, toolVersions?: Rec
       const targets = toolVersions["flutter-targets"]?.split(",") ?? [];
       if (!targets.includes("web")) return "run-instructions";
     }
+    if (platform === "react-native") {
+      const targets = toolVersions["rn-targets"]?.split(",") ?? [];
+      if (!targets.includes("web")) return "run-instructions";
+    }
   }
   return base;
 }

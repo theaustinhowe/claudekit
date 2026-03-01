@@ -133,6 +133,12 @@ function getStartCommand(
       return { cmd: "npx", args: ["expo", "start", "--web", "--port", String(port)], env: { BROWSER: "none" } };
     case "flutter":
       return { cmd: "flutter", args: ["run", "-d", "chrome", "--web-port", String(port)], env: {} };
+    case "react-native":
+      return {
+        cmd: pm === "bun" ? "bun" : pm,
+        args: pm === "bun" ? ["web"] : ["run", "web"],
+        env: { PORT: String(port), BROWSER: "none" },
+      };
     default: {
       const args = pm === "bun" ? ["dev"] : ["run", "dev"];
       return { cmd: pm, args, env: { PORT: String(port), BROWSER: "none" } };

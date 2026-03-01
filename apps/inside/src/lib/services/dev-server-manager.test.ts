@@ -458,6 +458,32 @@ describe("start / stop lifecycle", () => {
     expect(mockSpawn).toHaveBeenCalledWith("npm", ["run", "dev"], expect.any(Object));
   });
 
+  it("uses 'run web' args for react-native platform with npm", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-rn", "/tmp/proj", "npm", "react-native");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    expect(mockSpawn).toHaveBeenCalledWith("npm", ["run", "web"], expect.any(Object));
+  });
+
+  it("uses 'web' args for react-native platform with bun", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-rn", "/tmp/proj", "bun", "react-native");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    expect(mockSpawn).toHaveBeenCalledWith("bun", ["web"], expect.any(Object));
+  });
+
   it("passes preferredPort to findAvailablePort", async () => {
     const mockProcess = createMockProcess();
     mockSpawn.mockReturnValue(mockProcess);

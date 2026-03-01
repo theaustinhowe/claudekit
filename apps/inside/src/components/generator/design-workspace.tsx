@@ -840,7 +840,9 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             hideTerminalTab={!PLATFORMS_WITH_DEV_SERVER.has(project.platform)}
             previewStrategy={previewStrategy}
             runInstruction={runInstruction}
-            onViewTerminal={() => setPreviewTab("terminal")}
+            onViewTerminal={
+              PLATFORMS_WITH_DEV_SERVER.has(project.platform) ? () => setPreviewTab("terminal") : undefined
+            }
             tasksContent={
               isUpgrading ? (
                 upgradeCompleted ? (
