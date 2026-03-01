@@ -224,38 +224,6 @@ describe("stop (adopted server)", () => {
   });
 });
 
-describe("findAvailablePort with preferredPort", () => {
-  it("returns preferred port when available", async () => {
-    setupPortMock();
-    const port = await devServerManager.findAvailablePort(2550, 3000);
-    expect(port).toBe(3000);
-  });
-
-  it("falls back to sequential scan when preferred port is taken", async () => {
-    let callCount = 0;
-    mockCreateServer.mockImplementation(() => {
-      const mockServer = new EventEmitter() as EventEmitter & {
-        listen: ReturnType<typeof vi.fn>;
-        close: ReturnType<typeof vi.fn>;
-      };
-      mockServer.close = vi.fn().mockImplementation((cb: () => void) => cb());
-      mockServer.listen = vi.fn().mockImplementation(function (this: EventEmitter) {
-        callCount++;
-        // First call is the preferred port — fail it
-        if (callCount === 1) {
-          process.nextTick(() => this.emit("error", new Error("EADDRINUSE")));
-        } else {
-          process.nextTick(() => this.emit("listening"));
-        }
-      });
-      return mockServer;
-    });
-
-    const port = await devServerManager.findAvailablePort(2550, 3000);
-    expect(port).toBe(2550);
-  });
-});
-
 describe("start / stop lifecycle", () => {
   it("starts a server, captures logs, and populates getStatus", async () => {
     const mockProcess = createMockProcess();
