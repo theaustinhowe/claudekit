@@ -16,7 +16,7 @@ Next.js 16 app serving as the ClaudeKit landing page and control center.
 - Color-coded log levels with row highlighting for WARN/ERROR/FATAL
 - Per-app todo lists with file-based persistence
 - App management (start/stop/restart) via daemon proxy
-- Toolbox — dev tool version checker (Node.js, pnpm, Homebrew, Claude, etc.) with update detection
+- Toolbox — dev tool version checker (20 tools incl. Rust, Cargo, Tauri CLI, Flutter, Dart, Godot, FFmpeg) with `usedFor` descriptions and update detection
 - Setup wizard for configuring app environment variables
 - Theme support via @claudekit/hooks (9 color themes + light/dark/system)
 
@@ -66,12 +66,12 @@ src/
     ├── toolbox-settings.ts           # Toolbox tool selection (~/.claudekit/toolbox-settings.json)
     ├── env-parser.ts
     ├── actions/setup-wizard.ts
-    ├── constants/tools.ts            # Default tool definitions (Homebrew, Node, pnpm, etc.)
-    ├── types/toolbox.ts              # Tool checker types
+    ├── constants/tools.ts            # 20 tool definitions with `usedFor` field (Homebrew, Node, pnpm, Rust, Flutter, Godot, etc.)
+    ├── types/toolbox.ts              # Tool checker types (ToolDefinition incl. `usedFor?: string`, `updateCommands`, `detectInstallMethod`, `brewPackage`)
     └── services/
         ├── tool-checker.ts           # Version detection + update check logic
         ├── version-resolver.ts       # Latest version resolution (npm, GitHub, URLs)
-        └── process-runner.ts         # Safe command execution wrapper
+        └── process-runner.ts         # Safe command execution wrapper with PATH augmentation for non-standard tool locations (~/.cargo/bin, ~/.bun/bin, ~/.local/bin, /opt/homebrew/bin)
 ```
 
 ## Data Layer
