@@ -224,6 +224,83 @@ describe("stop (adopted server)", () => {
   });
 });
 
+describe("start sanitizes pnpm/npm env vars", () => {
+  it("strips all pnpm/npm workspace vars from spawned process env", async () => {
+    process.env.npm_config_globalconfig = "/some/path";
+    process.env.npm_config_recursive = "true";
+    process.env.npm_package_name = "my-package";
+    process.env.npm_lifecycle_event = "dev";
+    process.env.pnpm_config_verify_deps_before_run = "install";
+    process.env.npm_command = "run-script";
+    process.env.npm_execpath = "/usr/local/bin/pnpm";
+    process.env.npm_node_execpath = "/usr/local/bin/node";
+
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-env", "/tmp/proj", "npm");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    const spawnEnv = mockSpawn.mock.calls[0][2].env;
+
+    expect(spawnEnv.npm_config_globalconfig).toBeUndefined();
+    expect(spawnEnv.npm_config_recursive).toBeUndefined();
+    expect(spawnEnv.npm_package_name).toBeUndefined();
+    expect(spawnEnv.npm_lifecycle_event).toBeUndefined();
+    expect(spawnEnv.pnpm_config_verify_deps_before_run).toBeUndefined();
+    expect(spawnEnv.npm_command).toBeUndefined();
+    expect(spawnEnv.npm_execpath).toBeUndefined();
+    expect(spawnEnv.npm_node_execpath).toBeUndefined();
+
+    // Clean up
+    delete process.env.npm_config_globalconfig;
+    delete process.env.npm_config_recursive;
+    delete process.env.npm_package_name;
+    delete process.env.npm_lifecycle_event;
+    delete process.env.pnpm_config_verify_deps_before_run;
+    delete process.env.npm_command;
+    delete process.env.npm_execpath;
+    delete process.env.npm_node_execpath;
+  });
+
+  it("preserves PATH/HOME and applies extraEnv", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-env", "/tmp/proj", "npm");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    const spawnEnv = mockSpawn.mock.calls[0][2].env;
+
+    expect(spawnEnv.PATH).toBe(process.env.PATH);
+    expect(spawnEnv.HOME).toBe(process.env.HOME);
+    expect(spawnEnv.PORT).toBeDefined();
+    expect(spawnEnv.BROWSER).toBe("none");
+  });
+
+  it("does not mutate process.env", async () => {
+    process.env.npm_config_test_var = "should-stay";
+
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-env", "/tmp/proj", "npm");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    expect(process.env.npm_config_test_var).toBe("should-stay");
+    delete process.env.npm_config_test_var;
+  });
+});
+
 describe("start / stop lifecycle", () => {
   it("starts a server, captures logs, and populates getStatus", async () => {
     const mockProcess = createMockProcess();

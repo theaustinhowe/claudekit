@@ -8,3 +8,7 @@ const execFileAsync = promisify(execFile);
 export async function openFolderInFinder(dirPath: string): Promise<void> {
   await execFileAsync("open", [dirPath]);
 }
+
+export async function openFolderInTerminal(dirPath: string): Promise<void> {
+  await execFileAsync("open", ["-a", "Terminal", dirPath]);
+}

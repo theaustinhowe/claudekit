@@ -48,7 +48,7 @@ import { UpgradeChatView } from "@/components/generator/upgrade-chat-view";
 import { UpgradeCompleteView } from "@/components/generator/upgrade-complete-view";
 import { UpgradeDialog } from "@/components/generator/upgrade-dialog";
 import { createDesignMessage, updateGeneratorProject } from "@/lib/actions/generator-projects";
-import { getEffectivePreviewStrategy, PLATFORM_RUN_INSTRUCTIONS } from "@/lib/constants";
+import { getEffectivePreviewStrategy, PLATFORM_RUN_INSTRUCTIONS, PLATFORMS_WITH_DEV_SERVER } from "@/lib/constants";
 import type {
   DesignMessage,
   GeneratorProject,
@@ -199,6 +199,11 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   }, []);
 
   const startDevServer = useCallback(async () => {
+    // Non-server platforms (CLI tools, games, etc.) don't have dev servers
+    if (!PLATFORMS_WITH_DEV_SERVER.has(project.platform)) {
+      setPreviewTab("app");
+      return;
+    }
     setDevServer({ port: 0, status: "starting" });
     try {
       const res = await fetch(`/api/projects/${project.id}/dev-server`, { method: "POST" });
@@ -215,7 +220,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
     } catch {
       setDevServer({ port: 0, status: "error" });
     }
-  }, [project.id]);
+  }, [project.id, project.platform]);
 
   // Safety net: if scaffold-terminal reports "done" via onStatusChange but the
   // SSE onComplete callback never fires (connection dropped, event missed),
@@ -259,14 +264,24 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
         parts.push(`**${stats.commandsRun}** command${stats.commandsRun !== 1 ? "s" : ""} run`);
 
       const statsLine = parts.length > 0 ? ` ${parts.join(", ")}.` : "";
-      const content = `Your project **${project.title}** has been scaffolded!${statsLine}\n\nThe dev server is starting up and you'll see a preview on the right shortly. You can now describe any changes you'd like to make.`;
+      const hasServer = PLATFORMS_WITH_DEV_SERVER.has(project.platform);
+      const content = hasServer
+        ? `Your project **${project.title}** has been scaffolded!${statsLine}\n\nThe dev server is starting up and you'll see a preview on the right shortly. You can now describe any changes you'd like to make.`
+        : `Your project **${project.title}** has been scaffolded!${statsLine}\n\nYou can browse the generated files and describe any changes you'd like to make.`;
 
-      const suggestions = [
-        "Refine the layout and spacing",
-        "Add more pages or sections",
-        "Improve the color scheme and typography",
-        "Add animations and transitions",
-      ];
+      const suggestions = hasServer
+        ? [
+            "Refine the layout and spacing",
+            "Add more pages or sections",
+            "Improve the color scheme and typography",
+            "Add animations and transitions",
+          ]
+        : [
+            "Add a new command or subcommand",
+            "Improve the help text and documentation",
+            "Add input validation and error handling",
+            "Add configuration file support",
+          ];
 
       try {
         const msg = await createDesignMessage({
@@ -280,7 +295,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
         // Non-critical — chat still works without the welcome message
       }
     },
-    [startDevServer, project.id, project.title],
+    [startDevServer, project.id, project.title, project.platform],
   );
 
   // Whether the current preview strategy supports screenshots (iframe-based only)
@@ -338,16 +353,26 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
           updateGeneratorProject(project.id, { status: "designing" }).catch(() => {});
 
           try {
+            const hasServer = PLATFORMS_WITH_DEV_SERVER.has(project.platform);
             const msg = await createDesignMessage({
               project_id: project.id,
               role: "assistant",
-              content: `Your project **${project.title}** has been scaffolded!\n\nThe dev server is starting up and you'll see a preview on the right shortly. You can now describe any changes you'd like to make.`,
-              suggestions: [
-                "Refine the layout and spacing",
-                "Add more pages or sections",
-                "Improve the color scheme and typography",
-                "Add animations and transitions",
-              ],
+              content: hasServer
+                ? `Your project **${project.title}** has been scaffolded!\n\nThe dev server is starting up and you'll see a preview on the right shortly. You can now describe any changes you'd like to make.`
+                : `Your project **${project.title}** has been scaffolded!\n\nYou can browse the generated files and describe any changes you'd like to make.`,
+              suggestions: hasServer
+                ? [
+                    "Refine the layout and spacing",
+                    "Add more pages or sections",
+                    "Improve the color scheme and typography",
+                    "Add animations and transitions",
+                  ]
+                : [
+                    "Add a new command or subcommand",
+                    "Improve the help text and documentation",
+                    "Add input validation and error handling",
+                    "Add configuration file support",
+                  ],
             });
             setMessages((prev) => [...prev, msg]);
           } catch {
@@ -376,11 +401,12 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
       clearTimeout(initialTimer);
       if (intervalRef) clearInterval(intervalRef);
     };
-  }, [scaffolding, project.id, project.title, startDevServer]);
+  }, [scaffolding, project.id, project.title, project.platform, startDevServer]);
 
-  // Load auto-fix state on mount
+  // Load auto-fix state on mount (only for platforms with dev servers)
   // biome-ignore lint/correctness/useExhaustiveDependencies: only on mount
   useEffect(() => {
+    if (!PLATFORMS_WITH_DEV_SERVER.has(project.platform)) return;
     fetch(`/api/projects/${project.id}/auto-fix`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -811,6 +837,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             onTabChange={setPreviewTab}
             showTasksTab={isUpgrading}
             disableAppTab={isUpgrading && !upgradeCompleted}
+            hideTerminalTab={!PLATFORMS_WITH_DEV_SERVER.has(project.platform)}
             previewStrategy={previewStrategy}
             runInstruction={runInstruction}
             onViewTerminal={() => setPreviewTab("terminal")}

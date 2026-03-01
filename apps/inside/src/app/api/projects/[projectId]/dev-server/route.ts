@@ -1,6 +1,7 @@
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { getGeneratorProject, updateGeneratorProject } from "@/lib/actions/generator-projects";
+import { PLATFORMS_WITH_DEV_SERVER } from "@/lib/constants";
 import * as devServerManager from "@/lib/services/dev-server-manager";
 import { expandTilde } from "@/lib/utils";
 
@@ -15,6 +16,11 @@ export async function POST(_request: Request, { params }: RouteContext) {
     const project = await getGeneratorProject(projectId);
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    // Non-server platforms (CLI tools, games, etc.) don't have dev servers
+    if (!PLATFORMS_WITH_DEV_SERVER.has(project.platform)) {
+      return NextResponse.json({ port: 0, status: "not-applicable" });
     }
 
     // 1. Already tracked in memory?

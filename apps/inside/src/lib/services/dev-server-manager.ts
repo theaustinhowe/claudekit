@@ -105,6 +105,24 @@ async function findAvailablePort(startPort = 2550, preferredPort?: number): Prom
   throw new Error(`No available port found in range ${startPort}-${startPort + 99}`);
 }
 
+function sanitizeEnvForNpm(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (
+      key.startsWith("npm_config_") ||
+      key.startsWith("npm_package_") ||
+      key.startsWith("npm_lifecycle_") ||
+      key.startsWith("pnpm_config_") ||
+      key === "npm_command" ||
+      key === "npm_execpath" ||
+      key === "npm_node_execpath"
+    ) {
+      delete env[key];
+    }
+  }
+  return env;
+}
+
 function getStartCommand(
   pm: string,
   port: number,
@@ -138,7 +156,7 @@ export async function start(
 
   const child = spawn(cmd, args, {
     cwd: projectDir,
-    env: { ...process.env, ...extraEnv },
+    env: { ...sanitizeEnvForNpm(), ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
   });
 

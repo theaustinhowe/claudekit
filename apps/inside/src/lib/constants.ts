@@ -360,6 +360,7 @@ export const PLATFORM_ADVANCED_OPTIONS: Record<string, ConditionalOption[]> = {
         options: [
           { label: "iOS", value: "ios" },
           { label: "Android", value: "android" },
+          { label: "Web", value: "web" },
         ],
         defaultValues: ["ios", "android"],
       },
@@ -836,7 +837,7 @@ export const PLATFORM_PREVIEW_STRATEGY: Record<string, PreviewStrategy> = {
   "desktop-app": "iframe",
   expo: "iframe-web-mode",
   flutter: "iframe-web-mode",
-  "react-native": "run-instructions",
+  "react-native": "iframe-web-mode",
   godot: "run-instructions",
   bevy: "run-instructions",
   pygame: "run-instructions",
@@ -894,12 +895,13 @@ export const PLATFORM_RUN_INSTRUCTIONS: Record<string, PlatformRunInstruction> =
   },
   cli: {
     title: "CLI Tool",
-    runCommand: "See project README",
-    description: "Run the CLI tool from a terminal",
+    runCommand: "pnpm run build && node dist/index.js",
+    description: "Build and run the CLI tool from a terminal",
     steps: [
       "Open a terminal in the project directory",
-      "Follow the README.md for build and run instructions",
-      "For TypeScript CLIs: `pnpm run build && node dist/index.js`",
+      "Run `pnpm install` to install dependencies",
+      "Run `pnpm run build` to compile the project",
+      "Run `node dist/index.js --help` to see available commands",
     ],
   },
 };

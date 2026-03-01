@@ -23,6 +23,7 @@ interface PreviewPanelProps {
   showTasksTab?: boolean;
   tasksContent?: ReactNode;
   disableAppTab?: boolean;
+  hideTerminalTab?: boolean;
   previewStrategy?: PreviewStrategy;
   runInstruction?: PlatformRunInstruction;
   onViewTerminal?: () => void;
@@ -42,6 +43,7 @@ export function PreviewPanel({
   showTasksTab,
   tasksContent,
   disableAppTab,
+  hideTerminalTab,
   previewStrategy,
   runInstruction,
   onViewTerminal,
@@ -64,10 +66,12 @@ export function PreviewPanel({
             <FileCode className="w-3.5 h-3.5 mr-1" />
             Files
           </TabsTrigger>
-          <TabsTrigger value="terminal" className="text-xs" disabled={disableAppTab}>
-            <Terminal className="w-3.5 h-3.5 mr-1" />
-            Terminal
-          </TabsTrigger>
+          {!hideTerminalTab && (
+            <TabsTrigger value="terminal" className="text-xs" disabled={disableAppTab}>
+              <Terminal className="w-3.5 h-3.5 mr-1" />
+              Terminal
+            </TabsTrigger>
+          )}
           <TabsTrigger value="history" className="text-xs">
             <Film className="w-3.5 h-3.5 mr-1" />
             History
@@ -94,14 +98,16 @@ export function PreviewPanel({
           <TabsContent value="files" className="mt-0 p-3 h-full">
             <SpecFilesTab projectId={projectId} projectPath={projectPath} projectName={projectName} />
           </TabsContent>
-          <TabsContent value="terminal" className="mt-0 p-3 h-full">
-            <DevServerLogs
-              projectId={projectId}
-              projectPath={projectPath}
-              autoFixEnabled={autoFixEnabled}
-              onToggleAutoFix={onToggleAutoFix}
-            />
-          </TabsContent>
+          {!hideTerminalTab && (
+            <TabsContent value="terminal" className="mt-0 p-3 h-full">
+              <DevServerLogs
+                projectId={projectId}
+                projectPath={projectPath}
+                autoFixEnabled={autoFixEnabled}
+                onToggleAutoFix={onToggleAutoFix}
+              />
+            </TabsContent>
+          )}
           <TabsContent value="history" className="mt-0 h-full">
             <ScreenshotTimelapse projectId={projectId} />
           </TabsContent>
