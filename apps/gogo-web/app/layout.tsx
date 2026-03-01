@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     template: "%s | GoGo",
   },
   description: "GitHub Issue to PR Orchestrator",
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
