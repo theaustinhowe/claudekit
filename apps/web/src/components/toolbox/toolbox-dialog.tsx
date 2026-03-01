@@ -365,6 +365,9 @@ export function ToolboxDialog({ trigger, initialToolIds }: ToolboxDialogProps) {
                             <label htmlFor={`tool-${tool.id}`} className="cursor-pointer">
                               <span className="text-sm font-medium">{tool.name}</span>
                               <span className="text-xs text-muted-foreground ml-2">{tool.description}</span>
+                              {tool.usedFor && (
+                                <span className="text-[10px] text-muted-foreground/60 ml-1">— {tool.usedFor}</span>
+                              )}
                             </label>
                           </div>
                         );
@@ -490,7 +493,12 @@ function ToolRow({
         {/* Name + description */}
         <CollapsibleTrigger asChild>
           <div className="flex-1 min-w-0 cursor-pointer">
-            <p className="text-sm font-medium truncate">{tool.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium truncate">{tool.name}</p>
+              {tool.usedFor && (
+                <span className="text-[10px] text-muted-foreground/70 truncate hidden sm:inline">{tool.usedFor}</span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground truncate hidden sm:block">{tool.description}</p>
           </div>
         </CollapsibleTrigger>

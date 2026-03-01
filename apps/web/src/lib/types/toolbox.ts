@@ -30,6 +30,8 @@ export interface ToolDefinition {
   /** Homebrew package name when it differs from binary (e.g. claude-code vs claude) */
   brewPackage?: string;
   shellFunction?: boolean;
+  /** Short description of what projects/apps need this tool */
+  usedFor?: string;
 }
 
 export interface ToolCheckResult {
