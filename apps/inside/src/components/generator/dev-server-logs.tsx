@@ -56,16 +56,9 @@ export function DevServerLogs({ projectId, projectPath, autoFixEnabled, onToggle
       title="Dev Server"
       variant="terminal"
       headerExtra={
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/80" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-            <div className="w-3 h-3 rounded-full bg-green-500/80" />
-          </div>
-          {projectPath && onToggleAutoFix && (
-            <AutoFixIndicator projectId={projectId} enabled={autoFixEnabled ?? false} onToggle={onToggleAutoFix} />
-          )}
-        </div>
+        projectPath && onToggleAutoFix ? (
+          <AutoFixIndicator projectId={projectId} enabled={autoFixEnabled ?? false} onToggle={onToggleAutoFix} />
+        ) : undefined
       }
     />
   );
