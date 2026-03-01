@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Inside** is a **Next.js 16 App Router** local-first dev tool for project creation, scaffolding, and design workspace management. Users describe a project idea, pick a platform and options, then Inside scaffolds it via Claude CLI, launches a dev server, and provides a split-pane design workspace with chat-driven AI iteration, live preview, auto-fix, screenshots, and upgrade workflows. All imports use the `@/` alias for `src/`.
+**Inside** is a **Next.js 16 App Router** local-first dev tool for multi-platform project creation, scaffolding, and design workspace management. Users choose an app type (Web, Mobile, Desktop, Game, or Tool), describe their idea, pick a platform (12 options across 5 categories) and configuration options, then Inside scaffolds it via Claude CLI. For platforms with dev servers, it launches a live preview; for others (Godot, Bevy, Pygame, CLI) it shows run instructions. The split-pane design workspace provides chat-driven AI iteration, live preview (iframe, iframe-web-mode, or run-instructions), auto-fix, screenshots, and upgrade workflows. All imports use the `@/` alias for `src/`.
 
 ## Port
 
@@ -72,7 +72,7 @@ src/
 │   │   ├── layout-config.tsx        # Nav config (New, Projects, Archived, Settings)
 │   │   └── nav-count-badge.tsx      # Active/archived project count badges
 │   ├── generator/                   # Main workspace components (20 components)
-│   │   ├── describe-step.tsx        # New project form (idea, platform, services, constraints, vibes)
+│   │   ├── describe-step.tsx        # App type selection + new project form (idea, platform, services, constraints, vibes)
 │   │   ├── features-input.tsx       # Feature selection chips
 │   │   ├── vibes-selector.tsx       # Design vibe picker
 │   │   ├── inspiration-input.tsx    # Inspiration URL input
@@ -80,7 +80,8 @@ src/
 │   │   ├── design-workspace.tsx     # Split-pane design workspace (main client component)
 │   │   ├── chat-panel.tsx           # Design chat interface
 │   │   ├── preview-panel.tsx        # Live app preview + code browser + terminal + screenshots
-│   │   ├── app-preview.tsx          # iframe app preview
+│   │   ├── app-preview.tsx          # App preview (iframe, iframe-web-mode, or run-instructions strategy)
+│   │   ├── run-instructions-preview.tsx # Static run instructions for non-server platforms (Godot, Bevy, Pygame, CLI)
 │   │   ├── scaffold-terminal.tsx    # Real-time scaffolding log viewer
 │   │   ├── scaffold-log-dialog.tsx  # Scaffold log review dialog
 │   │   ├── dev-server-logs.tsx      # Dev server log output
@@ -101,13 +102,13 @@ src/
 │   └── directory-picker.tsx         # Filesystem directory picker
 └── lib/
     ├── types.ts                     # All domain types (GeneratorProject, UiSpec, DesignMessage, SessionType, etc.)
-    ├── constants.ts                 # App constants (PLATFORMS, CONSTRAINTS, DESIGN_VIBES, BACKEND_OPTIONS, AUTH_OPTIONS, FEATURE_CATEGORIES, SESSION_TYPE_LABELS, etc.)
-    ├── constants/tools.ts           # Tool definitions (14 tools: homebrew, node, nvm, pnpm, npm, npx, bun, git, gh, claude, python, docker, playwright)
+    ├── constants.ts                 # App constants (APP_TYPES (5 categories, 12 platforms), PLATFORMS, PLATFORM_PREVIEW_STRATEGY, PLATFORMS_WITH_DEV_SERVER, CONSTRAINTS, DESIGN_VIBES, BACKEND_OPTIONS, AUTH_OPTIONS, FEATURE_CATEGORIES, SESSION_TYPE_LABELS, etc.)
+    ├── constants/tools.ts           # Tool definitions (19 tools incl. Rust, Cargo, Tauri CLI, Flutter, Dart, Godot) with `usedFor` descriptions
     ├── utils.ts                     # Re-exports from @claudekit/ui (expandTilde, generateId, nowTimestamp, removeDirectory, timeAgo)
     ├── db/
     │   ├── index.ts                 # DuckDB connection (createDatabase + runMigrations + session reconciliation + seed)
     │   ├── seed.ts                  # Built-in data seeding
-    │   └── migrations/              # 2 numbered SQL migration files
+    │   └── migrations/              # 1 migration file (001_initial.sql)
     ├── actions/                     # 9 Server Action files ("use server")
     │   ├── generator-projects.ts    # Project CRUD, specs, design messages
     │   ├── settings.ts              # Key-value settings
@@ -127,14 +128,14 @@ src/
         │   ├── upgrade.ts           # Upgrade task execution via Claude CLI
         │   ├── upgrade-init.ts      # Upgrade plan generation via Claude CLI
         │   └── auto-fix.ts          # Auto-fix via Claude CLI
-        ├── scaffold-prompt.ts       # Implementation prompt builder for scaffolding
+        ├── scaffold-prompt.ts       # Implementation prompt builder for scaffolding (handles 12 platforms: web, CLI, desktop, mobile, game engine)
         ├── interface-design.ts      # Design vibe traits and style configuration
-        ├── dev-server-manager.ts    # Spawn/stop child dev servers (globalThis-cached)
+        ├── dev-server-manager.ts    # Spawn/stop child dev servers (globalThis-cached) with adopt/recovery (port+pid persistence to DB), platform-aware start commands
         ├── auto-fix-engine.ts       # Automated error detection + fix via Claude
         ├── screenshot-service.ts    # Playwright screenshot capture (stored in ~/.inside/screenshots/)
         ├── spec-exporter.ts         # Generate export files from locked spec
         ├── generator.ts             # Template-based project generation
-        ├── tool-checker.ts          # CLI tool detection and version checking
+        ├── tool-checker.ts          # CLI tool detection and version checking (19 tools)
         ├── version-resolver.ts      # Latest version resolution (npm, GitHub, etc.)
         ├── language-detector.ts     # Programming language detection
         ├── task-mutation-parser.ts   # Parse upgrade task mutations from Claude output
@@ -145,8 +146,8 @@ src/
 
 - **DuckDB** via `@claudekit/duckdb` with `createDatabase()` + `runMigrations()`. DB file at `~/.inside/data.duckdb`.
 - `src/lib/db/index.ts` -- singleton connection cached via `globalThis`. On startup: runs migrations, reconciles orphaned sessions, recovers projects stuck in `scaffolding` status, auto-seeds built-in data.
-- 2 migration files: `001_initial.sql` (9 app tables + 2 session tables = 11 total), `002_tool_versions.sql` (adds `tool_versions` column).
-- 11 tables: `templates`, `generator_projects`, `project_specs`, `design_messages`, `upgrade_tasks`, `auto_fix_runs`, `project_screenshots`, `generator_runs`, `settings`, `sessions`, `session_logs`.
+- 1 migration file: `001_initial.sql` (9 app tables + 2 session tables = 11 total).
+- 11 tables: `templates`, `generator_projects` (incl. `app_type`, `tool_versions`, `dev_server_port`, `dev_server_pid` columns), `project_specs`, `design_messages`, `upgrade_tasks`, `auto_fix_runs`, `project_screenshots`, `generator_runs`, `settings`, `sessions`, `session_logs`.
 
 ### Session System
 
@@ -216,7 +217,7 @@ Key service files:
 - **`screenshot-service.ts`** -- Captures screenshots via `@claudekit/playwright`. Screenshots stored in `~/.inside/screenshots/<projectId>/`.
 - **`spec-exporter.ts`** -- Generates project files deterministically from a locked UI spec
 - **`generator.ts`** -- Template-based project generation (legacy)
-- **`tool-checker.ts`** -- Checks installed CLI tools and versions (14 tools defined in `constants/tools.ts`)
+- **`tool-checker.ts`** -- Checks installed CLI tools and versions (19 tools defined in `constants/tools.ts`)
 - **`version-resolver.ts`** -- Resolves latest versions from npm, GitHub releases, or custom URLs
 - **`language-detector.ts`** -- Detects programming language from file extensions
 - **`task-mutation-parser.ts`** -- Parses file mutations from Claude CLI output during upgrades
@@ -226,7 +227,7 @@ Key service files:
 
 ### Project Lifecycle
 
-1. **Describe** -- User fills in idea, platform, services, constraints, design vibes, features
+1. **Describe** -- User selects app type (Web/Mobile/Desktop/Game/Tool), then fills in idea, platform, services, constraints, design vibes, features
 2. **Scaffold** -- Claude CLI scaffolds the project (session type: `scaffold`)
 3. **Design** -- Split-pane workspace: chat (left) + live preview/code browser/terminal (right)
 4. **Upgrade** -- Optional: generate upgrade tasks, execute them one-by-one via Claude CLI
@@ -236,6 +237,7 @@ Key service files:
 
 The main design workspace (`design-workspace.tsx`) is a large client component that manages:
 - Resizable split pane (chat left, preview right)
+- 3 preview strategies: `iframe` (web apps), `iframe-web-mode` (mobile/Flutter with web target), `run-instructions` (Godot, Bevy, Pygame, CLI — shows static run instructions instead of iframe)
 - Dev server lifecycle (start, restart, stop on unmount)
 - Auto-fix monitoring (toggle, status tracking)
 - Screenshot capture (initial, after each assistant message, manual)
@@ -259,6 +261,8 @@ When enabled, the auto-fix engine monitors the dev server log output for error p
 - Servers are tracked in a `globalThis`-cached Map to survive HMR
 - Port detection via stdout parsing or sequential port scanning
 - Log lines stored in a ring buffer (last 500 lines)
+- Adopt/recovery: persists `dev_server_port` and `dev_server_pid` to DB, reconnects on page reload via `adopt()` if the process is still alive
+- Platform-aware start commands (e.g. `pnpm dev`, `cargo tauri dev`, `flutter run -d chrome`, `npx expo start --web`)
 - Cleanup on project page unmount (DELETE `/api/projects/[id]/dev-server`)
 
 ## Theme System

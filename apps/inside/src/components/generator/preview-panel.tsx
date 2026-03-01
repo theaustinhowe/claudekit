@@ -7,6 +7,7 @@ import { AppPreview } from "@/components/generator/app-preview";
 import { DevServerLogs } from "@/components/generator/dev-server-logs";
 import { ScreenshotTimelapse } from "@/components/generator/screenshot-timelapse";
 import { SpecFilesTab } from "@/components/generator/spec-files-tab";
+import type { PlatformRunInstruction, PreviewStrategy } from "@/lib/constants";
 
 interface PreviewPanelProps {
   projectId: string;
@@ -22,6 +23,10 @@ interface PreviewPanelProps {
   showTasksTab?: boolean;
   tasksContent?: ReactNode;
   disableAppTab?: boolean;
+  hideTerminalTab?: boolean;
+  previewStrategy?: PreviewStrategy;
+  runInstruction?: PlatformRunInstruction;
+  onViewTerminal?: () => void;
 }
 
 export function PreviewPanel({
@@ -38,6 +43,10 @@ export function PreviewPanel({
   showTasksTab,
   tasksContent,
   disableAppTab,
+  hideTerminalTab,
+  previewStrategy,
+  runInstruction,
+  onViewTerminal,
 }: PreviewPanelProps) {
   return (
     <div className="h-full flex flex-col">
@@ -57,10 +66,12 @@ export function PreviewPanel({
             <FileCode className="w-3.5 h-3.5 mr-1" />
             Files
           </TabsTrigger>
-          <TabsTrigger value="terminal" className="text-xs" disabled={disableAppTab}>
-            <Terminal className="w-3.5 h-3.5 mr-1" />
-            Terminal
-          </TabsTrigger>
+          {!hideTerminalTab && (
+            <TabsTrigger value="terminal" className="text-xs" disabled={disableAppTab}>
+              <Terminal className="w-3.5 h-3.5 mr-1" />
+              Terminal
+            </TabsTrigger>
+          )}
           <TabsTrigger value="history" className="text-xs">
             <Film className="w-3.5 h-3.5 mr-1" />
             History
@@ -74,19 +85,30 @@ export function PreviewPanel({
             </TabsContent>
           )}
           <TabsContent value="app" className="mt-0 h-full">
-            <AppPreview port={port} status={devServerStatus} onStartServer={onStartServer} />
+            <AppPreview
+              port={port}
+              status={devServerStatus}
+              onStartServer={onStartServer}
+              strategy={previewStrategy}
+              runInstruction={runInstruction}
+              projectPath={projectPath}
+              projectName={projectName}
+              onViewTerminal={onViewTerminal}
+            />
           </TabsContent>
           <TabsContent value="files" className="mt-0 p-3 h-full">
             <SpecFilesTab projectId={projectId} projectPath={projectPath} projectName={projectName} />
           </TabsContent>
-          <TabsContent value="terminal" className="mt-0 p-3 h-full">
-            <DevServerLogs
-              projectId={projectId}
-              projectPath={projectPath}
-              autoFixEnabled={autoFixEnabled}
-              onToggleAutoFix={onToggleAutoFix}
-            />
-          </TabsContent>
+          {!hideTerminalTab && (
+            <TabsContent value="terminal" className="mt-0 p-3 h-full">
+              <DevServerLogs
+                projectId={projectId}
+                projectPath={projectPath}
+                autoFixEnabled={autoFixEnabled}
+                onToggleAutoFix={onToggleAutoFix}
+              />
+            </TabsContent>
+          )}
           <TabsContent value="history" className="mt-0 h-full">
             <ScreenshotTimelapse projectId={projectId} />
           </TabsContent>

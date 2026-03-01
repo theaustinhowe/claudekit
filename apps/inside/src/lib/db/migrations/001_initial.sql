@@ -38,7 +38,11 @@ CREATE TABLE IF NOT EXISTS generator_projects (
   inspiration_urls JSON DEFAULT '[]',
   color_scheme JSON DEFAULT '{}',
   custom_features JSON DEFAULT '[]',
-  scaffold_logs JSON
+  scaffold_logs JSON,
+  tool_versions JSON DEFAULT '{}',
+  app_type TEXT NOT NULL DEFAULT 'web',
+  dev_server_port INTEGER,
+  dev_server_pid INTEGER
 );
 
 -- 3. project_specs

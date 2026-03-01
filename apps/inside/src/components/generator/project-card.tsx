@@ -44,6 +44,7 @@ export function ProjectCard({ project, statusColors, screenshotId }: ProjectCard
             </div>
             <p className="text-sm text-muted-foreground truncate mt-1">{project.idea_description}</p>
             <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+              {project.app_type && project.app_type !== "web" && <span className="capitalize">{project.app_type}</span>}
               <span>{project.platform}</span>
               <span>{project.package_manager}</span>
               <span>{timeAgo(project.updated_at)}</span>

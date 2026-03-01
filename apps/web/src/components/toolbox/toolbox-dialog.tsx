@@ -228,7 +228,7 @@ export function ToolboxDialog({ trigger, initialToolIds }: ToolboxDialogProps) {
     <TooltipProvider>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Hammer className="w-5 h-5" />
@@ -365,6 +365,9 @@ export function ToolboxDialog({ trigger, initialToolIds }: ToolboxDialogProps) {
                             <label htmlFor={`tool-${tool.id}`} className="cursor-pointer">
                               <span className="text-sm font-medium">{tool.name}</span>
                               <span className="text-xs text-muted-foreground ml-2">{tool.description}</span>
+                              {tool.usedFor && (
+                                <p className="text-[11px] text-muted-foreground/60 mt-0.5">{tool.usedFor}</p>
+                              )}
                             </label>
                           </div>
                         );
@@ -604,6 +607,7 @@ function ToolRow({
 
       <CollapsibleContent>
         <div className="px-4 pb-2.5 pl-12 space-y-2">
+          {tool.usedFor && <p className="text-[11px] text-muted-foreground/70">{tool.usedFor}</p>}
           {expandCommand ? (
             <div className="flex items-center gap-2">
               <code className="flex-1 text-xs bg-muted px-3 py-1.5 rounded-md font-mono text-muted-foreground">

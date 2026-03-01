@@ -60,7 +60,7 @@ src/
 │   ├── skills/             # Skill cards, detail drawer, trend chart, groups panel
 │   └── splitter/           # Sub-PR cards, diff preview
 ├── lib/
-│   ├── db/                 # DuckDB connection + migrations (2 migration files)
+│   ├── db/                 # DuckDB connection + migrations (1 migration file)
 │   ├── actions/            # Server Actions (account, claude-usage, github, prs, resolver,
 │   │                       #   reviewers, sessions, settings, skill-groups, skills, splitter)
 │   ├── github.ts           # Octokit client factory

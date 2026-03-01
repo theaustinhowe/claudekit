@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working in this monorepo.
 
 ## Overview
 
-**ClaudeKit** is a pnpm workspace monorepo containing local-first dev tool apps and shared packages. All apps run locally on macOS and persist data via DuckDB (except `apps/web` which is file-based). The monorepo uses `pnpm@10.30.2` and requires Node.js >= 20.
+**ClaudeKit** is a pnpm workspace monorepo containing local-first dev tool apps and shared packages. All apps run locally on macOS and persist data via DuckDB (except `apps/web` which is file-based). The monorepo uses `pnpm@10.30.3` and requires Node.js >= 20.
 
 ## Apps
 
@@ -13,7 +13,7 @@ This file provides guidance to Claude Code when working in this monorepo.
 | `apps/web` | 2000 | Next.js 16 | ClaudeKit dashboard, app health monitor, log viewer, toolbox |
 | `apps/ducktails` | 2050 | Next.js 16 | DuckDB admin UI — browse, query, edit all ClaudeKit databases |
 | `apps/gadget` | 2100 | Next.js 16 | Repository auditor, AI integrations |
-| `apps/inside` | 2150 | Next.js 16 | Project creation, scaffolding, design workspace |
+| `apps/inside` | 2150 | Next.js 16 | Multi-platform project creation (web, mobile, desktop, game, CLI), scaffolding, design workspace |
 | `apps/gogo-web` | 2200 | Next.js 16 | Job orchestration dashboard for multi-repo AI agents |
 | `apps/gogo-orchestrator` | 2201 | Fastify 5 | Backend orchestrator for GoGo job execution |
 | `apps/b4u` | 2300 | Next.js 16 | Automated repo walkthrough video generator |

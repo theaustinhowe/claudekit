@@ -6,12 +6,30 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockCreateServer = vi.fn();
 const mockSpawn = vi.fn();
 
+// Mock net.Socket for probePort tests — must be a real class so `new net.Socket()` works
+const mockSocketConfig = { behavior: "connect" as "connect" | "timeout" | "error" };
+class MockSocket extends EventEmitter {
+  setTimeout = vi.fn();
+  destroy = vi.fn();
+  connect() {
+    const behavior = mockSocketConfig.behavior;
+    process.nextTick(() => {
+      if (behavior === "connect") this.emit("connect");
+      else if (behavior === "timeout") this.emit("timeout");
+      else this.emit("error", new Error("ECONNREFUSED"));
+    });
+  }
+}
+
 vi.mock("node:child_process", () => ({
   spawn: mockSpawn,
 }));
 
 vi.mock("node:net", () => ({
-  default: { createServer: mockCreateServer },
+  default: {
+    createServer: mockCreateServer,
+    Socket: MockSocket,
+  },
   createServer: mockCreateServer,
 }));
 
@@ -24,12 +42,17 @@ beforeEach(async () => {
   vi.resetModules();
   delete (globalThis as Record<string, unknown>)[GLOBAL_KEY];
 
+  mockSocketConfig.behavior = "connect";
+
   // Re-apply stable mocks after resetModules
   vi.doMock("node:child_process", () => ({
     spawn: mockSpawn,
   }));
   vi.doMock("node:net", () => ({
-    default: { createServer: mockCreateServer },
+    default: {
+      createServer: mockCreateServer,
+      Socket: MockSocket,
+    },
     createServer: mockCreateServer,
   }));
 
@@ -99,6 +122,182 @@ describe("onLog", () => {
 describe("stop", () => {
   it("is a no-op for unknown project", () => {
     expect(() => devServerManager.stop("nonexistent")).not.toThrow();
+  });
+});
+
+describe("isProcessAlive", () => {
+  it("returns true for the current process", () => {
+    expect(devServerManager.isProcessAlive(process.pid)).toBe(true);
+  });
+
+  it("returns false for a non-existent PID", () => {
+    expect(devServerManager.isProcessAlive(99999999)).toBe(false);
+  });
+});
+
+describe("probePort", () => {
+  it("returns true when socket connects", async () => {
+    mockSocketConfig.behavior = "connect";
+    const result = await devServerManager.probePort(3000);
+    expect(result).toBe(true);
+  });
+
+  it("returns false on timeout", async () => {
+    mockSocketConfig.behavior = "timeout";
+    const result = await devServerManager.probePort(3000);
+    expect(result).toBe(false);
+  });
+
+  it("returns false on error", async () => {
+    mockSocketConfig.behavior = "error";
+    const result = await devServerManager.probePort(3000);
+    expect(result).toBe(false);
+  });
+});
+
+describe("adopt", () => {
+  it("creates entry visible via getStatus with correct port and pid", () => {
+    devServerManager.adopt("proj-adopt", 3456, 11111);
+
+    const status = devServerManager.getStatus("proj-adopt");
+    expect(status).not.toBeNull();
+    expect(status?.running).toBe(true);
+    expect(status?.port).toBe(3456);
+    expect(status?.pid).toBe(11111);
+  });
+
+  it("does not overwrite an existing active server", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-1", "/tmp/proj", "npm");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:3456\n");
+    await startPromise;
+
+    // Attempt to adopt over existing server — should be ignored
+    devServerManager.adopt("proj-1", 9999, 99999);
+
+    const status = devServerManager.getStatus("proj-1");
+    expect(status?.port).toBe(3456);
+    expect(status?.pid).toBe(12345);
+  });
+
+  it("appears in listAll", () => {
+    devServerManager.adopt("proj-adopt", 3456, 11111);
+
+    const list = devServerManager.listAll();
+    expect(list).toHaveLength(1);
+    expect(list[0]).toEqual({ projectId: "proj-adopt", port: 3456, pid: 11111 });
+  });
+
+  it("logs contain adopted message", () => {
+    devServerManager.adopt("proj-adopt", 3456, 11111);
+
+    const logs = devServerManager.getLogs("proj-adopt");
+    expect(logs.some((l) => l.includes("[adopted]"))).toBe(true);
+  });
+});
+
+describe("stop (adopted server)", () => {
+  it("kills via process.kill for adopted server", () => {
+    devServerManager.adopt("proj-adopt", 3456, process.pid);
+
+    const killSpy = vi.spyOn(process, "kill").mockImplementation(() => true);
+    devServerManager.stop("proj-adopt");
+
+    expect(killSpy).toHaveBeenCalledWith(process.pid, "SIGTERM");
+    expect(devServerManager.getStatus("proj-adopt")).toBeNull();
+    killSpy.mockRestore();
+  });
+
+  it("handles already-dead PID gracefully", () => {
+    devServerManager.adopt("proj-adopt", 3456, 99999999);
+
+    const killSpy = vi.spyOn(process, "kill").mockImplementation(() => {
+      throw new Error("ESRCH");
+    });
+    expect(() => devServerManager.stop("proj-adopt")).not.toThrow();
+    expect(devServerManager.getStatus("proj-adopt")).toBeNull();
+    killSpy.mockRestore();
+  });
+});
+
+describe("start sanitizes pnpm/npm env vars", () => {
+  it("strips all pnpm/npm workspace vars from spawned process env", async () => {
+    process.env.npm_config_globalconfig = "/some/path";
+    process.env.npm_config_recursive = "true";
+    process.env.npm_package_name = "my-package";
+    process.env.npm_lifecycle_event = "dev";
+    process.env.pnpm_config_verify_deps_before_run = "install";
+    process.env.npm_command = "run-script";
+    process.env.npm_execpath = "/usr/local/bin/pnpm";
+    process.env.npm_node_execpath = "/usr/local/bin/node";
+
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-env", "/tmp/proj", "npm");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    const spawnEnv = mockSpawn.mock.calls[0][2].env;
+
+    expect(spawnEnv.npm_config_globalconfig).toBeUndefined();
+    expect(spawnEnv.npm_config_recursive).toBeUndefined();
+    expect(spawnEnv.npm_package_name).toBeUndefined();
+    expect(spawnEnv.npm_lifecycle_event).toBeUndefined();
+    expect(spawnEnv.pnpm_config_verify_deps_before_run).toBeUndefined();
+    expect(spawnEnv.npm_command).toBeUndefined();
+    expect(spawnEnv.npm_execpath).toBeUndefined();
+    expect(spawnEnv.npm_node_execpath).toBeUndefined();
+
+    // Clean up
+    delete process.env.npm_config_globalconfig;
+    delete process.env.npm_config_recursive;
+    delete process.env.npm_package_name;
+    delete process.env.npm_lifecycle_event;
+    delete process.env.pnpm_config_verify_deps_before_run;
+    delete process.env.npm_command;
+    delete process.env.npm_execpath;
+    delete process.env.npm_node_execpath;
+  });
+
+  it("preserves PATH/HOME and applies extraEnv", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-env", "/tmp/proj", "npm");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    const spawnEnv = mockSpawn.mock.calls[0][2].env;
+
+    expect(spawnEnv.PATH).toBe(process.env.PATH);
+    expect(spawnEnv.HOME).toBe(process.env.HOME);
+    expect(spawnEnv.PORT).toBeDefined();
+    expect(spawnEnv.BROWSER).toBe("none");
+  });
+
+  it("does not mutate process.env", async () => {
+    process.env.npm_config_test_var = "should-stay";
+
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-env", "/tmp/proj", "npm");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    expect(process.env.npm_config_test_var).toBe("should-stay");
+    delete process.env.npm_config_test_var;
   });
 });
 
@@ -257,5 +456,47 @@ describe("start / stop lifecycle", () => {
     await startPromise;
 
     expect(mockSpawn).toHaveBeenCalledWith("npm", ["run", "dev"], expect.any(Object));
+  });
+
+  it("uses 'run web' args for react-native platform with npm", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-rn", "/tmp/proj", "npm", "react-native");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    expect(mockSpawn).toHaveBeenCalledWith("npm", ["run", "web"], expect.any(Object));
+  });
+
+  it("uses 'web' args for react-native platform with bun", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-rn", "/tmp/proj", "bun", "react-native");
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:2550\n");
+    await startPromise;
+
+    expect(mockSpawn).toHaveBeenCalledWith("bun", ["web"], expect.any(Object));
+  });
+
+  it("passes preferredPort to findAvailablePort", async () => {
+    const mockProcess = createMockProcess();
+    mockSpawn.mockReturnValue(mockProcess);
+    setupPortMock();
+
+    const startPromise = devServerManager.start("proj-1", "/tmp/proj", "npm", undefined, 4000);
+    await new Promise((r) => process.nextTick(r));
+    mockProcess.stdout.push("http://localhost:4000\n");
+    await startPromise;
+
+    // The first createServer call should be for the preferred port 4000
+    expect(mockCreateServer).toHaveBeenCalled();
+    const firstListenCall = mockCreateServer.mock.results[0].value.listen.mock.calls[0];
+    expect(firstListenCall[0]).toBe(4000);
   });
 });

@@ -1,4 +1,24 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+/** Build PATH that includes common tool install directories the spawned shell might not have. */
+function getAugmentedPath(): string {
+  const home = homedir();
+  const extra = [
+    join(home, ".cargo", "bin"),
+    join(home, ".bun", "bin"),
+    join(home, ".local", "bin"),
+    "/opt/homebrew/bin",
+    "/opt/homebrew/sbin",
+    "/usr/local/bin",
+  ];
+  const current = process.env.PATH ?? "";
+  const existing = new Set(current.split(":"));
+  const additions = extra.filter((p) => !existing.has(p) && existsSync(p));
+  return additions.length > 0 ? `${additions.join(":")}:${current}` : current;
+}
 
 /**
  * Spawn a bash process and return a ReadableStream of stdout/stderr chunks.
@@ -12,7 +32,7 @@ export function runCommand(command: string): ReadableStream<Uint8Array> {
   return new ReadableStream({
     start(controller) {
       childProcess = spawn("bash", ["-l", "-c", command], {
-        env: { ...process.env, FORCE_COLOR: "0" },
+        env: { ...process.env, FORCE_COLOR: "0", PATH: getAugmentedPath() },
         stdio: ["ignore", "pipe", "pipe"],
       });
 

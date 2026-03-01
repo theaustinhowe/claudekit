@@ -2,6 +2,7 @@ import { Button } from "@claudekit/ui/components/button";
 import { FolderKanban, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { DescribeStep } from "@/components/generator/describe-step";
 import { ProjectCard } from "@/components/generator/project-card";
 import { getGeneratorProjects } from "@/lib/actions/generator-projects";
@@ -47,7 +48,9 @@ export default async function ProjectsPage() {
       <div className="flex h-full flex-col">
         <div className="flex-1 overflow-auto">
           <div className="p-6">
-            <DescribeStep defaultPath={defaultPath} installedPMs={installedPMs} />
+            <Suspense>
+              <DescribeStep defaultPath={defaultPath} installedPMs={installedPMs} />
+            </Suspense>
           </div>
         </div>
       </div>

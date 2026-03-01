@@ -13,6 +13,7 @@ interface FeaturesInputProps {
   customFeatures: string[];
   onFeaturesChange: (features: string[]) => void;
   onCustomChange: (custom: string[]) => void;
+  categories?: typeof FEATURE_CATEGORIES;
 }
 
 export function FeaturesInput({
@@ -20,7 +21,9 @@ export function FeaturesInput({
   customFeatures,
   onFeaturesChange,
   onCustomChange,
+  categories,
 }: FeaturesInputProps) {
+  const featureCategories = categories ?? FEATURE_CATEGORIES;
   const [inputValue, setInputValue] = useState("");
 
   const toggleFeature = (id: string) => {
@@ -63,7 +66,7 @@ export function FeaturesInput({
   return (
     <div className="space-y-3">
       <div className="space-y-3">
-        {FEATURE_CATEGORIES.map((category) => (
+        {featureCategories.map((category) => (
           <div key={category.label}>
             <p className="text-xs text-muted-foreground mb-1.5">{category.label}</p>
             <div className="flex flex-wrap gap-1.5">

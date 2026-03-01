@@ -1,4 +1,4 @@
--- B4U Consolidated Schema (12 tables)
+-- B4U Consolidated Schema (13 tables)
 -- Standardized: TEXT ids, TIMESTAMPTZ timestamps, JSON columns, unified session DDL
 
 -- Project summary (per-run)
@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS run_state (
   phase_statuses_json JSON NOT NULL,
   project_path TEXT,
   project_name TEXT,
+  threads_json JSON DEFAULT '{}',
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -145,3 +146,18 @@ CREATE TABLE IF NOT EXISTS final_videos (
   status TEXT NOT NULL DEFAULT 'pending',
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Per-phase conversation threads with revision history
+CREATE TABLE IF NOT EXISTS phase_threads (
+  id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL,
+  phase INTEGER NOT NULL,
+  revision INTEGER NOT NULL DEFAULT 1,
+  messages_json JSON NOT NULL DEFAULT '[]',
+  decisions_json JSON NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_phase_threads_run ON phase_threads(run_id);
+CREATE INDEX IF NOT EXISTS idx_phase_threads_run_phase ON phase_threads(run_id, phase);

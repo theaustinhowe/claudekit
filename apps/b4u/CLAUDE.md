@@ -74,7 +74,7 @@ src/
     ├── validations.ts           # Zod validation schemas
     ├── session-config.tsx       # Session type labels (10 types)
     ├── db.ts                    # DuckDB connection (createDatabase + runMigrations)
-    ├── db/migrations/           # 2 numbered SQL migration files
+    ├── db/migrations/           # 1 migration file (001_initial.sql)
     ├── actions/                 # Server Actions (claude-usage)
     ├── hooks/                   # App-specific hooks (use-state-sync, use-thread-sync, use-sync-status, use-run-param)
     ├── claude/
@@ -93,8 +93,8 @@ src/
 
 - **DuckDB** via `@claudekit/duckdb` with `createDatabase()` + `runMigrations()`. DB file at `data/b4u.duckdb` (relative to app root).
 - `src/lib/db.ts` -- singleton connection cached via `globalThis` to survive HMR.
-- 2 migration files in `src/lib/db/migrations/`: `001_initial.sql` (12 tables), `002_phase_threads.sql` (phase threads + revision history).
-- 13 tables total: `project_summary`, `run_content`, `flow_scripts`, `flow_voiceover`, `voice_options`, `chapter_markers`, `run_state`, `sessions`, `session_logs`, `recordings`, `audio_files`, `final_videos`, `phase_threads`.
+- 1 migration file in `src/lib/db/migrations/`: `001_initial.sql` (13 tables).
+- 13 tables: `project_summary`, `run_content`, `flow_scripts`, `flow_voiceover`, `voice_options`, `chapter_markers`, `run_state`, `sessions`, `session_logs`, `recordings`, `audio_files`, `final_videos`, `phase_threads`.
 
 ### Session System
 

@@ -2,7 +2,8 @@ import { type ChildProcess, spawn } from "node:child_process";
 import net from "node:net";
 
 interface DevServer {
-  process: ChildProcess;
+  process: ChildProcess | null; // null for adopted servers
+  pid: number;
   port: number;
   status: "starting" | "ready" | "error" | "stopped";
   logs: string[]; // ring buffer, last 500 lines
@@ -34,7 +35,60 @@ function pushLog(server: DevServer, line: string) {
   }
 }
 
-async function findAvailablePort(startPort = 2550): Promise<number> {
+export function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function probePort(port: number, host = "127.0.0.1"): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(1000);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once("error", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.connect(port, host);
+  });
+}
+
+export function adopt(projectId: string, port: number, pid: number): void {
+  if (servers.has(projectId)) return;
+  servers.set(projectId, {
+    process: null,
+    pid,
+    port,
+    status: "ready",
+    logs: ["[adopted] Reconnected to existing dev server"],
+    onLogCallbacks: [],
+  });
+}
+
+async function findAvailablePort(startPort = 2550, preferredPort?: number): Promise<number> {
+  if (preferredPort) {
+    const available = await new Promise<boolean>((resolve) => {
+      const srv = net.createServer();
+      srv.once("error", () => resolve(false));
+      srv.once("listening", () => {
+        srv.close(() => resolve(true));
+      });
+      srv.listen(preferredPort, "127.0.0.1");
+    });
+    if (available) return preferredPort;
+  }
+
   let port = startPort;
   while (port < startPort + 100) {
     const available = await new Promise<boolean>((resolve) => {
@@ -51,24 +105,70 @@ async function findAvailablePort(startPort = 2550): Promise<number> {
   throw new Error(`No available port found in range ${startPort}-${startPort + 99}`);
 }
 
-export async function start(projectId: string, projectDir: string, pm: string): Promise<{ port: number }> {
+function sanitizeEnvForNpm(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (
+      key.startsWith("npm_config_") ||
+      key.startsWith("npm_package_") ||
+      key.startsWith("npm_lifecycle_") ||
+      key.startsWith("pnpm_config_") ||
+      key === "npm_command" ||
+      key === "npm_execpath" ||
+      key === "npm_node_execpath"
+    ) {
+      delete env[key];
+    }
+  }
+  return env;
+}
+
+function getStartCommand(
+  pm: string,
+  port: number,
+  platform?: string,
+): { cmd: string; args: string[]; env: Record<string, string> } {
+  switch (platform) {
+    case "expo":
+      return { cmd: "npx", args: ["expo", "start", "--web", "--port", String(port)], env: { BROWSER: "none" } };
+    case "flutter":
+      return { cmd: "flutter", args: ["run", "-d", "chrome", "--web-port", String(port)], env: {} };
+    case "react-native":
+      return {
+        cmd: pm === "bun" ? "bun" : pm,
+        args: pm === "bun" ? ["web"] : ["run", "web"],
+        env: { PORT: String(port), BROWSER: "none" },
+      };
+    default: {
+      const args = pm === "bun" ? ["dev"] : ["run", "dev"];
+      return { cmd: pm, args, env: { PORT: String(port), BROWSER: "none" } };
+    }
+  }
+}
+
+export async function start(
+  projectId: string,
+  projectDir: string,
+  pm: string,
+  platform?: string,
+  preferredPort?: number,
+): Promise<{ port: number }> {
   // Stop any existing server for this project
   stop(projectId);
 
-  const port = await findAvailablePort();
+  const port = await findAvailablePort(2550, preferredPort);
 
-  // Use PORT env var (set below) instead of --port flag.
-  // Passing --port via `pnpm run dev -- --port N` breaks Next.js (treats --port as directory).
-  const args = pm === "bun" ? ["dev"] : ["run", "dev"];
+  const { cmd, args, env: extraEnv } = getStartCommand(pm, port, platform);
 
-  const child = spawn(pm, args, {
+  const child = spawn(cmd, args, {
     cwd: projectDir,
-    env: { ...process.env, PORT: String(port), BROWSER: "none" },
+    env: { ...sanitizeEnvForNpm(), ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
   const server: DevServer = {
     process: child,
+    pid: child.pid ?? 0,
     port: 0, // will be set from actual server output
     status: "starting",
     logs: [],
@@ -82,9 +182,13 @@ export async function start(projectId: string, projectDir: string, pm: string): 
 
   // Extract actual port from server output (handles Vite ignoring PORT env var)
   const portPattern = /http:\/\/localhost:(\d+)/;
-  // Ready: require an actual localhost URL so we capture the real port.
-  // Covers Next.js ("http://localhost:3000"), Vite ("Local: http://localhost:5173"), etc.
-  const readyPattern = /http:\/\/localhost:\d+/;
+  // Ready patterns: detect when the dev server is ready to serve.
+  // Covers Next.js, Vite, Expo Web, Flutter Web, etc.
+  const readyPatterns = [
+    /http:\/\/localhost:\d+/, // Next.js, Vite, most dev servers
+    /Logs for your project/, // Expo
+    /lib\/main\.dart/, // Flutter web (prints entry point when ready)
+  ];
 
   const handleData = (data: Buffer) => {
     const text = data.toString();
@@ -92,10 +196,14 @@ export async function start(projectId: string, projectDir: string, pm: string): 
       const trimmed = line.trim();
       if (!trimmed) continue;
       pushLog(server, trimmed);
-      if (server.status === "starting" && readyPattern.test(trimmed)) {
+      if (server.status === "starting" && readyPatterns.some((p) => p.test(trimmed))) {
         const portMatch = trimmed.match(portPattern);
         if (portMatch) {
           server.port = Number.parseInt(portMatch[1], 10);
+        }
+        // If no port detected from this line, use the allocated port
+        if (!server.port) {
+          server.port = port;
         }
         server.status = "ready";
         server.readyResolve?.();
@@ -134,8 +242,16 @@ export function stop(projectId: string): void {
   const server = servers.get(projectId);
   if (!server) return;
   server.onLogCallbacks.length = 0;
-  if (server.process.exitCode === null) {
-    server.process.kill("SIGTERM");
+  if (server.process) {
+    if (server.process.exitCode === null) {
+      server.process.kill("SIGTERM");
+    }
+  } else if (server.pid > 0) {
+    try {
+      process.kill(server.pid, "SIGTERM");
+    } catch {
+      /* already dead */
+    }
   }
   server.status = "stopped";
   servers.delete(projectId);
@@ -157,7 +273,7 @@ export function getStatus(projectId: string): { running: boolean; port: number; 
   return {
     running: server.status === "starting" || server.status === "ready",
     port: server.port,
-    pid: server.process.pid ?? 0,
+    pid: server.pid,
     logs: server.logs,
   };
 }
@@ -171,7 +287,7 @@ export function listAll(): Array<{ projectId: string; port: number; pid: number 
   const result: Array<{ projectId: string; port: number; pid: number }> = [];
   for (const [id, server] of servers) {
     if (server.status === "starting" || server.status === "ready") {
-      result.push({ projectId: id, port: server.port, pid: server.process.pid ?? 0 });
+      result.push({ projectId: id, port: server.port, pid: server.pid });
     }
   }
   return result;

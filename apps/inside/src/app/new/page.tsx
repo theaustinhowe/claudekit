@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { DescribeStep } from "@/components/generator/describe-step";
 import { getSetting } from "@/lib/actions/settings";
 import { DEFAULT_TOOLS } from "@/lib/constants/tools";
@@ -17,7 +18,9 @@ export default async function NewProjectPage() {
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto">
         <div className="p-6">
-          <DescribeStep defaultPath={defaultPath} installedPMs={installedPMs} />
+          <Suspense>
+            <DescribeStep defaultPath={defaultPath} installedPMs={installedPMs} />
+          </Suspense>
         </div>
       </div>
     </div>
