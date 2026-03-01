@@ -391,6 +391,7 @@ export function DescribeStep({ defaultPath, installedPMs }: DescribeStepProps) {
   );
 
   // --- App type change: reset everything to filtered defaults ---
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setAppType is a stable nuqs setter
   const handleAppTypeChange = useCallback((newAppType: AppType) => {
     setAppType(newAppType);
     const typeDef = APP_TYPES.find((t) => t.id === newAppType);
