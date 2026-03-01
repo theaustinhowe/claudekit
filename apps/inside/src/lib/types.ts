@@ -57,6 +57,8 @@ export interface GeneratorProject {
   custom_features: string[];
   tool_versions: Record<string, string>;
   scaffold_logs: { log: string; logType: string }[] | null;
+  dev_server_port: number | null;
+  dev_server_pid: number | null;
 }
 
 export type UpgradeTaskStatus = "pending" | "in_progress" | "completed" | "failed" | "skipped";

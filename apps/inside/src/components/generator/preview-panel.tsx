@@ -7,6 +7,7 @@ import { AppPreview } from "@/components/generator/app-preview";
 import { DevServerLogs } from "@/components/generator/dev-server-logs";
 import { ScreenshotTimelapse } from "@/components/generator/screenshot-timelapse";
 import { SpecFilesTab } from "@/components/generator/spec-files-tab";
+import type { PlatformRunInstruction, PreviewStrategy } from "@/lib/constants";
 
 interface PreviewPanelProps {
   projectId: string;
@@ -22,6 +23,9 @@ interface PreviewPanelProps {
   showTasksTab?: boolean;
   tasksContent?: ReactNode;
   disableAppTab?: boolean;
+  previewStrategy?: PreviewStrategy;
+  runInstruction?: PlatformRunInstruction;
+  onViewTerminal?: () => void;
 }
 
 export function PreviewPanel({
@@ -38,6 +42,9 @@ export function PreviewPanel({
   showTasksTab,
   tasksContent,
   disableAppTab,
+  previewStrategy,
+  runInstruction,
+  onViewTerminal,
 }: PreviewPanelProps) {
   return (
     <div className="h-full flex flex-col">
@@ -74,7 +81,15 @@ export function PreviewPanel({
             </TabsContent>
           )}
           <TabsContent value="app" className="mt-0 h-full">
-            <AppPreview port={port} status={devServerStatus} onStartServer={onStartServer} />
+            <AppPreview
+              port={port}
+              status={devServerStatus}
+              onStartServer={onStartServer}
+              strategy={previewStrategy}
+              runInstruction={runInstruction}
+              projectPath={projectPath}
+              onViewTerminal={onViewTerminal}
+            />
           </TabsContent>
           <TabsContent value="files" className="mt-0 p-3 h-full">
             <SpecFilesTab projectId={projectId} projectPath={projectPath} projectName={projectName} />

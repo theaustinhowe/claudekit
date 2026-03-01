@@ -51,6 +51,8 @@ function makeProject(overrides: Partial<GeneratorProject> = {}): GeneratorProjec
     custom_features: [],
     tool_versions: {},
     scaffold_logs: null,
+    dev_server_port: null,
+    dev_server_pid: null,
     ...overrides,
   };
 }

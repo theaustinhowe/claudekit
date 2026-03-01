@@ -13,6 +13,7 @@ import {
   getAuthForAppType,
   getBackendsForAppType,
   getConstraintsForAppType,
+  getEffectivePreviewStrategy,
   getExamplesForAppType,
   getFeatureCategoriesForAppType,
   getPlatformsForAppType,
@@ -21,6 +22,8 @@ import {
   PAYMENT_OPTIONS,
   PLATFORM_ADVANCED_OPTIONS,
   PLATFORM_NEXT_STEPS,
+  PLATFORM_PREVIEW_STRATEGY,
+  PLATFORM_RUN_INSTRUCTIONS,
   PLATFORMS,
   PLATFORMS_WITH_DEV_SERVER,
   SERVICE_NEXT_STEPS,
@@ -408,9 +411,95 @@ describe("PLATFORMS_WITH_DEV_SERVER", () => {
     expect(PLATFORMS_WITH_DEV_SERVER.has("react-spa")).toBe(true);
   });
 
+  it("includes flutter", () => {
+    expect(PLATFORMS_WITH_DEV_SERVER.has("flutter")).toBe(true);
+  });
+
   it("excludes game engines", () => {
     expect(PLATFORMS_WITH_DEV_SERVER.has("godot")).toBe(false);
     expect(PLATFORMS_WITH_DEV_SERVER.has("bevy")).toBe(false);
     expect(PLATFORMS_WITH_DEV_SERVER.has("pygame")).toBe(false);
+  });
+});
+
+describe("PLATFORM_PREVIEW_STRATEGY", () => {
+  it("has an entry for every platform", () => {
+    for (const p of PLATFORMS) {
+      expect(PLATFORM_PREVIEW_STRATEGY[p.id]).toBeDefined();
+    }
+  });
+
+  it("maps web platforms to iframe", () => {
+    expect(PLATFORM_PREVIEW_STRATEGY.nextjs).toBe("iframe");
+    expect(PLATFORM_PREVIEW_STRATEGY["tanstack-start"]).toBe("iframe");
+    expect(PLATFORM_PREVIEW_STRATEGY["react-spa"]).toBe("iframe");
+    expect(PLATFORM_PREVIEW_STRATEGY["node-api"]).toBe("iframe");
+    expect(PLATFORM_PREVIEW_STRATEGY["desktop-app"]).toBe("iframe");
+  });
+
+  it("maps expo and flutter to iframe-web-mode", () => {
+    expect(PLATFORM_PREVIEW_STRATEGY.expo).toBe("iframe-web-mode");
+    expect(PLATFORM_PREVIEW_STRATEGY.flutter).toBe("iframe-web-mode");
+  });
+
+  it("maps non-web platforms to run-instructions", () => {
+    expect(PLATFORM_PREVIEW_STRATEGY["react-native"]).toBe("run-instructions");
+    expect(PLATFORM_PREVIEW_STRATEGY.godot).toBe("run-instructions");
+    expect(PLATFORM_PREVIEW_STRATEGY.bevy).toBe("run-instructions");
+    expect(PLATFORM_PREVIEW_STRATEGY.pygame).toBe("run-instructions");
+    expect(PLATFORM_PREVIEW_STRATEGY.cli).toBe("run-instructions");
+  });
+});
+
+describe("PLATFORM_RUN_INSTRUCTIONS", () => {
+  it("has entries for all run-instructions platforms", () => {
+    for (const [platform, strategy] of Object.entries(PLATFORM_PREVIEW_STRATEGY)) {
+      if (strategy === "run-instructions") {
+        expect(PLATFORM_RUN_INSTRUCTIONS[platform]).toBeDefined();
+      }
+    }
+  });
+
+  it("each entry has title, runCommand, and non-empty steps", () => {
+    for (const [, instruction] of Object.entries(PLATFORM_RUN_INSTRUCTIONS)) {
+      expect(instruction.title).toBeTruthy();
+      expect(instruction.runCommand).toBeTruthy();
+      expect(instruction.description).toBeTruthy();
+      expect(instruction.steps.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("getEffectivePreviewStrategy", () => {
+  it("returns iframe for web platforms", () => {
+    expect(getEffectivePreviewStrategy("nextjs")).toBe("iframe");
+  });
+
+  it("returns iframe-web-mode for expo by default", () => {
+    expect(getEffectivePreviewStrategy("expo")).toBe("iframe-web-mode");
+  });
+
+  it("returns run-instructions for expo without web target", () => {
+    expect(getEffectivePreviewStrategy("expo", { "expo-targets": "ios,android" })).toBe("run-instructions");
+  });
+
+  it("returns iframe-web-mode for expo with web target", () => {
+    expect(getEffectivePreviewStrategy("expo", { "expo-targets": "ios,android,web" })).toBe("iframe-web-mode");
+  });
+
+  it("returns run-instructions for flutter without web target", () => {
+    expect(getEffectivePreviewStrategy("flutter", { "flutter-targets": "ios,android" })).toBe("run-instructions");
+  });
+
+  it("returns iframe-web-mode for flutter with web target", () => {
+    expect(getEffectivePreviewStrategy("flutter", { "flutter-targets": "ios,web" })).toBe("iframe-web-mode");
+  });
+
+  it("falls back to run-instructions for unknown platform", () => {
+    expect(getEffectivePreviewStrategy("unknown")).toBe("run-instructions");
+  });
+
+  it("returns run-instructions for godot regardless of toolVersions", () => {
+    expect(getEffectivePreviewStrategy("godot", {})).toBe("run-instructions");
   });
 });

@@ -26,6 +26,8 @@ export interface ToolDefinition {
   updateCommand?: string;
   /** If true, requires special shell handling (e.g. nvm is a shell function) */
   shellFunction?: boolean;
+  /** Short description of what projects/apps need this tool */
+  usedFor?: string;
 }
 
 export const DEFAULT_TOOLS: ToolDefinition[] = [
@@ -41,6 +43,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installUrl: "https://brew.sh",
     installCommand: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
     latestVersionSource: { type: "github-release", repo: "Homebrew/brew" },
+    usedFor: "Core — macOS package manager for installing other tools",
   },
   {
     id: "node",
@@ -54,6 +57,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install node",
     updateCommand: "brew upgrade node",
     latestVersionSource: { type: "url", url: "https://nodejs.org/dist/index.json", parser: "nodejs-lts" },
+    usedFor: "Core — all web and desktop projects",
   },
   {
     id: "nvm",
@@ -67,6 +71,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash",
     latestVersionSource: { type: "github-release", repo: "nvm-sh/nvm" },
     shellFunction: true,
+    usedFor: "Core — manage multiple Node.js versions",
   },
   {
     id: "pnpm",
@@ -80,6 +85,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "npm install -g pnpm",
     updateCommand: "npm update -g pnpm",
     latestVersionSource: { type: "npm", package: "pnpm" },
+    usedFor: "Core — fast, disk-efficient package manager",
   },
   {
     id: "npm",
@@ -91,6 +97,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     versionParser: "first-line",
     installUrl: "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
     latestVersionSource: { type: "npm", package: "npm" },
+    usedFor: "Core — Node.js package manager",
   },
   {
     id: "npx",
@@ -103,6 +110,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installUrl: "https://docs.npmjs.com/cli/v10/commands/npx",
     installCommand: "npm install -g npm",
     latestVersionSource: { type: "none" },
+    usedFor: "Core — run npm packages without installing",
   },
   {
     id: "bun",
@@ -115,6 +123,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installUrl: "https://bun.sh",
     installCommand: "curl -fsSL https://bun.sh/install | bash",
     latestVersionSource: { type: "github-release", repo: "oven-sh/bun" },
+    usedFor: "Alternative Node.js runtime",
   },
   {
     id: "git",
@@ -129,6 +138,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install git",
     updateCommand: "brew upgrade git",
     latestVersionSource: { type: "github-release", repo: "git/git" },
+    usedFor: "Core — version control",
   },
   {
     id: "gh",
@@ -143,6 +153,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install gh",
     updateCommand: "brew upgrade gh",
     latestVersionSource: { type: "github-release", repo: "cli/cli" },
+    usedFor: "Core — GitHub integration",
   },
   {
     id: "claude",
@@ -156,6 +167,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "npm install -g @anthropic-ai/claude-code",
     updateCommand: "npm update -g @anthropic-ai/claude-code",
     latestVersionSource: { type: "npm", package: "@anthropic-ai/claude-code" },
+    usedFor: "Core — AI-powered scaffolding and design iteration",
   },
   {
     id: "python",
@@ -170,6 +182,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install python",
     updateCommand: "brew upgrade python",
     latestVersionSource: { type: "url", url: "https://endoflife.date/api/python.json", parser: "python-eol" },
+    usedFor: "Game projects (Pygame), CLI tools",
   },
   {
     id: "docker",
@@ -184,6 +197,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install --cask docker",
     updateCommand: "brew upgrade --cask docker",
     latestVersionSource: { type: "github-release", repo: "moby/moby" },
+    usedFor: "Optional — container-based workflows",
   },
   {
     id: "playwright",
@@ -197,6 +211,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installUrl: "https://playwright.dev",
     installCommand: "npx playwright install chromium",
     latestVersionSource: { type: "npm", package: "playwright" },
+    usedFor: "Screenshots and browser automation",
   },
   {
     id: "rustc",
@@ -211,6 +226,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
     updateCommand: "rustup update",
     latestVersionSource: { type: "github-release", repo: "rust-lang/rust" },
+    usedFor: "Desktop (Tauri) and Game (Bevy) projects",
   },
   {
     id: "cargo",
@@ -224,6 +240,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installUrl: "https://rustup.rs",
     installCommand: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
     latestVersionSource: { type: "none" },
+    usedFor: "Desktop (Tauri) and Game (Bevy) projects",
   },
   {
     id: "tauri-cli",
@@ -238,6 +255,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "cargo install tauri-cli",
     updateCommand: "cargo install tauri-cli",
     latestVersionSource: { type: "none" },
+    usedFor: "Desktop apps with Tauri",
   },
   {
     id: "flutter",
@@ -252,6 +270,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install --cask flutter",
     updateCommand: "flutter upgrade",
     latestVersionSource: { type: "github-release", repo: "flutter/flutter" },
+    usedFor: "Mobile apps with Flutter",
   },
   {
     id: "dart",
@@ -266,6 +285,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install dart",
     updateCommand: "brew upgrade dart",
     latestVersionSource: { type: "github-release", repo: "dart-lang/sdk" },
+    usedFor: "Mobile apps with Flutter",
   },
   {
     id: "godot",
@@ -279,5 +299,6 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install --cask godot",
     updateCommand: "brew upgrade --cask godot",
     latestVersionSource: { type: "github-release", repo: "godotengine/godot" },
+    usedFor: "Game projects with Godot engine",
   },
 ];

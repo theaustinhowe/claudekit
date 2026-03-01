@@ -5,11 +5,17 @@ import { Button } from "@claudekit/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@claudekit/ui/components/tooltip";
 import { AlertCircle, Circle, Loader2, Monitor, MonitorDot, Play, RefreshCw, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+import { RunInstructionsPreview } from "@/components/generator/run-instructions-preview";
+import type { PlatformRunInstruction, PreviewStrategy } from "@/lib/constants";
 
 interface AppPreviewProps {
   port: number | null;
   status: "starting" | "ready" | "error" | "stopped";
   onStartServer?: () => void;
+  strategy?: PreviewStrategy;
+  runInstruction?: PlatformRunInstruction;
+  projectPath?: string;
+  onViewTerminal?: () => void;
 }
 
 type Viewport = "desktop" | "tablet" | "mobile";
@@ -20,7 +26,15 @@ const viewportConfig: Record<Viewport, { maxWidth: string; icon: typeof Monitor;
   mobile: { maxWidth: "375px", icon: Smartphone, label: "Mobile" },
 };
 
-export function AppPreview({ port, status, onStartServer }: AppPreviewProps) {
+export function AppPreview({
+  port,
+  status,
+  onStartServer,
+  strategy = "iframe",
+  runInstruction,
+  projectPath,
+  onViewTerminal,
+}: AppPreviewProps) {
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -29,6 +43,17 @@ export function AppPreview({ port, status, onStartServer }: AppPreviewProps) {
       iframeRef.current.src = `${iframeRef.current.src}`;
     }
   }, []);
+
+  // Run-instructions strategy: show instruction card instead of iframe
+  if (strategy === "run-instructions" && runInstruction) {
+    return (
+      <RunInstructionsPreview
+        instruction={runInstruction}
+        projectPath={projectPath ?? ""}
+        onViewTerminal={onViewTerminal}
+      />
+    );
+  }
 
   const url = port ? `http://localhost:${port}` : null;
 

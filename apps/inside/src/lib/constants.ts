@@ -821,7 +821,103 @@ export const PLATFORMS_WITH_DEV_SERVER = new Set([
   "desktop-app",
   "expo",
   "react-native",
+  "flutter",
 ]);
+
+// --- Preview Strategy ---
+
+export type PreviewStrategy = "iframe" | "iframe-web-mode" | "run-instructions";
+
+export const PLATFORM_PREVIEW_STRATEGY: Record<string, PreviewStrategy> = {
+  nextjs: "iframe",
+  "tanstack-start": "iframe",
+  "react-spa": "iframe",
+  "node-api": "iframe",
+  "desktop-app": "iframe",
+  expo: "iframe-web-mode",
+  flutter: "iframe-web-mode",
+  "react-native": "run-instructions",
+  godot: "run-instructions",
+  bevy: "run-instructions",
+  pygame: "run-instructions",
+  cli: "run-instructions",
+};
+
+export interface PlatformRunInstruction {
+  title: string;
+  runCommand: string;
+  description: string;
+  steps: string[];
+}
+
+export const PLATFORM_RUN_INSTRUCTIONS: Record<string, PlatformRunInstruction> = {
+  "react-native": {
+    title: "React Native",
+    runCommand: "npx react-native start",
+    description: "Start the Metro bundler and run on a connected device or emulator",
+    steps: [
+      "Open a terminal in the project directory",
+      "Run `npx react-native start` to start Metro",
+      "In another terminal, run `npx react-native run-ios` or `npx react-native run-android`",
+      "The app will open in the iOS Simulator or Android Emulator",
+    ],
+  },
+  godot: {
+    title: "Godot",
+    runCommand: "godot --editor",
+    description: "Open the project in the Godot editor",
+    steps: [
+      "Open Godot Engine",
+      "Import the project by selecting the project.godot file",
+      "Press F5 or click the Play button to run the main scene",
+    ],
+  },
+  bevy: {
+    title: "Bevy",
+    runCommand: "cargo run",
+    description: "Compile and run the Bevy game",
+    steps: [
+      "Open a terminal in the project directory",
+      "Run `cargo run` to compile and launch the game",
+      "First build may take several minutes as Bevy compiles",
+    ],
+  },
+  pygame: {
+    title: "Pygame",
+    runCommand: "python main.py",
+    description: "Run the Pygame game with Python",
+    steps: [
+      "Open a terminal in the project directory",
+      "Ensure pygame is installed: `pip install pygame`",
+      "Run `python main.py` to start the game",
+    ],
+  },
+  cli: {
+    title: "CLI Tool",
+    runCommand: "See project README",
+    description: "Run the CLI tool from a terminal",
+    steps: [
+      "Open a terminal in the project directory",
+      "Follow the README.md for build and run instructions",
+      "For TypeScript CLIs: `pnpm run build && node dist/index.js`",
+    ],
+  },
+};
+
+export function getEffectivePreviewStrategy(platform: string, toolVersions?: Record<string, string>): PreviewStrategy {
+  const base = PLATFORM_PREVIEW_STRATEGY[platform] ?? "run-instructions";
+  if (base === "iframe-web-mode" && toolVersions) {
+    if (platform === "expo") {
+      const targets = toolVersions["expo-targets"]?.split(",") ?? [];
+      if (!targets.includes("web")) return "run-instructions";
+    }
+    if (platform === "flutter") {
+      const targets = toolVersions["flutter-targets"]?.split(",") ?? [];
+      if (!targets.includes("web")) return "run-instructions";
+    }
+  }
+  return base;
+}
 
 // --- Session Constants (re-exported from shared package) ---
 

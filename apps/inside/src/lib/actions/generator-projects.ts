@@ -117,7 +117,15 @@ export async function updateGeneratorProject(
   data: Partial<
     Pick<
       GeneratorProject,
-      "title" | "status" | "active_spec_version" | "ai_provider" | "ai_model" | "exported_at" | "implementation_prompt"
+      | "title"
+      | "status"
+      | "active_spec_version"
+      | "ai_provider"
+      | "ai_model"
+      | "exported_at"
+      | "implementation_prompt"
+      | "dev_server_port"
+      | "dev_server_pid"
     >
   > & { scaffold_logs?: { log: string; logType: string }[] | null },
 ): Promise<void> {

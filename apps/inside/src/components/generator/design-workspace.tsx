@@ -48,7 +48,7 @@ import { UpgradeChatView } from "@/components/generator/upgrade-chat-view";
 import { UpgradeCompleteView } from "@/components/generator/upgrade-complete-view";
 import { UpgradeDialog } from "@/components/generator/upgrade-dialog";
 import { createDesignMessage, updateGeneratorProject } from "@/lib/actions/generator-projects";
-import { PLATFORMS_WITH_DEV_SERVER } from "@/lib/constants";
+import { getEffectivePreviewStrategy, PLATFORM_RUN_INSTRUCTIONS } from "@/lib/constants";
 import type {
   DesignMessage,
   GeneratorProject,
@@ -98,9 +98,10 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [autoFixEnabled, setAutoFixEnabled] = useState(false);
-  const hasDevServer = PLATFORMS_WITH_DEV_SERVER.has(project.platform);
+  const previewStrategy = getEffectivePreviewStrategy(project.platform, project.tool_versions);
+  const runInstruction = PLATFORM_RUN_INSTRUCTIONS[project.platform];
   const [previewTab, setPreviewTab] = useState(
-    project.status === "upgrading" || project.status === "archived" ? "tasks" : hasDevServer ? "app" : "terminal",
+    project.status === "upgrading" || project.status === "archived" ? "tasks" : "app",
   );
   const [scaffoldLogOpen, setScaffoldLogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -282,9 +283,15 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
     [startDevServer, project.id, project.title],
   );
 
+  // Whether the current preview strategy supports screenshots (iframe-based only)
+  const canTakeScreenshot =
+    (previewStrategy === "iframe" || previewStrategy === "iframe-web-mode") &&
+    devServer?.status === "ready" &&
+    (devServer?.port ?? 0) > 0;
+
   // Capture initial screenshot once dev server is ready after scaffolding
   useEffect(() => {
-    if (devServer?.status === "ready" && devServer.port > 0 && !initialScreenshotTaken.current && !scaffolding) {
+    if (canTakeScreenshot && !initialScreenshotTaken.current && !scaffolding) {
       initialScreenshotTaken.current = true;
       // Check if an initial screenshot already exists (ref resets on remount)
       fetch(`/api/projects/${project.id}/screenshots`)
@@ -301,7 +308,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
         })
         .catch(() => {});
     }
-  }, [devServer?.status, devServer?.port, scaffolding, project.id]);
+  }, [canTakeScreenshot, devServer?.port, scaffolding, project.id]);
 
   // Start dev server if already past scaffolding
   // biome-ignore lint/correctness/useExhaustiveDependencies: only on mount
@@ -443,8 +450,8 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
     (msg: DesignMessage) => {
       setMessages((prev) => [...prev, msg]);
 
-      // Capture screenshot after each assistant response
-      if (msg.role === "assistant" && devServer?.status === "ready" && devServer.port > 0) {
+      // Capture screenshot after each assistant response (only for iframe-based previews)
+      if (msg.role === "assistant" && canTakeScreenshot && devServer?.port) {
         fetch(`/api/projects/${project.id}/screenshots`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -473,7 +480,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
         }
       }
     },
-    [devServer?.status, devServer?.port, project.id, isUpgrading],
+    [canTakeScreenshot, devServer?.port, project.id, isUpgrading],
   );
 
   const handleActiveTaskChange = useCallback((taskId: string | null, title: string | null) => {
@@ -565,8 +572,8 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
   }, [project.id, project.project_name]);
 
   const handleUpgradeComplete = useCallback(async () => {
-    // Capture a final screenshot
-    if (devServer?.status === "ready" && devServer.port > 0) {
+    // Capture a final screenshot (only for iframe-based previews)
+    if (canTakeScreenshot && devServer?.port) {
       fetch(`/api/projects/${project.id}/screenshots`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -586,7 +593,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
     // Keep dev server running so the user can interact with their app
     setProjectStatus("archived");
     setUpgradeCompleted(true);
-  }, [devServer?.status, devServer?.port, project.id]);
+  }, [canTakeScreenshot, devServer?.port, project.id]);
 
   // Scaffolding view — full-width terminal
   if (scaffolding) {
@@ -675,7 +682,7 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             </Tooltip>
             <DropdownMenuContent align="end" className="p-1">
               <DropdownMenuItem
-                disabled={!devServer || devServer.status !== "ready"}
+                disabled={!canTakeScreenshot}
                 onClick={() => {
                   if (devServer?.port) {
                     fetch(`/api/projects/${project.id}/screenshots`, {
@@ -803,7 +810,10 @@ export function DesignWorkspace({ project, initialMessages }: DesignWorkspacePro
             activeTab={previewTab}
             onTabChange={setPreviewTab}
             showTasksTab={isUpgrading}
-            disableAppTab={(isUpgrading && !upgradeCompleted) || !devServer?.port || !hasDevServer}
+            disableAppTab={isUpgrading && !upgradeCompleted}
+            previewStrategy={previewStrategy}
+            runInstruction={runInstruction}
+            onViewTerminal={() => setPreviewTab("terminal")}
             tasksContent={
               isUpgrading ? (
                 upgradeCompleted ? (
