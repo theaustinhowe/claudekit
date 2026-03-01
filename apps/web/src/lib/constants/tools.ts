@@ -15,7 +15,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     updateCommands: { default: "brew update" },
     detectInstallMethod: false,
     latestVersionSource: { type: "github-release", repo: "Homebrew/brew" },
-    usedFor: "Core — macOS package manager for installing other tools",
+    usedFor: "Required to install most other tools on macOS",
   },
   {
     id: "node",
@@ -29,7 +29,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install node",
     updateCommands: { homebrew: "brew upgrade node", default: "brew upgrade node" },
     latestVersionSource: { type: "url", url: "https://nodejs.org/dist/index.json", parser: "nodejs-lts" },
-    usedFor: "Core — ClaudeKit and all web/desktop projects",
+    usedFor: "Required for ClaudeKit and all web/desktop projects",
   },
   {
     id: "nvm",
@@ -45,7 +45,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     detectInstallMethod: false,
     latestVersionSource: { type: "github-release", repo: "nvm-sh/nvm" },
     shellFunction: true,
-    usedFor: "Core — manage multiple Node.js versions",
+    usedFor: "Optional, lets you switch between Node.js versions",
   },
   {
     id: "pnpm",
@@ -64,7 +64,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     },
     shellFunction: true,
     latestVersionSource: { type: "npm", package: "pnpm" },
-    usedFor: "Core — ClaudeKit monorepo package manager",
+    usedFor: "Required for ClaudeKit monorepo",
   },
   {
     id: "npm",
@@ -78,7 +78,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "npm install -g npm@latest",
     updateCommands: { homebrew: "brew upgrade node", default: "npm install -g npm@latest" },
     latestVersionSource: { type: "npm", package: "npm" },
-    usedFor: "Core — Node.js package manager",
+    usedFor: "Comes with Node.js, used to install packages",
   },
   {
     id: "npx",
@@ -92,7 +92,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     updateCommands: { default: "npm install -g npm@latest" },
     detectInstallMethod: false,
     latestVersionSource: { type: "none" },
-    usedFor: "Core — run npm packages without installing",
+    usedFor: "Comes with Node.js, runs packages without installing them",
   },
   {
     id: "bun",
@@ -106,7 +106,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "curl -fsSL https://bun.sh/install | bash",
     updateCommands: { homebrew: "brew upgrade bun", default: "bun upgrade" },
     latestVersionSource: { type: "github-release", repo: "oven-sh/bun" },
-    usedFor: "Alternative Node.js runtime",
+    usedFor: "Optional, faster alternative to Node.js",
   },
   {
     id: "git",
@@ -121,7 +121,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install git",
     updateCommands: { homebrew: "brew upgrade git" },
     latestVersionSource: { type: "github-release", repo: "git/git" },
-    usedFor: "Core — version control",
+    usedFor: "Required for version control and project scaffolding",
   },
   {
     id: "gh",
@@ -136,7 +136,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install gh",
     updateCommands: { homebrew: "brew upgrade gh" },
     latestVersionSource: { type: "github-release", repo: "cli/cli" },
-    usedFor: "Core — GitHub integration",
+    usedFor: "Used for PR reviews, issue tracking, and repo management",
   },
   {
     id: "claude",
@@ -155,7 +155,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     },
     brewPackage: "claude-code",
     latestVersionSource: { type: "npm", package: "@anthropic-ai/claude-code" },
-    usedFor: "Core — AI-powered scaffolding and design iteration",
+    usedFor: "Powers project scaffolding, design chat, and auto-fix",
   },
   {
     id: "python",
@@ -170,7 +170,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install python",
     updateCommands: { homebrew: "brew upgrade python" },
     latestVersionSource: { type: "url", url: "https://endoflife.date/api/python.json", parser: "python-eol" },
-    usedFor: "Inside — Game projects (Pygame), CLI tools",
+    usedFor: "Needed for Pygame game projects and Python CLI tools",
   },
   {
     id: "docker",
@@ -185,7 +185,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install --cask docker",
     updateCommands: { homebrew: "brew upgrade --cask docker" },
     latestVersionSource: { type: "github-release", repo: "moby/moby" },
-    usedFor: "Optional — container-based workflows",
+    usedFor: "Optional, only needed for containerized deployments",
   },
   {
     id: "playwright",
@@ -201,7 +201,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     updateCommands: { default: "npx playwright install chromium" },
     detectInstallMethod: false,
     latestVersionSource: { type: "npm", package: "playwright" },
-    usedFor: "B4U — screenshots and browser automation",
+    usedFor: "Used for automated screenshots and walkthrough videos",
   },
   {
     id: "ffmpeg",
@@ -216,7 +216,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install ffmpeg",
     updateCommands: { homebrew: "brew upgrade ffmpeg" },
     latestVersionSource: { type: "github-release", repo: "FFmpeg/FFmpeg" },
-    usedFor: "B4U — audio/video processing for walkthroughs",
+    usedFor: "Used for generating walkthrough videos with narration",
   },
   {
     id: "rustc",
@@ -232,7 +232,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     updateCommands: { default: "rustup update" },
     detectInstallMethod: false,
     latestVersionSource: { type: "github-release", repo: "rust-lang/rust" },
-    usedFor: "Inside — Desktop (Tauri) and Game (Bevy) projects",
+    usedFor: "Needed for Tauri desktop apps and Bevy game projects",
   },
   {
     id: "cargo",
@@ -248,7 +248,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     updateCommands: { default: "rustup update" },
     detectInstallMethod: false,
     latestVersionSource: { type: "none" },
-    usedFor: "Inside — Desktop (Tauri) and Game (Bevy) projects",
+    usedFor: "Installed with Rust, manages Rust packages and builds",
   },
   {
     id: "tauri-cli",
@@ -264,7 +264,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     updateCommands: { default: "cargo install tauri-cli" },
     detectInstallMethod: false,
     latestVersionSource: { type: "none" },
-    usedFor: "Inside — Desktop apps with Tauri",
+    usedFor: "Only needed if you're building Tauri desktop apps",
   },
   {
     id: "flutter",
@@ -279,7 +279,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install --cask flutter",
     updateCommands: { homebrew: "brew upgrade --cask flutter", default: "flutter upgrade" },
     latestVersionSource: { type: "github-release", repo: "flutter/flutter" },
-    usedFor: "Inside — Mobile apps with Flutter",
+    usedFor: "Only needed if you're building Flutter mobile apps",
   },
   {
     id: "dart",
@@ -294,7 +294,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install dart",
     updateCommands: { homebrew: "brew upgrade dart" },
     latestVersionSource: { type: "github-release", repo: "dart-lang/sdk" },
-    usedFor: "Inside — Mobile apps with Flutter",
+    usedFor: "Installed with Flutter, the language Flutter apps are written in",
   },
   {
     id: "godot",
@@ -308,7 +308,7 @@ export const DEFAULT_TOOLS: ToolDefinition[] = [
     installCommand: "brew install --cask godot",
     updateCommands: { homebrew: "brew upgrade --cask godot" },
     latestVersionSource: { type: "github-release", repo: "godotengine/godot" },
-    usedFor: "Inside — Game projects with Godot engine",
+    usedFor: "Only needed if you're building Godot game projects",
   },
 ];
 
