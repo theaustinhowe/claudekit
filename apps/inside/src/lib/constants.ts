@@ -663,7 +663,7 @@ export const IMAGE_EXTENSIONS = new Set(Object.keys(IMAGE_MIME_TYPES));
 
 // --- App Type Definitions ---
 
-export interface AppTypeDefinition {
+interface AppTypeDefinition {
   id: AppType;
   label: string;
   description: string;
@@ -772,7 +772,7 @@ export const APP_TYPES: AppTypeDefinition[] = [
 
 // --- App Type Helper Functions ---
 
-export function getAppTypeDefinition(appTypeId: AppType): AppTypeDefinition {
+function getAppTypeDefinition(appTypeId: AppType): AppTypeDefinition {
   return APP_TYPES.find((t) => t.id === appTypeId) ?? APP_TYPES[0];
 }
 

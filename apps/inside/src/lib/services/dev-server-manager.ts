@@ -76,7 +76,7 @@ export function adopt(projectId: string, port: number, pid: number): void {
   });
 }
 
-export async function findAvailablePort(startPort = 2550, preferredPort?: number): Promise<number> {
+async function findAvailablePort(startPort = 2550, preferredPort?: number): Promise<number> {
   if (preferredPort) {
     const available = await new Promise<boolean>((resolve) => {
       const srv = net.createServer();
